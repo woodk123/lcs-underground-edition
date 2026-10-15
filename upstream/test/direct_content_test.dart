@@ -13,6 +13,7 @@ import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/modern/direct_content.dart';
 import 'package:lcs_new_age/modern/modern_app.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
+import 'package:lcs_new_age/sitemode/chase_sequence.dart';
 import 'package:lcs_new_age/vehicles/vehicle.dart';
 import 'package:lcs_new_age/vehicles/vehicle_type.dart';
 
@@ -83,6 +84,21 @@ void main() {
     ).gameState!;
     game.mode = GameMode.base;
     game.activeSquadMember = null;
+  });
+
+  testWidgets('chase command separators do not become card descriptions', (
+    tester,
+  ) async {
+    printChaseOptions();
+    final flow = engine.getKey();
+    await mountContent(tester, const Size(1280, 800), flow.then((_) {}));
+    expect(find.text(',', findRichText: true), findsNothing);
+    final fight = engine.console.actions.singleWhere(
+      (action) => action.key == 'f',
+    );
+    await tester.tap(contentAction(fight));
+    await tester.pumpAndSettle();
+    expect(await flow, engine.Key.f);
   });
 
   for (final size in [const Size(1280, 800), const Size(800, 600)]) {

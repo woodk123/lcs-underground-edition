@@ -1416,6 +1416,9 @@ class _ContentFrame {
       }
       for (final (start, end) in ranges) {
         final text = slice(y, start, end).trim();
+        // Commas between inline commands separate the classic console options.
+        // They are not descriptions for the journal's individual action cards.
+        if (y == action.y && text == ',') continue;
         if (text.isNotEmpty && !RegExp(r'^[—═─━=\s]+$').hasMatch(text)) {
           details.add(_Detail(text, spans(y, start, end, trim: true)));
         }
