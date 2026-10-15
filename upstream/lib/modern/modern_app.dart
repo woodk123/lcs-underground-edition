@@ -908,7 +908,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
                       ),
                       const SizedBox(height: 18),
                       const Text(
-                        'Original game by Tarn Adams · New Age by Ashley S. Fox\nOpen source · GPL-2.0',
+                        'Original game by Tarn Adams · New Age by Ashley S. Fox\n'
+                        'The Underground Edition by Kevin Wood\n'
+                        'Open source · GPL-2.0',
                         style: TextStyle(fontSize: 11, color: muted),
                       ),
                     ],

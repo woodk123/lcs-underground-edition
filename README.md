@@ -4,7 +4,7 @@ A work-in-progress fork of [Liberal Crime Squad: New Age](https://github.com/ash
 
 ## Why this exists
 
-I contributed a few small features and bug fixes to LCS years ago. I've still got emails with Jonathan from 2009, which is slightly terrifying! Finding the Flutter version blew me away and got me tinkering again. It's lovely to see familiar names still keeping LCS going.
+I'm Kevin Wood. I contributed a few small features and bug fixes to LCS years ago. I've still got emails with Jonathan from 2009, which is slightly terrifying! Finding the Flutter version blew me away and got me tinkering again. It's lovely to see familiar names still keeping LCS going.
 
 The game always reminded me a little of Gangsters: Organized Crime, so I started this vibe-coded fork to explore that style of interface. It's still very much a work in progress, and feedback is welcome.
 
@@ -33,6 +33,8 @@ If you already have a packaged build, extract the whole archive and run its **Pl
 - [Gameplay fidelity and testing](docs/GAMEPLAY_FIDELITY.md)
 
 ## Credits and license
+
+The Underground Edition by **Kevin Wood**.
 
 Based on [Liberal Crime Squad: New Age by Ashley S. Fox](https://github.com/ashley-s-fox/lcs-new-age), itself built on the original Liberal Crime Squad. Thanks to everyone who has kept the game alive over the years.
 

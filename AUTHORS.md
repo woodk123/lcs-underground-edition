@@ -7,6 +7,10 @@ Liberal Crime Squad: New Age is a complete rewrite and fork of Liberal Crime Squ
 
 The Underground Edition is a modernization of Liberal Crime Squad: New Age, with an illustrated journal interface, crew portraits and dossiers, and city planning. The original game and New Age authorship credits follow.
 
+## The Underground Edition created by:
+
+* Kevin Wood - interface direction, modernization and bug fixes, developed with AI assistance
+
 ## Liberal Crime Squad originally created by:
 
 * Tarn Adams / Toady One (www.bay12games.com)
