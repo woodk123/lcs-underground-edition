@@ -1,0 +1,71 @@
+name: Nightly Windows and web
+
+on:
+  schedule:
+    - cron: '23 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-release
+  cancel-in-progress: false
+
+jobs:
+  nightly:
+    # A manual run on a feature branch must never replace the public nightly.
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: windows-2022
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Check for changed build inputs
+        id: changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/nightly_release.py check
+      - name: Install pinned Flutter SDK
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          $pin = Get-Content scripts/toolchain.json -Raw | ConvertFrom-Json
+          New-Item -ItemType Directory -Force .tools | Out-Null
+          git clone --depth 1 --branch $pin.flutter_version $pin.flutter_repository .tools/flutter
+          if ($LASTEXITCODE -ne 0) { throw 'Flutter checkout failed.' }
+          .tools/flutter/bin/flutter.bat config --no-analytics --enable-windows-desktop
+          if ($LASTEXITCODE -ne 0) { throw 'Flutter setup failed.' }
+      - name: Verify nightly tooling
+        if: steps.changes.outputs.changed == 'true'
+        run: python -m unittest discover -s scripts -p 'test_*nightly*.py' -v
+      - name: Test, analyze, build and package Windows and web
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          NIGHTLY_FINGERPRINT: ${{ steps.changes.outputs.fingerprint }}
+          NIGHTLY_TAG: ${{ steps.changes.outputs.tag }}
+        run: ./scripts/build_release.ps1 -Nightly
+      - name: Publish complete Nightly prerelease
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NIGHTLY_FINGERPRINT: ${{ steps.changes.outputs.fingerprint }}
+          NIGHTLY_TAG: ${{ steps.changes.outputs.tag }}
+        run: python scripts/nightly_release.py publish
+      - name: Retain build logs
+        if: always() && steps.changes.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-build-logs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .local/reports/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: ignore

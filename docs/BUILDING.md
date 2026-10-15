@@ -52,6 +52,18 @@ The script writes the three ZIPs and verification metadata. Use a fresh output d
 
 The repackaged preview keeps the original binaries; their corresponding game source matches the tree at commit `626adbef0a0f578d2ac049173185de3090036a8c`. `BUILD_INFO.json` records the original build, matching game source and packaging identities separately; repackaging adds no new gameplay test coverage. The preview's focused founder and offline browser checks passed; the complete legacy browser run remains incomplete, and the native build has not had a complete graphical playthrough or clean-machine launch check.
 
+## Nightly builds on GitHub
+
+The **Nightly Windows and web** Actions workflow checks the default branch daily at **03:23 UTC** (03:23 UK winter time / 04:23 UK summer time). It can also be started from GitHub's **Actions → Nightly Windows and web → Run workflow** button. Feature-branch manual runs are skipped.
+
+It compares the Git identities of `upstream/` (including runtime assets, dependencies and tests), `scripts/`, `.github/` and `Play.cmd` with the last successfully published nightly. Unchanged inputs skip SDK installation and builds. Documentation-only changes outside those paths do not trigger a rebuild. Failed builds or uploads are retried on the next run because they do not advance the published input fingerprint.
+
+Changed inputs run the pinned Flutter toolchain, serialization generation, tests, analysis, web/offline build and Windows x64 build on a GitHub-hosted Windows runner. The workflow packages Windows and web player ZIPs, matching source (including generated serializers), and SHA-256 sidecars. Windows packages include app-local Visual C++ runtime DLLs. No personal SDK path or extra release secret is required; the workflow uses GitHub's built-in token with repository contents write permission.
+
+Downloads appear in a prerelease titled **Nightly**, with a unique `nightly-<run-id>-<attempt>` tag. All six assets are uploaded to a draft and checked before publication. Only after publication succeeds does the workflow retire earlier releases carrying its nightly tag and metadata marker. The existing `underground-preview-*` releases are never selected for replacement or cleanup, and the nightly is never marked as GitHub's latest stable release. Failed uploads may leave a draft, which a later successful run cleans up. The most recent successful nightly stays available if checks or uploads fail.
+
+Build logs are retained as Actions artifacts for seven days. Automated builds do not certify manual gameplay, browser offline acceptance or clean-machine native launch. Export important campaigns before trying a nightly. Scheduled runs can be delayed by GitHub; public-repository schedules may be disabled after 60 days without activity.
+
 ## Development
 
 After dependencies and serialization have been generated:

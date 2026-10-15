@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param()
+param([switch]$Nightly)
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common.ps1')
@@ -64,10 +64,19 @@ try {
     Invoke-BuildStep '06-web-release' $flutter @('--suppress-analytics', 'build', 'web', '--release', '--no-pub', '--no-wasm-dry-run', '--base-href', '/')
     # The upstream injector requires a fresh build and must run exactly once per build.
     Invoke-BuildStep '07-offline-manifest' $dart @('run', 'tool/inject_service_worker.dart', 'build/web')
+    if ($Nightly) {
+        Invoke-BuildStep '08-windows-release' $flutter @('--suppress-analytics', 'build', 'windows', '--release', '--no-pub')
+    }
     Write-BuildReport 'automated_checks_passed_manual_qa_pending'
-    Invoke-BuildStep '08-package' $python @(
-        (Join-Path $root 'scripts\package_release.py'), '--root', $root, '--report', $reportDir
-    )
+    if ($Nightly) {
+        Invoke-BuildStep '09-package-nightly' $python @(
+            (Join-Path $root 'scripts\package_nightly.py'), '--root', $root, '--report', $reportDir
+        )
+    } else {
+        Invoke-BuildStep '08-package' $python @(
+            (Join-Path $root 'scripts\package_release.py'), '--root', $root, '--report', $reportDir
+        )
+    }
     Write-BuildReport 'automated_checks_and_packaging_passed_manual_qa_pending'
     Write-Host "`nRelease artifacts are under $root\release. Build evidence: $reportDir"
     Write-Host 'Complete docs/RELEASE_CHECKLIST.md against the package before describing this build as production ready.'
