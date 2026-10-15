@@ -1,4 +1,10 @@
-# Current Gangsters journal Windows build
+# GitHub early preview — 15 October 2026
+
+Download the Windows ZIP from the [early preview release](https://github.com/woodk123/lcs-underground-edition/releases/tag/underground-preview-2026.10.15), extract the whole folder and run `lcs_new_age.exe`. This is a work in progress. The package includes the modified source, credits and app-local runtime DLLs; Python and Flutter are not required to play.
+
+For this release, use the included `BUILD_INFO.json`, `FILES.sha256` and GitHub release notes for build identity and verification scope. The native version has not received a complete graphical playthrough or a clean-machine launch check. The dated results below describe earlier local builds.
+
+# Historical Gangsters journal Windows build
 
 The final journal source compiled in 29.9 seconds and is packaged alongside the corresponding accepted web/source release. It passes 352 tests and clean focused/full analysis. Current build identity, test count and native archive are in `release/DELIVERY.json`; current browser evidence is in [GANGSTERS_JOURNAL_ACCEPTANCE.md](GANGSTERS_JOURNAL_ACCEPTANCE.md). Native graphical playthrough remains outside the verified scope after the user's stop instruction. No native UI automation resumed. The package includes its app-local Visual C++ runtime, fonts and license notices.
 

@@ -115,7 +115,7 @@ def main():
         if (root / asset_folder).is_dir():
             shutil.copytree(root / asset_folder, source / asset_folder,
                             ignore=artwork_ignore)
-    for filename in ("Play.cmd", "README.md", ".gitignore"):
+    for filename in ("Play.cmd", "README.md", ".gitignore", "LICENSE", "AUTHORS.md"):
         shutil.copy2(root / filename, source / filename)
     git_diff = subprocess.run(
         ["git", "-C", str(root / "upstream"), "diff", "--binary", "HEAD"],
@@ -127,6 +127,7 @@ def main():
         "# Liberal Crime Squad: New Age — The Underground Edition — Source and attribution\n\n"
         "Liberal Crime Squad was created by Tarn Adams. Liberal Crime Squad: New Age "
         "was created by Ashley S. Fox; see AUTHORS.md for the complete upstream credits.\n\n"
+        "The Underground Edition is by Kevin Wood, developed with AI assistance.\n\n"
         f"Upstream: {pin['upstream_repository']}\n\n"
         f"Base revision: `{pin['upstream_base_revision']}`\n\n"
         "This package contains a modernized Flutter presentation over the retained Dart game. "

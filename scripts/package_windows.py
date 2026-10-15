@@ -139,6 +139,7 @@ verification details are in `docs/WINDOWS_BUILD.md`.
         "flutter_version": "3.47.7",
         "build_command": "flutter build windows --release --no-pub",
         "source_package": source_package.name if source_package else None,
+        "source_commit": json.loads((source_package / "BUILD_INFO.json").read_text(encoding="utf-8"))["source_commit"] if source_package else None,
         "native_visual_qa": "Earlier title window inspected; final native playthrough unverified after user stopped computer control. See docs/WINDOWS_BUILD.md.",
         "app_local_vc_runtime": list(runtime_files),
         "runtime_source": str(runtime),

@@ -13,6 +13,8 @@ $reportDir = Join-Path $root ".local\reports\build-$stamp"
 New-Item -ItemType Directory -Path $reportDir -Force | Out-Null
 $steps = [System.Collections.Generic.List[object]]::new()
 $reportPath = Join-Path $reportDir 'build-info.json'
+$sourceCommit = git -C $root rev-parse HEAD
+if ($LASTEXITCODE -ne 0) { throw 'Could not identify the source commit.' }
 
 function Write-BuildReport([string]$Status) {
     $report = [ordered]@{
@@ -20,6 +22,7 @@ function Write-BuildReport([string]$Status) {
         timestamp_utc = [DateTime]::UtcNow.ToString('o')
         project = 'LiberalCrimeSquad-NewAge-UndergroundEdition'
         display_name = 'Liberal Crime Squad: New Age ' + [char]0x2014 + ' The Underground Edition'
+        source_commit = $sourceCommit
         toolchain = (Get-Content -LiteralPath (Join-Path $root 'scripts\toolchain.json') -Raw | ConvertFrom-Json)
         steps = @($steps.ToArray())
         manual_qa = 'Pending. Automated build success does not establish production readiness; see docs/RELEASE_CHECKLIST.md.'

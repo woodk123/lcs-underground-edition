@@ -29,11 +29,16 @@ The interface and artwork are being developed with AI assistance; the paintings 
 
 ## Playing
 
-There isn't a downloadable GitHub release yet. For now, [build from source](docs/BUILDING.md), then double-click **Play.cmd** in the project folder. On Windows, it starts a local server and opens the game at **http://127.0.0.1:8765/**. Python 3 is required.
+Download the **[early preview release](https://github.com/woodk123/lcs-underground-edition/releases/tag/underground-preview-2026.10.15)** and extract the whole ZIP.
 
-If you already have a packaged build, extract the whole archive and run its **Play.cmd**.
+- **Windows 10/11 (64-bit):** choose the Windows ZIP and double-click **lcs_new_age.exe**. No Python or Flutter needed.
+- **Browser package for Windows:** choose the Web ZIP and double-click **Play.cmd**. Requires Python 3; opens **http://127.0.0.1:8765/**.
+
+Both packages include the corresponding source. You can also [build from source](docs/BUILDING.md).
 
 **Keep the same browser profile and address to keep using your browser saves.** `localhost`, another port or another browser has separate save storage. Export important saves from the game before clearing browser data.
+
+Windows and browser saves are separate. Use the game's export/import controls to transfer a campaign between them.
 
 ## More information
 
