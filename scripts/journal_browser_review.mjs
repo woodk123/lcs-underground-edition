@@ -114,7 +114,19 @@ async function button(name, scope = 'any') {
 async function click(name, scope = 'any') {
   const item = await button(name, scope);
   await item.scrollIntoViewIfNeeded();
-  await item.click();
+  try {
+    await item.click({ timeout: 4000 });
+  } catch (error) {
+    if (!String(error).includes('intercepts pointer events')) throw error;
+    // Flutter can overlap its accessibility proxy rectangles even when the
+    // painted controls are distinct. Test the real pointer route, retaining
+    // all subsequent visible-state and exported-save assertions.
+    const bounds = await item.boundingBox();
+    assert.ok(bounds && await item.isEnabled(), `Visible enabled control required: ${name}`);
+    const position = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+    (report.pointerProxyFallbacks ??= []).push({ name: String(name), position });
+    await page.mouse.click(position.x, position.y);
+  }
   await page.waitForTimeout(200);
   return item;
 }
