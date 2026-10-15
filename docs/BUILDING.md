@@ -52,6 +52,12 @@ The script writes the three ZIPs and verification metadata. Use a fresh output d
 
 The repackaged preview keeps the original binaries; their corresponding game source matches the tree at commit `626adbef0a0f578d2ac049173185de3090036a8c`. `BUILD_INFO.json` records the original build, matching game source and packaging identities separately; repackaging adds no new gameplay test coverage. The preview's focused founder and offline browser checks passed; the complete legacy browser run remains incomplete, and the native build has not had a complete graphical playthrough or clean-machine launch check.
 
+## Checks on pushes and pull requests
+
+The **Project checks** GitHub Actions workflow runs on every push and pull request, and can also be started manually from the Actions tab. It uses the pinned Flutter SDK and Python 3.12 on Windows to test the packaging/release tools, resolve dependencies, generate serialization, run the game tests, and perform the same focused and full-project analysis as the nightly build. Focused analysis is strict; full-project errors fail while legacy warnings and infos remain visible.
+
+Each check has a separate step in the Actions log. A newer push cancels an older checks run for the same branch or pull request. This workflow uses read-only repository access and does not build or publish release downloads. Nightly publication remains in the separate **Nightly Windows and web** workflow. Push checks run after the push; requiring them before merging would be a separate branch-protection setting.
+
 ## Nightly builds on GitHub
 
 The **Nightly Windows and web** Actions workflow checks the default branch daily at **03:23 UTC** (03:23 UK winter time / 04:23 UK summer time). It can also be started from GitHub's **Actions → Nightly Windows and web → Run workflow** button. Feature-branch manual runs are skipped.
