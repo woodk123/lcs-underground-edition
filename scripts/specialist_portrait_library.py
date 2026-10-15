@@ -99,7 +99,7 @@ def contact_sheet(tiles: list[tuple[dict, Image.Image]], path: Path,
     sheet.save(path)
 
 
-def build(source: Path, output: Path, review: Path, partial: bool) -> dict:
+def build(source: Path, output: Path, review: Path, partial: bool, manifest_path: Path | None = None) -> dict:
     missing = [f'batch_{batch:02}.png' for batch in range(16, 24)
                if not (source / f'batch_{batch:02}.png').is_file()]
     if missing and not partial:
@@ -195,7 +195,7 @@ def build(source: Path, output: Path, review: Path, partial: bool) -> dict:
             overlays[1]['runtimeSha256'] = digest((output / 'appearance_overlays.png').read_bytes())
         for atlas in atlases:
             atlas['runtimeSha256'] = digest((output / Path(atlas['asset']).name).read_bytes())
-        write_json(review / 'manifest.json', manifest)
+        write_json(manifest_path or review / 'manifest.json', manifest)
         write_json(output / 'manifest-v3.json', manifest)
     return {'portraitCount': len(entries), 'complete': not missing, 'runtimeWritten': not partial,
             'review': str(review), 'counts': manifest['counts']}
@@ -205,11 +205,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path, default=ROOT / 'assets/portraits-v3/source')
     parser.add_argument('--output', type=Path, default=ROOT / 'upstream/assets/modern/portraits_v2')
-    parser.add_argument('--review', type=Path, default=ROOT / 'assets/portraits-v3')
+    parser.add_argument('--review', type=Path, default=ROOT / '.local/art-review/portraits-v3')
+    parser.add_argument('--manifest', type=Path, default=ROOT / 'assets/portraits-v3/manifest.json')
     parser.add_argument('--partial', action='store_true')
     args = parser.parse_args()
     try:
-        print(json.dumps(build(args.source, args.output, args.review, args.partial), indent=2))
+        print(json.dumps(build(args.source, args.output, args.review, args.partial, args.manifest), indent=2))
     except (ValueError, OSError) as error:
         print(f'Specialist portrait validation failed: {error}', file=sys.stderr)
         return 1

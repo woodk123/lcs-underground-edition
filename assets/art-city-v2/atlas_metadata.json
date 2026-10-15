@@ -1,13 +1,12 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "created_utc_date": "2026-10-13",
   "generator": "ChatGPT built-in image_gen.imagegen",
   "postprocessing": "None. PNG bytes copied verbatim; crop rectangles are renderer metadata only.",
   "assets": {
     "buildings": {
       "runtime_path": "upstream/assets/modern/building_sprites_v2.png",
-      "original_path": "assets/art-city-v2/building_sprites_v2.png",
-      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a1372c-83ad-75a2-849d-f3e0daa8356b\\exec-dd231bf0-634e-45d5-950a-6e21623cda0a.png",
+      "original_path": "upstream/assets/modern/building_sprites_v2.png",
       "prompt_path": "assets/art-city-v2/building_sprites_v2.prompt.txt",
       "width": 1254,
       "height": 1254,
@@ -18,7 +17,7 @@
         255
       ],
       "fully_transparent_pixels": 952411,
-      "initial_prompt_path": "assets/art-city-v2/explorations/building_sprites_v1.prompt.txt",
+      "initial_prompt_path": "assets/art-city-v2/building_sprites_v2.prompt.txt",
       "layout": "4x4 logical arrangement with explicit unequal crop rectangles; do not divide by equal quarters.",
       "frames": [
         {
@@ -361,8 +360,7 @@
     },
     "portraits": {
       "runtime_path": "upstream/assets/modern/crew_portraits_v1.png",
-      "original_path": "assets/art-city-v2/crew_portraits_v1.png",
-      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a1372c-83ad-75a2-849d-f3e0daa8356b\\exec-d8e952ab-e564-4fa0-94d2-0d505f8f9bcd.png",
+      "original_path": "upstream/assets/modern/crew_portraits_v1.png",
       "prompt_path": "assets/art-city-v2/crew_portraits_v1.prompt.txt",
       "width": 1254,
       "height": 1254,
@@ -541,8 +539,7 @@
     },
     "pedestrian_walk": {
       "runtime_path": "upstream/assets/modern/pedestrian_walk_v2.png",
-      "original_path": "assets/art-city-v2/pedestrian_walk_v2.png",
-      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a1372c-83ad-75a2-849d-f3e0daa8356b\\exec-c1334288-aec2-4c8e-95dc-c26583966c06.png",
+      "original_path": "upstream/assets/modern/pedestrian_walk_v2.png",
       "prompt_path": "assets/art-city-v2/pedestrian_walk_v2.prompt.txt",
       "width": 1536,
       "height": 1024,

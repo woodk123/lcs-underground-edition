@@ -9,7 +9,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from package_preview import digest
+from release_common import digest
 
 MARKER = '<!-- lcs-nightly-inputs:'
 INPUTS = ('upstream', 'scripts', '.github', 'Play.cmd')
@@ -62,7 +62,7 @@ def check(repository: str) -> None:
 
 
 def publish(repository: str, output: Path) -> None:
-    metadata = json.loads((output / 'nightly.json').read_text(encoding='utf-8'))
+    metadata = json.loads((output / 'release.json').read_text(encoding='utf-8'))
     tag = os.environ['NIGHTLY_TAG']
     value = os.environ['NIGHTLY_FINGERPRINT']
     commit = git('rev-parse', 'HEAD')

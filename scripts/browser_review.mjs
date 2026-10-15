@@ -1,5 +1,5 @@
-// Focused, isolated UI review for skill hierarchy, mechanics disclosure and
-// saved portrait-age repair. Synthetic fixture edits never touch player saves.
+// Isolated browser regression checks for dossiers, order details and portrait
+// migration. Synthetic fixture edits never touch player saves.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
@@ -13,7 +13,7 @@ const { chromium } = require('playwright');
 const args = process.argv.slice(2);
 const value = (flag, fallback) => args.includes(flag) ? args[args.indexOf(flag) + 1] : fallback;
 const url = value('--url', 'http://127.0.0.1:18879/');
-const output = resolve(root, value('--out', `reports/ashley-feedback-${new Date().toISOString().replaceAll(':', '-')}`));
+const output = resolve(root, value('--out', `reports/browser-review-${new Date().toISOString().replaceAll(':', '-')}`));
 await mkdir(output, { recursive: true });
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const decode = save => typeof save.saveData === 'string' ? JSON.parse(save.saveData) : save.saveData;

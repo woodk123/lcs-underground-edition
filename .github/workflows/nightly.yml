@@ -46,7 +46,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Flutter setup failed.' }
       - name: Verify nightly tooling
         if: steps.changes.outputs.changed == 'true'
-        run: python -m unittest discover -s scripts -p 'test_*nightly*.py' -v
+        run: |
+          python -m unittest discover -s scripts -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Release tooling tests failed.' }
+          python scripts/verify_assets.py
+          if ($LASTEXITCODE -ne 0) { throw 'Asset verification failed.' }
       - name: Test, analyze, build and package Windows and web
         if: steps.changes.outputs.changed == 'true'
         env:

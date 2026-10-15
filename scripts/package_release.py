@@ -1,170 +1,170 @@
-"""Create a combined build intermediate; use package_preview.py for public downloads."""
+"""Package checked web/Windows players and one matching source archive."""
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
-import shutil
-import zipfile
+import os
+import re
 from datetime import datetime, timezone
+import shutil
+import subprocess
 from pathlib import Path
 
-
-def digest(path: Path) -> str:
-    checksum = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            checksum.update(block)
-    return checksum.hexdigest()
+from release_common import (
+    WEB_SCRIPTS, archive_package, cache_ignore, copy_file, digest, file_hashes,
+    filtered_source_hashes, require_files, runtime_hashes, source_reference, write_json,
+)
 
 
-def source_ignore(directory: str, names: list[str]) -> set[str]:
-    excluded = {
-        ".git", ".dart_tool", "build", ".idea", ".vscode", "ephemeral",
-        "node_modules", ".flutter-plugins", ".flutter-plugins-dependencies",
-        ".DS_Store", "Thumbs.db", "__pycache__",
-    }
-    return {name for name in names if name in excluded or name.endswith(".log")}
+def vc_runtime() -> Path:
+    vswhere = Path(os.environ['ProgramFiles(x86)']) / 'Microsoft Visual Studio/Installer/vswhere.exe'
+    installation = subprocess.run(
+        [str(vswhere), '-latest', '-products', '*', '-requires', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
+         '-property', 'installationPath'], check=True, capture_output=True, text=True,
+    ).stdout.strip()
+    if not installation:
+        raise ValueError('Visual Studio C++ toolchain was not found.')
+    candidates = sorted((Path(installation) / 'VC/Redist/MSVC').glob('*/x64/Microsoft.VC143.CRT'))
+    if not candidates:
+        raise ValueError('Visual C++ x64 redistributable DLLs were not found.')
+    return candidates[-1]
 
 
-def artwork_ignore(directory: str, names: list[str]) -> set[str]:
-    # Preserve provenance prompts without distributing rejected raster trials.
-    if Path(directory).name == "explorations":
-        return {name for name in names if not name.endswith(".txt")}
-    return set()
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, required=True)
-    parser.add_argument("--report", type=Path, required=True)
-    parser.add_argument("--qa-report", type=Path)
-    args = parser.parse_args()
-    root = args.root.resolve(strict=True)
-    report = args.report.resolve(strict=True)
-    build = root / "upstream/build/web"
-    required = ("index.html", "main.dart.js", "flutter_bootstrap.js", "sw.js")
-    for name in required:
-        if not (build / name).is_file():
-            parser.error(f"Missing required built file: {build / name}")
-    if "const RESOURCES = null; // build: manifest" in (build / "sw.js").read_text(encoding="utf-8"):
-        parser.error("Offline manifest was not injected. Run the complete release script.")
-    info = json.loads((report / "build-info.json").read_text(encoding="utf-8-sig"))
-    if info.get("status") not in {
-        "automated_checks_passed_manual_qa_pending",
-        "automated_checks_and_packaging_passed_manual_qa_pending",
-    }:
-        parser.error("Packaging requires the current release script's passing build report.")
-    steps = info.get("steps", [])
-    required_steps = ["01-dependencies", "02-serialization", "03-tests", "04-focused-analysis", "05-full-analysis", "06-web-release", "07-offline-manifest"]
-    if [step.get("name") for step in steps[:7]] != required_steps or any(step.get("exit_code") != 0 for step in steps):
-        parser.error("Release report must contain all seven successful build/check steps.")
-
-    qa_directory = None
-    if args.qa_report is not None:
-        qa_path = args.qa_report.resolve(strict=True)
-        qa = json.loads(qa_path.read_text(encoding="utf-8"))
-        if (qa.get("status") != "passed" or qa.get("skipped")
-                or qa.get("pageErrors") or qa.get("consoleErrors") or qa.get("failedRequests")
-                or qa.get("mainJsSha256") != digest(build / "main.dart.js")
-                or not qa.get("managedServerStopped")):
-            parser.error("Final QA must pass without skips/errors for this exact JavaScript hash, including server-stopped offline use.")
-        qa_directory = qa_path.parent
-        upgrade = json.loads((qa_directory / "upgrade/report.json").read_text(encoding="utf-8"))
-        if (upgrade.get("status") != "passed" or upgrade.get("pageErrors")
-                or upgrade.get("consoleErrors")
-                or upgrade.get("cache", {}).get("cachedMainSha256") != digest(build / "main.dart.js")):
-            parser.error("Final QA must also verify a save-preserving update to this exact cached JavaScript hash.")
-
-    now = datetime.now(timezone.utc)
-    name = f"LiberalCrimeSquad-NewAge-UndergroundEdition-{now:%Y%m%d-%H%M%S}-{digest(build / 'main.dart.js')[:8]}"
-    release_root = root / "release"
-    release_root.mkdir(exist_ok=True)
-    destination = release_root / name
-    destination.mkdir(exist_ok=False)
-    shutil.copytree(build, destination / "web", ignore=shutil.ignore_patterns("*.map", "*.symbols", ".last_build_id"))
-    shutil.copytree(root / "scripts", destination / "scripts", ignore=source_ignore)
-    shutil.copytree(root / "docs", destination / "docs", ignore=source_ignore)
-    for asset_folder in ("assets/concepts", "assets/art-city-v2", "assets/gangsters-journal"):
-        if (root / asset_folder).is_dir():
-            shutil.copytree(root / asset_folder, destination / asset_folder,
-                            ignore=artwork_ignore)
-    shutil.copytree(report, destination / "build-evidence", ignore=shutil.ignore_patterns("08-package.log"))
-    native_log = root / "reports/final-windows-build.log"
-    if native_log.is_file():
-        shutil.copy2(native_log, destination / "build-evidence/windows-build.log")
-    launcher_report = root / ".local/reports/launcher-contracts.json"
-    if launcher_report.is_file():
-        shutil.copy2(launcher_report, destination / "build-evidence/launcher-contracts.json")
-    if qa_directory is not None:
-        shutil.copytree(qa_directory, destination / "reports/browser" / qa_directory.name)
-    for filename in ("Play.cmd", "README.md"):
-        shutil.copy2(root / filename, destination / filename)
-    for filename in ("LICENSE", "AUTHORS.md"):
-        shutil.copy2(root / "upstream" / filename, destination / filename)
-
-    source = destination / "source"
+def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: str, fingerprint: str | None, repository: str) -> dict:
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*', tag):
+        raise ValueError('Invalid release tag.')
+    if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repository):
+        raise ValueError('Invalid GitHub repository.')
+    info = json.loads((report / 'build-info.json').read_text(encoding='utf-8-sig'))
+    required = ['01-dependencies', '02-serialization', '03-tests', '04-focused-analysis',
+                '05-full-analysis', '06-web-release', '07-offline-manifest']
+    if runtime is not None:
+        required.append('08-windows-release')
+    if (info['status'] != 'automated_checks_passed_manual_qa_pending'
+            or [step['name'] for step in info['steps']] != required
+            or any(step['exit_code'] != 0 for step in info['steps'])):
+        raise ValueError('Both builds and all checks must pass before packaging a Windows release.' if runtime is not None else 'The web build and all checks must pass before packaging.')
+    if output.exists():
+        raise ValueError(f'Choose a fresh release output directory: {output}')
+    web = root / 'upstream/build/web'
+    native = root / 'upstream/build/windows/x64/runner/Release'
+    require_files(web, ('index.html', 'main.dart.js', 'flutter_bootstrap.js', 'sw.js'))
+    if 'const RESOURCES = null; // build: manifest' in (web / 'sw.js').read_text(encoding='utf-8'):
+        raise ValueError('Web offline manifest was not injected.')
+    runtime_files = ('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll')
+    if runtime is not None:
+        require_files(native, ('lcs_new_age.exe', 'flutter_windows.dll', 'data/app.so',
+                              'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z'))
+        require_files(runtime, runtime_files)
+    output.mkdir(parents=True)
+    prefix = f'LCS-Underground-Edition-{tag}'
+    source = output / f'{prefix}-Source'
     source.mkdir()
-    shutil.copytree(root / "upstream", source / "upstream", ignore=source_ignore)
-    shutil.copytree(root / "scripts", source / "scripts", ignore=source_ignore)
-    shutil.copytree(root / "docs", source / "docs", ignore=source_ignore)
-    if qa_directory is not None:
-        shutil.copytree(qa_directory, source / "reports/browser" / qa_directory.name)
-    for asset_folder in ("assets/concepts", "assets/art-city-v2", "assets/gangsters-journal"):
-        if (root / asset_folder).is_dir():
-            shutil.copytree(root / asset_folder, source / asset_folder,
-                            ignore=artwork_ignore)
-    for filename in ("Play.cmd", "README.md", ".gitignore", "LICENSE", "AUTHORS.md"):
-        shutil.copy2(root / filename, source / filename)
-    pin = json.loads((root / "scripts/toolchain.json").read_text(encoding="utf-8"))
-    attribution = (
-        "# Liberal Crime Squad: New Age — The Underground Edition — Source and attribution\n\n"
-        "Liberal Crime Squad was created by Tarn Adams. Liberal Crime Squad: New Age "
-        "was created by Ashley S. Fox; see AUTHORS.md for the complete upstream credits.\n\n"
-        "The Underground Edition is by Kevin Wood, developed with AI assistance.\n\n"
-        f"Upstream: {pin['upstream_repository']}\n\n"
-        f"Base revision: `{pin['upstream_base_revision']}`\n\n"
-        "This package contains a modernized Flutter presentation over the retained Dart game. "
-        "Classic tactical and specialist console views remain available. It is not a new Godot port.\n\n"
-        "The corresponding modified game source, generated serialization, dependency lockfile, "
-        "build scripts and documentation are included under `source/`. "
-        "The original GPL v2 license is included as LICENSE. Flutter/Dart SDK downloads "
-        "are development prerequisites and are not bundled. Rebuild instructions are in docs/BUILDING.md.\n\n"
-        "Generated artwork provenance is recorded in the included documentation/asset manifests. "
-        "Build-evidence logs document automated checks; release usability and offline-save checks "
-        "must be assessed separately in docs/RELEASE_CHECKLIST.md.\n"
-    )
-    (destination / "SOURCE_ATTRIBUTION.md").write_text(attribution, encoding="utf-8")
-    info["package_name"] = name
-    info["packaged_utc"] = now.isoformat()
-    info["source_snapshot"] = "source/upstream"
-    if qa_directory is not None:
-        info["status"] = "automated_checks_and_packaged_browser_acceptance_passed"
-        info["manual_qa"] = "Selected browser screenshots inspected; exact scenarios and remaining coverage limits are documented in docs/RELEASE_CHECKLIST.md. Native graphical playthrough is not certified."
-        info["browser_qa"] = {
-            "report": f"reports/browser/{qa_directory.name}/report.json",
-            "main_js_sha256": digest(build / "main.dart.js"),
-            "server_stopped_offline": True,
-            "save_preserving_update": True,
-            "passed_checkpoints": len(qa["checks"]),
-        }
-    (destination / "BUILD_INFO.json").write_text(json.dumps(info, indent=2) + "\n", encoding="utf-8")
-    hashes = [
-        f"{digest(path)}  {path.relative_to(destination).as_posix()}"
-        for path in sorted(destination.rglob("*")) if path.is_file()
-    ]
-    (destination / "FILES.sha256").write_text("\n".join(hashes) + "\n", encoding="utf-8")
-    archive = release_root / f"{name}.zip"
-    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as bundle:
-        for path in sorted(destination.rglob("*")):
-            if path.is_file():
-                bundle.write(path, f"{name}/{path.relative_to(destination).as_posix()}")
-    sidecar = archive.with_suffix(".zip.sha256")
-    sidecar.write_text(f"{digest(archive)}  {archive.name}\n", encoding="utf-8")
-    print(f"Package: {destination}")
-    print(f"Archive: {archive}")
-    print(f"SHA-256: {sidecar.read_text().strip()}")
+    # Tracked repository files preserve tooling, documentation and artwork provenance.
+    if (root / '.git').exists():
+        tracked = subprocess.run(['git', '-C', str(root), 'ls-files', '-z'],
+                                 check=True, capture_output=True).stdout.decode('utf-8').split('\0')
+        for name in tracked:
+            if name and not name.startswith('upstream/') and Path(name).parts[0] not in {'.tools', '.local', 'reports', 'release'}:
+                copy_file(root / name, source / name)
+    else:
+        # A prepared source archive is also a supported rebuild root.
+        for name in ('scripts', 'docs', 'assets', '.github'):
+            if (root / name).is_dir():
+                shutil.copytree(root / name, source / name, ignore=cache_ignore)
+        for name in ('README.md', 'AUTHORS.md', 'LICENSE', 'Play.cmd', '.gitignore'):
+            copy_file(root / name, source / name)
+    # Include build_runner outputs and platform source; omit SDKs and build caches.
+    shutil.copytree(root / 'upstream', source / 'upstream', ignore=cache_ignore)
+    before = file_hashes(source / 'upstream')
+    if not any(name.endswith('.g.dart') for name in before):
+        raise ValueError('Generated serialization source is missing.')
+    shutil.copytree(report, source / 'build-evidence', ignore=shutil.ignore_patterns('*package*.log'))
+    identity = {'runtime_source_commit': info['source_commit'], 'packaging_commit': info['source_commit']}
+    common = {**identity, 'source_commit': info['source_commit'], 'release_tag': tag,
+              'fingerprint': fingerprint, 'verification_scope': 'Automated checks only; manual gameplay and clean-machine launch QA pending.'}
+    write_json(source / 'BUILD_INFO.json', {**common, 'target': 'corresponding-source', 'toolchain': info['toolchain']})
+    (source / 'SOURCE_INFO.md').write_text(
+        '# Corresponding source\n\n'
+        'The modified game is under `upstream/`, including generated serializers, locked dependencies '
+        'and runtime artwork. Build from this folder using `docs/BUILDING.md`; no Git history is needed. '
+        'Tests and automated build logs are under `build-evidence/`. Those checks do not certify '
+        'every gameplay path or a clean-machine native launch.\n\n'
+        f"Source revision: `{info['source_commit']}`. See LICENSE and AUTHORS.md.\n", encoding='utf-8')
+    source_result = archive_package(source)
+    source_archive = Path(source_result['archive']).name
+    source_url = (f'https://github.com/{repository}/releases/download/{tag}/{source_archive}'
+                  if fingerprint is not None else f'../{source_archive}')
+    results = [source_result]
+    targets = [('web', web, 'Web-Player')]
+    if runtime is not None:
+        targets.append(('windows-x64', native, 'Windows-x64-Player'))
+    for target, built, suffix in targets:
+        player = output / f'{prefix}-{suffix}'
+        if target == 'web':
+            shutil.copytree(built, player / 'web', ignore=shutil.ignore_patterns('*.map', '*.symbols', '.last_build_id'))
+            copy_file(root / 'Play.cmd', player / 'Play.cmd')
+            for name in WEB_SCRIPTS:
+                copy_file(root / 'scripts' / name, player / 'scripts' / name)
+            instructions = ('Extract the entire folder, then run Play.cmd. Python 3 is required. '
+                            'Keep the same browser and http://127.0.0.1:8765/ address to retain saves. '
+                            'On other systems: python3 scripts/serve.py --directory web --port 8765')
+        else:
+            shutil.copytree(built, player, ignore=shutil.ignore_patterns('*.pdb', '*.exp', '*.lib'))
+            for name in runtime_files:
+                copy_file(runtime / name, player / name)
+            instructions = ('Extract the entire folder, then run lcs_new_age.exe. Keep data/ and all DLLs '
+                            'beside it. Windows 10/11 x64; Python and Flutter are not required.')
+        for name in ('LICENSE', 'AUTHORS.md'):
+            copy_file(root / name, player / name)
+        for original, name in ((root / '.tools/flutter/LICENSE', 'Flutter-LICENSE.txt'),
+                               (root / 'upstream/fonts/journal/OFL.txt', 'LibreBaskerville-OFL.txt'),
+                               (root / 'upstream/fonts/modern/roboto_license.txt', 'Roboto-LICENSE.txt')):
+            copy_file(original, player / 'licenses' / name)
+        (player / 'README.md').write_text(
+            f'# The Underground Edition\n\nBuild: `{tag}`.\n\n{instructions}\n\n'
+            'Export important saves before trying a development build. '
+            'See SOURCE_REFERENCE.md for matching source, LICENSE and AUTHORS.md for credits, '
+            'and licenses/ plus runtime NOTICES for component notices.\n', encoding='utf-8')
+        (player / 'SOURCE_REFERENCE.md').write_text(
+            source_reference(source_archive, source_result['archive_sha256'], source_url, identity), encoding='utf-8')
+        write_json(player / 'BUILD_INFO.json', {**common, 'target': target, 'source_archive': source_archive,
+                                               'source_archive_sha256': source_result['archive_sha256']})
+        runtime_hashes(player, target)  # Fail on an incomplete runtime before sealing the archive.
+        results.append(archive_package(player))
+    # Neither packaging pass may mutate the corresponding game source.
+    if before != filtered_source_hashes(root / 'upstream'):
+        raise ValueError('Game source changed while packaging.')
+    assets = []
+    for result in results:
+        archive = Path(result['archive'])
+        for path in (archive, archive.with_name(archive.name + '.sha256')):
+            assets.append({'name': path.name, 'sha256': digest(path)})
+    metadata = {'tag': tag, 'fingerprint': fingerprint, 'source_commit': info['source_commit'], 'assets': assets}
+    write_json(output / 'release.json', metadata)
+    return metadata
 
 
-if __name__ == "__main__":
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--root', type=Path, required=True)
+    parser.add_argument('--report', type=Path, required=True)
+    parser.add_argument('--windows', action='store_true')
+    parser.add_argument('--nightly', action='store_true')
+    parser.add_argument('--tag')
+    parser.add_argument('--repository', default='woodk123/lcs-underground-edition')
+    parser.add_argument('--output', type=Path)
+    args = parser.parse_args()
+    root, report = args.root.resolve(), args.report.resolve()
+    info = json.loads((report / 'build-info.json').read_text(encoding='utf-8-sig'))
+    tag = os.environ['NIGHTLY_TAG'] if args.nightly else args.tag or f"local-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}-{info['source_commit'][:8]}"
+    fingerprint = os.environ['NIGHTLY_FINGERPRINT'] if args.nightly else None
+    repository = os.environ['GITHUB_REPOSITORY'] if args.nightly else args.repository
+    output = args.output.resolve() if args.output else root / 'release' / ('nightly' if args.nightly else tag)
+    result = package(root, report, vc_runtime() if args.windows or args.nightly else None,
+                     output, tag, fingerprint, repository)
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == '__main__':
     main()

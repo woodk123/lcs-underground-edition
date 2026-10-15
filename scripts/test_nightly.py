@@ -10,8 +10,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import nightly_release as release
-import package_nightly as packaging
-from package_preview import verify_package
+import package_release as packaging
+from release_common import verify_package
 
 
 def put(root: Path, name: str, content: str = 'fixture') -> None:
@@ -45,7 +45,7 @@ class NightlyTests(unittest.TestCase):
                 name = f'asset-{number}.zip'
                 put(output, name)
                 assets.append({'name': name, 'sha256': packaging.digest(output / name)})
-            put(output, 'nightly.json', json.dumps({'tag': 'nightly-456-1', 'fingerprint': 'b' * 64,
+            put(output, 'release.json', json.dumps({'tag': 'nightly-456-1', 'fingerprint': 'b' * 64,
                                                    'source_commit': 'c' * 40, 'assets': assets}))
             calls = []
 
@@ -72,7 +72,7 @@ class NightlyTests(unittest.TestCase):
                 name = f'asset-{number}.zip'
                 put(output, name)
                 assets.append({'name': name, 'sha256': packaging.digest(output / name)})
-            put(output, 'nightly.json', json.dumps({'tag': 'nightly-456-1', 'fingerprint': 'b' * 64,
+            put(output, 'release.json', json.dumps({'tag': 'nightly-456-1', 'fingerprint': 'b' * 64,
                                                    'source_commit': 'c' * 40, 'assets': assets}))
             calls = []
 

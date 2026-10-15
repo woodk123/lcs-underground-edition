@@ -14,7 +14,7 @@ const args = process.argv.slice(2);
 const expectedHash = args[args.indexOf('--expected-hash') + 1];
 assert.ok(args.includes('--expected-hash'));
 assert.match(expectedHash, /^[a-f0-9]{64}$/);
-const url = 'http://127.0.0.1:8765/';
+const url = args.includes('--url') ? args[args.indexOf('--url') + 1] : 'http://127.0.0.1:18879/';
 const stamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
 const output = resolve(root, `reports/browser/creation-${stamp}`);
 const profile = resolve(root, `.local/browser-profiles/creation-${stamp}`);

@@ -26,10 +26,10 @@ function Get-LcsSourceCommit([string]$Root = (Get-LcsRoot)) {
 }
 
 function Get-LcsPython {
-    $installed = 'C:\Users\sheer\AppData\Local\Programs\Python\Python312\python.exe'
-    if (Test-Path -LiteralPath $installed -PathType Leaf) { return $installed }
-    $found = Get-Command python.exe -ErrorAction SilentlyContinue
-    if ($null -ne $found) { return $found.Source }
+    foreach ($name in @('python.exe', 'python3.exe', 'py.exe')) {
+        $found = Get-Command $name -ErrorAction SilentlyContinue
+        if ($null -ne $found) { return $found.Source }
+    }
     throw 'Python 3 is required for the local launcher and packaging. Install Python, then reopen the launcher.'
 }
 

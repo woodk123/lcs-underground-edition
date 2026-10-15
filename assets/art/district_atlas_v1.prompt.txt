@@ -1,6 +1,5 @@
 Generator: built-in image_gen tool, 15 October 2026.
 Runtime asset: upstream/assets/modern/district_atlas_v1.png
-Original: C:/Users/sheer/.codex/generated_images/01a14105-4014-7261-ad27-ab22c820f3e4/exec-1743b3d1-d0e0-4415-a76b-eda69f4d71c3.png
 Atlas: 1254 x 1254 pixels, 3 columns x 2 rows. Cells are 418 x 627.
 Order: shopping, downtown, industrial / university, residential, rural.
 Rendering preserves image proportions and crops the centre of each cell to the lot.

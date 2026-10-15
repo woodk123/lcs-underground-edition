@@ -51,7 +51,7 @@ def overview(tiles: list[tuple[dict, Image.Image]], output: Path) -> None:
     sheet.save(output)
 
 
-def build(source: Path, output: Path, review: Path, atlas_size: int, partial: bool) -> dict:
+def build(source: Path, output: Path, review: Path, atlas_size: int, partial: bool, manifest_path: Path | None = None) -> dict:
     if atlas_size <= 0 or atlas_size % GRID:
         raise ValueError("--atlas-size must be positive and divisible by 4")
     missing = [f"batch_{batch:02}.png" for batch in range(16)
@@ -140,7 +140,7 @@ def build(source: Path, output: Path, review: Path, atlas_size: int, partial: bo
         for atlas in manifest["atlases"]:
             atlas["runtimeSha256"] = digest((output / Path(atlas["asset"]).name).read_bytes())
         write_json(output / "manifest.json", manifest)
-        write_json(review / "manifest.json", manifest)
+        write_json(manifest_path or review / "manifest.json", manifest)
     return {"portraitCount": len(entries), "atlasCount": len(atlases),
             "complete": not missing, "partialMode": partial, "counts": manifest["counts"],
             "review": str(review), "runtimeWritten": not partial}
@@ -150,12 +150,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, default=ROOT / "assets/portraits-v2/source")
     parser.add_argument("--output", type=Path, default=ROOT / "upstream/assets/modern/portraits_v2")
-    parser.add_argument("--review", type=Path, default=ROOT / "assets/portraits-v2")
+    parser.add_argument("--review", type=Path, default=ROOT / ".local/art-review/portraits-v2")
+    parser.add_argument("--manifest", type=Path, default=ROOT / "assets/portraits-v2/manifest.json")
     parser.add_argument("--atlas-size", type=int, default=1024)
     parser.add_argument("--partial", action="store_true", help="QA available source files; never publish runtime assets")
     args = parser.parse_args()
     try:
-        print(json.dumps(build(args.source, args.output, args.review, args.atlas_size, args.partial), indent=2))
+        print(json.dumps(build(args.source, args.output, args.review, args.atlas_size, args.partial, args.manifest), indent=2))
     except (ValueError, OSError) as error:
         print(f"Portrait library validation failed: {error}", file=sys.stderr)
         return 1

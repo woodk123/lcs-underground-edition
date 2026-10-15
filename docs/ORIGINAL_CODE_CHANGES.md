@@ -1,26 +1,23 @@
-# Original code changes and bug fixes
+# Changes from New Age
 
-## Changes to the original code
+The Underground Edition retains the original Dart/Flutter engine and campaign content. It adds an illustrated journal interface, crew portraits/dossiers, city maps, assignment cards and scoped navigation. UI controls use source-authored command identities and eligibility rather than recreating gameplay handlers.
 
-The original Dart/Flutter engine, gameplay systems and authored content remain. Of 200 original Dart files, 171 are unchanged and 29 have reviewed changes.
+## Engine and save fixes
 
-- `main.dart` runs the original game loop inside the new interface.
-- Console and input helpers expose exact commands, entity IDs and availability to clickable controls.
-- Menu printers provide read-only data for squads, activities, creation, finances, politics and news.
-- Scoped navigation allows switching management screens without accidentally cancelling queued orders. Original gameplay handlers still execute the actions.
+- Unaffordable clothing/flag crafting no longer consumes recycled cloth.
+- Calendar advancement avoids skipped or repeated dates across daylight-saving changes.
+- Failed saves stop day advancement or exit before campaign progress changes.
+- Invalid imports are rejected without partially replacing the active campaign.
+- Legacy saves retain equipped clothing quality/protection during migration.
+- Inspecting saves does not consume the active campaign RNG.
+- Completed campaign totals are recorded once.
 
-## Bug fixes in the original game and save code
+## Interface and portrait behavior
 
-- **Crafting:** unaffordable clothing or flag jobs no longer consume recycled cloth. Successful crafting calculations remain unchanged.
-- **Calendar:** advancing a day no longer risks repeated or skipped dates across daylight-saving changes.
-- **Save failures:** unsuccessful saving stops day advancement or exit before campaign progress changes.
-- **Imports:** invalid saves are rejected without overwriting or partially replacing the active campaign.
-- **Legacy equipment:** older saves retain equipped clothing quality and protection during migration.
-- **Randomness:** inspecting saves no longer consumes the active campaign’s random draws.
-- **Statistics:** completed campaign totals are recorded once, avoiding repeated inclusion of active-save progress.
+- Orders are prepared locally, with explicit confirmation and safe cancellation.
+- Squad visits use the original destination planner and shared order card.
+- Skill levels sit next to their names; XP is secondary.
+- Full formulas and requirements are available through Order mechanics; cards keep key timing, estimates, costs and risks visible.
+- Portrait age compatibility takes precedence over avoiding duplicates. Clearly mismatched saved assignments are repaired once; appropriate identities persist across saves and birthdays.
 
-[Detailed source audit](GAMEPLAY_FIDELITY.md).
-
-## Squad visit order presentation — 14 October 2026
-
-The journal now offers Visit a location under Operations and Prepare visit on the left job card for an inspected building. Both use the original awaited planner and one Confirm order / safe Cancel row. Prepared/queued Squad cards show destination, members, existing travel-cost calculation, requirements, daily-task precedence and day-advance timing. No original gameplay source changed in this update. [Review and verification](SQUAD_VISIT_ORDERS.md).
+See [architecture](ARCHITECTURE.md), [testing](TESTING.md) and [portrait details](PORTRAIT_LIBRARY.md). Detailed development history and retired reviews remain available through Git history and the original release artifacts.

@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "created_uk_date": "2026-10-14",
   "generator": "ChatGPT built-in image_gen.imagegen",
   "postprocessing": "None. PNG bytes copied verbatim. Crop rectangles are renderer metadata only.",
@@ -7,8 +7,7 @@
   "assets": {
     "journal_leather_v1.png": {
       "runtime_path": "upstream/assets/modern/journal_leather_v1.png",
-      "original_path": "assets/gangsters-journal/journal_leather_v1.png",
-      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a137af-ec82-7230-8344-0caed38671d2\\exec-04f46092-dc6a-4bcb-856b-5ef5abea3d35.png",
+      "original_path": "upstream/assets/modern/journal_leather_v1.png",
       "prompt_path": "assets/gangsters-journal/journal_leather.prompt.txt",
       "width": 1254,
       "height": 1254,
@@ -17,8 +16,7 @@
     },
     "journal_paper_v1.png": {
       "runtime_path": "upstream/assets/modern/journal_paper_v1.png",
-      "original_path": "assets/gangsters-journal/journal_paper_v1.png",
-      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a137af-ec82-7230-8344-0caed38671d2\\exec-9d285d66-f1a1-4bef-939a-ddadd0aa5931.png",
+      "original_path": "upstream/assets/modern/journal_paper_v1.png",
       "prompt_path": "assets/gangsters-journal/journal_paper.prompt.txt",
       "width": 1254,
       "height": 1254,
@@ -27,8 +25,7 @@
     },
     "journal_portraits_v1.png": {
       "runtime_path": "upstream/assets/modern/journal_portraits_v1.png",
-      "original_path": "assets/gangsters-journal/journal_portraits_v1.png",
-      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a137af-ec82-7230-8344-0caed38671d2\\exec-fbc56f6f-bc14-4e45-97a0-ef5e7210c7ab.png",
+      "original_path": "upstream/assets/modern/journal_portraits_v1.png",
       "prompt_path": "assets/gangsters-journal/journal_portrait.prompt.txt",
       "width": 1254,
       "height": 1254,
@@ -227,8 +224,7 @@
     },
     "journal_icons_v1.png": {
       "runtime_path": "upstream/assets/modern/journal_icons_v1.png",
-      "original_path": "assets/gangsters-journal/journal_icons_v1.png",
-      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a137af-ec82-7230-8344-0caed38671d2\\exec-287245c5-d1d8-4314-ac93-c16088386999.png",
+      "original_path": "upstream/assets/modern/journal_icons_v1.png",
       "prompt_path": "assets/gangsters-journal/journal_icon.prompt.txt",
       "width": 1448,
       "height": 1086,
@@ -379,8 +375,7 @@
     },
     "journal_order_icons_v1.png": {
       "runtime_path": "upstream/assets/modern/journal_order_icons_v1.png",
-      "original_path": "assets/gangsters-journal/journal_order_icons_v1.png",
-      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a137af-ec82-7230-8344-0caed38671d2\\exec-f55537f5-30bf-4ff6-8203-2027a4e61533.png",
+      "original_path": "upstream/assets/modern/journal_order_icons_v1.png",
       "prompt_path": "assets/gangsters-journal/journal_order_icons_v1.prompt.txt",
       "width": 1254,
       "height": 1254,

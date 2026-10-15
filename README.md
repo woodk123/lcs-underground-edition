@@ -10,7 +10,7 @@ A work-in-progress fork of [Liberal Crime Squad: New Age](https://github.com/ash
 
 *Character dossiers bring portraits, skills and campaign records together.*
 
-![A character dossier showing Terry Tonelli's painted portrait, skills and training progress](docs/screenshots/character-dossier.png)
+![A character dossier showing a painted portrait, skill values and training progress](docs/screenshots/character-dossier.png)
 
 ## Why this exists
 
@@ -45,9 +45,11 @@ Windows and browser saves are separate. Use the game's export/import controls to
 ## More information
 
 - [Building and development](docs/BUILDING.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Testing](docs/TESTING.md)
 - [Changes and bug fixes](docs/ORIGINAL_CODE_CHANGES.md)
+- [Artwork and assets](docs/ASSETS.md)
 - [Portrait library](docs/PORTRAIT_LIBRARY.md)
-- [Gameplay fidelity and testing](docs/GAMEPLAY_FIDELITY.md)
 
 ## Credits and license
 
