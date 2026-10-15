@@ -2,6 +2,16 @@
 
 A work-in-progress fork of [Liberal Crime Squad: New Age](https://github.com/ashley-s-fox/lcs-new-age), with an interface inspired by the old organiser in **Gangsters: Organized Crime**. Paper and leather, painted portraits, crew dossiers, city maps and job cards—with the New Age game underneath.
 
+## Screenshots
+
+*The organisation journal: manage your crew, review job cards and explore the city.*
+
+![The Underground Edition's paper-and-leather journal showing crew members, an assignment card and the city map](docs/screenshots/city-and-orders.png)
+
+*Character dossiers bring portraits, skills and campaign records together.*
+
+![A character dossier showing Terry Tonelli's painted portrait, skills and training progress](docs/screenshots/character-dossier.png)
+
 ## Why this exists
 
 I'm Kevin Wood. I contributed a few small features and bug fixes to LCS years ago. I've still got emails with Jonathan from 2009, which is slightly terrifying! Finding the Flutter version blew me away and got me tinkering again. It's lovely to see familiar names still keeping LCS going.
