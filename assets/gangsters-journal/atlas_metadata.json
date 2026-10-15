@@ -1,0 +1,658 @@
+{
+  "schema_version": 1,
+  "created_uk_date": "2026-10-14",
+  "generator": "ChatGPT built-in image_gen.imagegen",
+  "postprocessing": "None. PNG bytes copied verbatim. Crop rectangles are renderer metadata only.",
+  "source_reference": "Gangsters: Organized Crime (1998) original organiser layout and manual; no original game bitmap is shipped.",
+  "assets": {
+    "journal_leather_v1.png": {
+      "runtime_path": "upstream/assets/modern/journal_leather_v1.png",
+      "original_path": "assets/gangsters-journal/journal_leather_v1.png",
+      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a137af-ec82-7230-8344-0caed38671d2\\exec-04f46092-dc6a-4bcb-856b-5ef5abea3d35.png",
+      "prompt_path": "assets/gangsters-journal/journal_leather.prompt.txt",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "sha256": "c2b5275322ab51be597e2349a3e3bb83bdff4eb9c4a93add1fb3932f9be4518b"
+    },
+    "journal_paper_v1.png": {
+      "runtime_path": "upstream/assets/modern/journal_paper_v1.png",
+      "original_path": "assets/gangsters-journal/journal_paper_v1.png",
+      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a137af-ec82-7230-8344-0caed38671d2\\exec-9d285d66-f1a1-4bef-939a-ddadd0aa5931.png",
+      "prompt_path": "assets/gangsters-journal/journal_paper.prompt.txt",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "sha256": "4ded547ed5561c66fc504858416ac1a49d38073a7ff3aa2e5d60f28126ab824d"
+    },
+    "journal_portraits_v1.png": {
+      "runtime_path": "upstream/assets/modern/journal_portraits_v1.png",
+      "original_path": "assets/gangsters-journal/journal_portraits_v1.png",
+      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a137af-ec82-7230-8344-0caed38671d2\\exec-fbc56f6f-bc14-4e45-97a0-ef5e7210c7ab.png",
+      "prompt_path": "assets/gangsters-journal/journal_portrait.prompt.txt",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "sha256": "cfc84cc822f3a124e1ab7ddae5447157654d0a84e8a8fa1f74ec9ce26c087121",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "cell_width": 313.5,
+        "cell_height": 313.5,
+        "crop_order": "row-major"
+      },
+      "female_indices": [
+        0,
+        2,
+        4,
+        7,
+        8,
+        10,
+        12,
+        15
+      ],
+      "male_indices": [
+        1,
+        3,
+        5,
+        6,
+        9,
+        11,
+        13,
+        14
+      ],
+      "portraits": [
+        {
+          "index": 0,
+          "description": "Young adult Black woman, dark curly hair, dark teal wool jacket",
+          "source_rect": [
+            0.0,
+            0.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 1,
+          "description": "Middle-aged white man, dark hair, charcoal suit and brown fedora",
+          "source_rect": [
+            313.5,
+            0.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 2,
+          "description": "Older Black woman, salt-and-pepper curls, burgundy coat",
+          "source_rect": [
+            627.0,
+            0.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 3,
+          "description": "Adult East Asian man, close-cropped dark hair, glasses, navy suit",
+          "source_rect": [
+            940.5,
+            0.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 4,
+          "description": "Adult South Asian woman, dark wavy hair, mustard collared coat",
+          "source_rect": [
+            0.0,
+            313.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 5,
+          "description": "Older white man, silver hair, dark wool coat",
+          "source_rect": [
+            313.5,
+            313.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 6,
+          "description": "Young adult Black man, neatly shaped short hair, olive wool suit",
+          "source_rect": [
+            627.0,
+            313.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 7,
+          "description": "Middle-aged Latina woman, short wavy dark hair, charcoal collared jacket",
+          "source_rect": [
+            940.5,
+            313.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 8,
+          "description": "Young adult white woman, red bob, cream blouse",
+          "source_rect": [
+            0.0,
+            627.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 9,
+          "description": "Adult Middle Eastern man, short dark beard, grey pinstripe suit",
+          "source_rect": [
+            313.5,
+            627.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 10,
+          "description": "Older East Asian woman, grey bob, amber blouse",
+          "source_rect": [
+            627.0,
+            627.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 11,
+          "description": "Adult white man, swept-back brown hair, burgundy coat",
+          "source_rect": [
+            940.5,
+            627.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 12,
+          "description": "Adult Black woman, neatly arranged braids, dark blue collared coat",
+          "source_rect": [
+            0.0,
+            940.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 13,
+          "description": "Middle-aged East Asian man, grey-streaked hair, brown suit",
+          "source_rect": [
+            313.5,
+            940.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 14,
+          "description": "Adult Latino man, shaved head, navy wool jacket",
+          "source_rect": [
+            627.0,
+            940.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 15,
+          "description": "Older South Asian woman, glasses, grey hair, muted teal coat",
+          "source_rect": [
+            940.5,
+            940.5,
+            313.5,
+            313.5
+          ]
+        }
+      ],
+      "usage": "Cosmetic adult likeness only; same stable existing gender-index banks. Do not infer biography, consume RNG, or replace factual text. Preserve child/nonhuman fallback."
+    },
+    "journal_icons_v1.png": {
+      "runtime_path": "upstream/assets/modern/journal_icons_v1.png",
+      "original_path": "assets/gangsters-journal/journal_icons_v1.png",
+      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a137af-ec82-7230-8344-0caed38671d2\\exec-287245c5-d1d8-4314-ac93-c16088386999.png",
+      "prompt_path": "assets/gangsters-journal/journal_icon.prompt.txt",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sha256": "5044642d06d418cc6a7289d0fc6380a6855dc7cc15d12f66ccf09cfb0ddca043",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 820254,
+      "layout": "4x3 logical arrangement; use inspected explicit unequal source rectangles, not equal-cell cuts.",
+      "icons": [
+        {
+          "index": 0,
+          "name": "crew",
+          "source_rect": [
+            22,
+            69,
+            355,
+            297
+          ],
+          "source_rect_format": "x,y,width,height"
+        },
+        {
+          "index": 1,
+          "name": "accounts",
+          "source_rect": [
+            387,
+            95,
+            345,
+            254
+          ],
+          "source_rect_format": "x,y,width,height"
+        },
+        {
+          "index": 2,
+          "name": "law",
+          "source_rect": [
+            749,
+            50,
+            335,
+            323
+          ],
+          "source_rect_format": "x,y,width,height"
+        },
+        {
+          "index": 3,
+          "name": "diplomacy",
+          "source_rect": [
+            1104,
+            98,
+            326,
+            204
+          ],
+          "source_rect_format": "x,y,width,height"
+        },
+        {
+          "index": 4,
+          "name": "newspaper",
+          "source_rect": [
+            24,
+            409,
+            351,
+            275
+          ],
+          "source_rect_format": "x,y,width,height"
+        },
+        {
+          "index": 5,
+          "name": "reports",
+          "source_rect": [
+            411,
+            399,
+            295,
+            271
+          ],
+          "source_rect_format": "x,y,width,height"
+        },
+        {
+          "index": 6,
+          "name": "city",
+          "source_rect": [
+            736,
+            399,
+            363,
+            287
+          ],
+          "source_rect_format": "x,y,width,height"
+        },
+        {
+          "index": 7,
+          "name": "options",
+          "source_rect": [
+            1106,
+            409,
+            308,
+            288
+          ],
+          "source_rect_format": "x,y,width,height"
+        },
+        {
+          "index": 8,
+          "name": "business",
+          "source_rect": [
+            27,
+            741,
+            332,
+            272
+          ],
+          "source_rect_format": "x,y,width,height"
+        },
+        {
+          "index": 9,
+          "name": "personnel",
+          "source_rect": [
+            376,
+            717,
+            355,
+            316
+          ],
+          "source_rect_format": "x,y,width,height"
+        },
+        {
+          "index": 10,
+          "name": "activism",
+          "source_rect": [
+            750,
+            696,
+            337,
+            333
+          ],
+          "source_rect_format": "x,y,width,height"
+        },
+        {
+          "index": 11,
+          "name": "operations",
+          "source_rect": [
+            1089,
+            746,
+            342,
+            288
+          ],
+          "source_rect_format": "x,y,width,height"
+        }
+      ],
+      "inspection": "Twelve separate principal alpha>=32 connected components inspected. Source rectangles include each complete illustration plus eight pixels of transparent margin; portraits/labels are not embedded in controls.",
+      "usage": "Decorative pictorial art in live labelled controls. No input handler or extra focus stop."
+    },
+    "journal_order_icons_v1.png": {
+      "runtime_path": "upstream/assets/modern/journal_order_icons_v1.png",
+      "original_path": "assets/gangsters-journal/journal_order_icons_v1.png",
+      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a137af-ec82-7230-8344-0caed38671d2\\exec-f55537f5-30bf-4ff6-8203-2027a4e61533.png",
+      "prompt_path": "assets/gangsters-journal/journal_order_icons_v1.prompt.txt",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "4cad6bdf225e0d5e0070ab9c8e94403c458eba383499830bec38d34a5f8585e5",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 734941,
+      "style_reference": "upstream/assets/modern/journal_icons_v1.png (original generated project art only)",
+      "layout": "4x4 logical arrangement; use inspected explicit unequal source rectangles, not equal-quarter cuts.",
+      "icons": [
+        {
+          "index": 0,
+          "name": "donations",
+          "source_rect": [
+            20,
+            46,
+            280,
+            273
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "donations"
+          ]
+        },
+        {
+          "index": 1,
+          "name": "art",
+          "source_rect": [
+            317,
+            44,
+            299,
+            287
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "sellArt"
+          ]
+        },
+        {
+          "index": 2,
+          "name": "sewing",
+          "source_rect": [
+            647,
+            59,
+            293,
+            276
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "makeClothing",
+            "sellTshirts",
+            "makeFlag"
+          ]
+        },
+        {
+          "index": 3,
+          "name": "music",
+          "source_rect": [
+            968,
+            25,
+            265,
+            320
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "sellMusic"
+          ]
+        },
+        {
+          "index": 4,
+          "name": "recruitment",
+          "source_rect": [
+            10,
+            346,
+            313,
+            289
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "recruiting",
+            "sleeperRecruit"
+          ]
+        },
+        {
+          "index": 5,
+          "name": "study",
+          "source_rect": [
+            318,
+            364,
+            326,
+            257
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "study",
+            "takeClass"
+          ]
+        },
+        {
+          "index": 6,
+          "name": "teaching",
+          "source_rect": [
+            652,
+            361,
+            291,
+            273
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "teachLiberalArts",
+            "teachFighting",
+            "teachCovert"
+          ]
+        },
+        {
+          "index": 7,
+          "name": "medicine",
+          "source_rect": [
+            944,
+            383,
+            299,
+            235
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "clinic"
+          ]
+        },
+        {
+          "index": 8,
+          "name": "graffiti",
+          "source_rect": [
+            40,
+            656,
+            271,
+            251
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "graffiti"
+          ]
+        },
+        {
+          "index": 9,
+          "name": "protest",
+          "source_rect": [
+            349,
+            624,
+            293,
+            306
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "trouble",
+            "sleeperLiberal",
+            "sleeperConservative"
+          ]
+        },
+        {
+          "index": 10,
+          "name": "newspaper",
+          "source_rect": [
+            639,
+            652,
+            308,
+            255
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "writeGuardian"
+          ]
+        },
+        {
+          "index": 11,
+          "name": "hacking",
+          "source_rect": [
+            946,
+            655,
+            284,
+            246
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "hacking"
+          ]
+        },
+        {
+          "index": 12,
+          "name": "vehicle_acquisition",
+          "source_rect": [
+            15,
+            949,
+            329,
+            254
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "stealCars"
+          ]
+        },
+        {
+          "index": 13,
+          "name": "prisoner_tending",
+          "source_rect": [
+            336,
+            944,
+            281,
+            272
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "interrogation"
+          ]
+        },
+        {
+          "index": 14,
+          "name": "burial",
+          "source_rect": [
+            647,
+            943,
+            285,
+            274
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "bury"
+          ]
+        },
+        {
+          "index": 15,
+          "name": "laying_low",
+          "source_rect": [
+            949,
+            939,
+            278,
+            285
+          ],
+          "source_rect_format": "x,y,width,height",
+          "activity_types": [
+            "none"
+          ]
+        }
+      ],
+      "inspection": "All sixteen pictorial symbols inspected at full resolution. Seventeen principal alpha>=32 components: donation hands form two separate components. Explicit crops preserve each complete symbol; no pixel processing.",
+      "usage": "Pure exact ActivityType enum mapping in journal_order_icon.dart. Unsupported types use accurate Material icon fallbacks. Art never invents an action, writes an activity, handles input, changes time, or consumes RNG.",
+      "rights_provenance": "Original art commissioned/generated for this project with built-in ChatGPT image generation; style reference is the project original generated atlas, not any copyrighted original-game bitmap."
+    }
+  },
+  "fonts": {
+    "LibreBaskerville-Variable.ttf": {
+      "runtime_path": "upstream/fonts/journal/LibreBaskerville-Variable.ttf",
+      "sha256": "05a95421961341c5b2556285e8415df9db27dab4f4abe22b446b3c6a8b916c5d",
+      "source_repository": "https://github.com/google/fonts/tree/main/ofl/librebaskerville",
+      "license": "SIL Open Font License 1.1",
+      "source_url": "https://raw.githubusercontent.com/google/fonts/main/ofl/librebaskerville/LibreBaskerville%5Bwght%5D.ttf"
+    },
+    "LibreBaskerville-Italic-Variable.ttf": {
+      "runtime_path": "upstream/fonts/journal/LibreBaskerville-Italic-Variable.ttf",
+      "sha256": "223959683dc73ec4437bd61fabaa4b3f22209e22855ffd3aee36ba61a5116e97",
+      "source_repository": "https://github.com/google/fonts/tree/main/ofl/librebaskerville",
+      "license": "SIL Open Font License 1.1",
+      "source_url": "https://raw.githubusercontent.com/google/fonts/main/ofl/librebaskerville/LibreBaskerville-Italic%5Bwght%5D.ttf"
+    },
+    "OFL.txt": {
+      "runtime_path": "upstream/fonts/journal/OFL.txt",
+      "sha256": "3624eddd4c8f8a908130a417ae7cd089c9da69899c4e0ca1a5217d0a6fae16fd",
+      "source_repository": "https://github.com/google/fonts/tree/main/ofl/librebaskerville",
+      "license": "SIL Open Font License 1.1",
+      "source_url": "https://raw.githubusercontent.com/google/fonts/main/ofl/librebaskerville/OFL.txt"
+    }
+  }
+}

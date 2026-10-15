@@ -1,0 +1,3559 @@
+{
+  "status": "passed",
+  "checked_utc": "2026-10-14T11:29:24.473174+00:00",
+  "audit_script_sha256": "bdb12523bd58d3e282f3642b3cea66f58a9be30d521912560b3180d7c5f03ba8",
+  "audited_snapshot_sha256": "c2834127614b662846ddaf42488ceae746d2bd57d348af5cef76c3c752d7b44f",
+  "upstream_repository": "https://github.com/ashley-s-fox/lcs-new-age",
+  "upstream_base_revision": "a1a2112dabf4a8d1a25e36a7a747ef99c9318b87",
+  "normalization": "Text CRLF is normalized to LF only; binary bytes remain exact. SHA-256 is not a semantic-equivalence claim.",
+  "scope": "All original lib/**/*.dart, assets/**, fonts/**, LICENSE and AUTHORS.md; approved added modern source/art/fonts.",
+  "summary": {
+    "authored_maps": {
+      "original_files": 21,
+      "unchanged": 21
+    },
+    "dart_source": {
+      "original_files": 200,
+      "reviewed_change": 29,
+      "unchanged": 171
+    },
+    "license_and_credits": {
+      "original_files": 2,
+      "unchanged": 2
+    },
+    "original_fonts": {
+      "original_files": 1,
+      "unchanged": 1
+    },
+    "other_original_assets": {
+      "original_files": 40,
+      "unchanged": 40
+    },
+    "xml_data": {
+      "original_files": 12,
+      "unchanged": 12
+    }
+  },
+  "original_file_count": 276,
+  "approved_modified_source_count": 29,
+  "added_source_count": 29,
+  "generated_serializer_count": 31,
+  "generated_serializer_origin": "Inventory matches original model part declarations; current generated contents are pinned, not claimed to be tracked original files.",
+  "added_asset_and_font_count": 19,
+  "files": [
+    {
+      "path": "AUTHORS.md",
+      "group": "license_and_credits",
+      "status": "unchanged",
+      "base_git_blob": "ecbd02b7a96f75bfb43f8ea9cfc2550556cad0ea",
+      "base_sha256": "5314562b2b34b5433f853dbb1c68e6dc7794efb469c9c7bde04724a3b3b493e5",
+      "current_sha256": "5314562b2b34b5433f853dbb1c68e6dc7794efb469c9c7bde04724a3b3b493e5",
+      "base_bytes": 5471,
+      "current_bytes": 5569,
+      "reason": null
+    },
+    {
+      "path": "LICENSE",
+      "group": "license_and_credits",
+      "status": "unchanged",
+      "base_git_blob": "d159169d1050894d3ea3b98e1c965c4058208fe1",
+      "base_sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+      "current_sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+      "base_bytes": 18092,
+      "current_bytes": 18431,
+      "reason": null
+    },
+    {
+      "path": "assets/art/3x3caps.txt",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "1032dec91cf33cb9397a4de0fb892ffa15f4f310",
+      "base_sha256": "277383f6e222d6c67fa4c88c7eb327f3b914fa0b2b69cbdac3456cf80c64c231",
+      "current_sha256": "277383f6e222d6c67fa4c88c7eb327f3b914fa0b2b69cbdac3456cf80c64c231",
+      "base_bytes": 673,
+      "current_bytes": 675,
+      "reason": null
+    },
+    {
+      "path": "assets/art/3x5caps.txt",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "d053e1971225dc01e961c2ae0f2ce19fcc2f5375",
+      "base_sha256": "51838df16d1e8fc87f3fe7b46e48607333ccf1c543733742c1dce3b45d35aabb",
+      "current_sha256": "51838df16d1e8fc87f3fe7b46e48607333ccf1c543733742c1dce3b45d35aabb",
+      "base_bytes": 991,
+      "current_bytes": 993,
+      "reason": null
+    },
+    {
+      "path": "assets/art/4x5caps.txt",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "4ff0f7b4d1a8369369686cd028dea0b4c36e2e52",
+      "base_sha256": "65d0cdade3f173b8f024affd0126a094524dcfaa54c6427d9b7c90ab81b97a65",
+      "current_sha256": "65d0cdade3f173b8f024affd0126a094524dcfaa54c6427d9b7c90ab81b97a65",
+      "base_bytes": 1238,
+      "current_bytes": 1241,
+      "reason": null
+    },
+    {
+      "path": "assets/art/5x5caps.txt",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "d9830704b06eaa86c2b52ce250ec043cfe3642e7",
+      "base_sha256": "0e1bb2260509b373b60521256b0c2eff429a8240e8cfef297c9db75617a3aec3",
+      "current_sha256": "0e1bb2260509b373b60521256b0c2eff429a8240e8cfef297c9db75617a3aec3",
+      "base_bytes": 1488,
+      "current_bytes": 1492,
+      "reason": null
+    },
+    {
+      "path": "assets/art/abort.cmv",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "e22f9ded4dcfacc22b63fb3a2b1a2d27cdc01464",
+      "base_sha256": "eacb79c9e6f7373c49055d012897fb764d67babf1040062edbe914dd624d86b1",
+      "current_sha256": "eacb79c9e6f7373c49055d012897fb764d67babf1040062edbe914dd624d86b1",
+      "base_bytes": 112276,
+      "current_bytes": 112276,
+      "reason": null
+    },
+    {
+      "path": "assets/art/anchor.cmv",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "6a6156f9cac8d8b0090524a23d2f2d550193f963",
+      "base_sha256": "4778adf91d6c6dc27c3428f48a5629b3932f68029e1c508758ece884541cbf5c",
+      "current_sha256": "4778adf91d6c6dc27c3428f48a5629b3932f68029e1c508758ece884541cbf5c",
+      "base_bytes": 32114,
+      "current_bytes": 32114,
+      "reason": null
+    },
+    {
+      "path": "assets/art/glamshow.cmv",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "bc8dc4c79060d3c2cce4f9bdf3ca0fbaff005586",
+      "base_sha256": "0c24a994b6e517e12383a6228b8146b861ceb02e0c7abf09f0cad62732be8451",
+      "current_sha256": "0c24a994b6e517e12383a6228b8146b861ceb02e0c7abf09f0cad62732be8451",
+      "base_bytes": 120456,
+      "current_bytes": 120456,
+      "reason": null
+    },
+    {
+      "path": "assets/art/lacops.cmv",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "8cbf190a68490f5ed454c28aad790d53ec90eb95",
+      "base_sha256": "a0241c882dc53130afe1a782e70a2aead0867219817d18f416a693c1024ae49a",
+      "current_sha256": "a0241c882dc53130afe1a782e70a2aead0867219817d18f416a693c1024ae49a",
+      "base_bytes": 184492,
+      "current_bytes": 184492,
+      "reason": null
+    },
+    {
+      "path": "assets/art/largecap.cpc",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "2389b59410bc3f0ba69e338872c4a31b1e244bb5",
+      "base_sha256": "64ed2d7f3d8a3dc97e5ba866e8262b4449de25a930cec11a0010de05834632fa",
+      "current_sha256": "64ed2d7f3d8a3dc97e5ba866e8262b4449de25a930cec11a0010de05834632fa",
+      "base_bytes": 3792,
+      "current_bytes": 3792,
+      "reason": null
+    },
+    {
+      "path": "assets/art/newscast.cmv",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "b9f67ee1f16c7a17947450195849834ad598f9d2",
+      "base_sha256": "087d59abf0121b704ac025a92b1bd7203457a6086a1cc438065adcc134f4027e",
+      "current_sha256": "087d59abf0121b704ac025a92b1bd7203457a6086a1cc438065adcc134f4027e",
+      "base_bytes": 161068,
+      "current_bytes": 161068,
+      "reason": null
+    },
+    {
+      "path": "assets/art/newspic.cpc",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "2298ba6b4aa1ccbaddc8c88d831f25b20e12ab01",
+      "base_sha256": "f6d8b3c8e2250f9954124d8d4927b8bc8f76121892de03d4007029b3031144d9",
+      "current_sha256": "f6d8b3c8e2250f9954124d8d4927b8bc8f76121892de03d4007029b3031144d9",
+      "base_bytes": 73020,
+      "current_bytes": 73020,
+      "reason": null
+    },
+    {
+      "path": "assets/art/newstops.cpc",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "61c56d2acb11732d9b7dbd8edbab8cd1c9518044",
+      "base_sha256": "ed58c876c87306236871d99a6be1059ea4cb7d823ceb3ed52aabf5ae9d55c2a0",
+      "current_sha256": "ed58c876c87306236871d99a6be1059ea4cb7d823ceb3ed52aabf5ae9d55c2a0",
+      "base_bytes": 9612,
+      "current_bytes": 9612,
+      "reason": null
+    },
+    {
+      "path": "assets/changelog.md",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "a4e7aa40a5b37f0b020d9d6dc768c69b4746059e",
+      "base_sha256": "b2ae363e55f2f85a527d738c9dadad0a235f25b498ba8df8542d5d2314d338af",
+      "current_sha256": "b2ae363e55f2f85a527d738c9dadad0a235f25b498ba8df8542d5d2314d338af",
+      "base_bytes": 73135,
+      "current_bytes": 74015,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/Anarchist.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "e5b2870102257c628e0213c58746141120687e13",
+      "base_sha256": "d7a88886180a3449f81eeecef37be35add5a25944bc18a0ff45ebe69eb9746d3",
+      "current_sha256": "d7a88886180a3449f81eeecef37be35add5a25944bc18a0ff45ebe69eb9746d3",
+      "base_bytes": 140,
+      "current_bytes": 143,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/AnarchistA.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "6bd6583b2867a996c9f4ad3518b5e2adcbad2247",
+      "base_sha256": "1ddaa4e5b23f64f35f090365ca83a0ce7015881a18af843cca762a38f857ac31",
+      "current_sha256": "1ddaa4e5b23f64f35f090365ca83a0ce7015881a18af843cca762a38f857ac31",
+      "base_bytes": 382,
+      "current_bytes": 388,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/AnarchistFeminism.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "ba8d43001095a7dfcae34e18f909c508b1db2e63",
+      "base_sha256": "0b99faa47907fb511861b357632c3d5795c67aa3fba2a7699b537ba8bc9c76f7",
+      "current_sha256": "0b99faa47907fb511861b357632c3d5795c67aa3fba2a7699b537ba8bc9c76f7",
+      "base_bytes": 165,
+      "current_bytes": 169,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/AntifaBlack.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "258e84eb9ae5f4b9529cba6c63e558bf4e34c5ed",
+      "base_sha256": "e55a3e34db05aad3619aa4e7282a2cc14c61524931261061656762c5bcbc67ee",
+      "current_sha256": "e55a3e34db05aad3619aa4e7282a2cc14c61524931261061656762c5bcbc67ee",
+      "base_bytes": 9670,
+      "current_bytes": 9826,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/AntifaRed.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "4fb7fd56cfb48856cb14873255106dff06277b26",
+      "base_sha256": "7218cef4daf5260e401d8c67fdb49321e6279dfcfc305574e9ca28d7b2205429",
+      "current_sha256": "7218cef4daf5260e401d8c67fdb49321e6279dfcfc305574e9ca28d7b2205429",
+      "base_bytes": 5429,
+      "current_bytes": 5445,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/Bisexual.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "162e1c37dbf058b5c617ae1527a3bfeb97cd71db",
+      "base_sha256": "3efd47af797ba25fb47c03eb64992a5fa0d21e1268d5637d326666f32ae5cc59",
+      "current_sha256": "3efd47af797ba25fb47c03eb64992a5fa0d21e1268d5637d326666f32ae5cc59",
+      "base_bytes": 205,
+      "current_bytes": 210,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/BlackAmericanHeritage.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "ee02a32e066f612c1e0b04f7ee8c5f119d530439",
+      "base_sha256": "c36e14f0bc6307dceeed3614daf889a35df048cf3825fc802229247b22ffd580",
+      "current_sha256": "c36e14f0bc6307dceeed3614daf889a35df048cf3825fc802229247b22ffd580",
+      "base_bytes": 11409,
+      "current_bytes": 11436,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/BlackLivesMatter.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "b875622a2ac71981843edce6c6a776c0188c479c",
+      "base_sha256": "d56119cea972b8519bd90229aa804767a37462fbd732a0d82b78323a495d35f8",
+      "current_sha256": "d56119cea972b8519bd90229aa804767a37462fbd732a0d82b78323a495d35f8",
+      "base_bytes": 4715,
+      "current_bytes": 4724,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/EcologyTheta.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "a9bd6ed4e2804e08e977ca8a0022330186f53dc0",
+      "base_sha256": "246df59257c8cca003388b1d1b728c016d58467f257444079ba533212da49fe3",
+      "current_sha256": "246df59257c8cca003388b1d1b728c016d58467f257444079ba533212da49fe3",
+      "base_bytes": 721,
+      "current_bytes": 728,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/Environmentalist.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "186263d8206f3314e711569acd35bab6a9f0efd8",
+      "base_sha256": "4cf3959e88f12fd4ae85d31414d64234c9fc9d761fd771714419276e6bed94c6",
+      "current_sha256": "4cf3959e88f12fd4ae85d31414d64234c9fc9d761fd771714419276e6bed94c6",
+      "base_bytes": 135,
+      "current_bytes": 137,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/Feminist.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "b2efdd4b935f20695b25c6332d8c9775b9625d42",
+      "base_sha256": "5111e251279017183d03086c35bcac90c4f44937e5bfab0ad24da8f97759fdd1",
+      "current_sha256": "5111e251279017183d03086c35bcac90c4f44937e5bfab0ad24da8f97759fdd1",
+      "base_bytes": 351,
+      "current_bytes": 358,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/GayMen.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "9d2d73140940db9896ea243f35fc6253f0bfc6f8",
+      "base_sha256": "03f0c3e27ec7557ad83e14e8dc181ad3aed2e384a8964f8e770e2a62c8321438",
+      "current_sha256": "03f0c3e27ec7557ad83e14e8dc181ad3aed2e384a8964f8e770e2a62c8321438",
+      "base_bytes": 399,
+      "current_bytes": 408,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/GreenAndBlack.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "b353128eb9f4943726cdc01e2e2b6d87c1baab86",
+      "base_sha256": "a53f07d1489f76ddb99f03359ca4f26b5a2766b692d163f8ecf0b407edf0005c",
+      "current_sha256": "a53f07d1489f76ddb99f03359ca4f26b5a2766b692d163f8ecf0b407edf0005c",
+      "base_bytes": 165,
+      "current_bytes": 169,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/IntersexInclusiveProgress.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "5a8bfbe35c5ee11a91cf62e1acdfdfde122b7315",
+      "base_sha256": "e82d4eb937f0bce59234661a0ac2127e202abe882076a80d7debeec33f14dc67",
+      "current_sha256": "e82d4eb937f0bce59234661a0ac2127e202abe882076a80d7debeec33f14dc67",
+      "base_bytes": 777,
+      "current_bytes": 792,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/Lesbian.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "2c99f4525e54587b1023a74b4d3fad88d9f72b55",
+      "base_sha256": "5c251df308f45658e0f731032ea56c8359e58cd1dcb4bc27a7f58fba94fd657f",
+      "current_sha256": "5c251df308f45658e0f731032ea56c8359e58cd1dcb4bc27a7f58fba94fd657f",
+      "base_bytes": 416,
+      "current_bytes": 425,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/PanAfrican.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "d5b8ccb7b4ce25f1537d22f7c3aab01f9e0a0959",
+      "base_sha256": "2253b9e04212c96ae67f5f023b07ce3e51839f8233f174aec53a28a00ea94df8",
+      "current_sha256": "2253b9e04212c96ae67f5f023b07ce3e51839f8233f174aec53a28a00ea94df8",
+      "base_bytes": 182,
+      "current_bytes": 182,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/Pansexual.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "6b9f32f89681d32bc53fb2ec5903dac8604e3171",
+      "base_sha256": "dfa1e12e5ece2760da14bf1a0636ff9d9f6c59408c85e028068aee8074772843",
+      "current_sha256": "dfa1e12e5ece2760da14bf1a0636ff9d9f6c59408c85e028068aee8074772843",
+      "base_bytes": 205,
+      "current_bytes": 210,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/Progress.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "fc54143837068b88fc585e0d7ebe8f4f1d5e63fa",
+      "base_sha256": "d931d95d73bd034f14a146b4da1863bbf1663dc7da970a1d114c9a4736a00270",
+      "current_sha256": "d931d95d73bd034f14a146b4da1863bbf1663dc7da970a1d114c9a4736a00270",
+      "base_bytes": 618,
+      "current_bytes": 630,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/PunkAnarchist.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "e1ee0a019ada8af44dbba3b727d7a7a92f81c37d",
+      "base_sha256": "9321831cedbceff8a054ffa65e587454a7b5082091fefa9390fa1fe9d2a5ca34",
+      "current_sha256": "9321831cedbceff8a054ffa65e587454a7b5082091fefa9390fa1fe9d2a5ca34",
+      "base_bytes": 3810,
+      "current_bytes": 3813,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/Rainbow.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "50340faee5b8f2089d83c5aed96300985a079a44",
+      "base_sha256": "726f77ff894b87fc5a22a5e735598b03979782612c0b9fb45ef58e04a26adf20",
+      "current_sha256": "726f77ff894b87fc5a22a5e735598b03979782612c0b9fb45ef58e04a26adf20",
+      "base_bytes": 339,
+      "current_bytes": 347,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/RedAndBlack.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "7dee51e91aece0c1e1356b223c11bbc13869fdc0",
+      "base_sha256": "74e7a1895b5362b5004e6953e2339ab34ca118146fb5fc1c9d84f77651deb3bd",
+      "current_sha256": "74e7a1895b5362b5004e6953e2339ab34ca118146fb5fc1c9d84f77651deb3bd",
+      "base_bytes": 165,
+      "current_bytes": 169,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/SaboTabby.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "78591cfe2f31fb92f677b4dd13319e64d7928122",
+      "base_sha256": "d3b40578a5bd0646d1d7e966263779fbc4d257fbd9081d5255384b3dc2e1ec51",
+      "current_sha256": "d3b40578a5bd0646d1d7e966263779fbc4d257fbd9081d5255384b3dc2e1ec51",
+      "base_bytes": 7983,
+      "current_bytes": 8053,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/SaboTabbyAntiGadsden.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "6fe0285dd4c8da1e11a574d166fccc74dbfa6f7e",
+      "base_sha256": "43db9c257038443a8071e6fb6c92d7a3f8592e7bb63ccaaa9d033e963936e5be",
+      "current_sha256": "43db9c257038443a8071e6fb6c92d7a3f8592e7bb63ccaaa9d033e963936e5be",
+      "base_bytes": 27618,
+      "current_bytes": 27626,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/Socialist.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "46349f24ac2e52d8adfd1482509513bdf55c2894",
+      "base_sha256": "7e6eacd84163ad51113a13479abb8e610ff47a78e35964d8bc97a31d94ebc489",
+      "current_sha256": "7e6eacd84163ad51113a13479abb8e610ff47a78e35964d8bc97a31d94ebc489",
+      "base_bytes": 135,
+      "current_bytes": 137,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/TransLabrysLesbian.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "6045118f4865bf056363c7ded2d90360b0475ce4",
+      "base_sha256": "b93c7a9f6132fa25b0fb5a33ed802ec019b7ddbdae88b8d4c0ef7103aaddc24e",
+      "current_sha256": "b93c7a9f6132fa25b0fb5a33ed802ec019b7ddbdae88b8d4c0ef7103aaddc24e",
+      "base_bytes": 1918,
+      "current_bytes": 1925,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/Transgender.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "508feff620e51be2695fdbf8c8add074a0a65c99",
+      "base_sha256": "a46c2d7f8524ce172136c8810256b9b0b0fb3301c8b98e680394554d865f5fc8",
+      "current_sha256": "a46c2d7f8524ce172136c8810256b9b0b0fb3301c8b98e680394554d865f5fc8",
+      "base_bytes": 273,
+      "current_bytes": 279,
+      "reason": null
+    },
+    {
+      "path": "assets/flags/UnitedStates.svg",
+      "group": "other_original_assets",
+      "status": "unchanged",
+      "base_git_blob": "b8da223b239470ac1b4385654f6eaa127db55123",
+      "base_sha256": "8bde67ab5bc7abb4c437d5f66766c4289060fb7bb9c65c28758c9d03404a7baf",
+      "current_sha256": "8bde67ab5bc7abb4c437d5f66766c4289060fb7bb9c65c28758c9d03404a7baf",
+      "base_bytes": 972,
+      "current_bytes": 997,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_Bank_Specials.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "a5d7484cac04dc93ef200d91c9320a77524af50d",
+      "base_sha256": "316a6c46dbe48836912db7853a10247824e2d18900be0577b4abb786ce4d91ec",
+      "current_sha256": "316a6c46dbe48836912db7853a10247824e2d18900be0577b4abb786ce4d91ec",
+      "base_bytes": 3229,
+      "current_bytes": 3252,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_Bank_Tiles.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "516b1cf7e7b298fbf3cca0e281f316566684a84e",
+      "base_sha256": "4519a30bd5d94b5ffffd2098454f99a86c812820a8a6230534116b60ac909bd4",
+      "current_sha256": "4519a30bd5d94b5ffffd2098454f99a86c812820a8a6230534116b60ac909bd4",
+      "base_bytes": 3236,
+      "current_bytes": 3259,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_BarAndGrill_Specials.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "3afdffb5edab2fa1feaf623b8b107d0ee6ac6166",
+      "base_sha256": "03922a87bbc4e53424b1562723d055eede6307bd16caeeec99c844dfcc00cb13",
+      "current_sha256": "03922a87bbc4e53424b1562723d055eede6307bd16caeeec99c844dfcc00cb13",
+      "base_bytes": 3231,
+      "current_bytes": 3254,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_BarAndGrill_Tiles.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "db4e966f96cf8173236e9a099f62b6fe2bb96bc4",
+      "base_sha256": "2dbbf5544df408bd5149ec37707a639a9ffc98284a5ce32aea4537f75a6ca245",
+      "current_sha256": "2dbbf5544df408bd5149ec37707a639a9ffc98284a5ce32aea4537f75a6ca245",
+      "base_bytes": 3220,
+      "current_bytes": 3243,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_BombShelter_Specials.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "a46678114a7e36a8e940cbc0a8ae281fe2384432",
+      "base_sha256": "b246258ae9c695c5cad1c134277a95fb9c05d665852dc8b57229045b99e8db4f",
+      "current_sha256": "b246258ae9c695c5cad1c134277a95fb9c05d665852dc8b57229045b99e8db4f",
+      "base_bytes": 3228,
+      "current_bytes": 3251,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_BombShelter_Tiles.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "915bd1d4970a45331b164f17dd912861e8e49fc9",
+      "base_sha256": "bfe9bed3aa5e906336dc098c653c153c562cac031ece22068e29985f052eecca",
+      "current_sha256": "bfe9bed3aa5e906336dc098c653c153c562cac031ece22068e29985f052eecca",
+      "base_bytes": 3220,
+      "current_bytes": 3243,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_Bunker_Specials.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "e1543dd0955dc95f4b24ccd2b6c06228e2adfd24",
+      "base_sha256": "5c073db7687571921411ee10ef673f994837dd367e877c7b8d46bbadf1929471",
+      "current_sha256": "5c073db7687571921411ee10ef673f994837dd367e877c7b8d46bbadf1929471",
+      "base_bytes": 3222,
+      "current_bytes": 3245,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_Bunker_Tiles.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "db4f466c9f5b6bd42f1bba584ca3eb52be3bf540",
+      "base_sha256": "a435d66d66fbb269a4d87a03e52724c765d047a1425b678baf0832841f22b8c5",
+      "current_sha256": "a435d66d66fbb269a4d87a03e52724c765d047a1425b678baf0832841f22b8c5",
+      "base_bytes": 3220,
+      "current_bytes": 3243,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_Church_Specials.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "0e7d74268d5070445f9a4bbcd9df9ed3dadf2df3",
+      "base_sha256": "390a7db66556d1fd374c94dbbb6fd665378c88573dcbf0930b185348f86363ea",
+      "current_sha256": "390a7db66556d1fd374c94dbbb6fd665378c88573dcbf0930b185348f86363ea",
+      "base_bytes": 3240,
+      "current_bytes": 3263,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_Church_Tiles.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "2366d8584747db65ec45cbb8b52c8cb88d0bdf99",
+      "base_sha256": "2244921f909ae568564e3c6613f30d1c3435830ac2ed95b60e2db596f9e31c10",
+      "current_sha256": "2244921f909ae568564e3c6613f30d1c3435830ac2ed95b60e2db596f9e31c10",
+      "base_bytes": 3220,
+      "current_bytes": 3243,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_Courthouse_Specials.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "8d6fad267bfa3908ccce8ad825d1f921bf89ce59",
+      "base_sha256": "c2fbd681c122098bad34716a49a855117a0bae8e6075bf983d6cc58ca3211041",
+      "current_sha256": "c2fbd681c122098bad34716a49a855117a0bae8e6075bf983d6cc58ca3211041",
+      "base_bytes": 3233,
+      "current_bytes": 3256,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_Courthouse_Tiles.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "3e95e9c87f5925d408e72cfb8e8836a14a358c40",
+      "base_sha256": "efb6516e16cb4a53ff07cc70beb26ce61b9e7bb82feec8e84a1be00c775f1dfe",
+      "current_sha256": "efb6516e16cb4a53ff07cc70beb26ce61b9e7bb82feec8e84a1be00c775f1dfe",
+      "base_bytes": 3220,
+      "current_bytes": 3243,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_NuclearPlant_Specials.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "01a299a5fa8c81de1327b68a49510a5c8433c6cf",
+      "base_sha256": "bd63edeb1847eb9ad584622b21d86496953dc123b2f64d5282d2486f5140f3f8",
+      "current_sha256": "bd63edeb1847eb9ad584622b21d86496953dc123b2f64d5282d2486f5140f3f8",
+      "base_bytes": 3241,
+      "current_bytes": 3264,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_NuclearPlant_Tiles.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "b91f2b5d4e897722a96230e5cd2f48533eb4f34f",
+      "base_sha256": "94026615fe3078aa29f960719bfdf9a7e0291504d51fa9090557f14a021ee1ae",
+      "current_sha256": "94026615fe3078aa29f960719bfdf9a7e0291504d51fa9090557f14a021ee1ae",
+      "base_bytes": 3220,
+      "current_bytes": 3243,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_WhiteHouse2_Specials.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "6095f5a2637e8ca24740efd53e4db70b3cc290ed",
+      "base_sha256": "eaaebda33cf9fd61548b9f1d22157b9fd3b51ae9e1ffad360fe0f3f117a978d2",
+      "current_sha256": "eaaebda33cf9fd61548b9f1d22157b9fd3b51ae9e1ffad360fe0f3f117a978d2",
+      "base_bytes": 3229,
+      "current_bytes": 3252,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_WhiteHouse2_Tiles.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "71040625f20a29a92436a65ae3b5548392bae6d4",
+      "base_sha256": "7511fd7e74bd12b6360b14e0f176469998265ede047586eb806e2eab463cfaa9",
+      "current_sha256": "7511fd7e74bd12b6360b14e0f176469998265ede047586eb806e2eab463cfaa9",
+      "base_bytes": 3220,
+      "current_bytes": 3243,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_WhiteHouse3_Specials.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "61784032e3be9245931e4bc9217810ef8d9cb22a",
+      "base_sha256": "4eeaaf427281762aaebdd8254a81d65abdbe857f07cac763a8e3a7054fc0041c",
+      "current_sha256": "4eeaaf427281762aaebdd8254a81d65abdbe857f07cac763a8e3a7054fc0041c",
+      "base_bytes": 3221,
+      "current_bytes": 3244,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_WhiteHouse3_Tiles.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "8a2b0c3267cb6d842f026e7247f979371080e0c0",
+      "base_sha256": "dcc120bff412950b9ef1a8a5009f2d7f86f78eaaaad7a4d023c5a7de0085d382",
+      "current_sha256": "dcc120bff412950b9ef1a8a5009f2d7f86f78eaaaad7a4d023c5a7de0085d382",
+      "base_bytes": 3220,
+      "current_bytes": 3243,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_WhiteHouse_Specials.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "60ba116b0cccb4745707e65948a6705367249f54",
+      "base_sha256": "31e2ac6effa248fb788003863e18dfb6bdb68fa4eeeec472587eb75ad374e74d",
+      "current_sha256": "31e2ac6effa248fb788003863e18dfb6bdb68fa4eeeec472587eb75ad374e74d",
+      "base_bytes": 3224,
+      "current_bytes": 3247,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/mapCSV_WhiteHouse_Tiles.csv",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "f35be9fec640f3fb6e446482254fb41c67606548",
+      "base_sha256": "976983401ddedbcf5f939c77dd52f91b5bf58c2ba92b3b82c9216914b56f0805",
+      "current_sha256": "976983401ddedbcf5f939c77dd52f91b5bf58c2ba92b3b82c9216914b56f0805",
+      "base_bytes": 3220,
+      "current_bytes": 3243,
+      "reason": null
+    },
+    {
+      "path": "assets/maps/sitemaps.txt",
+      "group": "authored_maps",
+      "status": "unchanged",
+      "base_git_blob": "776683b51553b16d499c676fa5cf3525b509d8e7",
+      "base_sha256": "7af87fed6f5eeb99da8f23c2e9112420a76ab751d9e62b283cdd67f916a334ac",
+      "current_sha256": "7af87fed6f5eeb99da8f23c2e9112420a76ab751d9e62b283cdd67f916a334ac",
+      "base_bytes": 12805,
+      "current_bytes": 13604,
+      "reason": null
+    },
+    {
+      "path": "assets/xml/ammo.xml",
+      "group": "xml_data",
+      "status": "unchanged",
+      "base_git_blob": "9a808ac17e6435b9087df8b40dc258c0da616ea2",
+      "base_sha256": "b3a98567e73bd1bfc38ab60ed1848079ea46e433cfa25fabc1c4b172b5179b1f",
+      "current_sha256": "b3a98567e73bd1bfc38ab60ed1848079ea46e433cfa25fabc1c4b172b5179b1f",
+      "base_bytes": 3702,
+      "current_bytes": 3818,
+      "reason": null
+    },
+    {
+      "path": "assets/xml/armor_upgrades.xml",
+      "group": "xml_data",
+      "status": "unchanged",
+      "base_git_blob": "df360556f928d86758c124e3f8cdc34d1491de52",
+      "base_sha256": "2f683121bcd5547f2b5c2e58b3ed48898044d676a314175906e4c407cf412d97",
+      "current_sha256": "2f683121bcd5547f2b5c2e58b3ed48898044d676a314175906e4c407cf412d97",
+      "base_bytes": 6401,
+      "current_bytes": 6583,
+      "reason": null
+    },
+    {
+      "path": "assets/xml/armsdealer.xml",
+      "group": "xml_data",
+      "status": "unchanged",
+      "base_git_blob": "fc3b9ac761e410b6f3a4b005191852b5035dada9",
+      "base_sha256": "b318d60b493bb3e3f5d0bb202fed2e43558f8bd2fec9091be783aedca4d466b3",
+      "current_sha256": "b318d60b493bb3e3f5d0bb202fed2e43558f8bd2fec9091be783aedca4d466b3",
+      "base_bytes": 3461,
+      "current_bytes": 3566,
+      "reason": null
+    },
+    {
+      "path": "assets/xml/clothing.xml",
+      "group": "xml_data",
+      "status": "unchanged",
+      "base_git_blob": "93f1a52f4f2235f16bef46fa7597efb7e85f4892",
+      "base_sha256": "3da254090e03b95887c27460c113b15853a6642fbd51dedfde4c3db98e3db0e3",
+      "current_sha256": "3da254090e03b95887c27460c113b15853a6642fbd51dedfde4c3db98e3db0e3",
+      "base_bytes": 35779,
+      "current_bytes": 36769,
+      "reason": null
+    },
+    {
+      "path": "assets/xml/creatures.xml",
+      "group": "xml_data",
+      "status": "unchanged",
+      "base_git_blob": "4d713661f2e6ae928e5b29a4a10990ef6e3bc60b",
+      "base_sha256": "98cdfcb3a7c96332f3ee510a6618adb6a64ee8b9bd61755fc82c6d942bdac2a0",
+      "current_sha256": "98cdfcb3a7c96332f3ee510a6618adb6a64ee8b9bd61755fc82c6d942bdac2a0",
+      "base_bytes": 89049,
+      "current_bytes": 91376,
+      "reason": null
+    },
+    {
+      "path": "assets/xml/deptstore.xml",
+      "group": "xml_data",
+      "status": "unchanged",
+      "base_git_blob": "9d05f5b5d362e85c3a239ceb1d967446b62034ef",
+      "base_sha256": "5733804bc383cc59018d350e4412b850c140aa7c4ab8f60cdd8af271976cca89",
+      "current_sha256": "5733804bc383cc59018d350e4412b850c140aa7c4ab8f60cdd8af271976cca89",
+      "base_bytes": 1514,
+      "current_bytes": 1582,
+      "reason": null
+    },
+    {
+      "path": "assets/xml/flags.xml",
+      "group": "xml_data",
+      "status": "unchanged",
+      "base_git_blob": "ed5041ef36828d8a905165bc750faf5cca50afb3",
+      "base_sha256": "1b15b2b9408a5aea3857ae2435dbddebad9d9141ea84687d4ee044ad69ba30b5",
+      "current_sha256": "1b15b2b9408a5aea3857ae2435dbddebad9d9141ea84687d4ee044ad69ba30b5",
+      "base_bytes": 11483,
+      "current_bytes": 11785,
+      "reason": null
+    },
+    {
+      "path": "assets/xml/loot.xml",
+      "group": "xml_data",
+      "status": "unchanged",
+      "base_git_blob": "7b2c9f6f57aea140472ea761b1a09a41b6c8c057",
+      "base_sha256": "c5c5b00a171eb7988e6cc83baa8947fed30a008efb8525eaf901988ee67f8f36",
+      "current_sha256": "c5c5b00a171eb7988e6cc83baa8947fed30a008efb8525eaf901988ee67f8f36",
+      "base_bytes": 6438,
+      "current_bytes": 6650,
+      "reason": null
+    },
+    {
+      "path": "assets/xml/oubliette.xml",
+      "group": "xml_data",
+      "status": "unchanged",
+      "base_git_blob": "0f7bb09fe9fca92ef9b67bae711e0c7e3dc6949f",
+      "base_sha256": "8781e731a78f77c710bb4cfe3e1aa53bc1d730e9cce6a7bc2d01ccfcd8d788b4",
+      "current_sha256": "8781e731a78f77c710bb4cfe3e1aa53bc1d730e9cce6a7bc2d01ccfcd8d788b4",
+      "base_bytes": 4696,
+      "current_bytes": 4845,
+      "reason": null
+    },
+    {
+      "path": "assets/xml/pawnshop.xml",
+      "group": "xml_data",
+      "status": "unchanged",
+      "base_git_blob": "0d1e374a0ff171b4057ad65c48ab65a6e3f8819e",
+      "base_sha256": "97322c625db59b32fbecdbeafc48e46fc96466d1950835fe706332d8162626b1",
+      "current_sha256": "97322c625db59b32fbecdbeafc48e46fc96466d1950835fe706332d8162626b1",
+      "base_bytes": 3736,
+      "current_bytes": 3884,
+      "reason": null
+    },
+    {
+      "path": "assets/xml/vehicles.xml",
+      "group": "xml_data",
+      "status": "unchanged",
+      "base_git_blob": "deec590f877a61353a8d38efbebd96d6c59e7a5c",
+      "base_sha256": "2a559afa019f879e80b0bda9c473071cc0a5042a1fa73e949d301c28616e3331",
+      "current_sha256": "2a559afa019f879e80b0bda9c473071cc0a5042a1fa73e949d301c28616e3331",
+      "base_bytes": 12828,
+      "current_bytes": 13171,
+      "reason": null
+    },
+    {
+      "path": "assets/xml/weapons.xml",
+      "group": "xml_data",
+      "status": "unchanged",
+      "base_git_blob": "4aed8fa8d29cbde5ff20255c760bba4572786574",
+      "base_sha256": "6acde307d5a5c84b1918e08c99e6f5b20fee752f9dc5d6552e0dbb4c5a7d8d70",
+      "current_sha256": "6acde307d5a5c84b1918e08c99e6f5b20fee752f9dc5d6552e0dbb4c5a7d8d70",
+      "base_bytes": 35469,
+      "current_bytes": 36386,
+      "reason": null
+    },
+    {
+      "path": "fonts/SourceCodePro-Regular.ttf",
+      "group": "original_fonts",
+      "status": "unchanged",
+      "base_git_blob": "10c73d7d901cf0dfa8ba03e45e3271d466291520",
+      "base_sha256": "74bd80d3e42a08517cd7e1108ba3d86f2da29ac0f3065be95e0357956ab9db37",
+      "current_sha256": "74bd80d3e42a08517cd7e1108ba3d86f2da29ac0f3065be95e0357956ab9db37",
+      "base_bytes": 210312,
+      "current_bytes": 210312,
+      "reason": null
+    },
+    {
+      "path": "lib/basemode/activate_regulars.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "e7b14ca56689b7cd4be7bd332e1253da7bf47400",
+      "base_sha256": "a2043c7a91e5ed7ac45c2b3ca6078fbfc7eb9e889d1876cfeb5cde9cd63fb246",
+      "current_sha256": "63c63b37463138bc52efb00514c7b7686836f668c5b7ed0709a75470f2b0b89d",
+      "base_bytes": 37872,
+      "current_bytes": 42319,
+      "reason": "Presentation: exact actor/confirmation/navigation identities and private read-only category preview branch. Preview changes local menu category only; original immediate keys, defaults, assignments and bulk handlers retained."
+    },
+    {
+      "path": "lib/basemode/activate_sleepers.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "7b5e225b2862d7be7a1b04aa02ffc71633bbd761",
+      "base_sha256": "cd1ddfa637f120d49009db00dd196bccd03db4371c8238a1567e09fc41b85e09",
+      "current_sha256": "92258bce2517ded9f834fdfca0a31e541145b3c4d00986797db17c85f07b684e",
+      "base_bytes": 12206,
+      "current_bytes": 16865,
+      "reason": "Presentation: exact sleeper/confirmation/navigation identities and private read-only category preview branch. Original monthly effects, return-to-service, defaults and bulk handlers retained."
+    },
+    {
+      "path": "lib/basemode/activities.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "5af47ec066d509aeff6a2c2ba7ce8e8c4590db3b",
+      "base_sha256": "82db9c43b1f2e60f5f47a847619441af5c09e774047da9646bf6d65f7b582b2b",
+      "current_sha256": "82db9c43b1f2e60f5f47a847619441af5c09e774047da9646bf6d65f7b582b2b",
+      "base_bytes": 4145,
+      "current_bytes": 4256,
+      "reason": null
+    },
+    {
+      "path": "lib/basemode/base_actions.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "03e8d028aa511e6155b65464ada48a4ffd16985b",
+      "base_sha256": "9a0fdfc69c12cc3dbdec125512f9e2ad71b3daa0ebb96273f1240de0db98fbd9",
+      "current_sha256": "08b6793ef48b1e87395415b72e63cc69a78dcbcd86f3ef4c5110e96adbd16d5b",
+      "base_bytes": 4766,
+      "current_bytes": 5741,
+      "reason": "Presentation: exact uppercase Drive, actor intent and scoped recipient/reorder choices; only the base vehicle list declares a safe section exit. Original vehicle/order effects retained."
+    },
+    {
+      "path": "lib/basemode/base_mode.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "ef2cc237f9b5879df77b83c0c2e0d2129b48a8b3",
+      "base_sha256": "cd0b9be43ca8c5d47d8052215331f7ac85f4c686ea1c9d8e27a8313f914b4c71",
+      "current_sha256": "9bfc5d40ac2b4116a0d37456df38679c074079054e75b6f0b3008469a2aa6f7c",
+      "base_bytes": 20295,
+      "current_bytes": 21176,
+      "reason": "HQ marker and exact source-authored W/F/C capability snapshot; failed-save guard prevents exit/day advancement; calendar-day helper retained. No duplicated HQ eligibility rules."
+    },
+    {
+      "path": "lib/basemode/blind_time_log.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "e855c89ed1adc0bb9f269d454d7702a755f2684f",
+      "base_sha256": "eb7d2060afa3a92772a0b385958d231e724d7ef5ac8503140bd2cfa0c2ae3839",
+      "current_sha256": "eb7d2060afa3a92772a0b385958d231e724d7ef5ac8503140bd2cfa0c2ae3839",
+      "base_bytes": 1601,
+      "current_bytes": 1665,
+      "reason": null
+    },
+    {
+      "path": "lib/basemode/disbanding.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "45e58820e5c91fd53c2f67d3f831d9761b6ddad5",
+      "base_sha256": "f87f5d56ae2e778a295c16391da422901ac4a745443401968aacd37c2cea2c64",
+      "current_sha256": "f87f5d56ae2e778a295c16391da422901ac4a745443401968aacd37c2cea2c64",
+      "base_bytes": 4390,
+      "current_bytes": 4527,
+      "reason": null
+    },
+    {
+      "path": "lib/basemode/flag.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "75540629351db3ec715ac2369f39c407d566d68d",
+      "base_sha256": "19d8848ae01b4ea4543fe4cc9517d539399e6881edc6ae9d347395f7bd472f19",
+      "current_sha256": "19d8848ae01b4ea4543fe4cc9517d539399e6881edc6ae9d347395f7bd472f19",
+      "base_bytes": 20268,
+      "current_bytes": 20958,
+      "reason": null
+    },
+    {
+      "path": "lib/basemode/help_system.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "d1e22b4de3c8a3a21e568e3c0a5dece5919b40d9",
+      "base_sha256": "9975bab09102ec40ff0e6915c5efb77db6a686b089c4ee3167f062fea72ef147",
+      "current_sha256": "9975bab09102ec40ff0e6915c5efb77db6a686b089c4ee3167f062fea72ef147",
+      "base_bytes": 17792,
+      "current_bytes": 18088,
+      "reason": null
+    },
+    {
+      "path": "lib/basemode/interrogation.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "e982b8132133deb3f81312f94b22c8a6b89bd7d5",
+      "base_sha256": "5c03bf541a1eb2e9b7d826ea69d1526049588f757263a727767cc9e1be5c24d6",
+      "current_sha256": "5c03bf541a1eb2e9b7d826ea69d1526049588f757263a727767cc9e1be5c24d6",
+      "base_bytes": 186,
+      "current_bytes": 195,
+      "reason": null
+    },
+    {
+      "path": "lib/basemode/invest_in_location.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "081da759637755978236ff3c8b62193b423c3ce2",
+      "base_sha256": "d19a8dc724fc03b59b6983f219cab6c0654c87c02b222f0297488e37ac3f6e8c",
+      "current_sha256": "d19a8dc724fc03b59b6983f219cab6c0654c87c02b222f0297488e37ac3f6e8c",
+      "base_bytes": 9376,
+      "current_bytes": 9641,
+      "reason": null
+    },
+    {
+      "path": "lib/basemode/liberal_agenda.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "7ea503ea9457598d0dd550e24f10ed646f60bc61",
+      "base_sha256": "376439cf1850ce4d27954b8e09d1dc34a286ee91bacee2ac1c9b5e75bc753894",
+      "current_sha256": "bb56803702909c30ea96292cc0966514b891aa849f88c180756e37569aeb0d60",
+      "base_bytes": 20098,
+      "current_bytes": 24466,
+      "reason": "Presentation: actual government, chamber counts, laws, source-printed poll statements/percentages and controls captured alongside original printers. Only ongoing Agenda declares safe navigation; disband confirmation and forced victory/defeat score readers retain original sequencing and rules."
+    },
+    {
+      "path": "lib/basemode/media_overview.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "cc12d27d7fe9ee4c8163c028abe579a31971eed7",
+      "base_sha256": "c984a0b2cda147a7b46a3876b53da7d3ab06b4d8bb8b13bf997d4535f7023a0d",
+      "current_sha256": "0fd7fb419fd6aae8ebce3ee08615f711a7ddcb4a9a8dc716c2ea21649c3a1c91",
+      "base_bytes": 5631,
+      "current_bytes": 8196,
+      "reason": "Presentation: source-computed media statistics, complete article rows and exact paged controls captured at the audited archive await. Original generation, unread state and opinion effects retained."
+    },
+    {
+      "path": "lib/basemode/plan_site_visit.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "555a2debc182a8bde1d680f77615d003f9792659",
+      "base_sha256": "59e85d10d1a60b13097f520c2af24c42d4f4856e2dcae715bbe9830c527ce68f",
+      "current_sha256": "42c37cd1300cf67d6b9f685e4a6e075b84868cf11657f3ac7c5c3caeb05d947b",
+      "base_bytes": 5771,
+      "current_bytes": 6818,
+      "reason": "Presentation: current visible place IDs/categories, pagination/planning marker, and reserved U+E000 section exit preserving a queued visit. Original manual Back/Cancel, eligibility, travel costs and visit assignment retained."
+    },
+    {
+      "path": "lib/basemode/review_mode.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "ed0d7d2504eb983a2b40650137c12a428ee30d8b",
+      "base_sha256": "19eb3434908ba27a0a934811efc680253255051e7d1055437d12c9e94043a478",
+      "current_sha256": "918897947da74d33c3ec675649e39134e75f878783025c7aafbb017d0b043c9d",
+      "base_bytes": 38898,
+      "current_bytes": 42144,
+      "reason": "Presentation: exact current organisation/squad allocation snapshots and ready action identity, person IDs and audited safe exits. Manual finance entry opts into its read-only navigation; original squad/membership/review mutation handlers retained."
+    },
+    {
+      "path": "lib/common_actions/common_actions.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "d648e5203287fa66ecf781a571b4d99efcd40103",
+      "base_sha256": "df5abab41b897afd89762dd107ebe40037403f7d397cb85200373e2885e823aa",
+      "current_sha256": "df5abab41b897afd89762dd107ebe40037403f7d397cb85200373e2885e823aa",
+      "base_bytes": 3264,
+      "current_bytes": 3379,
+      "reason": null
+    },
+    {
+      "path": "lib/common_actions/equipment.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "fc5e7c9ae4b679ce8926ac9d21c9ae8ba71f709f",
+      "base_sha256": "dc535e0b2326cee539e9efb826c60e5c84b6ecca4d130c27441b8c571b25ee6f",
+      "current_sha256": "7ee6e9c5c05dd158e20c59149187176a1f5bd25b7b246d1f850941127cff963f",
+      "base_bytes": 17921,
+      "current_bytes": 18514,
+      "reason": "Presentation: full roster, explicit unequip intent, scoped recipients/strip/quantity prompts; base equipment and location lists opt into safe section exits, tactical/recipient readers remain untagged. Original mutations retained."
+    },
+    {
+      "path": "lib/common_display/common_display.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "4129d348cdacecf1b6d9fb3df730ba5505e5de5e",
+      "base_sha256": "797202244730ed4dcbdf99b25e400071272e17158c167f7d6ec4cf8488c8c81d",
+      "current_sha256": "030ec5df9ffcdd7709cc1ad6a4f3ef91b9ee733f8d7db8050be116d654cc28e7",
+      "base_bytes": 19330,
+      "current_bytes": 19945,
+      "reason": "Optional navigationSection and onAwait(page,pageCount) callback, both absent by default; supplied by the audited media archive after final actions are authored. Original generic pagination, choices and back effects retained. Presentation: complete showMessage text scoped to its unchanged awaited input, safe clear/restore after acknowledgement and erase. Original buffer, delimiters, colors, input, simulation and RNG preserved by eight tests."
+    },
+    {
+      "path": "lib/common_display/print_creature_info.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "76c6d96ea992f872857c6747104e1f9512f3f565",
+      "base_sha256": "0c6e4a044e98f7c675800951f5291d7e45bd5d1d348819a3585e05527d45fcc1",
+      "current_sha256": "0c6e4a044e98f7c675800951f5291d7e45bd5d1d348819a3585e05527d45fcc1",
+      "base_bytes": 21398,
+      "current_bytes": 22134,
+      "reason": null
+    },
+    {
+      "path": "lib/common_display/print_party.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "5e4640cf4acdbc8eaf546f8ecf03ece1a3c56eb8",
+      "base_sha256": "3c358c783d7a2c4603b0fb2c2331081935d11318503007e367907cd66164ab60",
+      "current_sha256": "ec105490b1a70bc0590b7f0b2183b3d4fb0332d7edec75928c083c578d72b642",
+      "base_bytes": 2284,
+      "current_bytes": 2513,
+      "reason": "Presentation metadata only: annotate the already displayed squad member with its existing ID; original print/selection behavior retained."
+    },
+    {
+      "path": "lib/creature/aging.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "1239ac3bfd3f5c07ca0217c5ca77ab159628b933",
+      "base_sha256": "c2353f79c57354079e8ea20337d10f206746a16da91c9ce972a2944f57c0cbd0",
+      "current_sha256": "c2353f79c57354079e8ea20337d10f206746a16da91c9ce972a2944f57c0cbd0",
+      "base_bytes": 1635,
+      "current_bytes": 1703,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/attributes.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "d272e7f5149bc89e971953c11698eeef3b0c44aa",
+      "base_sha256": "e8d05fc86217d1f75ddddeba674773ac0a623b09bddb1bfd54ba4a53c3b68e27",
+      "current_sha256": "e8d05fc86217d1f75ddddeba674773ac0a623b09bddb1bfd54ba4a53c3b68e27",
+      "base_bytes": 152,
+      "current_bytes": 162,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/body.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "d79c56f4f11ca60592108fccc65d2aa6490c70a4",
+      "base_sha256": "d49aa5d3fea6013f92854aa7e484897a69d89e1639bfa028c1bc2ed876584c2f",
+      "current_sha256": "d49aa5d3fea6013f92854aa7e484897a69d89e1639bfa028c1bc2ed876584c2f",
+      "base_bytes": 16078,
+      "current_bytes": 16645,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/conversion.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "9a0f9ff3a9acdd02f0599f521275d5c9c60a24b2",
+      "base_sha256": "d35736f9de4edc9bf33b7e66f763d238d7eb8cf2238952def594d0bde2765847",
+      "current_sha256": "d35736f9de4edc9bf33b7e66f763d238d7eb8cf2238952def594d0bde2765847",
+      "base_bytes": 1084,
+      "current_bytes": 1117,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/creature.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "da7c5cffff989518ce4e79aa6d2d8bbaf0519e8a",
+      "base_sha256": "6616d0cf386786e88c52d57e936e275dfaaf51feb263a1e79089e9a30508a564",
+      "current_sha256": "6616d0cf386786e88c52d57e936e275dfaaf51feb263a1e79089e9a30508a564",
+      "base_bytes": 29900,
+      "current_bytes": 30838,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/creature_builder.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "6a3186c8a77189b1a528a57736b1b5e54097c1d7",
+      "base_sha256": "114d31b95c821991576a9c04c641a2cb0eb4c9be896396490dd9899f72fa7010",
+      "current_sha256": "114d31b95c821991576a9c04c641a2cb0eb4c9be896396490dd9899f72fa7010",
+      "base_bytes": 7612,
+      "current_bytes": 7815,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/creature_type.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "4ad5f04e23682a6a7128284f2111af72088a7d2f",
+      "base_sha256": "8b34626f4cea7a7da5e8e67756e369b023f851b7d0f96e0617d6a88671c11462",
+      "current_sha256": "8b34626f4cea7a7da5e8e67756e369b023f851b7d0f96e0617d6a88671c11462",
+      "base_bytes": 12334,
+      "current_bytes": 12613,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/creature_type_xml.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "687c611660c816be78d42c000d951d823e784e59",
+      "base_sha256": "1848fc886d5dc06af4512dbf5c63098c24459114a3ebe068ec2a328467ebbecc",
+      "current_sha256": "1848fc886d5dc06af4512dbf5c63098c24459114a3ebe068ec2a328467ebbecc",
+      "base_bytes": 7271,
+      "current_bytes": 7468,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/creature_work_locations.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "bef966fc2894149ddf1903d7f76bb095a02f6136",
+      "base_sha256": "bc38d92d8d4db765979807a636c4fe661d512615694a8591f66f9f91473c31ab",
+      "current_sha256": "bc38d92d8d4db765979807a636c4fe661d512615694a8591f66f9f91473c31ab",
+      "base_bytes": 9069,
+      "current_bytes": 9353,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/dice.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "97919ed419e55ca7a2b4ac7f96baecd7a98203c0",
+      "base_sha256": "cdb01f14720ccac398cc8baacae9224525becd8a2f09f2486f5ecaa4fd6e2add",
+      "current_sha256": "cdb01f14720ccac398cc8baacae9224525becd8a2f09f2486f5ecaa4fd6e2add",
+      "base_bytes": 522,
+      "current_bytes": 551,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/difficulty.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "80ce76f423929b74bf52988768e794c6a359b4bf",
+      "base_sha256": "b5051413baa88263787004fcaf5c04139f365181e18e285052920bf4b6eaa830",
+      "current_sha256": "b5051413baa88263787004fcaf5c04139f365181e18e285052920bf4b6eaa830",
+      "base_bytes": 678,
+      "current_bytes": 701,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/gender.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "467f0838f6e66c83264ea6de840b5eec161e7c8d",
+      "base_sha256": "7ea4ee3a1e50502dcae7b36905470ffb3013e8bade64f01ea52d2a7e264400b2",
+      "current_sha256": "7ea4ee3a1e50502dcae7b36905470ffb3013e8bade64f01ea52d2a7e264400b2",
+      "base_bytes": 1578,
+      "current_bytes": 1635,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/hardcoded_creature_type_stuff.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "afed5242bff1507828b267aafc59a46d62d42378",
+      "base_sha256": "c2abc39e6f35973d9afa729f0a2a08ac93731171a29aadbac610ccb5fd9325cb",
+      "current_sha256": "c2abc39e6f35973d9afa729f0a2a08ac93731171a29aadbac610ccb5fd9325cb",
+      "base_bytes": 10898,
+      "current_bytes": 11215,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/level.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "83aaecf603da52307c7ea7b98ede1aeb24f2a905",
+      "base_sha256": "6a14f18e1db2e3d9027ceeb0b89c9328f1f196b71e748ae945d7a3bb79c66447",
+      "current_sha256": "6a14f18e1db2e3d9027ceeb0b89c9328f1f196b71e748ae945d7a3bb79c66447",
+      "base_bytes": 2274,
+      "current_bytes": 2361,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/monster_name.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "4fb22e42b0b0cb4bedc4aec777f3df5665b6a4c5",
+      "base_sha256": "c239c8719f4ec9169c5e45de95600fc72ff184fd208ab1f514368b6a55840418",
+      "current_sha256": "c239c8719f4ec9169c5e45de95600fc72ff184fd208ab1f514368b6a55840418",
+      "base_bytes": 860,
+      "current_bytes": 892,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/name.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "7ff3119e4a46b2f751ba90328cb3156d6cba4d13",
+      "base_sha256": "29c5d9b61c7932911b3f2c8c19946810d7ce28f788d3a529ec2842eefd47e207",
+      "current_sha256": "29c5d9b61c7932911b3f2c8c19946810d7ce28f788d3a529ec2842eefd47e207",
+      "base_bytes": 2727,
+      "current_bytes": 2820,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/name_lists.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "8cb0c30f4ca8c45e0ed23732e7b386a64a7e5f61",
+      "base_sha256": "3edc87d800bc5de31d74a6e430f55c2b01a4b4a4bc6e62affd2039df974c2c2b",
+      "current_sha256": "3edc87d800bc5de31d74a6e430f55c2b01a4b4a4bc6e62affd2039df974c2c2b",
+      "base_bytes": 33997,
+      "current_bytes": 36843,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/skills.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "dbeec9f478d08c304133617d63d94f4fc1f4528c",
+      "base_sha256": "52619fb008e5e460bc5e8ca56e1c52bce73ffd6723fdd8c5aea20517f1eac0ad",
+      "current_sha256": "52619fb008e5e460bc5e8ca56e1c52bce73ffd6723fdd8c5aea20517f1eac0ad",
+      "base_bytes": 3726,
+      "current_bytes": 3804,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/sort_creatures.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "81142d3a0874080cd48ce6e14f00120c8aac2004",
+      "base_sha256": "c0cb7496cbd8f91a3204c5474344e51cae3bf37a287725f3b8c9ae08889ec260",
+      "current_sha256": "c0cb7496cbd8f91a3204c5474344e51cae3bf37a287725f3b8c9ae08889ec260",
+      "base_bytes": 3022,
+      "current_bytes": 3120,
+      "reason": null
+    },
+    {
+      "path": "lib/creature/unique_creatures.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "117d03afbfadc605063a2caea97ffcf0747b2d45",
+      "base_sha256": "257be667912d9fb6cff1e5328868cdeb2701359f33871c5c48a5b16d642516d0",
+      "current_sha256": "257be667912d9fb6cff1e5328868cdeb2701359f33871c5c48a5b16d642516d0",
+      "base_bytes": 5177,
+      "current_bytes": 5332,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/arrest.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "5614d1f49594fbae8a5aaa2cb2aace022423f659",
+      "base_sha256": "23dbfc08410c7a68842775df2cfbf7975f933e92352c88cf0cce2f7df817d0c6",
+      "current_sha256": "23dbfc08410c7a68842775df2cfbf7975f933e92352c88cf0cce2f7df817d0c6",
+      "base_bytes": 1401,
+      "current_bytes": 1444,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/bury_dead.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "6f3fe54412df4df081e2f979273507c1478d923a",
+      "base_sha256": "75336be62b5501e164ad173751029202b0bd71c529939b15728857b0cd9182b0",
+      "current_sha256": "75336be62b5501e164ad173751029202b0bd71c529939b15728857b0cd9182b0",
+      "base_bytes": 1452,
+      "current_bytes": 1489,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/car_theft.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "b0c9c6fd1911f8ea1584b9d3cdd2b12ba2e404c2",
+      "base_sha256": "c74ecf764178834d796d93395830098e934bfd2785bcbdcede7d2faa7ead63e8",
+      "current_sha256": "c74ecf764178834d796d93395830098e934bfd2785bcbdcede7d2faa7ead63e8",
+      "base_bytes": 14176,
+      "current_bytes": 14612,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/clothing_creation.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "e7a6c2eabb9b42d38c5b5ac5d849e3bbaa9fe563",
+      "base_sha256": "6689c195419299203029c0aa2a7339e8a2a5517b98bcfb3b462f36da3211bb9f",
+      "current_sha256": "45d292a7b627b5061d278d8415c68d8a9326d9062eebf3b3af021461a255268a",
+      "base_bytes": 3272,
+      "current_bytes": 3468,
+      "reason": "Confirmed crafting bug fix: calculate the existing cloth discount before affordability, but consume cloth only after the unchanged funds check and payment. Unaffordable jobs preserve inventory; successful cost, item selection, RNG, XP, output and activity behavior retained. Four pre-fix failures and exact successful-outcome/RNG regression cases recorded in engine reports."
+    },
+    {
+      "path": "lib/daily/activities/clothing_repair.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "af0a8abadc43165199856a44f0a9988ff6677565",
+      "base_sha256": "4198635ae7fca1bec865b88f74636b5f8dfca4cefde5a35b108475dc946de482",
+      "current_sha256": "4198635ae7fca1bec865b88f74636b5f8dfca4cefde5a35b108475dc946de482",
+      "base_bytes": 2073,
+      "current_bytes": 2145,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/flag_creation.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "fd3236bc59e06dd19dfdaeff118b823789330d4f",
+      "base_sha256": "44a84121b9b0300dd2902ac5eec7607cf3017bd7d4ca766048d7ecd42073a1ed",
+      "current_sha256": "0997279db74a26e28291e0014faf87ca7c02fb0f343df88cde291868456c786c",
+      "base_bytes": 2847,
+      "current_bytes": 3028,
+      "reason": "Confirmed crafting bug fix: calculate the existing cloth discount before affordability, but consume cloth only after the unchanged funds check and payment. Unaffordable jobs preserve inventory; successful cost, item selection, RNG, XP, output and activity behavior retained. Four pre-fix failures and exact successful-outcome/RNG regression cases recorded in engine reports."
+    },
+    {
+      "path": "lib/daily/activities/fundraising.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "8f66aefc606947488af7d5ac3dd6bdef533756fc",
+      "base_sha256": "ebfc5280c7a5ad5612ae79f8fb43b865def6c9f2c2b4ca2e0ff9c8900d594d57",
+      "current_sha256": "ebfc5280c7a5ad5612ae79f8fb43b865def6c9f2c2b4ca2e0ff9c8900d594d57",
+      "base_bytes": 7369,
+      "current_bytes": 7570,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/graffiti.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "435ba4b5da81d63b781e49b524861c6987641d5d",
+      "base_sha256": "f7b1212d1021225575e7d1b057a94e6dddaf3e4f35158ae6692feee0779f8d01",
+      "current_sha256": "f7b1212d1021225575e7d1b057a94e6dddaf3e4f35158ae6692feee0779f8d01",
+      "base_bytes": 4511,
+      "current_bytes": 4631,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/guardian.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "dc6c98946b78aa8968d70eb92e254a04e9a3c2c0",
+      "base_sha256": "2cdabc46125a746ec16b3b938371bb6e52a4b96ac06372e4f72cb042f14b940d",
+      "current_sha256": "2cdabc46125a746ec16b3b938371bb6e52a4b96ac06372e4f72cb042f14b940d",
+      "base_bytes": 1080,
+      "current_bytes": 1114,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/hacking.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "5888267835c2153bfff91046df8a60cd5bd5f764",
+      "base_sha256": "82a2120e7a8536e78e446a0726ea462438c63b1d0975ec512fb46499b48a4be7",
+      "current_sha256": "82a2120e7a8536e78e446a0726ea462438c63b1d0975ec512fb46499b48a4be7",
+      "base_bytes": 4373,
+      "current_bytes": 4517,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/hardliner_fight.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "d0976dabb91884a99b97a742441df00847fb9c76",
+      "base_sha256": "1c4d4a1f15179f6d0af0a82f90515c0cba222ee8cff2377c20c9e4de7c788090",
+      "current_sha256": "1c4d4a1f15179f6d0af0a82f90515c0cba222ee8cff2377c20c9e4de7c788090",
+      "base_bytes": 4173,
+      "current_bytes": 4288,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/learning.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "38bdea861c5965969b8253544249f55a6dd298b4",
+      "base_sha256": "da4e729423daa5fce5e9ad2cae77e1a0346a789a04d1391fc36af09f9489dc1e",
+      "current_sha256": "da4e729423daa5fce5e9ad2cae77e1a0346a789a04d1391fc36af09f9489dc1e",
+      "base_bytes": 2458,
+      "current_bytes": 2529,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/recruiting.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "43c826becc592bcaf970fe3f71308149f8aa3bc0",
+      "base_sha256": "a16ee824be5c5531461f3a1a208fa8b2e0f79d2983bd81606d2ac89bf6b8b614",
+      "current_sha256": "a16ee824be5c5531461f3a1a208fa8b2e0f79d2983bd81606d2ac89bf6b8b614",
+      "base_bytes": 4410,
+      "current_bytes": 4546,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/sleeper_join_lcs.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "73a62643e6f77a0e7abb563ce236f157c93066c0",
+      "base_sha256": "5f80b84455f0a45d5d9123e0e611cbbea959683a2b33b6c5bbf13b2dc982e7af",
+      "current_sha256": "5f80b84455f0a45d5d9123e0e611cbbea959683a2b33b6c5bbf13b2dc982e7af",
+      "base_bytes": 1013,
+      "current_bytes": 1036,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/solo_activities.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "b293067c0a23f5f58b5d2a365884db8d0d1a4ee2",
+      "base_sha256": "bae4aa7d2610efcbe08bf6ffceff4bfe297bde8b6df8e36902b00b08237d2499",
+      "current_sha256": "bae4aa7d2610efcbe08bf6ffceff4bfe297bde8b6df8e36902b00b08237d2499",
+      "base_bytes": 8393,
+      "current_bytes": 8615,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/teaching.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "e09f10f725937151783e6a6fbe39537b2dfe6a34",
+      "base_sha256": "b34a1c46b78d26b773d8845def7c8deb0f8963ef881f7aa0f9dbeb135ead4bd7",
+      "current_sha256": "b34a1c46b78d26b773d8845def7c8deb0f8963ef881f7aa0f9dbeb135ead4bd7",
+      "base_bytes": 4568,
+      "current_bytes": 4703,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/activities/trouble.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "b2ec4519f406a606f82c595eb459f81372e25117",
+      "base_sha256": "6a535a6012351aba195de78b3573381f804dcc4b8752db7146bac6652fada0ed",
+      "current_sha256": "6a535a6012351aba195de78b3573381f804dcc4b8752db7146bac6652fada0ed",
+      "base_bytes": 8943,
+      "current_bytes": 9224,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/advance_day.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "0bdbb56ab3bc2777fa16ae20b1140d3bf47dd63a",
+      "base_sha256": "5fa04de2a6f9ce353c3344e50fdf239c0c4542de1673c3c9cd834f49d8995fbc",
+      "current_sha256": "b1a3d816811b2846aafe262d96c3caba48d2789665756b146a04be6309b6d7b6",
+      "base_bytes": 35738,
+      "current_bytes": 36871,
+      "reason": "Failed autosave aborts before daily simulation; calendar helper prevents DST date repeats/skips; all daily activities retained."
+    },
+    {
+      "path": "lib/daily/dating.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "79474b94b08fd500238c71bccedc68ecc48be997",
+      "base_sha256": "da6d05dbcdf0561ad0ded170766b67ad758e3abb89ac09e34663c997845e56b4",
+      "current_sha256": "da6d05dbcdf0561ad0ded170766b67ad758e3abb89ac09e34663c997845e56b4",
+      "base_bytes": 29884,
+      "current_bytes": 30863,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/hostages/execute.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "8a38b04f6d600dbbac2e8d31197e6a9ffc673967",
+      "base_sha256": "046777e4f41b0e94d6f5bd42b2aa734b8121ed8489fa5945ad6827a07f3c2ad7",
+      "current_sha256": "046777e4f41b0e94d6f5bd42b2aa734b8121ed8489fa5945ad6827a07f3c2ad7",
+      "base_bytes": 2343,
+      "current_bytes": 2422,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/hostages/interrogate.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "f9070872ebfe21fa47e3f48c6579db89ad38ff4c",
+      "base_sha256": "5b0c0a76434e1a41f1b3b4df97a98a50161cdc02956dfc855ba49b9b9a2a6475",
+      "current_sha256": "5b0c0a76434e1a41f1b3b4df97a98a50161cdc02956dfc855ba49b9b9a2a6475",
+      "base_bytes": 2600,
+      "current_bytes": 2679,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/hostages/lovebomb.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "e6bbb7dd4b8164a241f73e8359fc116a84a548df",
+      "base_sha256": "29630c34dda4193bf800c53e3db10ff2fbddbbb2a6aa06cf7e2d2114cd7cddee",
+      "current_sha256": "29630c34dda4193bf800c53e3db10ff2fbddbbb2a6aa06cf7e2d2114cd7cddee",
+      "base_bytes": 18305,
+      "current_bytes": 18668,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/hostages/ransom.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "03db524f1d13b6cda22b432cb845f91a44b3c100",
+      "base_sha256": "5b685555c62a2cca8cfe72097f5670874250e5827bbe1aa9f14e6dd934562b76",
+      "current_sha256": "5b685555c62a2cca8cfe72097f5670874250e5827bbe1aa9f14e6dd934562b76",
+      "base_bytes": 14332,
+      "current_bytes": 14740,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/hostages/release.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "a0d5d2add25817beb7d38293b51eb115ecf23552",
+      "base_sha256": "e30558b484aafb3a4806bb77ac3656f51a0a26430832e3cb939d4bd120f64ec0",
+      "current_sha256": "e30558b484aafb3a4806bb77ac3656f51a0a26430832e3cb939d4bd120f64ec0",
+      "base_bytes": 6023,
+      "current_bytes": 6179,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/hostages/tend_hostage.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "5b6dc61758126ff304f0be91265a1a7c6b1c4e3e",
+      "base_sha256": "5f7297ab8a1915eaaf688c3e91ba3f3e9215f436099fc7a53c6fb856b03e9121",
+      "current_sha256": "5f7297ab8a1915eaaf688c3e91ba3f3e9215f436099fc7a53c6fb856b03e9121",
+      "base_bytes": 20131,
+      "current_bytes": 20746,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/hostages/traumatize.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "239f8fbacfc3af135a28e2c7af9a8d0e7a9199ce",
+      "base_sha256": "784a42bdf78362272a27dd37cef3640ddd1583a2de2fdc1a19fdb97da34fc869",
+      "current_sha256": "784a42bdf78362272a27dd37cef3640ddd1583a2de2fdc1a19fdb97da34fc869",
+      "base_bytes": 5303,
+      "current_bytes": 5446,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/recruitment.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "49b0e4ac8442ca326c66b433fbf46ffaa8625fbb",
+      "base_sha256": "021e4029866c4dc11fb2a6f23d577f1b96ca38c68ed1ea0fbe1edd7a3fc82211",
+      "current_sha256": "021e4029866c4dc11fb2a6f23d577f1b96ca38c68ed1ea0fbe1edd7a3fc82211",
+      "base_bytes": 12423,
+      "current_bytes": 12838,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/shopsnstuff.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "fd8b379cf2dfb55b8844b11ceaf2a1a6788d98ed",
+      "base_sha256": "ae925a59140d78e6711039a599c89357a17df39c92c00590db0d1b3503f07f28",
+      "current_sha256": "ae925a59140d78e6711039a599c89357a17df39c92c00590db0d1b3503f07f28",
+      "base_bytes": 8949,
+      "current_bytes": 9248,
+      "reason": null
+    },
+    {
+      "path": "lib/daily/siege.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "b76ea977619f1b743f83e69d40352cb402e9e2b3",
+      "base_sha256": "1bea2f32e6136bd435adebb9a00e4b09358f93ea4da64222b577d50595961362",
+      "current_sha256": "1bea2f32e6136bd435adebb9a00e4b09358f93ea4da64222b577d50595961362",
+      "base_bytes": 69727,
+      "current_bytes": 71871,
+      "reason": null
+    },
+    {
+      "path": "lib/engine/changelog.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "0ae81a92614d2d3578f02fa244ad659952830457",
+      "base_sha256": "ba024116e882c3e58aaf7ac43ef3439937d42997d3c9f296dee732a9be3e3582",
+      "current_sha256": "340ff6d8a347e6dfb8c8d822274f82949e77e78572364a837ce6a10ca98208ba",
+      "base_bytes": 6603,
+      "current_bytes": 7951,
+      "reason": "UI only: journal palette/font, complete selectable markdown, viewport-bounded reader/header and close affordance; restores the previous live focus node, with retained classic fallback. Changelog content and original callers unchanged."
+    },
+    {
+      "path": "lib/engine/console.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "0d6c5dfa6254756f1d14fcc9d40fb1fc87455697",
+      "base_sha256": "1c79a2598e6f24bbf48143575f49f5334b1eacd37973bd64c5738bc48a7e5129",
+      "current_sha256": "9f244e253a47792318b14561a2b953756352816a74a14879a91dfb3d10d30cf1",
+      "base_bytes": 6734,
+      "current_bytes": 17605,
+      "reason": "Presentation bridge: exact action identity/intent/coordinates, scoped choices, articles, revisions/text context and bounded input. Per-await ConsoleNavigation is cleared on consume/erase/scoped prompts; no simulation rules. Read-only CreationContext cleared on erase, retained across name-reader key awaits; no new navigation capability or simulation rule. Presentation: complete showMessage text scoped to its unchanged awaited input, safe clear/restore after acknowledgement and erase. Original buffer, delimiters, colors, input, simulation and RNG preserved by eight tests."
+    },
+    {
+      "path": "lib/engine/console_char.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "accbadf8a89c97fa2d8f728924f9a90708d623e6",
+      "base_sha256": "22d0ad30e1be0107162174b4081c4f92926165d72842d871245e4d6bde7bc386",
+      "current_sha256": "22d0ad30e1be0107162174b4081c4f92926165d72842d871245e4d6bde7bc386",
+      "base_bytes": 404,
+      "current_bytes": 417,
+      "reason": null
+    },
+    {
+      "path": "lib/engine/console_graphic.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "6f84059a0dadbc7bf0198bdd65c845237543dd6b",
+      "base_sha256": "97119245a06d86de8315b2589b1c21e5e5af82392686791b79e3dc3edbce77be",
+      "current_sha256": "97119245a06d86de8315b2589b1c21e5e5af82392686791b79e3dc3edbce77be",
+      "base_bytes": 224,
+      "current_bytes": 234,
+      "reason": null
+    },
+    {
+      "path": "lib/engine/console_widget.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "e4ee72de4fe9ace14f7a795bbf26f1ddba8be10a",
+      "base_sha256": "37f3c2c752f33c2e0bf8e020089dd22f7a4031224546feb29f2022a781b25001",
+      "current_sha256": "408c0cd8cbb2f7947d4594e72abc15ad35cd287314cedb9726b4d92641c6f814",
+      "base_bytes": 16677,
+      "current_bytes": 17751,
+      "reason": "Retained classic rendering/input; repaint lifecycle, disposal and layout fixes; no simulation rules."
+    },
+    {
+      "path": "lib/engine/engine.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "3bd140ca92a9bf82b8bcd02341ba8d32781779d1",
+      "base_sha256": "97301d36149334270f79a82fccbd8ba4c1e1e44cf0f562d4b9771202875b3a04",
+      "current_sha256": "258a8c17b0d9de2631e83e9e9a2a72f7bbe399963ea51ec428f76daf70d8fd70",
+      "base_bytes": 9587,
+      "current_bytes": 11677,
+      "reason": "Capture exact semantic/modal actions, actual ammo arrows and text context; declare per-await safe section navigation and reserved U+E000 menuExit. Original readers and simulation loop retained."
+    },
+    {
+      "path": "lib/engine/fullscreen/fullscreen.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "21c724e8deb8050a86ba5b20594a019a52c84344",
+      "base_sha256": "da9893c7a7ef28c3390cbeaf790de8553ffe4cfeb3e8a073d756f1fd2debc964",
+      "current_sha256": "da9893c7a7ef28c3390cbeaf790de8553ffe4cfeb3e8a073d756f1fd2debc964",
+      "base_bytes": 77,
+      "current_bytes": 78,
+      "reason": null
+    },
+    {
+      "path": "lib/engine/fullscreen/fullscreen_dummy.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "03fb92e71163c1665dd3de58d6e3aa7da41330fd",
+      "base_sha256": "accc961c779ee60e66d2a7ce4a49a9c37857f883e8f6b5b9ead59605646cb387",
+      "current_sha256": "accc961c779ee60e66d2a7ce4a49a9c37857f883e8f6b5b9ead59605646cb387",
+      "base_bytes": 242,
+      "current_bytes": 251,
+      "reason": null
+    },
+    {
+      "path": "lib/engine/fullscreen/fullscreen_web.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "41593950b78f6fe432141375d36644e5b606dd16",
+      "base_sha256": "92fbb5e81c637d0216c4933807b7a715fc7b3998ee6c738d2f96f94d4317331b",
+      "current_sha256": "92fbb5e81c637d0216c4933807b7a715fc7b3998ee6c738d2f96f94d4317331b",
+      "base_bytes": 266,
+      "current_bytes": 278,
+      "reason": null
+    },
+    {
+      "path": "lib/gamestate/crime_squad.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "7997cf72105d3b65ffa57f6611a7cae5a1cec304",
+      "base_sha256": "b5849d4ead75780a24ba862184a730c6fedf8af1d304f2029cefe329fd911e36",
+      "current_sha256": "b5849d4ead75780a24ba862184a730c6fedf8af1d304f2029cefe329fd911e36",
+      "base_bytes": 2453,
+      "current_bytes": 2518,
+      "reason": null
+    },
+    {
+      "path": "lib/gamestate/game_mode.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "ed9a3b9b5ae6fb13fe954d5f3fd8b15a55f11045",
+      "base_sha256": "661c52b63f9f46f99a9f06ed9d32979dbdb0226bb196824ece89b1e4b185d163",
+      "current_sha256": "661c52b63f9f46f99a9f06ed9d32979dbdb0226bb196824ece89b1e4b185d163",
+      "base_bytes": 68,
+      "current_bytes": 75,
+      "reason": null
+    },
+    {
+      "path": "lib/gamestate/game_state.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "9b73e8d5cc3dd598768cabe0548c30a9cee10918",
+      "base_sha256": "b55ee598461b5ab25822f400f8fce7fd6610d46f33486b6763759ed80e07ca57",
+      "current_sha256": "b55ee598461b5ab25822f400f8fce7fd6610d46f33486b6763759ed80e07ca57",
+      "base_bytes": 15472,
+      "current_bytes": 15851,
+      "reason": null
+    },
+    {
+      "path": "lib/gamestate/ledger.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "c994d79793141f92a4d563f88e37d8d3046f256a",
+      "base_sha256": "3896feafc8534c1097c8ede298dfddebc5c844af45ed2a428567c3ba669e0a24",
+      "current_sha256": "3896feafc8534c1097c8ede298dfddebc5c844af45ed2a428567c3ba669e0a24",
+      "base_bytes": 2012,
+      "current_bytes": 2096,
+      "reason": null
+    },
+    {
+      "path": "lib/gamestate/squad.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "8d6386324aa4a71520fc2432b08f99dacbfb0790",
+      "base_sha256": "76e8344a41dc238e0c1d8de5dcbefcf38a2885a203fe8e283f73c153b7f507d2",
+      "current_sha256": "76e8344a41dc238e0c1d8de5dcbefcf38a2885a203fe8e283f73c153b7f507d2",
+      "base_bytes": 1946,
+      "current_bytes": 2005,
+      "reason": null
+    },
+    {
+      "path": "lib/gamestate/stats.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "c2dd99cf709c016d6ea5867bcdb179039894eba5",
+      "base_sha256": "52d49e246ad40a18fee4ab404b5bcd9f712d8b875f23e28ee94588d48e458f12",
+      "current_sha256": "52d49e246ad40a18fee4ab404b5bcd9f712d8b875f23e28ee94588d48e458f12",
+      "base_bytes": 384,
+      "current_bytes": 400,
+      "reason": null
+    },
+    {
+      "path": "lib/gamestate/time.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "f322fdded76a0b8d5748b1b5608cb60c63b1ce3f",
+      "base_sha256": "8414aeecbb280cfae7e1ba29767cdc04b9e039ddc058a6e9f982db7dba648240",
+      "current_sha256": "33a344d7bfb55bc0ba1e0224653934cd709298f37a902f1baf04c76df032b7ee",
+      "base_bytes": 402,
+      "current_bytes": 651,
+      "reason": "Calendar-day helper constructs the next date, preserving UTC; month labels unchanged."
+    },
+    {
+      "path": "lib/items/ammo.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "b2d0ffb38a099b03c3d866887eb4e906bbb6710b",
+      "base_sha256": "f86c5c317b8db3ee3a01cee5fea08b7d4996e3a007dcc1d94c0aa3c45fd79065",
+      "current_sha256": "f86c5c317b8db3ee3a01cee5fea08b7d4996e3a007dcc1d94c0aa3c45fd79065",
+      "base_bytes": 835,
+      "current_bytes": 864,
+      "reason": null
+    },
+    {
+      "path": "lib/items/ammo_type.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "8e7d59d9d4dceaf7949d3f915d7d3618960721f4",
+      "base_sha256": "b81c6546243b3683a383aa54e0ddc8f163869bfbe3aff36ee0b590948e220213",
+      "current_sha256": "b81c6546243b3683a383aa54e0ddc8f163869bfbe3aff36ee0b590948e220213",
+      "base_bytes": 448,
+      "current_bytes": 465,
+      "reason": null
+    },
+    {
+      "path": "lib/items/ammo_type_xml.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "53161bc3f9a8924d3bd5531197004eb51c7f910d",
+      "base_sha256": "f078243714be237eb8d54082da94f5cb702f010fb90a71fcccf5fd5ad670c7e9",
+      "current_sha256": "f078243714be237eb8d54082da94f5cb702f010fb90a71fcccf5fd5ad670c7e9",
+      "base_bytes": 1148,
+      "current_bytes": 1179,
+      "reason": null
+    },
+    {
+      "path": "lib/items/armor_upgrade.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "5b804167c1f2fb323289ca4bb72176b7fca4b6dd",
+      "base_sha256": "f3e7b7d169f2f0894fc06ac76ca9ab8e40e914cb1b75211cd361c8fb75f94817",
+      "current_sha256": "f3e7b7d169f2f0894fc06ac76ca9ab8e40e914cb1b75211cd361c8fb75f94817",
+      "base_bytes": 521,
+      "current_bytes": 542,
+      "reason": null
+    },
+    {
+      "path": "lib/items/armor_upgrade_xml.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "3656c83092a9b6b2f183ad659beafd772157c4b0",
+      "base_sha256": "b2ad09f6807739dcd7805ddad30b579a849794608062bc208db2fe0c6386da52",
+      "current_sha256": "b2ad09f6807739dcd7805ddad30b579a849794608062bc208db2fe0c6386da52",
+      "base_bytes": 1860,
+      "current_bytes": 1905,
+      "reason": null
+    },
+    {
+      "path": "lib/items/attack.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "bb71679af7e6ef24382c2247048e8d56c2b996a6",
+      "base_sha256": "1345227f9f4362975467e1fb5519013334a6bb6e4585c036a7ebee11813339a2",
+      "current_sha256": "1345227f9f4362975467e1fb5519013334a6bb6e4585c036a7ebee11813339a2",
+      "base_bytes": 1468,
+      "current_bytes": 1525,
+      "reason": null
+    },
+    {
+      "path": "lib/items/clothing.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "20a4d53ffd5631c38d6a8dbf6ed44e0f6fda8b98",
+      "base_sha256": "d9f248061f398668489036ad37506b7fa3a6da099a2231a56d6b7bab7041a0b9",
+      "current_sha256": "d9f248061f398668489036ad37506b7fa3a6da099a2231a56d6b7bab7041a0b9",
+      "base_bytes": 8105,
+      "current_bytes": 8373,
+      "reason": null
+    },
+    {
+      "path": "lib/items/clothing_type.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "67a1e0c7062ce7608124c8f704ee1dfd9c9d4480",
+      "base_sha256": "ab37b8e56a4bdd28c1d5c7204b126311a8ee7bee1f92771923bc415f4eaec795",
+      "current_sha256": "ab37b8e56a4bdd28c1d5c7204b126311a8ee7bee1f92771923bc415f4eaec795",
+      "base_bytes": 3920,
+      "current_bytes": 4039,
+      "reason": null
+    },
+    {
+      "path": "lib/items/clothing_type_xml.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "c74c57a740c459d68a8f8e151ad9476c50204067",
+      "base_sha256": "0c32840154071672f520cca8465f7b4b9f8c5e064e439848fdf8b833b2503d02",
+      "current_sha256": "0c32840154071672f520cca8465f7b4b9f8c5e064e439848fdf8b833b2503d02",
+      "base_bytes": 4763,
+      "current_bytes": 4875,
+      "reason": null
+    },
+    {
+      "path": "lib/items/flag.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "a22632aaa7d09cafbdf22b21db2eb557fbbb8353",
+      "base_sha256": "549c9b68e7b7b1c44809c57a54eeb7081fcbae7bbc343fbb2060b3e80f182dae",
+      "current_sha256": "549c9b68e7b7b1c44809c57a54eeb7081fcbae7bbc343fbb2060b3e80f182dae",
+      "base_bytes": 1001,
+      "current_bytes": 1035,
+      "reason": null
+    },
+    {
+      "path": "lib/items/flag_type.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "d9d70cba4ca9f22bb02242349fb268e252d20db6",
+      "base_sha256": "63ac0909a861eac6d54b5f5cb92aac1844a4d772d6558b813ccc8b9c383b3874",
+      "current_sha256": "63ac0909a861eac6d54b5f5cb92aac1844a4d772d6558b813ccc8b9c383b3874",
+      "base_bytes": 3536,
+      "current_bytes": 3650,
+      "reason": null
+    },
+    {
+      "path": "lib/items/flag_type_xml.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "e4b8df380b78b7478eaf5811c763a10c4c4103a3",
+      "base_sha256": "3114288044e3876f5709dbed665efd0e1dcb2b05b26c2b97ca7b26039649b939",
+      "current_sha256": "3114288044e3876f5709dbed665efd0e1dcb2b05b26c2b97ca7b26039649b939",
+      "base_bytes": 1190,
+      "current_bytes": 1223,
+      "reason": null
+    },
+    {
+      "path": "lib/items/item.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "a16798e692c1ad02e2294db647c0af90c4c92b3e",
+      "base_sha256": "f68b6ac5e20f722f2bb66309b1f6725c62bb0789a44feef594dad336617b92fe",
+      "current_sha256": "f68b6ac5e20f722f2bb66309b1f6725c62bb0789a44feef594dad336617b92fe",
+      "base_bytes": 5888,
+      "current_bytes": 6072,
+      "reason": null
+    },
+    {
+      "path": "lib/items/item_type.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "4c3cfc491b4828b3fc188e597ea9faa9a9eada72",
+      "base_sha256": "262c4bb7bdb4c526a81082e1fe95af0d9a98557c32e5a7d28cee50b9343e8df3",
+      "current_sha256": "262c4bb7bdb4c526a81082e1fe95af0d9a98557c32e5a7d28cee50b9343e8df3",
+      "base_bytes": 688,
+      "current_bytes": 718,
+      "reason": null
+    },
+    {
+      "path": "lib/items/loot.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "8236e42b37e4fec9597b8b168f11e417fa185bee",
+      "base_sha256": "38453cde35bb5de4fac54fe3ef383ac6af25303d6afc75a19e873121a439f409",
+      "current_sha256": "38453cde35bb5de4fac54fe3ef383ac6af25303d6afc75a19e873121a439f409",
+      "base_bytes": 928,
+      "current_bytes": 959,
+      "reason": null
+    },
+    {
+      "path": "lib/items/loot_type.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "2c67a1aa2e2ed8a5cf88c46c0fd61b58159ad225",
+      "base_sha256": "b5c6a7e74c0dcb84c23e797063c1a5860f62345e8c8aec97c3b935c3e1573f39",
+      "current_sha256": "b5c6a7e74c0dcb84c23e797063c1a5860f62345e8c8aec97c3b935c3e1573f39",
+      "base_bytes": 2096,
+      "current_bytes": 2143,
+      "reason": null
+    },
+    {
+      "path": "lib/items/loot_type_xml.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "6ffe17b1c03fdcde6ccd6d1c595811c8c1c347a8",
+      "base_sha256": "7af0781cd2b73434dbc165ed8328f723872840ebbed1e425cc1b09c6930f480c",
+      "current_sha256": "7af0781cd2b73434dbc165ed8328f723872840ebbed1e425cc1b09c6930f480c",
+      "base_bytes": 858,
+      "current_bytes": 882,
+      "reason": null
+    },
+    {
+      "path": "lib/items/money.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "92b440201037affdd18667a77e39c793f38656cd",
+      "base_sha256": "e9f5308c08c2cc13acbf6b3bcb84ab5b90b3e36ad8aa4c355439f0fef21c7c52",
+      "current_sha256": "e9f5308c08c2cc13acbf6b3bcb84ab5b90b3e36ad8aa4c355439f0fef21c7c52",
+      "base_bytes": 641,
+      "current_bytes": 665,
+      "reason": null
+    },
+    {
+      "path": "lib/items/weapon.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "4201f8906c0b4050c69b3c739c901bb3263c3be3",
+      "base_sha256": "66520030f505e308cfa238295d7bed3d5b65063331023cf0a0f14cde82ed8e1b",
+      "current_sha256": "66520030f505e308cfa238295d7bed3d5b65063331023cf0a0f14cde82ed8e1b",
+      "base_bytes": 4504,
+      "current_bytes": 4646,
+      "reason": null
+    },
+    {
+      "path": "lib/items/weapon_type.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "1ebc68b1b023110888d7c31efa46a8865b1c3eec",
+      "base_sha256": "f6b192655301eaaf14b1ae02d6d9a0ca15c241d3e8c1f53aa65c8a3c53908b7c",
+      "current_sha256": "f6b192655301eaaf14b1ae02d6d9a0ca15c241d3e8c1f53aa65c8a3c53908b7c",
+      "base_bytes": 2041,
+      "current_bytes": 2103,
+      "reason": null
+    },
+    {
+      "path": "lib/items/weapon_type_xml.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "a808577bcbd836064d6d911e6c017381d546d1cd",
+      "base_sha256": "1a77b27436d6627d3405c168461c99595b817ba443d6ac6b1fae4af07f834905",
+      "current_sha256": "1a77b27436d6627d3405c168461c99595b817ba443d6ac6b1fae4af07f834905",
+      "base_bytes": 8245,
+      "current_bytes": 8445,
+      "reason": null
+    },
+    {
+      "path": "lib/justice/crimes.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "e19d35ad28a2a01ca9e5e2aaa28ec34a4e34f469",
+      "base_sha256": "b8b364ec95e55dfa0e75be8bcbe51bb5e06119d11097b23f744a26347dd3cbc9",
+      "current_sha256": "b8b364ec95e55dfa0e75be8bcbe51bb5e06119d11097b23f744a26347dd3cbc9",
+      "base_bytes": 6720,
+      "current_bytes": 6919,
+      "reason": null
+    },
+    {
+      "path": "lib/justice/prison.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "252e1ff1a13689b4ddf62e98d4e20293592b36e7",
+      "base_sha256": "26802d29fc45032540f907fdee78477ba738beb5c1c22669bee465317a3c6bbd",
+      "current_sha256": "26802d29fc45032540f907fdee78477ba738beb5c1c22669bee465317a3c6bbd",
+      "base_bytes": 15642,
+      "current_bytes": 16163,
+      "reason": null
+    },
+    {
+      "path": "lib/justice/trial.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "3fcc337ebfcf30fea2d64663eeb9bf10c0854c19",
+      "base_sha256": "e9e2d7d2dc3c30e851a74574072599ec400da0455ee298ba3f686ed80a9a17e3",
+      "current_sha256": "e9e2d7d2dc3c30e851a74574072599ec400da0455ee298ba3f686ed80a9a17e3",
+      "base_bytes": 23667,
+      "current_bytes": 24460,
+      "reason": null
+    },
+    {
+      "path": "lib/location/city.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "ed0bc5d70592d293cb62fdc3ab976943908b7d8c",
+      "base_sha256": "2af4359784903fd8f3e36eb86e3a9d5ade383c0ff1b8bbe7f158c7b03105d301",
+      "current_sha256": "2af4359784903fd8f3e36eb86e3a9d5ade383c0ff1b8bbe7f158c7b03105d301",
+      "base_bytes": 1620,
+      "current_bytes": 1684,
+      "reason": null
+    },
+    {
+      "path": "lib/location/compound.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "829397e15e9d5633be3e6b51eae5651bf4141cae",
+      "base_sha256": "ecc2caf16d48d35f136643c22b199bac1a35bd5154dc58b5090e7fdfa741082f",
+      "current_sha256": "ecc2caf16d48d35f136643c22b199bac1a35bd5154dc58b5090e7fdfa741082f",
+      "base_bytes": 739,
+      "current_bytes": 772,
+      "reason": null
+    },
+    {
+      "path": "lib/location/compound_upgrades.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "63af496ebfce0f22388a34769b5c456c7d3a7c47",
+      "base_sha256": "a8bd2094b71309828d3935a2ef01383e090c25ece08101e9286ec6b0702cbf99",
+      "current_sha256": "a8bd2094b71309828d3935a2ef01383e090c25ece08101e9286ec6b0702cbf99",
+      "base_bytes": 3623,
+      "current_bytes": 3730,
+      "reason": null
+    },
+    {
+      "path": "lib/location/district.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "54bd13de2f1dcb5e077e70e47ae3a96d7beeb50a",
+      "base_sha256": "4e3197d43a950489947228ce0e487c3ab29dd68b8c62819b1ecf428e8602ec91",
+      "current_sha256": "4e3197d43a950489947228ce0e487c3ab29dd68b8c62819b1ecf428e8602ec91",
+      "base_bytes": 1414,
+      "current_bytes": 1472,
+      "reason": null
+    },
+    {
+      "path": "lib/location/location.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "5aa5eedd45fdc27d897bb7d7da8c0b1d035df7d9",
+      "base_sha256": "538eefa7f8f1d38ce506b00020504d5740a354dfc7462e58af7d8bf0f97d30e0",
+      "current_sha256": "538eefa7f8f1d38ce506b00020504d5740a354dfc7462e58af7d8bf0f97d30e0",
+      "base_bytes": 261,
+      "current_bytes": 274,
+      "reason": null
+    },
+    {
+      "path": "lib/location/location_type.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "7e79bb2f8bd13982a37a27e40526adf3d9ce3ebd",
+      "base_sha256": "8e582b8bb3a701e5f0fa4cf01f35dd51461aa8e865ef29311e5512fe26c02d94",
+      "current_sha256": "8e582b8bb3a701e5f0fa4cf01f35dd51461aa8e865ef29311e5512fe26c02d94",
+      "base_bytes": 3202,
+      "current_bytes": 3296,
+      "reason": null
+    },
+    {
+      "path": "lib/location/siege.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "ec19b20b9b39539e32ca58617f7e3194104d0276",
+      "base_sha256": "be5d89043c417f9120c0bc1ef90d4b48dc5fc73aed2784d2984650d41fe45f8d",
+      "current_sha256": "be5d89043c417f9120c0bc1ef90d4b48dc5fc73aed2784d2984650d41fe45f8d",
+      "base_bytes": 12539,
+      "current_bytes": 12943,
+      "reason": null
+    },
+    {
+      "path": "lib/location/site.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "b146be99c659da1b32e99c0b5d8a1290fd3a06d7",
+      "base_sha256": "818460be8b43e20de1dc7c7412dfc0c28f5cda2f8630b0c2eca26f63959d9262",
+      "current_sha256": "818460be8b43e20de1dc7c7412dfc0c28f5cda2f8630b0c2eca26f63959d9262",
+      "base_bytes": 17148,
+      "current_bytes": 17693,
+      "reason": null
+    },
+    {
+      "path": "lib/main.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "6f6edfec43bbc6f9e8082e595eb523d18ddc948e",
+      "base_sha256": "23c33169a8fc7be4f4287b4512e4ab968050d09d7225acfa103e7093109bff70",
+      "current_sha256": "5decaecb4916e31932c3e5a68556f20e240bd0df8e317bcd4f6e7aa0930ada6d",
+      "base_bytes": 1062,
+      "current_bytes": 1554,
+      "reason": "Start the original launchGame loop inside the modern themed/accessible Flutter shell. Share reading scale with app overlays; original game launch retained."
+    },
+    {
+      "path": "lib/map_editor/editor_tools.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "b9a039aefa5830c390c0a87b543205cbc6c35ca9",
+      "base_sha256": "1e34f1065725404e24b54183225ca8e1b572328059857f6b057b8c544a3cd9a6",
+      "current_sha256": "1e34f1065725404e24b54183225ca8e1b572328059857f6b057b8c544a3cd9a6",
+      "base_bytes": 12026,
+      "current_bytes": 12341,
+      "reason": null
+    },
+    {
+      "path": "lib/map_editor/main.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "d0a8d72f085e9ce26bf355ca54eb1c16add4d419",
+      "base_sha256": "0df84bb3f6652170f1c499bcfbc1e1ff2bc17677fd3a90a2f6b3874f713eeda4",
+      "current_sha256": "0df84bb3f6652170f1c499bcfbc1e1ff2bc17677fd3a90a2f6b3874f713eeda4",
+      "base_bytes": 590,
+      "current_bytes": 609,
+      "reason": null
+    },
+    {
+      "path": "lib/map_editor/map_canvas.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "48858ad1b0e5c3065cc4e74916d2e835725a96dd",
+      "base_sha256": "a462344eec9c5c8fa5b1ca617eb2f8d88e74cdeb93abd36b23ce30fc79ff0792",
+      "current_sha256": "a462344eec9c5c8fa5b1ca617eb2f8d88e74cdeb93abd36b23ce30fc79ff0792",
+      "base_bytes": 4818,
+      "current_bytes": 4953,
+      "reason": null
+    },
+    {
+      "path": "lib/map_editor/map_editor_controller.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "bbfb7292103692b198fe42baba1e2234e3cf2a78",
+      "base_sha256": "87c0350a4966b8b09ae13ba8cb48086ff9e9f6c29a9482e471e86d2a9531b82c",
+      "current_sha256": "87c0350a4966b8b09ae13ba8cb48086ff9e9f6c29a9482e471e86d2a9531b82c",
+      "base_bytes": 24125,
+      "current_bytes": 24949,
+      "reason": null
+    },
+    {
+      "path": "lib/map_editor/map_editor_screen.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "e4922095c5aa2f24924cd5d1fcb7f567b6353152",
+      "base_sha256": "7966a0bb50a9111f1ba0b491d39986ad46aabb661e2b5be0605b9f1b2179d3a6",
+      "current_sha256": "7966a0bb50a9111f1ba0b491d39986ad46aabb661e2b5be0605b9f1b2179d3a6",
+      "base_bytes": 24785,
+      "current_bytes": 25537,
+      "reason": null
+    },
+    {
+      "path": "lib/map_editor/map_painter.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "25ba19f98ca082a664903fd1aaef324f5b25aecc",
+      "base_sha256": "ff91ccce1e94dd68ff60b948b0418d6b5c1080c5dc72a024ffb71bace54b7b30",
+      "current_sha256": "ff91ccce1e94dd68ff60b948b0418d6b5c1080c5dc72a024ffb71bace54b7b30",
+      "base_bytes": 8367,
+      "current_bytes": 8641,
+      "reason": null
+    },
+    {
+      "path": "lib/map_editor/tile_palette.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "6d229af3f9b4bbbf6a33f50f176ab44f16386a22",
+      "base_sha256": "b1b6ae589f7b91f8a60ce208cc86100ed2e3adea2f4eeb5288b63cc7751e27be",
+      "current_sha256": "b1b6ae589f7b91f8a60ce208cc86100ed2e3adea2f4eeb5288b63cc7751e27be",
+      "base_bytes": 9040,
+      "current_bytes": 9314,
+      "reason": null
+    },
+    {
+      "path": "lib/monthly/advance_month.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "c92a6eae4c6effe77d21ba2459f1cc3ca10364a4",
+      "base_sha256": "77478ba0aa652b2e30ffb3d35f78be51adfde044f27d0da960c959659f4a7e26",
+      "current_sha256": "77478ba0aa652b2e30ffb3d35f78be51adfde044f27d0da960c959659f4a7e26",
+      "base_bytes": 15080,
+      "current_bytes": 15542,
+      "reason": null
+    },
+    {
+      "path": "lib/monthly/lcs_monthly.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "5812df0f0212570b3f85160fae971478c1ee30e6",
+      "base_sha256": "87887c67efc468000a965c001ae7250d2beb0974d6be25d1bac56e79ad488bfe",
+      "current_sha256": "aa54e9d8b6d21ad565a9e5ff97520c0ffc8e9a57387e292ead50dd0c16c0fb18",
+      "base_bytes": 35754,
+      "current_bytes": 37750,
+      "reason": "Read-only funding report projection: missing legacy ledger categories display as zero/are omitted, labels and page rows captured with original net/fence valuations. Manual Review call opts into safe navigation; automatic month-end remains required and original reset sequence/formulas/save maps are unchanged."
+    },
+    {
+      "path": "lib/monthly/sleeper_update.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "859b14d11ca9bf0c1bf04ee42c6c9db6a9633f0b",
+      "base_sha256": "e135fbd856abf5d27ae88cbefecf92f353182623c12dd42d67e09022da0c8aae",
+      "current_sha256": "e135fbd856abf5d27ae88cbefecf92f353182623c12dd42d67e09022da0c8aae",
+      "base_bytes": 27734,
+      "current_bytes": 28471,
+      "reason": null
+    },
+    {
+      "path": "lib/newspaper/ads.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "22f55b0577c98e7489c4730523c77edce71ad543",
+      "base_sha256": "b83abf59477d021d38d2647d60dcdd43f45053e07a1f317346c418d1bebd12b4",
+      "current_sha256": "b83abf59477d021d38d2647d60dcdd43f45053e07a1f317346c418d1bebd12b4",
+      "base_bytes": 6734,
+      "current_bytes": 6959,
+      "reason": null
+    },
+    {
+      "path": "lib/newspaper/ccs_storyline.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "3558e51d23d9a49b0f6ed95f7fcdcad2b22c9211",
+      "base_sha256": "6b1ba8dc4535f8f0a5b264481f152014c21b36db20d3a920e3c675ee3cbd8312",
+      "current_sha256": "6b1ba8dc4535f8f0a5b264481f152014c21b36db20d3a920e3c675ee3cbd8312",
+      "base_bytes": 3545,
+      "current_bytes": 3646,
+      "reason": null
+    },
+    {
+      "path": "lib/newspaper/display_news.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "8cb58fb664cf7283c8b5649677dbde24c23e4a6e",
+      "base_sha256": "f43dacad5cb3fdc62bfc5eeaaf54a136048d5220718c2af350ac865f96286a76",
+      "current_sha256": "b23994998dabfa3a3b8491874fa9c8cc9461a846856ea701128785eeea2bfacf",
+      "base_bytes": 39784,
+      "current_bytes": 41077,
+      "reason": "Presentation-only article snapshot before original dismissal loop; full generated story and effects retained."
+    },
+    {
+      "path": "lib/newspaper/filler.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "0d6e8260d53c0010974a31e9c73789e74512adef",
+      "base_sha256": "650658561040d493e91a4a520ab7a3757500a1763a4336665ace2d9da360257f",
+      "current_sha256": "650658561040d493e91a4a520ab7a3757500a1763a4336665ace2d9da360257f",
+      "base_bytes": 565,
+      "current_bytes": 585,
+      "reason": null
+    },
+    {
+      "path": "lib/newspaper/headline.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "c7943aa36c59538d3f9f3f013984867e61bb9ea4",
+      "base_sha256": "a3f24fb962cbf9d25fed6bdcecb72a3fd961681d351d3a65ce553a6421e5c8b0",
+      "current_sha256": "a3f24fb962cbf9d25fed6bdcecb72a3fd961681d351d3a65ce553a6421e5c8b0",
+      "base_bytes": 9666,
+      "current_bytes": 9906,
+      "reason": null
+    },
+    {
+      "path": "lib/newspaper/layout.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "b87f403219817f8f29a193b5f18dd23d2f19e1bf",
+      "base_sha256": "f8288f405216556ea44206613b2b31db07fe7d3ea732fddcc69b5c5a1988dc0e",
+      "current_sha256": "f8288f405216556ea44206613b2b31db07fe7d3ea732fddcc69b5c5a1988dc0e",
+      "base_bytes": 6295,
+      "current_bytes": 6488,
+      "reason": null
+    },
+    {
+      "path": "lib/newspaper/major_event.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "302415821d6298dff0e11d8ce0cfe83343f0a0b6",
+      "base_sha256": "371935976b19b48462aa1b338ac4b5aabd864f2b9eae04b915576755f61f1ae6",
+      "current_sha256": "371935976b19b48462aa1b338ac4b5aabd864f2b9eae04b915576755f61f1ae6",
+      "base_bytes": 117896,
+      "current_bytes": 120227,
+      "reason": null
+    },
+    {
+      "path": "lib/newspaper/news_story.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "0c112ac737508d37fddb30af4f164ee331e16493",
+      "base_sha256": "c208cb4d90be71d1b4c0b898eb7fe04edab3bbd72cb0ad3c6087cccee0c15c91",
+      "current_sha256": "c208cb4d90be71d1b4c0b898eb7fe04edab3bbd72cb0ad3c6087cccee0c15c91",
+      "base_bytes": 5786,
+      "current_bytes": 6006,
+      "reason": null
+    },
+    {
+      "path": "lib/newspaper/run_news_cycle.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "9da7b90cecb453b2483952d8a8f2654ed8409fc3",
+      "base_sha256": "05ee5f5c114b38300a99f8c77e32a680bad00775e9f374f8e96d978df82e2882",
+      "current_sha256": "05ee5f5c114b38300a99f8c77e32a680bad00775e9f374f8e96d978df82e2882",
+      "base_bytes": 26678,
+      "current_bytes": 27413,
+      "reason": null
+    },
+    {
+      "path": "lib/newspaper/squad_story_text.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "a200eff0bd79e406281778166c8431318c1e2743",
+      "base_sha256": "bdc7833fed16898529fbe311ee5c1c0428a45b255c64fb8b81d4cd0bdfaecf69",
+      "current_sha256": "bdc7833fed16898529fbe311ee5c1c0428a45b255c64fb8b81d4cd0bdfaecf69",
+      "base_bytes": 11420,
+      "current_bytes": 11717,
+      "reason": null
+    },
+    {
+      "path": "lib/newspaper/television.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "df6033b2faab1953590c3d796a4f2b582062f41b",
+      "base_sha256": "b19df86a57d08b50038330f716dbba4ce4c8fa10314f95e012f5eedb189e6f50",
+      "current_sha256": "b19df86a57d08b50038330f716dbba4ce4c8fa10314f95e012f5eedb189e6f50",
+      "base_bytes": 10969,
+      "current_bytes": 11260,
+      "reason": null
+    },
+    {
+      "path": "lib/politics/alignment.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "a57cbbee99fbfa15e16f5fe42c2268f4f7fe371e",
+      "base_sha256": "fff9472c115f81240b706d7d31d59da178a8226d8257b38708eb8e2c73c99875",
+      "current_sha256": "fff9472c115f81240b706d7d31d59da178a8226d8257b38708eb8e2c73c99875",
+      "base_bytes": 2824,
+      "current_bytes": 2959,
+      "reason": null
+    },
+    {
+      "path": "lib/politics/congress.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "26b2aa8df2cd0aa2099cda9a5a4e122193721e9d",
+      "base_sha256": "5d10fbd877aad3e04a584cb502e114f192709cdb965ca3bb1fde679912a37994",
+      "current_sha256": "5d10fbd877aad3e04a584cb502e114f192709cdb965ca3bb1fde679912a37994",
+      "base_bytes": 12218,
+      "current_bytes": 12603,
+      "reason": null
+    },
+    {
+      "path": "lib/politics/constitution.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "d651c61fa9a36908f5d1773b7a4ed3e74c7889d3",
+      "base_sha256": "3827131b24f400050c878fb69e875c3b6d33c127546aa938db4626bb3b4a29f5",
+      "current_sha256": "3827131b24f400050c878fb69e875c3b6d33c127546aa938db4626bb3b4a29f5",
+      "base_bytes": 17682,
+      "current_bytes": 18319,
+      "reason": null
+    },
+    {
+      "path": "lib/politics/elections.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "2ce4328e115e77069baa6a489370817b5c5cbdae",
+      "base_sha256": "d58139a2fd7e5d632e19472e716b3621ab09efec3b549b46fb3d033b9a15ab80",
+      "current_sha256": "d58139a2fd7e5d632e19472e716b3621ab09efec3b549b46fb3d033b9a15ab80",
+      "base_bytes": 22405,
+      "current_bytes": 23128,
+      "reason": null
+    },
+    {
+      "path": "lib/politics/laws.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "f9d897a5c2c845352aa9257dc43c6529c4f23f62",
+      "base_sha256": "c87548bc01f046a9472430310e62933aee67b617e77b60a3091a816bed68dc92",
+      "current_sha256": "c87548bc01f046a9472430310e62933aee67b617e77b60a3091a816bed68dc92",
+      "base_bytes": 17386,
+      "current_bytes": 17783,
+      "reason": null
+    },
+    {
+      "path": "lib/politics/politics.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "db7da13cafbaf185dedd65b9569052a6c167ee7d",
+      "base_sha256": "0b0fdf47a0efb71cdb7a27f21a0040881fe52ee0579f07d747bcd545f6a6cbfb",
+      "current_sha256": "0b0fdf47a0efb71cdb7a27f21a0040881fe52ee0579f07d747bcd545f6a6cbfb",
+      "base_bytes": 13907,
+      "current_bytes": 14284,
+      "reason": null
+    },
+    {
+      "path": "lib/politics/states.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "58b14251c03c100b59bf117d8fd5aeeb0444c524",
+      "base_sha256": "9de819875f4d4df17bf362a29b3221b99ad030e1f5ca21fd5b74fe737ef551f1",
+      "current_sha256": "9de819875f4d4df17bf362a29b3221b99ad030e1f5ca21fd5b74fe737ef551f1",
+      "base_bytes": 1924,
+      "current_bytes": 1998,
+      "reason": null
+    },
+    {
+      "path": "lib/politics/supreme_court.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "582f58ad20fac44389662421240cec6ecc484e87",
+      "base_sha256": "d5216137a92712c86a0259b01e376ce02c934b3cb165d0f4ddd51c2a3fa170a9",
+      "current_sha256": "d5216137a92712c86a0259b01e376ce02c934b3cb165d0f4ddd51c2a3fa170a9",
+      "base_bytes": 12493,
+      "current_bytes": 12893,
+      "reason": null
+    },
+    {
+      "path": "lib/politics/views.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "a7f2e1d5538fa3ae7381c624b162bfa56c371d22",
+      "base_sha256": "d8f0a352cc2c83bda2aa4ffff2513f8d51f6e4e6fc374e7b38cdc081a873d720",
+      "current_sha256": "d8f0a352cc2c83bda2aa4ffff2513f8d51f6e4e6fc374e7b38cdc081a873d720",
+      "base_bytes": 1602,
+      "current_bytes": 1678,
+      "reason": null
+    },
+    {
+      "path": "lib/saveload/load_cmv_movies.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "c6ae5d90ac0ea4937c3e6fbff5e3c07b18cb5169",
+      "base_sha256": "2458695badd7474133c932ae59ed3a75b8067a58f90ddd8aabe728def968b09b",
+      "current_sha256": "2458695badd7474133c932ae59ed3a75b8067a58f90ddd8aabe728def968b09b",
+      "base_bytes": 3393,
+      "current_bytes": 3502,
+      "reason": null
+    },
+    {
+      "path": "lib/saveload/load_cpc_images.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "880f8db35a1c947b0dc475b2c4b17a9ca6844dd7",
+      "base_sha256": "fb84413251167ce7990efc33903cb240cc0a54a2d70a4d78fedc3bd143fe490b",
+      "current_sha256": "fb84413251167ce7990efc33903cb240cc0a54a2d70a4d78fedc3bd143fe490b",
+      "base_bytes": 8986,
+      "current_bytes": 9336,
+      "reason": null
+    },
+    {
+      "path": "lib/saveload/load_xml_data.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "0b2cb32676bf503ed45e64beea686c39e3b354c1",
+      "base_sha256": "758dcb888f2f748a3d68b8ffa2605d49edaf8a845e8ad90eaf7c0309ddd9dd40",
+      "current_sha256": "758dcb888f2f748a3d68b8ffa2605d49edaf8a845e8ad90eaf7c0309ddd9dd40",
+      "base_bytes": 4488,
+      "current_bytes": 4594,
+      "reason": null
+    },
+    {
+      "path": "lib/saveload/parse_value.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "be42f941f9db7749d4089b313dc2345080ddd29a",
+      "base_sha256": "72adb352e94de941587fceeb2e1bba683c492df4265e8876512e7b0eba762484",
+      "current_sha256": "72adb352e94de941587fceeb2e1bba683c492df4265e8876512e7b0eba762484",
+      "base_bytes": 972,
+      "current_bytes": 1007,
+      "reason": null
+    },
+    {
+      "path": "lib/saveload/save_load.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "1603e103ae235d1fc64a95f5d5a0059d0b32e9d7",
+      "base_sha256": "d4fa8d6aa4e860179a20e3ceb39d799eaeda97ad4eb2972acca218cab5734730",
+      "current_sha256": "48cf887e8f2e74164e28912a08feef2cfe5724434a8aa76adba9fefd7ddca2ef",
+      "base_bytes": 16755,
+      "current_bytes": 21782,
+      "reason": "Legacy clothing migration; validate/version-check before commit/import overwrite; rollback active state and isolate RNG during previews; truthful save/export/import errors."
+    },
+    {
+      "path": "lib/saveload/storage/game_storage.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "534cb862a1540e468864b13a8b452287b32861bb",
+      "base_sha256": "2c31dcfca785b674b2a559acf6bd5a0b3114f8e888c61d872b06409e6fcff6cf",
+      "current_sha256": "2c31dcfca785b674b2a559acf6bd5a0b3114f8e888c61d872b06409e6fcff6cf",
+      "base_bytes": 584,
+      "current_bytes": 608,
+      "reason": null
+    },
+    {
+      "path": "lib/saveload/storage/sembast_storage.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "c43456342462b42e0b8342960e080f3e42db6599",
+      "base_sha256": "8afbaca1fb2f11bccca9117c1cec5f64a1be5098940cac6b281119ab40dbe56d",
+      "current_sha256": "8afbaca1fb2f11bccca9117c1cec5f64a1be5098940cac6b281119ab40dbe56d",
+      "base_bytes": 2772,
+      "current_bytes": 2863,
+      "reason": null
+    },
+    {
+      "path": "lib/saveload/storage/storage_factory.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "951cb06fbf5f050c39dd86c69fa42f67ddc9c795",
+      "base_sha256": "757c557401f9f09d9f136fadc0a92a5d4019f55ef178c3afaad11d7bd4652279",
+      "current_sha256": "757c557401f9f09d9f136fadc0a92a5d4019f55ef178c3afaad11d7bd4652279",
+      "base_bytes": 88,
+      "current_bytes": 90,
+      "reason": null
+    },
+    {
+      "path": "lib/saveload/storage/storage_factory_io.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "27cfa2696b6144141f096a5445982389f34a7526",
+      "base_sha256": "5e3d931aa6cd3a6d615a2935e5f00c7f251f57cc076b92b72a1bf0626e0c5041",
+      "current_sha256": "5e3d931aa6cd3a6d615a2935e5f00c7f251f57cc076b92b72a1bf0626e0c5041",
+      "base_bytes": 256,
+      "current_bytes": 261,
+      "reason": null
+    },
+    {
+      "path": "lib/saveload/storage/storage_factory_web.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "e226f413f720607860bc576b5f0a0dce2e8f7d4b",
+      "base_sha256": "31e23e5697e203425903c368c8bd2d088dd83eaf51adfd340dbaaa247b46cc24",
+      "current_sha256": "31e23e5697e203425903c368c8bd2d088dd83eaf51adfd340dbaaa247b46cc24",
+      "base_bytes": 179,
+      "current_bytes": 183,
+      "reason": null
+    },
+    {
+      "path": "lib/saveload/storage/web_storage.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "e641c5705d224526770dc8d9aa78588ae02e67a9",
+      "base_sha256": "cf3274d1e766c66cafe12fec2e2e2e5d58ede4d42d7422aa29b3404d1e7c6d50",
+      "current_sha256": "cf3274d1e766c66cafe12fec2e2e2e5d58ede4d42d7422aa29b3404d1e7c6d50",
+      "base_bytes": 2568,
+      "current_bytes": 2653,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/advance.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "f9d2a9339506e19ce9445711b3b5470ec473e154",
+      "base_sha256": "d37ba64d533632d7956938d3897601a8c7e71f123d3b945eec717edaf3d5eac0",
+      "current_sha256": "d37ba64d533632d7956938d3897601a8c7e71f123d3b945eec717edaf3d5eac0",
+      "base_bytes": 9655,
+      "current_bytes": 9983,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/chase_sequence.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "d86c0a224a3f94c62c971770f2f39003b4137a0d",
+      "base_sha256": "59936ae11c1ddd5e0ea14db86de135f21d26cd7dee3afa1af71749bca8c90009",
+      "current_sha256": "59936ae11c1ddd5e0ea14db86de135f21d26cd7dee3afa1af71749bca8c90009",
+      "base_bytes": 49685,
+      "current_bytes": 51252,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/fight.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "6b9741d3cbbc789ed628a2235b2f6864c9297043",
+      "base_sha256": "deea2f1d4ba894f4ed6de356b4321d9496fab6ecec5b3fa3b59446be2d79e3f2",
+      "current_sha256": "deea2f1d4ba894f4ed6de356b4321d9496fab6ecec5b3fa3b59446be2d79e3f2",
+      "base_bytes": 68702,
+      "current_bytes": 71020,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/haul_kidnap.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "1f209a4d1f3ebe4b2908d0974b77234c2ca97fb7",
+      "base_sha256": "217a3bf9190afc382f6122a74c62f57697f962de84960b0a1b656be6b5c0033a",
+      "current_sha256": "217a3bf9190afc382f6122a74c62f57697f962de84960b0a1b656be6b5c0033a",
+      "base_bytes": 13629,
+      "current_bytes": 14142,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/map_specials.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "500cbd8e4cbd8b3d23bb193f6f0f96bb8d517981",
+      "base_sha256": "dab6ca4a0c04a45487651bc9c31c701fe4a34311d83ef038888310f0d4262295",
+      "current_sha256": "dab6ca4a0c04a45487651bc9c31c701fe4a34311d83ef038888310f0d4262295",
+      "base_bytes": 86834,
+      "current_bytes": 89608,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/miscactions.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "633604f4ecc6653644147277fc982d2c710e39b6",
+      "base_sha256": "f8ec1ed08ff24ab5adb7b78ef4ff68c32dc19e9d8421cce03b63a4216de0704c",
+      "current_sha256": "f8ec1ed08ff24ab5adb7b78ef4ff68c32dc19e9d8421cce03b63a4216de0704c",
+      "base_bytes": 19779,
+      "current_bytes": 20401,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/newencounter.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "cfb671a97e16ed7bded6cb7b3e9979fe9e362c6c",
+      "base_sha256": "187951c901f94b0e900116704f9c13130e43c03173c33f0cb9af0d213453d472",
+      "current_sha256": "187951c901f94b0e900116704f9c13130e43c03173c33f0cb9af0d213453d472",
+      "base_bytes": 47696,
+      "current_bytes": 48936,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/shop.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "e79329102f111a92eda1f76111f8fa5dbf540793",
+      "base_sha256": "121766170615b6b91bf43f65f2fcfaaffff5471e5afe1fc2ef1aacc7a1ae8890",
+      "current_sha256": "121766170615b6b91bf43f65f2fcfaaffff5471e5afe1fc2ef1aacc7a1ae8890",
+      "base_bytes": 23926,
+      "current_bytes": 24678,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/shop_xml.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "d3c2e7888475af0b1e3c113e0811b5f05b310e60",
+      "base_sha256": "13784188f4a534c76674d4bac5c0f683a9e52e043a92b6fa8a5ccd16c6eb1d10",
+      "current_sha256": "13784188f4a534c76674d4bac5c0f683a9e52e043a92b6fa8a5ccd16c6eb1d10",
+      "base_bytes": 2718,
+      "current_bytes": 2804,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/site_display.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "a7d62466d62dab1d756819a21d02b24842c210ca",
+      "base_sha256": "b7890ba5bb366c1ace44f8173dbb1a84a9e634e0228b43db0cb6dc992694dc4a",
+      "current_sha256": "b7890ba5bb366c1ace44f8173dbb1a84a9e634e0228b43db0cb6dc992694dc4a",
+      "base_bytes": 36899,
+      "current_bytes": 38096,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/sitemap.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "821b9c95292812d9a7a2ec224a174346aabb25e2",
+      "base_sha256": "d2c0b95a2efd45131168619bba58da7c2e1fc2ade77504ce073c9499dea1ae1e",
+      "current_sha256": "d2c0b95a2efd45131168619bba58da7c2e1fc2ade77504ce073c9499dea1ae1e",
+      "base_bytes": 30879,
+      "current_bytes": 31824,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/sitemap_from_dame.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "975333ba415ad93bfffd158f6569a451b92c79f4",
+      "base_sha256": "40571f329bf931a77aa1ead7e30698125945c6ae706e85bb0e365a0cb60e7739",
+      "current_sha256": "40571f329bf931a77aa1ead7e30698125945c6ae706e85bb0e365a0cb60e7739",
+      "base_bytes": 9152,
+      "current_bytes": 9404,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/sitemap_from_tabscript.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "c7341e22a7d8b3f8240d0c009fe2712c6ce19c0b",
+      "base_sha256": "310808a15bbfaac2fb55e852edd834b532746ba0c789536cc56ea42d8f507953",
+      "current_sha256": "310808a15bbfaac2fb55e852edd834b532746ba0c789536cc56ea42d8f507953",
+      "base_bytes": 23538,
+      "current_bytes": 24233,
+      "reason": null
+    },
+    {
+      "path": "lib/sitemode/sitemode.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "097c7661d58a2a881e653c4b42ed30c82f2701f2",
+      "base_sha256": "cddf64e749a9de849f1359d030780b054d3a51e631dff82ee7f2d7b376b9a374",
+      "current_sha256": "608833943d07f75e23246cf016f363311ea3a06e53c161f0f35c9845bbae4104",
+      "base_bytes": 69098,
+      "current_bytes": 72782,
+      "reason": "Presentation: semantic tactical commands with original availability, tactical/full-map markers, clean map buffer, exact flee directions; combat/movement resolution retained."
+    },
+    {
+      "path": "lib/sitemode/stealth.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "fb497c00c5a9c9c3b09a4600d85a25bb9d4183b7",
+      "base_sha256": "c3dd1b07e957d5fc0e0c5147f8b4123c252aae607707fcddaa1ce56e8b4015ab",
+      "current_sha256": "c3dd1b07e957d5fc0e0c5147f8b4123c252aae607707fcddaa1ce56e8b4015ab",
+      "base_bytes": 28867,
+      "current_bytes": 29759,
+      "reason": null
+    },
+    {
+      "path": "lib/talk/drop_a_pickup_line.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "6d16751a3adaa01a7b3a019aa5934e684421c77b",
+      "base_sha256": "9c5eb8a9e9de93fc7df7b7fa0acf87cf124ad7db130c2e5a410248a062f6a8ba",
+      "current_sha256": "9c5eb8a9e9de93fc7df7b7fa0acf87cf124ad7db130c2e5a410248a062f6a8ba",
+      "base_bytes": 33904,
+      "current_bytes": 34861,
+      "reason": null
+    },
+    {
+      "path": "lib/talk/talk.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "4ab10484535526e89d03c995a664f2d43e6bf173",
+      "base_sha256": "58bd0b5fcdf187b19e7769315215fcb08df5c075070637518cfa3b6dba6022a3",
+      "current_sha256": "58bd0b5fcdf187b19e7769315215fcb08df5c075070637518cfa3b6dba6022a3",
+      "base_bytes": 867,
+      "current_bytes": 891,
+      "reason": null
+    },
+    {
+      "path": "lib/talk/talk_about_issues.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "a3808005a7f239e25b863268e89cb83b51d97cca",
+      "base_sha256": "79a53b8cbaa3c3f937533a208e13025eb1e782a444b10d7a6d70c43f6fc573f3",
+      "current_sha256": "79a53b8cbaa3c3f937533a208e13025eb1e782a444b10d7a6d70c43f6fc573f3",
+      "base_bytes": 15937,
+      "current_bytes": 16273,
+      "reason": null
+    },
+    {
+      "path": "lib/talk/talk_in_combat.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "eba6f58c415d5e3431edc87bdccde02f589b7083",
+      "base_sha256": "fbbbfc83630d016470c740bef0fc5d727d74f7d9674b5b19a7bd6a7901c9a4df",
+      "current_sha256": "fbbbfc83630d016470c740bef0fc5d727d74f7d9674b5b19a7bd6a7901c9a4df",
+      "base_bytes": 20544,
+      "current_bytes": 21179,
+      "reason": null
+    },
+    {
+      "path": "lib/talk/talk_outside_combat.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "759b8c344a413b9041abaa1417b5643b26cd540e",
+      "base_sha256": "601d23f0285a15f1b49c1313e482f3c98953896e5993bb1c0ad8f1b12e550ccc",
+      "current_sha256": "601d23f0285a15f1b49c1313e482f3c98953896e5993bb1c0ad8f1b12e550ccc",
+      "base_bytes": 19995,
+      "current_bytes": 20647,
+      "reason": null
+    },
+    {
+      "path": "lib/talk/talk_to_animals.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "92a43a228a7afb09c33b1fcdc5a02e1cd3f8857b",
+      "base_sha256": "d29eef2917069d4bd7ee4bdf57d2126e78a952e69a81df9c2738ef00be1520c0",
+      "current_sha256": "d29eef2917069d4bd7ee4bdf57d2126e78a952e69a81df9c2738ef00be1520c0",
+      "base_bytes": 5232,
+      "current_bytes": 5396,
+      "reason": null
+    },
+    {
+      "path": "lib/title_screen/game_over.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "9aeac49a824fe0113cb6a7662572d11fea151685",
+      "base_sha256": "841176cdb073f45f105676046332ae58f4a9e82a9376242b49d605e66cfdc872",
+      "current_sha256": "841176cdb073f45f105676046332ae58f4a9e82a9376242b49d605e66cfdc872",
+      "base_bytes": 1643,
+      "current_bytes": 1719,
+      "reason": null
+    },
+    {
+      "path": "lib/title_screen/high_scores.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "693b905802601906ec364beda741ba182d95c87f",
+      "base_sha256": "77e10cf174a1ed33977238396cf343f23fa73f91b33d0622fa67338c521f0032",
+      "current_sha256": "b39a559ff48d2915926d60fd4d9ae17a8854c49ce10f9ab971e47d268b0806aa",
+      "base_bytes": 11280,
+      "current_bytes": 11960,
+      "reason": "Bookkeeping: persist completed campaign totals once; active saves remain included only in the display; score formula/endings unchanged."
+    },
+    {
+      "path": "lib/title_screen/launch_game.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "82c3a49a212ddac5a8f6f11622d2d3e1f403a357",
+      "base_sha256": "418f5be9358b6ef7fc78a3adfadc72dda25121710df5d08a884116859b63d1e4",
+      "current_sha256": "418f5be9358b6ef7fc78a3adfadc72dda25121710df5d08a884116859b63d1e4",
+      "base_bytes": 2675,
+      "current_bytes": 2760,
+      "reason": null
+    },
+    {
+      "path": "lib/title_screen/new_game.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "ff0b3ada0e7e1127a82c4aaab19acca11c276ec5",
+      "base_sha256": "a1b6bd4172d7fa1f910f878dc7dd244d0d7bff8e63a87b6e470b29f751c8c2be",
+      "current_sha256": "3051992638fa2851b557f8d322dbef15f3fa2a1492b8e52225ceac22fdafa51f",
+      "base_bytes": 15644,
+      "current_bytes": 19903,
+      "reason": "Presentation-only creation context for original setup/identity settings, complete political briefing and final name prompt. Original option cycling, world/founder initialization, RNG, callbacks and name reader unchanged; context cleared after name completion."
+    },
+    {
+      "path": "lib/title_screen/questions.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "7ae1ec4644f10c4e84ea1916d2f225322cad48df",
+      "base_sha256": "3465bf41144a4b5c11b9be1e82bfe65a633f76b896a3ebfb94cebeacc5ea62d7",
+      "current_sha256": "0e1a4422d0806e0b306689c55e197f6cfdea8c68046e833c27a71b0a5bd8c96d",
+      "base_bytes": 22121,
+      "current_bytes": 23674,
+      "reason": "Presentation-only current question number, full original option/description text and already selected fate outcome. Original ten-question order, RNG draws, callbacks, per-answer effects and post-background recruits unchanged."
+    },
+    {
+      "path": "lib/title_screen/stack_trace/convert_stack_trace.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "5855b71379a7cc7560e3f22938dc0bbb4faa9c97",
+      "base_sha256": "79ffaf0609a1ac948c881b7e78dd3604647ec8f36e9f27c285f172123164b42f",
+      "current_sha256": "79ffaf0609a1ac948c881b7e78dd3604647ec8f36e9f27c285f172123164b42f",
+      "base_bytes": 98,
+      "current_bytes": 100,
+      "reason": null
+    },
+    {
+      "path": "lib/title_screen/stack_trace/convert_stack_trace_stub.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "b9e6c29ec7a483c1807db0aece2206547b90d12a",
+      "base_sha256": "02ad636d13d4412669435d654ad12387e105c151f8609b95ecf448b5d3ac9992",
+      "current_sha256": "02ad636d13d4412669435d654ad12387e105c151f8609b95ecf448b5d3ac9992",
+      "base_bytes": 73,
+      "current_bytes": 74,
+      "reason": null
+    },
+    {
+      "path": "lib/title_screen/stack_trace/convert_stack_trace_web.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "a6d1ee9e9189437ef73fc989ee5f81d118a6c8c0",
+      "base_sha256": "8a8983e51fbbf698a2c3f3de2c3d1ddd14ed3067ef33408ba26e89804d8f1659",
+      "current_sha256": "8a8983e51fbbf698a2c3f3de2c3d1ddd14ed3067ef33408ba26e89804d8f1659",
+      "base_bytes": 584,
+      "current_bytes": 602,
+      "reason": null
+    },
+    {
+      "path": "lib/title_screen/title_screen.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "ac3aaff4093d20b3d96680f148340c9edc3192a1",
+      "base_sha256": "b12322c8b4908b7ff45f36bd71f900f688a0228a618a366e127fba4a0e5eddf9",
+      "current_sha256": "6ff5a87a458c6d4f409982e05d27ea39109c6e516c3f8dbb5d832fedf987ac0d",
+      "base_bytes": 13022,
+      "current_bytes": 13550,
+      "reason": "Title marker enables modern rendering; title commands/new-game path retained."
+    },
+    {
+      "path": "lib/title_screen/world.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "934416b44ddd3a1d090f8c858c72d4893025671f",
+      "base_sha256": "0d4bef9429aa106d76c13acbb2f4fbf243a29e7fc20cd3faaf8465803b66b507",
+      "current_sha256": "0d4bef9429aa106d76c13acbb2f4fbf243a29e7fc20cd3faaf8465803b66b507",
+      "base_bytes": 5192,
+      "current_bytes": 5368,
+      "reason": null
+    },
+    {
+      "path": "lib/utils/bitmask.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "437a5afdedfc6962e2eb8350f29c659373b382cd",
+      "base_sha256": "400eec3a4cff9dfd459c595b302f3df6f03059285b99696ae0689e4c6a3f6dce",
+      "current_sha256": "400eec3a4cff9dfd459c595b302f3df6f03059285b99696ae0689e4c6a3f6dce",
+      "base_bytes": 892,
+      "current_bytes": 926,
+      "reason": null
+    },
+    {
+      "path": "lib/utils/cast.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "e5513d584867c0c4aed667c16c93e1e49cd5fa17",
+      "base_sha256": "b17f4f53ff9d4adf4fdc001d9240e5b8ca6c5e0b03e661d93ad48b3f9daa5a14",
+      "current_sha256": "b17f4f53ff9d4adf4fdc001d9240e5b8ca6c5e0b03e661d93ad48b3f9daa5a14",
+      "base_bytes": 80,
+      "current_bytes": 81,
+      "reason": null
+    },
+    {
+      "path": "lib/utils/colors.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "40e2b2cac44a039d1867be91cc255027b893c460",
+      "base_sha256": "08834799f409d43e2c2667028521f26c174790b4f8bcce8d7f8fcd9aa42002fe",
+      "current_sha256": "08834799f409d43e2c2667028521f26c174790b4f8bcce8d7f8fcd9aa42002fe",
+      "base_bytes": 6370,
+      "current_bytes": 6566,
+      "reason": null
+    },
+    {
+      "path": "lib/utils/debug_flags.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "e0d48a9dab88e64114e09c03f486dc7f225d05e4",
+      "base_sha256": "dadd71c2cdda9da09caf316cc9a4adfac9f7755d0d280ed58deab6a580f070be",
+      "current_sha256": "dadd71c2cdda9da09caf316cc9a4adfac9f7755d0d280ed58deab6a580f070be",
+      "base_bytes": 439,
+      "current_bytes": 450,
+      "reason": null
+    },
+    {
+      "path": "lib/utils/game_options.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "519f7bbbadd3366d671205d49b862c50980191d8",
+      "base_sha256": "c86898c07a0ad32da917e1b1750727448e4133dc826af57eae2e692e61f95d95",
+      "current_sha256": "c86898c07a0ad32da917e1b1750727448e4133dc826af57eae2e692e61f95d95",
+      "base_bytes": 1317,
+      "current_bytes": 1351,
+      "reason": null
+    },
+    {
+      "path": "lib/utils/interface_options.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "2e43e427daa5f63bb5c66212ab5bb013dc635eb1",
+      "base_sha256": "3682a0b75c285b7dcc0cb3abbbf5583b47ad44cee72f2fa43d66847356ba122a",
+      "current_sha256": "3682a0b75c285b7dcc0cb3abbbf5583b47ad44cee72f2fa43d66847356ba122a",
+      "base_bytes": 3205,
+      "current_bytes": 3347,
+      "reason": null
+    },
+    {
+      "path": "lib/utils/lcsrandom.dart",
+      "group": "dart_source",
+      "status": "reviewed_change",
+      "base_git_blob": "7f0ae3ed9586ac23a0f81e0889f17cd4e3d02d8c",
+      "base_sha256": "c3d2c5bb773a0ad031e4887efea8254ae8d32ebc9d8396a8b906517ff89bb79b",
+      "current_sha256": "7c223adf2e485cc40ee08cfc9d9b0805cefea41bd8cb1cf0dba82ca1bd5fa689",
+      "base_bytes": 1841,
+      "current_bytes": 2175,
+      "reason": "Temporarily isolate RNG during synchronous save validation/previews, then restore the original Random object; gameplay roll functions unchanged."
+    },
+    {
+      "path": "lib/vehicles/vehicle.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "a9b76c17ae73dc92ebcd8b4da008f090daa5ca91",
+      "base_sha256": "5185eb6ca30779b2b57c5fca14cde850297d7f2f7681abd259fd8ebce6585529",
+      "current_sha256": "5185eb6ca30779b2b57c5fca14cde850297d7f2f7681abd259fd8ebce6585529",
+      "base_bytes": 1548,
+      "current_bytes": 1603,
+      "reason": null
+    },
+    {
+      "path": "lib/vehicles/vehicle_type.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "b72cb9fdddbdfd7aa5fa6ab65d0e86f3c5644e58",
+      "base_sha256": "4f29bc1ebb1d87477dfd8d33f9204e0446c57cfcb1bdfa794c247411ea356ffe",
+      "current_sha256": "4f29bc1ebb1d87477dfd8d33f9204e0446c57cfcb1bdfa794c247411ea356ffe",
+      "base_bytes": 1441,
+      "current_bytes": 1492,
+      "reason": null
+    },
+    {
+      "path": "lib/vehicles/vehicle_type_xml.dart",
+      "group": "dart_source",
+      "status": "unchanged",
+      "base_git_blob": "ee50826875c017ba84509bb333871520c3b9af99",
+      "base_sha256": "5beb12d747cbacb2d8c907fdb9f07c6d3279f428297ef4e62ad37488e74f2e87",
+      "current_sha256": "5beb12d747cbacb2d8c907fdb9f07c6d3279f428297ef4e62ad37488e74f2e87",
+      "base_bytes": 3563,
+      "current_bytes": 3678,
+      "reason": null
+    }
+  ],
+  "additions": [
+    {
+      "path": "assets/modern/app_mark.svg",
+      "sha256": "65fe758840326810cac7cc604fb7072984b3152432ee1b94adb393d41a6a90e4",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "assets/modern/building_sprites_v2.png",
+      "sha256": "bae3af57cfe77627eefdbaff3a9c193a29154e5a5c976cd1f73fd398b0c47263",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "assets/modern/city_panorama.png",
+      "sha256": "45c13fe656e6073fa3d22303fcbfe89cfbb6e7fcb9025c0966cc6fb3a6062a4c",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "assets/modern/crew_portraits_v1.png",
+      "sha256": "25134e519a8151730ededaf2b94fed8f43543a81d917a04a5e74102e45cf6e07",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "assets/modern/journal_icons_v1.png",
+      "sha256": "5044642d06d418cc6a7289d0fc6380a6855dc7cc15d12f66ccf09cfb0ddca043",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "assets/modern/journal_leather_v1.png",
+      "sha256": "c2b5275322ab51be597e2349a3e3bb83bdff4eb9c4a93add1fb3932f9be4518b",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "assets/modern/journal_order_icons_v1.png",
+      "sha256": "4cad6bdf225e0d5e0070ab9c8e94403c458eba383499830bec38d34a5f8585e5",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "assets/modern/journal_paper_v1.png",
+      "sha256": "4ded547ed5561c66fc504858416ac1a49d38073a7ff3aa2e5d60f28126ab824d",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "assets/modern/journal_portraits_v1.png",
+      "sha256": "cfc84cc822f3a124e1ab7ddae5447157654d0a84e8a8fa1f74ec9ce26c087121",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "assets/modern/pedestrian_walk_v2.png",
+      "sha256": "ed117eb4a247ef4848997971a326ee0541f2106b98560983c9b1378d8f1e5048",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "assets/modern/safehouse.png",
+      "sha256": "fbdf7c6c3e751168ff9b8414f3c0707f0e6ccd4fcc9a4a803bf893d60eec4040",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "fonts/journal/LibreBaskerville-Italic-Variable.ttf",
+      "sha256": "223959683dc73ec4437bd61fabaa4b3f22209e22855ffd3aee36ba61a5116e97",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "fonts/journal/LibreBaskerville-Variable.ttf",
+      "sha256": "05a95421961341c5b2556285e8415df9db27dab4f4abe22b446b3c6a8b916c5d",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "fonts/journal/OFL.txt",
+      "sha256": "55959eef5b0c3b2e3c1c7631b8ff0f9447d75de20f29cfa7db5bcfb026763343",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "fonts/modern/roboto-black.ttf",
+      "sha256": "3872e9b39760a1b59ac1e192633dbb3b58e595b4d423930ac7ded525e9ae25e0",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "fonts/modern/roboto-bold.ttf",
+      "sha256": "7d0b991ee3e0be7af01ad7ea8cd2beea6c00a25e679a0226b6737f079aafff86",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "fonts/modern/roboto-medium.ttf",
+      "sha256": "f205cc511821ea56078a105557fcea6253129404d411c997e1866fbd006abb68",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "fonts/modern/roboto-regular.ttf",
+      "sha256": "79e851404657dac2106b3d22ad256d47824a9a5765458edb72c9102a45816d95",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "fonts/modern/roboto_license.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/basemode/activities.g.dart",
+      "sha256": "5689165c1061439bc8acb5c23f4d0236db3ff5c3f01be72175a0621b20fb1123",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/creature/body.g.dart",
+      "sha256": "8b76c52507a0d59c16e90a04d8c081fb72a5ccd9917b7f7c56bfc94a88c51d2b",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/creature/creature.g.dart",
+      "sha256": "e2a0a8129e4972c3d14dca19dc881811ab17a78bfdaa391e3da65979bf2208ac",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/creature/name.g.dart",
+      "sha256": "c95e8d809942e562631692ec131cc15ce0fcedc74719a88eba9ea167c2058bbd",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/creature/unique_creatures.g.dart",
+      "sha256": "780a965b908e58fa1fbd3d622ee0864cd33298437187740060c6b1013197c00e",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/daily/dating.g.dart",
+      "sha256": "f31ec702e29bf8872cb684febe2a7786a2f3d6fd4965ae82ae6eed7da4b55c23",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/daily/hostages/tend_hostage.g.dart",
+      "sha256": "ce742ffc2d3ecba180e5f00acf322d9002012c3cab5a8524dfe8f17ed7f530b8",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/daily/recruitment.g.dart",
+      "sha256": "1b9ed302342cb870f1695cacac840ae7cbe15d5f34ee9c3efb34afe563cfebcc",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/engine/agenda_context.dart",
+      "sha256": "94812174b65557ae23e77402d0c118fc358048e9df432f47c00820c9dd5bc6d9",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/engine/creation_context.dart",
+      "sha256": "b36622fc37fb4152557bb86e89f33d41e8208027d63af0af347a5d6048bc4097",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/engine/ledger_context.dart",
+      "sha256": "bdffba4251d7d884a8781d09c8d9ef9a079af13f8f80ac12305b8c7ec7063ede",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/engine/media_context.dart",
+      "sha256": "05d4ea25e32a2904d0773b93a2225e60b74f5443f23168d4ac2d4b6c77715982",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/engine/organisation_context.dart",
+      "sha256": "1c15285f4c97ba92046f8b7a2546b81e51db32245e41a2f48b975f38aa67f35a",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/gamestate/crime_squad.g.dart",
+      "sha256": "d0e2813bf2f96793a8424c7a6a765f159c4801372ea3849d03cb30c186638818",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/gamestate/game_state.g.dart",
+      "sha256": "265f261cb555a6cc760fc4ad318839d84c8696d7c04aa90b8fe21d985bf0d42f",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/gamestate/ledger.g.dart",
+      "sha256": "d8ba502147b0201b7b098f05ca87c3c8aa4086155d9309aaca37e605985f17b3",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/gamestate/squad.g.dart",
+      "sha256": "0019753abbbf2b923220c0989d3b7ef9d630a4f698c11b6f1aa311bfadebcec2",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/gamestate/stats.g.dart",
+      "sha256": "731d08326a056cb7790934e64b949898fd3592d6590e8d34b987bd95630acc29",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/items/ammo.g.dart",
+      "sha256": "46981af70bb2a1d6e60f847c1286b949a75aebf414f1914031803c277efcef52",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/items/attack.g.dart",
+      "sha256": "765e223ae2e6da4b4e5177f1d429c5559404e6ea39b7966aa2a1f313cb8cdd30",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/items/clothing.g.dart",
+      "sha256": "72802bdb57beddf36782951837376a32ad5ae02fb14e59bef33593c9beaadf64",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/items/flag.g.dart",
+      "sha256": "0a2f1984af24713c7f0897015cadca542ed5928df2c4fd6c3c9ce5cad7972ef3",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/items/item.g.dart",
+      "sha256": "5804a9c856fb895f8d8ebb9303985ff7be7200ae196d92603547ee2322cdca4e",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/items/loot.g.dart",
+      "sha256": "590019df428b8f748946f642af5596ee3ec9256382977bbf00f61aa5e59fe7fa",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/items/money.g.dart",
+      "sha256": "a107f837c66c606a753ecf26da27775f947349ea3cdefcb35dd6fc5c33d3f3d6",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/items/weapon.g.dart",
+      "sha256": "9c740fb89a5d71e3664955aaaef25f41341fd3ad2a4f4b4d6ff217942bfc7738",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/location/city.g.dart",
+      "sha256": "9d5bb672eddb85778555222fc60eadea6ef4a701ef787d6141ce9295a9bc85c6",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/location/compound.g.dart",
+      "sha256": "e2f69c39bc8b062a689ed5b53df8c49a7daac7a1e53bb7301bc6c05505c9f580",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/location/district.g.dart",
+      "sha256": "295899fa3d2c5baec6fd395b4ed57c98d3b6f8c05781a770224d51d3da617000",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/location/siege.g.dart",
+      "sha256": "59a9d418559604e122e93dd56e0bac6bf1dc8e303d18b1b36f703307c9f71058",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/location/site.g.dart",
+      "sha256": "a8f2d5e37b15102056202a3ba447246ff56df0c3497e526474971a12a4592f5c",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/activity_calculations.dart",
+      "sha256": "e89abbe0c30bf33e4a470179dec662aa69eea97c8095ecf100a9450eaf8134fe",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/article_view.dart",
+      "sha256": "d2b3b6ace5a00d12eeefb1faa9e448e76bab8f731d99975b50581c35f8238e06",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/city_planning_view.dart",
+      "sha256": "7e4b05b5ef4c240a56cdd2031dba983491cd69b11476f4f63413bce331e0f704",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/city_scene.dart",
+      "sha256": "4d3a8f44932ffbf5cf0f7110d269e0dfe85d681b243d16d38ecae4ecba1152b5",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/crew_dossier.dart",
+      "sha256": "507c225a031cd44e50271e1577402b8c37ddca60133aea1c0ecab96891eca23d",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/crew_portrait.dart",
+      "sha256": "71ec74644eec65aa4cedc07172e87723aae98d215ea9c645af9445e8f226c94d",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/direct_content.dart",
+      "sha256": "fb40303a7b855f4a0146753aef93c5ae0fef7e640df70b9708c4c84fe6b4b98d",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/full_site_map.dart",
+      "sha256": "22dfea5a5f17f915ed52381243c317ffdd6b9b14154eb57bcfdf7ae9fa3f04c0",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/headquarters_view.dart",
+      "sha256": "71be6a05fd732d602771e0330b640ac8a3632fbba094544ef6a2b8c3a9feb3af",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/journal_agenda.dart",
+      "sha256": "54a8e9f084df9b9aa1b04bb6687886906f6ecf90dfe5320cbe42543e293464e0",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/journal_city_plan.dart",
+      "sha256": "28b53a9101c6ec8b6c3ec606d5ed1cf4a23436a49c824225098197680788e886",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/journal_creation.dart",
+      "sha256": "13d47502701d7c22a8c13547b70f5c6ae2edcab798af21c443b518f116718b48",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/journal_ledger.dart",
+      "sha256": "c45376bb87c9b7519d934ad1507633ddbdb3428f00cb0281ededb941865e9d88",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/journal_legislation.dart",
+      "sha256": "39ac6c9fc086b223d5f37530391e17c6e62d3a2509ed872f5ac14391e5c6fed9",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/journal_media.dart",
+      "sha256": "656df3ba14089d0042c806e8d307e72dacd01aa328d11bdbc7c82dc25f610769",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/journal_order_icon.dart",
+      "sha256": "5f985bd42666f5b0d1321b7906e32afb6891b3ed898f9433071a9e62c65a63fd",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/journal_theme.dart",
+      "sha256": "f49104051be629f9ca3bd857264123276823da2d3b106bc52c28f22508cd2842",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/journal_title.dart",
+      "sha256": "ab1c44f41cbaf824dc9c58b26660f9180b6f74c61e5ba5405035523432a5cef6",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/mechanics_help.dart",
+      "sha256": "bed913b10c1dec6cb764dd7c44537a0872a4ef561794e6aaf1d87bbc1b5ff702",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/modern_app.dart",
+      "sha256": "53f8a472503aea25c86b8fafcc0a0209e478d7aa35f56f09fccf6720ca8a96e2",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/organisation_controller.dart",
+      "sha256": "3d9c28bf4eabc9718a698dd3cde37e4274d318ee0062ac7678efe1d1a9dfe343",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/organisation_journal.dart",
+      "sha256": "16b67543a62480010227cabd28215aa98d5aa5be9b4697fbf99ae2084d13e8be",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/skill_help.dart",
+      "sha256": "59c280fb98fe110d7468f92172a7049ff79dcd4aef1725c6ebb4b4aa681ec0ae",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/modern/tactical_map.dart",
+      "sha256": "9770fb0c5a3d55425a4dfd411fc74179b26634e856254c597e7871db7a136c9e",
+      "kind": "modern_presentation_or_asset",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/newspaper/news_story.g.dart",
+      "sha256": "71a531c2e5be503afb9578aef5d6c5c4639016a36922d7316c352367a4f02fa0",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/politics/politics.g.dart",
+      "sha256": "39fd2fc15b5a7bcde454f49d686ed6e32b10650a0f38f36ab1e6aad67ee7381e",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/saveload/save_load.g.dart",
+      "sha256": "1d072d3b2b21e106daa692d52fac976fda31da2a77a7d2ef51676a63c5a455d3",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/sitemode/sitemap.g.dart",
+      "sha256": "8db74d0f96f5418ffb3dca97d567f4e20570c5e8547392f549a1801f9f509f1e",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    },
+    {
+      "path": "lib/vehicles/vehicle.g.dart",
+      "sha256": "9412f912bbf51e2e9f430a9802001fc926d0cbe5405a79ff3952d8f19865b933",
+      "kind": "generated_serializer",
+      "status": "approved_addition"
+    }
+  ],
+  "failures": [],
+  "limitations": "Source/data retention and exact reviewed change identity only. Runtime scenario evidence is documented separately in GAMEPLAY_FIDELITY.md; this does not certify every original rule path."
+}

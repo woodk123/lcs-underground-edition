@@ -1,0 +1,24 @@
+# Local SDK, development state and build products
+.tools/
+.local/
+release/
+.dart_tool/
+build/
+upstream/.dart_tool/
+upstream/build/
+upstream/.flutter-plugins
+upstream/.flutter-plugins-dependencies
+
+# Editor / OS state
+.idea/
+.vscode/settings.json
+Thumbs.db
+.DS_Store
+*.log
+
+# Keep source, pubspec.lock, generated serialization and production artwork.
+
+# Generated playtest captures and reports
+/reports/
+__pycache__/
+

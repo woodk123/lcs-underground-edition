@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {resolve} from 'node:path';
+const root=resolve(import.meta.dirname,'..');
+const output=resolve(root,'reports/deep-playtest-20261014');
+const report=JSON.parse(await readFile(resolve(output,'browser-report.json'),'utf8'));
+assert.equal(report.scenarios.length,8);
+assert.ok(report.scenarios.every(s=>s.status==='passed'));
+assert.deepEqual(report.errors,[]);
+const hash=b=>createHash('sha256').update(b).digest('hex');
+const runtime=hash(await readFile(resolve(root,'upstream/build/web/main.dart.js')));
+const served=hash(Buffer.from(await(await fetch('http://127.0.0.1:8766/main.dart.js')).arrayBuffer()));
+assert.equal(served,runtime);
+assert.equal(report.runtimeSha256,runtime);
+const readGame=async name=>{const raw=JSON.parse(await readFile(resolve(output,name+'.json'),'utf8'));return typeof raw.saveData==='string'?JSON.parse(raw.saveData):raw.saveData;};
+const first=await readGame('extension-start'),last=await readGame('extension-final');
+assert.equal(last.date.slice(0,10),'2023-05-05');
+assert.equal(last.ledger._funds,first.ledger._funds+last.ledger.totalIncome-first.ledger.totalIncome-last.ledger.totalExpense+first.ledger.totalExpense);
+for(const person of first.lcs.pool){const p=last.lcs.pool.find(p=>p.id===person.id);assert.ok(p);assert.equal(p.alive,person.alive);assert.equal(p.daysSinceJoined,person.daysSinceJoined+90);}
+const tests=await readFile(resolve(output,'full-tests.log'),'utf8');assert.match(tests,/\+474: All tests passed!/);
+const analysis=await readFile(resolve(output,'analysis.log'),'utf8');assert.match(analysis,/No issues found/);
+const injection=await readFile(resolve(output,'service-worker.log'),'utf8');assert.match(injection,/manifest injected/);
+const summary={date:'2026-10-14',testsPassed:474,analysis:'No issues found',webBuild:'passed',serviceWorker:injection.trim(),runtimeSha256:runtime,servedSha256:served,origin:report.origin,browserScenarios:report.scenarios.map(s=>({label:s.label,status:s.status,runtimeSha256:s.runtimeSha256||report.runtimeSha256})),browserErrors:report.errors,naturalCampaign:{start:first.date,end:last.date,days:90,rosterPreserved:true,allFiveAlive:last.lcs.pool.every(p=>p.alive),startingFunds:first.ledger._funds,endingFunds:last.ledger._funds,income:last.ledger.totalIncome-first.ledger.totalIncome,expenses:last.ledger.totalExpense-first.ledger.totalExpense,accountingReconciles:true},readiness:'Improved campaign build; remaining rare branches and multi-year browser play are explicitly unverified. See report.txt.'};
+await writeFile(resolve(output,'validation-summary.json'),JSON.stringify(summary,null,2));console.log(JSON.stringify(summary,null,2));

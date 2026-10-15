@@ -1,0 +1,149 @@
+<shop name="OUBLIETTE">
+    <!-- Clarification
+    
+    <only_sell_legal_items> (boolean) The shop will only sell legal items.
+        Default: true
+    <fullscreen> (boolean) The shop will use the full screen. Otherwise half
+                           the screen with squad above.
+        Default: false
+    <allow_selling> (boolean) The shop will allow fencing items.
+        Default: false
+    <increase_prices_with_illegality> (boolean) The price of illegal items will
+                                                increase the more illegal they 
+                                                are.
+        Default: false
+    <exit> (string) What it says at the the exit. In fullscreen the buyer's
+                    name is printed first.
+        Default:
+    <entry> (string) What it says at the entrance. Only visible for departments.
+        Default:
+    <letter> (character) Letter to press to select the department or item sold.
+        Default:
+    
+    <department> Items for sale can be categorised into departments. They are
+                 essentially subshops or shops inside the shop. They have the
+                 same tags as above but inherit their defaults for
+                 only_sell_legal_items, fullscreen and
+                 increase_prices_with_illegality from their "parent" shop.
+                 
+    <item> An item being sold in the shop.
+        <class> (WEAPON, ARMOR, CLIP, LOOT) What class of item the item is.
+        <type> (item idname) The idname of the item type being sold.
+        <price> (integer) The price of the item being sold.
+    
+    -->
+    <only_sell_legal_items>true</only_sell_legal_items>
+    <allow_selling>false</allow_selling>
+    <exit>Leave</exit>
+
+    <department>
+        <entry>Purchase Halloween Costumes</entry>
+        <letter>c</letter>
+        <ui>clothes</ui>
+        <exit>Done</exit>
+        <item>
+            <class>ARMOR</class>
+            <type>CLOTHING_TOGA</type>
+            <price>25</price>
+        </item>
+        <item>
+            <class>ARMOR</class>
+            <type>CLOTHING_BLACKROBE</type>
+            <price>50</price>
+        </item>
+        <item>
+            <class>ARMOR</class>
+            <type>CLOTHING_TRENCHCOAT</type>
+            <price>100</price>
+        </item>
+        <item>
+            <class>ARMOR</class>
+            <type>CLOTHING_LABCOAT</type>
+            <price>200</price>
+        </item>
+        <item>
+            <class>ARMOR</class>
+            <type>CLOTHING_HARDHAT</type>
+            <price>200</price>
+        </item>
+        <item>
+            <class>ARMOR</class>
+            <type>CLOTHING_CLOWNSUIT</type>
+            <price>200</price>
+        </item>
+        <item>
+            <class>ARMOR</class>
+            <type>CLOTHING_BONDAGEGEAR</type>
+            <price>350</price>
+        </item>
+        <item>
+            <class>ARMOR</class>
+            <type>CLOTHING_ELEPHANTSUIT</type>
+            <price>1000</price>
+        </item>
+        <item>
+            <class>ARMOR</class>
+            <type>CLOTHING_DONKEYSUIT</type>
+            <price>1000</price>
+        </item>
+        <!-- +Masks! -->
+    </department>
+
+    <department>
+        <entry>Purchase Medieval Armor</entry>
+        <letter>a</letter>
+        <ui>clothes</ui>
+        <exit>Done</exit>
+        <item>
+            <class>ARMOR</class>
+            <type>CLOTHING_LEATHER</type>
+            <price>800</price>
+        </item>
+        <item>
+            <class>ARMOR</class>
+            <type>CLOTHING_STEELHAUBERK</type>
+            <price>1000</price>
+        </item>
+        <item>
+            <class>ARMOR</class>
+            <type>CLOTHING_MITHRIL</type>
+            <letter>!</letter>            <!-- Not a letter! -->
+            <price>150000</price>
+        </item>
+    </department>
+
+    <department>
+        <entry>Purchase Medieval Weapons</entry>
+        <letter>m</letter>
+        <ui>weapons</ui>
+        <exit>Done</exit>
+        <item>
+            <class>WEAPON</class>
+            <type>WEAPON_DAGGER</type>
+        </item>
+        <item>
+            <class>WEAPON</class>
+            <type>WEAPON_SWORD</type>
+        </item>
+        <item>
+            <class>WEAPON</class>
+            <type>WEAPON_DAISHO</type>
+        </item>
+        <item>
+            <class>WEAPON</class>
+            <type>WEAPON_HAMMER</type>
+        </item>
+        <item>
+            <class>WEAPON</class>
+            <type>WEAPON_MAUL</type>
+        </item>
+        <item>
+            <class>WEAPON</class>
+            <type>WEAPON_CROSS</type>
+        </item>
+        <item>
+            <class>WEAPON</class>
+            <type>WEAPON_STAFF</type>
+        </item>
+    </department>
+</shop>

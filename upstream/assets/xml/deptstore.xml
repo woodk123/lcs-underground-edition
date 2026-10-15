@@ -1,0 +1,69 @@
+<shop name="DEPARTMENT_STORE">
+	<only_sell_legal_items>true</only_sell_legal_items>
+	<allow_selling>false</allow_selling>
+	<exit>Leave</exit>
+
+	<department>
+		<entry>Men's Clothing</entry>
+		<letter>m</letter>
+		<ui>clothes</ui>
+		<item>
+			<class>ARMOR</class>
+			<type>CLOTHING_CLOTHES</type>
+			<price>50</price>
+		</item>
+		<item>
+			<class>ARMOR</class>
+			<type>CLOTHING_BLACKCLOTHES</type>
+			<price>50</price>
+		</item>
+		<item>
+			<class>ARMOR</class>
+			<type>CLOTHING_CHEAPSUIT</type>
+			<price>400</price>
+		</item>
+		<item>
+			<class>ARMOR</class>
+			<type>CLOTHING_EXPENSIVESUIT</type>
+			<price>5000</price>
+		</item>
+		<item>
+			<class>ARMOR</class>
+			<type>CLOTHING_BLACKSUIT</type>
+			<price>500</price>
+		</item>
+	</department>
+	<department>
+		<entry>Women's Clothing</entry>
+		<letter>w</letter>
+		<ui>clothes</ui>
+		<item>
+			<class>ARMOR</class>
+			<type>CLOTHING_CLOTHES</type>
+			<price>50</price>
+		</item>
+		<item>
+			<class>ARMOR</class>
+			<type>CLOTHING_BLACKCLOTHES</type>
+			<price>50</price>
+		</item>
+		<item>
+			<class>ARMOR</class>
+			<type>CLOTHING_CHEAPDRESS</type>
+			<description>Buy a Cheap Dress</description>
+			<price>400</price>
+		</item>
+		<item>
+			<class>ARMOR</class>
+			<type>CLOTHING_EXPENSIVEDRESS</type>
+			<description>Buy an Expensive Dress</description>
+			<price>5000</price>
+		</item>
+		<item>
+			<class>ARMOR</class>
+			<type>CLOTHING_BLACKDRESS</type>
+			<description>Buy a Black Dress</description>
+			<price>500</price>
+		</item>
+	</department>
+</shop>

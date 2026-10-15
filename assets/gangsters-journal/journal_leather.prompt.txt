@@ -1,0 +1,6 @@
+Use case: historical-scene
+Asset type: original seamless material surface for a readable 1920s organiser game interface, not a mockup or illustration of controls.
+Primary request: a square orthographic macro photograph of one uninterrupted piece of old oxblood-brown leather used to bind a well-kept 1920s business journal. Fill the entire image edge to edge with the material.
+Style/medium: restrained realistic material photography, matte aged leather, fine subtle pores and barely visible creasing, dark walnut brown with a muted oxblood undertone. Even neutral lighting, extremely low contrast microtexture, no directional light, no dramatic gradients.
+Composition/framing: perfectly flat top-down swatch, no perspective, evenly detailed throughout, visually seamless opposite edges for tiling. Square 1024 by 1024.
+Constraints: completely text-free. No embossing, no ornaments, no metal, no stitching, no book outline, no frame, no paper, no controls, no icons, no logos, no watermarks, no props, no border, no vignette, no focal object. It will be a quiet thin outer journal edge behind live high-contrast game controls. Entire field a continuous dark oxblood-brown leather texture.

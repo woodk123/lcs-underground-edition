@@ -1,0 +1,6 @@
+Use case: historical-scene
+Asset type: original quiet parchment material for live text in a 1920s business journal game interface.
+Primary request: one flat square swatch of warm light ivory writing paper, slightly creamy with a very faint grey-olive undertone, fine close woven rag fibres and a barely perceptible antique tooth. Fill every pixel edge to edge with the paper surface.
+Style/medium: orthographic archival material photograph under perfectly even neutral light. A well-maintained 1920s account ledger, clean and professional. Extremely subtle microtexture and very low contrast, almost uniform; dark text must remain easy to read anywhere.
+Composition/framing: seamless opposite edges suitable for tiling, perfectly flat top-down view, no perspective or shadow, no book form. Square 1024 by 1024.
+Constraints: blank material only. No writing, no text, no ruled lines, no drawings, no stains, no brown burned edges, no tears, no folds, no paper outline, no border, no vignette, no objects, no icons, no controls, no logos, no watermark. Do not create an open book or a UI mockup. One uninterrupted very light ivory paper material, no other elements.

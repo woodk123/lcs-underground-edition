@@ -1,0 +1,15 @@
+Use case: stylized-concept
+Asset type: technically correct EIGHT FRAME WALK ANIMATION for a game, transparent sprite sheet.
+Primary request: Show a full natural WALK CYCLE with eight distinctly different sequential leg poses, not eight almost-identical standing pictures. Exactly4columns x2rows, one same character percell, same scale and same in-place anchor. Transparent landscape canvas, no background. Clean simplified illustrated ink sprite, subtle painted navy/teal shading, contemporary adult civilian short darkhair, navy jacket, greyshirt, tealtrousers, brown shoes. Camera is an elevated isometric30degree three-quarter view, the character always faces down-right/southeast.
+The key is ANIMATION CHANGES. This is one complete cycle: FIRST HALF steps forward with the LEFT leg, SECOND HALF steps forward with the RIGHT leg. Frame4 must clearly have the OPPOSITE foot leading from frame0. Both shoes must remain visible as separate shapes. Arms also alternate clearly.
+Pose blueprint by grid position:
+TOP LEFT/frame0 CONTACT: LEFT leg straight extended forward southeast, LEFT shoe farthest down-right. RIGHT leg straight extended back northwest, RIGHT shoe visibly back. RIGHT arm forward, LEFT arm back.
+TOP second/frame1 DOWN: LEFT knee slightly bends supporting body at front; RIGHT knee bends and trailing RIGHT heel lifts. Body lowers slightly.
+TOP third/frame2 PASS: Both feet close together under hips, RIGHT knee bent lifted passing forward next to LEFT supporting leg. Body centered.
+TOP fourth/frame3 UP: RIGHT thigh swings forward, RIGHT knee bent at45degrees and RIGHT shoe lifted forward. LEFT leg remains behind supporting on toes. Body higher.
+BOTTOM LEFT/frame4 OPPOSITE CONTACT: RIGHT leg straight extended forward southeast, RIGHT shoe farthest down-right. LEFT leg straight extended back northwest, LEFT shoe visibly back. LEFT arm forward, RIGHT arm back. This is opposite frame0.
+BOTTOM second/frame5 DOWN: RIGHT knee slightly bends supporting body at front; LEFT knee bends trailing LEFT heel lifts. Body lower.
+BOTTOM third/frame6 PASS: Feet close together under hips, LEFT knee bent lifted passing forward next to RIGHT supporting leg. Body centered.
+BOTTOM fourth/frame7 UP: LEFT thigh swings forward, LEFT knee bent at45degrees and LEFT shoe lifted forward. RIGHT leg remains behind supporting on toes. Body higher. Frame7 leads naturally back to frame0.
+Keep head and jacket identity consistent but allow the anatomically required torso twist and opposing arm swing. Character must not rotate or turn direction. All8 legs must NOT have the same leading leg. Clearly differentiate the narrow PASS poses from broad CONTACT stride poses.
+Grid contract: Each figure fully inside its own square cell; at least20% transparent margin left and right,8% top,12% bottom. Footground common local anchor at x50%, y88%, figures same height. Genuine alpha, no shadows, no ground, no numbers, no labels, no words, no frame borders, no watermark. Preserve full4x2canvas.

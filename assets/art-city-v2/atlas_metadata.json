@@ -1,0 +1,683 @@
+{
+  "schema_version": 1,
+  "created_utc_date": "2026-10-13",
+  "generator": "ChatGPT built-in image_gen.imagegen",
+  "postprocessing": "None. PNG bytes copied verbatim; crop rectangles are renderer metadata only.",
+  "assets": {
+    "buildings": {
+      "runtime_path": "upstream/assets/modern/building_sprites_v2.png",
+      "original_path": "assets/art-city-v2/building_sprites_v2.png",
+      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a1372c-83ad-75a2-849d-f3e0daa8356b\\exec-dd231bf0-634e-45d5-950a-6e21623cda0a.png",
+      "prompt_path": "assets/art-city-v2/building_sprites_v2.prompt.txt",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "bae3af57cfe77627eefdbaff3a9c193a29154e5a5c976cd1f73fd398b0c47263",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 952411,
+      "initial_prompt_path": "assets/art-city-v2/explorations/building_sprites_v1.prompt.txt",
+      "layout": "4x4 logical arrangement with explicit unequal crop rectangles; do not divide by equal quarters.",
+      "frames": [
+        {
+          "index": 0,
+          "type": "apartment_safehouse",
+          "source_rect": [
+            52,
+            64,
+            233,
+            258
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            116.5,
+            254
+          ],
+          "visible_bounds_alpha_ge_8": [
+            56,
+            68,
+            225,
+            250
+          ]
+        },
+        {
+          "index": 1,
+          "type": "neighborhood_shop",
+          "source_rect": [
+            352,
+            120,
+            247,
+            192
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            123.5,
+            188
+          ],
+          "visible_bounds_alpha_ge_8": [
+            356,
+            124,
+            239,
+            184
+          ]
+        },
+        {
+          "index": 2,
+          "type": "cafe",
+          "source_rect": [
+            664,
+            108,
+            240,
+            211
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            120.0,
+            207
+          ],
+          "visible_bounds_alpha_ge_8": [
+            668,
+            112,
+            232,
+            203
+          ]
+        },
+        {
+          "index": 3,
+          "type": "warehouse",
+          "source_rect": [
+            962,
+            83,
+            248,
+            228
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            124.0,
+            224
+          ],
+          "visible_bounds_alpha_ge_8": [
+            966,
+            87,
+            240,
+            220
+          ]
+        },
+        {
+          "index": 4,
+          "type": "factory",
+          "source_rect": [
+            45,
+            349,
+            250,
+            273
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            125.0,
+            269
+          ],
+          "visible_bounds_alpha_ge_8": [
+            49,
+            353,
+            242,
+            265
+          ]
+        },
+        {
+          "index": 5,
+          "type": "media_office",
+          "source_rect": [
+            365,
+            349,
+            226,
+            272
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            113.0,
+            268
+          ],
+          "visible_bounds_alpha_ge_8": [
+            369,
+            353,
+            218,
+            264
+          ]
+        },
+        {
+          "index": 6,
+          "type": "courthouse",
+          "source_rect": [
+            658,
+            352,
+            259,
+            272
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            129.5,
+            268
+          ],
+          "visible_bounds_alpha_ge_8": [
+            662,
+            356,
+            251,
+            264
+          ]
+        },
+        {
+          "index": 7,
+          "type": "police_station",
+          "source_rect": [
+            964,
+            373,
+            252,
+            239
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            126.0,
+            235
+          ],
+          "visible_bounds_alpha_ge_8": [
+            968,
+            377,
+            244,
+            231
+          ]
+        },
+        {
+          "index": 8,
+          "type": "hospital",
+          "source_rect": [
+            44,
+            661,
+            259,
+            240
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            129.5,
+            236
+          ],
+          "visible_bounds_alpha_ge_8": [
+            48,
+            665,
+            251,
+            232
+          ]
+        },
+        {
+          "index": 9,
+          "type": "university",
+          "source_rect": [
+            347,
+            667,
+            257,
+            239
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            128.5,
+            235
+          ],
+          "visible_bounds_alpha_ge_8": [
+            351,
+            671,
+            249,
+            231
+          ]
+        },
+        {
+          "index": 10,
+          "type": "bank",
+          "source_rect": [
+            656,
+            677,
+            258,
+            229
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            129.0,
+            225
+          ],
+          "visible_bounds_alpha_ge_8": [
+            660,
+            681,
+            250,
+            221
+          ]
+        },
+        {
+          "index": 11,
+          "type": "prison",
+          "source_rect": [
+            965,
+            672,
+            255,
+            228
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            127.5,
+            224
+          ],
+          "visible_bounds_alpha_ge_8": [
+            969,
+            676,
+            247,
+            220
+          ]
+        },
+        {
+          "index": 12,
+          "type": "office_tower",
+          "source_rect": [
+            52,
+            930,
+            234,
+            278
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            117.0,
+            274
+          ],
+          "visible_bounds_alpha_ge_8": [
+            56,
+            934,
+            226,
+            270
+          ]
+        },
+        {
+          "index": 13,
+          "type": "suburban_house",
+          "source_rect": [
+            349,
+            978,
+            256,
+            218
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            128.0,
+            214
+          ],
+          "visible_bounds_alpha_ge_8": [
+            353,
+            982,
+            248,
+            210
+          ]
+        },
+        {
+          "index": 14,
+          "type": "farm_ranch",
+          "source_rect": [
+            648,
+            970,
+            275,
+            232
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            137.5,
+            228
+          ],
+          "visible_bounds_alpha_ge_8": [
+            652,
+            974,
+            267,
+            224
+          ]
+        },
+        {
+          "index": 15,
+          "type": "city_hall",
+          "source_rect": [
+            965,
+            916,
+            251,
+            283
+          ],
+          "source_rect_format": "x,y,width,height",
+          "foot_anchor_in_source_rect": [
+            125.5,
+            279
+          ],
+          "visible_bounds_alpha_ge_8": [
+            969,
+            920,
+            243,
+            275
+          ]
+        }
+      ]
+    },
+    "portraits": {
+      "runtime_path": "upstream/assets/modern/crew_portraits_v1.png",
+      "original_path": "assets/art-city-v2/crew_portraits_v1.png",
+      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a1372c-83ad-75a2-849d-f3e0daa8356b\\exec-d8e952ab-e564-4fa0-94d2-0d505f8f9bcd.png",
+      "prompt_path": "assets/art-city-v2/crew_portraits_v1.prompt.txt",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "sha256": "25134e519a8151730ededaf2b94fed8f43543a81d917a04a5e74102e45cf6e07",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "cell_width": 313.5,
+        "cell_height": 313.5,
+        "crop_order": "row-major"
+      },
+      "portraits": [
+        {
+          "index": 0,
+          "description": "Young adult woman, warm brown skin, dark curly hair, teal jacket",
+          "source_rect": [
+            0.0,
+            0.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 1,
+          "description": "Middle-aged white man, short dark hair, stubble, charcoal work shirt",
+          "source_rect": [
+            313.5,
+            0.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 2,
+          "description": "Older Black woman, short salt-and-pepper curls, brick cardigan",
+          "source_rect": [
+            627.0,
+            0.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 3,
+          "description": "Adult East Asian man, close-cropped dark hair, rectangular glasses, navy jacket",
+          "source_rect": [
+            940.5,
+            0.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 4,
+          "description": "Adult South Asian woman, dark bun, mustard scarf",
+          "source_rect": [
+            0.0,
+            313.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 5,
+          "description": "Older white man, silver hair, dark coat",
+          "source_rect": [
+            313.5,
+            313.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 6,
+          "description": "Young adult Black man, short twists, olive hoodie",
+          "source_rect": [
+            627.0,
+            313.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 7,
+          "description": "Middle-aged Latino woman, short wavy dark hair, denim jacket",
+          "source_rect": [
+            940.5,
+            313.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 8,
+          "description": "Young adult white woman, short red hair, freckles, navy knit top",
+          "source_rect": [
+            0.0,
+            627.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 9,
+          "description": "Adult Middle Eastern man, dark beard, teal collared shirt",
+          "source_rect": [
+            313.5,
+            627.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 10,
+          "description": "Older East Asian woman, grey bob, amber cardigan",
+          "source_rect": [
+            627.0,
+            627.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 11,
+          "description": "Adult white man, long brown hair, faded brick jacket",
+          "source_rect": [
+            940.5,
+            627.0,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 12,
+          "description": "Adult Black woman, braids, dark denim shirt",
+          "source_rect": [
+            0.0,
+            940.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 13,
+          "description": "Middle-aged East Asian man, grey-streaked hair, brown jacket",
+          "source_rect": [
+            313.5,
+            940.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 14,
+          "description": "Adult Latino man, shaved head, navy work shirt",
+          "source_rect": [
+            627.0,
+            940.5,
+            313.5,
+            313.5
+          ]
+        },
+        {
+          "index": 15,
+          "description": "Older South Asian woman, glasses, grey hair, muted teal coat",
+          "source_rect": [
+            940.5,
+            940.5,
+            313.5,
+            313.5
+          ]
+        }
+      ],
+      "usage": "Stable illustrative likeness selected from existing creature presentation fields; never changes or invents simulation attributes."
+    },
+    "pedestrian_walk": {
+      "runtime_path": "upstream/assets/modern/pedestrian_walk_v2.png",
+      "original_path": "assets/art-city-v2/pedestrian_walk_v2.png",
+      "generated_origin": "C:\\Users\\sheer\\.codex\\generated_images\\01a1372c-83ad-75a2-849d-f3e0daa8356b\\exec-c1334288-aec2-4c8e-95dc-c26583966c06.png",
+      "prompt_path": "assets/art-city-v2/pedestrian_walk_v2.prompt.txt",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "sha256": "ed117eb4a247ef4848997971a326ee0541f2106b98560983c9b1378d8f1e5048",
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "fully_transparent_pixels": 1176238,
+      "layout": {
+        "columns": 4,
+        "rows": 2,
+        "cell_width": 384,
+        "cell_height": 512,
+        "crop_order": "row-major",
+        "fps_recommended": 8,
+        "loop": true
+      },
+      "frames": [
+        {
+          "index": 0,
+          "source_rect": [
+            0,
+            0,
+            384,
+            512
+          ],
+          "foot_anchor_in_source_rect": [
+            223,
+            476
+          ],
+          "pose": "contact"
+        },
+        {
+          "index": 1,
+          "source_rect": [
+            384,
+            0,
+            384,
+            512
+          ],
+          "foot_anchor_in_source_rect": [
+            207.5,
+            466
+          ],
+          "pose": "down/recoil"
+        },
+        {
+          "index": 2,
+          "source_rect": [
+            768,
+            0,
+            384,
+            512
+          ],
+          "foot_anchor_in_source_rect": [
+            190.5,
+            463
+          ],
+          "pose": "passing"
+        },
+        {
+          "index": 3,
+          "source_rect": [
+            1152,
+            0,
+            384,
+            512
+          ],
+          "foot_anchor_in_source_rect": [
+            192,
+            431
+          ],
+          "pose": "up/swing"
+        },
+        {
+          "index": 4,
+          "source_rect": [
+            0,
+            512,
+            384,
+            512
+          ],
+          "foot_anchor_in_source_rect": [
+            234.5,
+            449
+          ],
+          "pose": "opposite arm contact"
+        },
+        {
+          "index": 5,
+          "source_rect": [
+            384,
+            512,
+            384,
+            512
+          ],
+          "foot_anchor_in_source_rect": [
+            205.5,
+            445
+          ],
+          "pose": "opposite arm down/recoil"
+        },
+        {
+          "index": 6,
+          "source_rect": [
+            768,
+            512,
+            384,
+            512
+          ],
+          "foot_anchor_in_source_rect": [
+            190.5,
+            439
+          ],
+          "pose": "opposite arm passing"
+        },
+        {
+          "index": 7,
+          "source_rect": [
+            1152,
+            512,
+            384,
+            512
+          ],
+          "foot_anchor_in_source_rect": [
+            199.5,
+            416
+          ],
+          "pose": "opposite arm up/swing"
+        }
+      ],
+      "usage": "Actual image frame animation with common pixel scale and per-frame foot anchors. Do not stretch each frame independently. Decorative street pedestrian, does not imply crew movement or change campaign time.",
+      "inspection": "Eight distinct narrow/wide stride poses and alternating arm swings. Initial repeated-stride sheet rejected. Fully transparent background; dark RGB under alpha0 is intentionally preserved and invisible with correct alpha compositing."
+    }
+  }
+}

@@ -1,0 +1,917 @@
+<weapons>
+    <!-- Clarification
+    <weapontype idname="(string)"> idname is used internally by the game to identify the weapon type.
+                                   No two item types should have the same idname.
+        <name> (string) The name of the weapon.
+            Default: UNDEFINED
+        <name_future> (string) The name of the weapon past year 2100.
+            Defaults to normal name.
+        <shortname> (string) A shorter name for the weapon. Max 9 characters for guns, 14 for others.
+            Defaults to normal name if it's not too long, otherwise UNDEF.
+        <shortname_future> (string) A shorter name used past year 2100.
+            Defaults to normal future name if it's not too long, otherwise UNDEF.
+        <can_take_hostages> (boolean) If the weapon can be used to take hostages quietly.
+            Default: false
+        <threatening> (boolean) If the weapon appears threatening. (Attracts bullets, threaten landlord)
+            Default: false
+        <can_threaten_hostages> (boolean) If the weapon can be used to threaten a held hostage.
+            Default: true
+        <protects_against_kidnapping> (boolean) If the weapon makes someone too dangerous to kidnap.
+            Default: true
+        <instrument> (boolean) The weapon will give a bonus when fund raising with music.
+            Default: false
+        <graffiti> (boolean) Weapon can be used to make graffiti.
+            Default: false
+        <legality> (-3, -2, -1, 0, 1, 2) Most liberal gun law for weapon to be legal. (-3 always illegal.)
+            Default: 2
+        <price> (integer) Money received when selling weapon at pawn shop.
+            Default: 0
+        <auto_break_locks> (boolean) The weapon will allow door breaking attempts to always be succesful.
+            Default: false
+        <suspicious> (boolean) If it is suspicious to carry the weapon.
+            Default: true
+        <size> (integer) Size is relevant for if a piece of clothing can conceal the weapon.
+            Default: 15 (trenchcoat conceals 10, all other 5; unless changed of course)
+        <attack>
+            <priority> (integer) Attack used depends on situation and priority, eg priority 1 chosen before priority 2 if situation permits.
+                Default: 1
+            <ranged> (boolean) If the weapon is ranged.
+                Default: false
+            <thrown> (boolean) If the weapon is thrown.
+                Default: false
+            <cartridge> (cartridge type)
+            <attack_description> (string) How the attack is descriped.
+                Default: assaults
+            <hit_description> (string) Description for the hit. Used when multiple hits.
+                Default: striking
+            <always_describe_hit> (boolean) Describe the hit even if only one hit occured.
+                Default: false
+            <hit_punctuation> (string)
+                Default: .
+            <accuracy_bonus> (integer) Bonus to accuracy.
+                Default: 0
+            <can_backstab> (boolean) If the weapon can be used to sneak attack enemies silently.
+                Default: false
+            <number_attacks> (integer) The number of attacks done with the weapon in one round of combat.
+                Default: 1
+            <successive_attacks_difficulty> (integer) Higher number makes it harder to hit more than once.
+                Default: 0
+            <damage> (integer) Base damage for the attack.
+                Default: 10
+            <bruises> (boolean) Will give "bruised" status.
+                Default: false
+            <tears> (boolean) Will give "torn" status.
+                Default: false
+            <cuts> (boolean) Will give "cut" status.
+                Default: false
+            <burns> (boolean) Will give "burned" status.
+                Default: false
+            <shoots> (boolean) Will give "shot" status. If all of bruises, tears, cut, burns and shoots
+                               are false, bruises will be turned true.
+                Default: false
+            <bleeding> (boolean) Will cause bleeding.
+                Default: false
+            <severtype> (CLEAN, NASTY, NONE)
+                Default: NONE
+        </attack>
+    </weapontype>
+    -->
+
+    <weapontype idname="WEAPON_NONE">
+        <name>None</name>
+        <shortname>None</shortname>
+        <suspicious>false</suspicious>
+        <can_threaten_hostages>false</can_threaten_hostages>
+        <protects_against_kidnapping>false</protects_against_kidnapping>
+        <size>0</size>
+        <attack>
+            <!-- Need to be fixed in code.
+            <attack_description> -->
+            <accuracy_bonus>0</accuracy_bonus>
+            <!-- Need to be fixed in code.
+            <number_attacks>
+            <successive_attacks_difficulty>
+            -->
+            <damage>10</damage>
+            <bruises>true</bruises>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_22_REVOLVER">
+        <name>.22 Revolver</name>
+        <shortname>.22 Rev</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <magazine_size>6</magazine_size>
+        <banned_at_gun_control>L+</banned_at_gun_control>
+        <description>Old west stylings.  But did cowboys have bullets this small?</description>
+        <price>160</price>
+        <size>1</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_22</cartridge>
+            <initiative>2</initiative>
+        </attack>
+        <attack preset="PISTOL_WHIP" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_22_HANDGUN">
+        <name>.22 Pistol</name>
+        <shortname>.22 Pist</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <magazine_size>15</magazine_size>
+        <ammo_plus_one>true</ammo_plus_one>
+        <banned_at_gun_control>L+</banned_at_gun_control>
+        <description>Marketed for self defense.  Inexpensive ammo.  Easy to use.</description>
+        <price>350</price>
+        <size>1</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_22</cartridge>
+            <initiative>2</initiative>
+        </attack>
+        <attack preset="PISTOL_WHIP" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_22_SMG">
+        <name>.22 SMG</name>
+        <shortname>.22 SMG</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <magazine_size>220</magazine_size>
+        <banned_at_gun_control>C</banned_at_gun_control>
+        <description>220 round pan magazine, because reloading is for chumps.</description>
+        <price>1000</price>
+        <size>2</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_22</cartridge>
+            <number_attacks>5</number_attacks>
+            <initiative>1</initiative>
+        </attack>
+        <attack preset="BUTT_STROKE" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_22_RIFLE">
+        <name>.22 Rifle</name>
+        <shortname>.22 Rifle</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <magazine_size>15</magazine_size>
+        <ammo_plus_one>true</ammo_plus_one>
+        <description>Lever action.  Fine for shooting bottles and tin cans.</description>
+        <price>350</price>
+        <size>2</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_22</cartridge>
+            <initiative>1</initiative>
+        </attack>
+        <attack preset="PISTOL_WHIP" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_44_REVOLVER">
+        <name>.44 Magnum</name>
+        <shortname>.44 Mag</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <banned_at_gun_control>L</banned_at_gun_control>
+        <magazine_size>6</magazine_size>
+        <price>850</price>
+        <description>Dirty Harry's preferred gun.  Do you feel lucky, punk?</description>
+        <size>1</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_44</cartridge>
+            <initiative>1</initiative>
+        </attack>
+        <attack preset="PISTOL_WHIP" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_45_HANDGUN">
+        <name>.45 Pistol</name>
+        <shortname>.45 Pist</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <banned_at_gun_control>L</banned_at_gun_control>
+        <magazine_size>10</magazine_size>
+        <ammo_plus_one>true</ammo_plus_one>
+        <price>450</price>
+        <description>M1911.  US Military sidearm for 74 years.</description>
+        <size>1</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_45</cartridge>
+            <initiative>2</initiative>
+        </attack>
+        <attack preset="PISTOL_WHIP" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_TOMMYGUN">
+        <name>Thompson SMG</name>
+        <shortname>.45 SMG</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <banned_at_gun_control>C</banned_at_gun_control>
+        <price>1500</price>
+        <description>Used by Prohibition era gangsters and US troops in WWII.</description>
+        <magazine_size>30</magazine_size>
+        <size>2</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_45</cartridge>
+            <number_attacks>5</number_attacks>
+            <initiative>1</initiative>
+        </attack>
+        <attack preset="BUTT_STROKE" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_9MM_HANDGUN">
+        <name>9mm Pistol</name>
+        <shortname>9mm Pist</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <banned_at_gun_control>L</banned_at_gun_control>
+        <magazine_size>15</magazine_size>
+        <ammo_plus_one>true</ammo_plus_one>
+        <price>500</price>
+        <description>One of the many kinds of 9mm pistols carried by police.</description>
+        <size>1</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_9MM</cartridge>
+            <initiative>2</initiative>
+        </attack>
+        <attack preset="PISTOL_WHIP" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_DESERT_EAGLE">
+        <name>Desert Eagle</name>
+        <shortname>Deagle</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <banned_at_gun_control>L</banned_at_gun_control>
+        <magazine_size>7</magazine_size>
+        <ammo_plus_one>true</ammo_plus_one>
+        <price>2200</price>
+        <description>More of a hand cannon.  Maybe size is everything?</description>
+        <size>1</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_50AE</cartridge>
+            <initiative>0</initiative>
+        </attack>
+        <attack preset="PISTOL_WHIP" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_MP5">
+        <name>MP5 SMG</name>
+        <shortname>MP5 SMG</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <banned_at_gun_control>C</banned_at_gun_control>
+        <price>1500</price>
+        <description>A 9mm submachine gun from Germany.  Popular with police.</description>
+        <magazine_size>30</magazine_size>
+        <ammo_plus_one>true</ammo_plus_one>
+        <size>2</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_9MM</cartridge>
+            <number_attacks>5</number_attacks>
+            <initiative>1</initiative>
+        </attack>
+        <attack preset="BUTT_STROKE" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_PUMP_SHOTGUN">
+        <name>Pump Shotgun</name>
+        <shortname>Shotgun</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <price>700</price>
+        <description>Pump action shotgun.  Used for hunting and home defense.</description>
+        <magazine_size>6</magazine_size>
+        <ammo_plus_one>true</ammo_plus_one>
+        <size>2</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_12GA</cartridge>
+            <initiative>-1</initiative>
+            <severtype>NASTY</severtype>
+        </attack>
+        <attack preset="BUTT_STROKE" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_AA12">
+        <name>AA-12 Auto Shotgun</name>
+        <shortname>AA-12</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <banned_at_gun_control>C</banned_at_gun_control>
+        <magazine_size>32</magazine_size>
+        <price>3250</price>
+        <size>3</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_12GA</cartridge>
+            <number_attacks>2</number_attacks>
+            <initiative>-1</initiative>
+        </attack>
+        <attack preset="BUTT_STROKE" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_AK102">
+        <name>AK-102 Rifle</name>
+        <shortname>AK-102</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <banned_at_gun_control>C</banned_at_gun_control>
+        <magazine_size>30</magazine_size>
+        <ammo_plus_one>true</ammo_plus_one>
+        <price>1800</price>
+        <description>Modern Russian export chambered for NATO rounds.  Full auto.</description>
+        <size>2</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_556</cartridge>
+            <number_attacks>3</number_attacks>
+            <initiative>0</initiative>
+        </attack>
+        <attack preset="BUTT_STROKE" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_AR15">
+        <name>Sport AR-15</name>
+        <shortname>AR-15</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <banned_at_gun_control>M</banned_at_gun_control>
+        <magazine_size>30</magazine_size>
+        <ammo_plus_one>true</ammo_plus_one>
+        <price>1500</price>
+        <description>America's favorite rifle, featured in countless school shootings.</description>
+        <size>3</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_556</cartridge>
+            <initiative>-1</initiative>
+        </attack>
+        <attack preset="BUTT_STROKE" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_M4">
+        <name>M4 Carbine</name>
+        <shortname>M4</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <banned_at_gun_control>C</banned_at_gun_control>
+        <magazine_size>30</magazine_size>
+        <ammo_plus_one>true</ammo_plus_one>
+        <price>2200</price>
+        <description>US Military standard issue.  Full auto.</description>
+        <size>2</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_556</cartridge>
+            <number_attacks>3</number_attacks>
+            <initiative>0</initiative>
+        </attack>
+        <attack preset="BUTT_STROKE" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_M7">
+        <name>M7 Rifle</name>
+        <shortname>M7</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <banned_at_gun_control>C</banned_at_gun_control>
+        <magazine_size>20</magazine_size>
+        <ammo_plus_one>true</ammo_plus_one>
+        <price>4000</price>
+        <description>Next generation army assault rifle firing 6.8x51 rounds.</description>
+        <size>2</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_68</cartridge>
+            <number_attacks>3</number_attacks>
+            <initiative>0</initiative>
+        </attack>
+        <attack preset="BUTT_STROKE" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_M250_MACHINEGUN">
+        <name>M250 LMG</name>
+        <shortname>M250</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <banned_at_gun_control>C</banned_at_gun_control>
+        <magazine_size>100</magazine_size>
+        <price>6000</price>
+        <description>Next generation army machine gun firing 6.8x51 rounds.</description>
+        <size>4</size>
+        <attack preset="FIRE_GUN">
+            <cartridge>CARTRIDGE_68</cartridge>
+            <number_attacks>5</number_attacks>
+            <initiative>-2</initiative>
+        </attack>
+        <attack preset="BUTT_STROKE" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_FLAMETHROWER">
+        <name>M2 Flamethrower</name>
+        <shortname>M2A1-7</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <banned_at_gun_control>C+</banned_at_gun_control>
+        <magazine_size>2</magazine_size>
+        <price>5000</price>
+        <description>Where the hell did they get one of these?</description>
+        <size>4</size>
+        <attack>
+            <priority>1</priority>
+            <ranged>true</ranged>
+            <attack_description>streams fire at</attack_description>
+            <cartridge>CARTRIDGE_GASOLINE</cartridge>
+            <burns>true</burns>
+            <damage>100</damage>
+            <fire>
+                <chance>33</chance>
+            </fire>
+        </attack>
+        <attack preset="BUTT_STROKE" />
+    </weapontype>
+
+    <weapontype idname="WEAPON_MOLOTOV">
+        <name>Molotov Bomb</name>
+        <shortname>Molotov</shortname>
+        <threatening>true</threatening>
+        <price>5</price>
+        <description>Nobody sells them, but here's everything you need to make one...</description>
+        <size>4</size>
+        <attack>
+            <priority>1</priority>
+            <ranged>true</ranged>
+            <thrown>true</thrown>
+            <attack_description>hurls a molotov at</attack_description>
+            <hit_description>exploding</hit_description>
+            <always_describe_hit>true</always_describe_hit>
+            <hit_punctuation>!</hit_punctuation>
+            <damage>100</damage>
+            <burns>true</burns>
+            <fire>
+                <chance>100</chance>
+            </fire>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_AXE">
+        <name>Axe</name>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <price>50</price>
+        <description>A solid fireaxe.</description>
+        <size>3</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>chops at</attack_description>
+            <damage>55</damage>
+            <cuts>true</cuts>
+            <bleeding>true</bleeding>
+            <severtype>CLEAN</severtype>
+            <number_attacks>3</number_attacks>
+            <successive_attacks_difficulty>4</successive_attacks_difficulty>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_BASEBALLBAT">
+        <name>Baseball Bat</name>
+        <name_future>Spaceball Bat</name_future>
+        <shortname>Bat</shortname>
+        <threatening>true</threatening>
+        <price>40</price>
+        <description>For breaking legs.  Not as unsuspicious as you'd hope.</description>
+        <size>3</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>swings at</attack_description>
+            <ranged>false</ranged>
+            <damage>35</damage>
+            <bruises>true</bruises>
+            <number_attacks>3</number_attacks>
+            <successive_attacks_difficulty>4</successive_attacks_difficulty>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_CHAIN">
+        <name>Chain</name>
+        <shortname>Chain</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <price>50</price>
+        <description>A length of chain.  Could be used as a weapon.</description>
+        <size>2</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>swings at</attack_description>
+            <damage>20</damage>
+            <bruises>true</bruises>
+            <number_attacks>3</number_attacks>
+            <successive_attacks_difficulty>6</successive_attacks_difficulty>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_COMBATKNIFE">
+        <name>Combat Knife</name>
+        <shortname>Knife</shortname>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <price>60</price>
+        <description>For stealthy takedowns.</description>
+        <size>1</size>
+        <attack>
+            <attack_description>lunges at</attack_description>
+            <hit_description>slashing</hit_description>
+            <damage>20</damage>
+            <can_backstab>true</can_backstab>
+            <cuts>true</cuts>
+            <bleeding>true</bleeding>
+            <number_attacks>3</number_attacks>
+            <successive_attacks_difficulty>2</successive_attacks_difficulty>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_CROSS">
+        <name>Silver Cross</name>
+        <shortname>Cross</shortname>
+        <price>150</price>
+        <description>Holy symbol of Christianity.  Not an effective weapon, but unsuspicious.</description>
+        <suspicious>false</suspicious>
+        <size>1</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>swings at</attack_description>
+            <damage>10</damage>
+            <bruises>true</bruises>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_CROWBAR">
+        <name>Crowbar</name>
+        <price>15</price>
+        <description>Can be used to pry doors off their hinges.</description>
+        <auto_break_locks>true</auto_break_locks>
+        <size>3</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>swings at</attack_description>
+            <damage>20</damage>
+            <bruises>true</bruises>
+            <bleeding>true</bleeding>
+            <number_attacks>3</number_attacks>
+            <successive_attacks_difficulty>5</successive_attacks_difficulty>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_DAGGER">
+        <name>Dagger</name>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <price>60</price>
+        <description>For the stealthy assassin.  Backstab the unwary.</description>
+        <size>1</size>
+        <attack>
+            <attack_description>lunges at</attack_description>
+            <hit_description>stabbing</hit_description>
+            <damage>20</damage>
+            <can_backstab>true</can_backstab>
+            <cuts>true</cuts>
+            <bleeding>true</bleeding>
+            <number_attacks>3</number_attacks>
+            <successive_attacks_difficulty>2</successive_attacks_difficulty>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_GAVEL">
+        <name>Gavel</name>
+        <shortname>Gavel</shortname>
+        <price>20</price>
+        <suspicious>false</suspicious>
+        <protects_against_kidnapping>false</protects_against_kidnapping>
+        <size>1</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>swings at</attack_description>
+            <damage>10</damage>
+            <bruises>true</bruises>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_GUITAR">
+        <name>Guitar</name>
+        <instrument>true</instrument>
+        <price>150</price>
+        <description>Play in combat to stun enemies and maybe even convert them.</description>
+        <suspicious>false</suspicious>
+        <can_threaten_hostages>false</can_threaten_hostages>
+        <size>3</size>
+        <attack>
+            <priority>1</priority>
+            <alignment_restriction>LIBERAL</alignment_restriction>
+            <attack_description>plays a song for</attack_description>
+            <attack_description>sings to</attack_description>
+            <attack_description>rocks out at</attack_description>
+            <attack_description>plays protest songs at</attack_description>
+            <attack_description>tries to inspire</attack_description>
+            <attack_description>rips into a solo at</attack_description>
+            <social_damage>true</social_damage>
+            <skill>MUSIC</skill>
+            <stuns>true</stuns>
+        </attack>
+        <attack>
+            <priority>1</priority>
+            <alignment_restriction>CONSERVATIVE</alignment_restriction>
+            <attack_description>plays a song for</attack_description>
+            <attack_description>sings to</attack_description>
+            <attack_description>rocks out at</attack_description>
+            <attack_description>plays country songs at</attack_description>
+            <attack_description>tries to enthuse</attack_description>
+            <attack_description>rips into a solo at</attack_description>
+            <social_damage>true</social_damage>
+            <skill>MUSIC</skill>
+            <stuns>true</stuns>
+        </attack>
+        <attack>
+            <priority>2</priority>
+            <attack_description>swings at</attack_description>
+            <damage>20</damage>
+            <bruises>true</bruises>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_BANJO">
+        <name>Banjo</name>
+        <instrument>true</instrument>
+        <price>150</price>
+        <description>Play in combat to stun enemies and maybe even convert them.</description>
+        <suspicious>false</suspicious>
+        <can_threaten_hostages>false</can_threaten_hostages>
+        <size>3</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>plays a song for</attack_description>
+            <attack_description>sings to</attack_description>
+            <attack_description>strums up a storm at</attack_description>
+            <attack_description>twangs away at</attack_description>
+            <attack_description>cuts loose on a roll at</attack_description>
+            <social_damage>true</social_damage>
+            <skill>MUSIC</skill>
+            <stuns>true</stuns>
+        </attack>
+        <attack>
+            <priority>2</priority>
+            <attack_description>swings at</attack_description>
+            <damage>20</damage>
+            <bruises>true</bruises>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_HAMMER">
+        <name>Dwarven Hammer</name>
+        <shortname>Hammer</shortname>
+        <threatening>true</threatening>
+        <price>120</price>
+        <description>An engraved hammer with a short shaft, inspired by Mjölnir.</description>
+        <size>1</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>swings at</attack_description>
+            <damage>40</damage>
+            <bruises>true</bruises>
+            <bleeding>true</bleeding>
+            <number_attacks>3</number_attacks>
+            <successive_attacks_difficulty>3</successive_attacks_difficulty>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_MAUL">
+        <name>Maul of Anrin</name>
+        <shortname>Maul</shortname>
+        <threatening>true</threatening>
+        <price>200</price>
+        <description>A mighty hammer at the end of a six foot rod.  Quite slow.</description>
+        <size>4</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>swings at</attack_description>
+            <damage>85</damage>
+            <bruises>true</bruises>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_NIGHTSTICK">
+        <name>Steel Baton</name>
+        <shortname>Baton</shortname>
+        <price>100</price>
+        <size>1</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>swings at</attack_description>
+            <damage>20</damage>
+            <bruises>true</bruises>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_PITCHFORK">
+        <name>Pitchfork</name>
+        <threatening>true</threatening>
+        <price>50</price>
+        <size>4</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>stabs at</attack_description>
+            <damage>35</damage>
+            <cuts>true</cuts>
+            <bleeding>true</bleeding>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_SHANK">
+        <name>Shank</name>
+        <can_take_hostages>true</can_take_hostages>
+        <price>5</price>
+        <size>1</size>
+        <attack>
+            <attack_description>lunges at</attack_description>
+            <hit_description>stabbing</hit_description>
+            <damage>15</damage>
+            <can_backstab>true</can_backstab>
+            <cuts>true</cuts>
+            <bleeding>true</bleeding>
+            <number_attacks>3</number_attacks>
+            <successive_attacks_difficulty>2</successive_attacks_difficulty>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_SPRAYCAN">
+        <name>Spray Paint</name>
+        <shortname>Spray Can</shortname>
+        <graffiti>true</graffiti>
+        <price>10</price>
+        <description>Can be used to tag walls in site actions.</description>
+        <size>1</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>swings at</attack_description>
+            <damage>10</damage>
+            <bruises>true</bruises>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_STAFF">
+        <name>Wizard's Staff</name>
+        <shortname>Staff</shortname>
+        <threatening>true</threatening>
+        <price>100</price>
+        <description>Morfiegor!  Vas Flam!  Wizard training not included.</description>
+        <size>4</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>swings at</attack_description>
+            <damage>30</damage>
+            <bruises>true</bruises>
+            <number_attacks>3</number_attacks>
+            <successive_attacks_difficulty>3</successive_attacks_difficulty>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_DAISHO">
+        <name>Daisho</name>
+        <name_large_subtype>Katana</name_large_subtype>
+        <name_small_subtype>Wakizashi</name_small_subtype>
+        <name_future>Twin Swords of Liberalism</name_future>
+        <name_large_subtype_future>Retribution Sword</name_large_subtype_future>
+        <name_small_subtype_future>Justice Blade</name_small_subtype_future>
+        <shortname>Daisho</shortname>
+        <shortname_future>Twin Sword</shortname_future>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <price>300</price>
+        <description>Katana and Wakizashi.  Masame hada.</description>
+        <size>3</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>swings at</attack_description>
+            <damage>45</damage>
+            <cuts>true</cuts>
+            <bleeding>true</bleeding>
+            <severtype>CLEAN</severtype>
+            <number_attacks>3</number_attacks>
+            <successive_attacks_difficulty>4</successive_attacks_difficulty>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_SWORD">
+        <name>Zweihänder</name>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <price>400</price>
+        <description>A very large sword, well over a meter in length.</description>
+        <size>4</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>slashes at</attack_description>
+            <damage>70</damage>
+            <cuts>true</cuts>
+            <bleeding>true</bleeding>
+            <severtype>CLEAN</severtype>
+            <number_attacks>2</number_attacks>
+            <successive_attacks_difficulty>6</successive_attacks_difficulty>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_SYRINGE">
+        <name>Syringe</name>
+        <can_take_hostages>true</can_take_hostages>
+        <price>10</price>
+        <suspicious>false</suspicious>
+        <size>1</size>
+        <attack>
+            <priority>1</priority>
+            <attack_description>pokes at</attack_description>
+            <damage>10</damage>
+            <cuts>true</cuts>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_TORCH">
+        <name>Torch</name>
+        <threatening>true</threatening>
+        <price>10</price>
+        <size>4</size>        <!-- You can't conceal a burning torch under your clothes. -->
+        <attack>
+            <priority>1</priority>
+            <attack_description>swings at</attack_description>
+            <damage>10</damage>
+            <burns>true</burns>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_120MM_CANNON">
+        <name>120mm Gun</name>
+        <threatening>true</threatening>
+        <price>10000</price>
+        <description>Mounted on a tank.  You're not going to be able to carry this around.</description>
+        <size>5</size>
+        <attack>
+            <priority>1</priority>
+            <ranged>true</ranged>
+            <attack_description>fires at</attack_description>
+            <skill>HEAVYWEAPONS</skill>
+            <damage>1000</damage>
+            <burns>true</burns>
+            <shoots>true</shoots>
+            <tears>true</tears>
+            <severtype>NASTY</severtype>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_BITE">
+        <name>Fangs</name>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <price>0</price>
+        <description>The teeth of a carnivore.</description>
+        <size>0</size>
+        <attack>
+            <attack_description>snarls and lunges at</attack_description>
+            <hit_description>savagely biting</hit_description>
+            <damage>30</damage>
+            <tears>true</tears>
+            <bleeding>true</bleeding>
+            <severtype>NASTY</severtype>
+            <number_attacks>1</number_attacks>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_PROBOSCIS">
+        <name>Proboscis</name>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <price>0</price>
+        <description>The feeding tube of a blood sucking insect.</description>
+        <size>0</size>
+        <attack>
+            <attack_description>lunges toward</attack_description>
+            <hit_description>draining</hit_description>
+            <damage>50</damage>
+            <bleeding>true</bleeding>
+            <number_attacks>1</number_attacks>
+        </attack>
+    </weapontype>
+
+    <weapontype idname="WEAPON_FIRE_BREATH">
+        <name>Fire Breath</name>
+        <can_take_hostages>true</can_take_hostages>
+        <threatening>true</threatening>
+        <price>0</price>
+        <description>Ignition of a spray of combustible chemicals.</description>
+        <size>0</size>
+        <attack>
+            <priority>1</priority>
+            <ranged>true</ranged>
+            <attack_description>breathes fire at</attack_description>
+            <hit_description>burning</hit_description>
+            <damage>100</damage>
+            <burns>true</burns>
+            <fire>
+                <chance>33</chance>
+            </fire>
+        </attack>
+    </weapontype>
+
+</weapons>
