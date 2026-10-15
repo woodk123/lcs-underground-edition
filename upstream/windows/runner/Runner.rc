@@ -90,11 +90,11 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "LCS New Age" "\0"
-            VALUE "FileDescription", "Liberal Crime Squad 2026" "\0"
+            VALUE "FileDescription", "Liberal Crime Squad: New Age — The Underground Edition" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "lcs_new_age" "\0"
             VALUE "OriginalFilename", "lcs_new_age.exe" "\0"
-            VALUE "ProductName", "Liberal Crime Squad: New Age" "\0"
+            VALUE "ProductName", "Liberal Crime Squad: New Age — The Underground Edition" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

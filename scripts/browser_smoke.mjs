@@ -768,7 +768,7 @@ try {
     const packageRoot = resolve(suppliedPackage);
     assert.equal(resolve(health.directory).toLowerCase(), resolve(packageRoot, 'web').toLowerCase(), 'The managed server must serve the exact extracted package.');
     const packageInfo = JSON.parse(await readFile(resolve(packageRoot, 'BUILD_INFO.json'), 'utf8'));
-    assert.equal(packageInfo.project, 'LiberalCrimeSquad2026');
+    assert.ok(['LiberalCrimeSquad-NewAge-UndergroundEdition', 'LiberalCrimeSquad2026'].includes(packageInfo.project));
     const packagedMain = await readFile(resolve(packageRoot, 'web/main.dart.js'));
     assert.equal(createHash('sha256').update(packagedMain).digest('hex'), report.mainJsSha256, 'The browser must be testing the extracted package binary.');
     report.managedServer = health;

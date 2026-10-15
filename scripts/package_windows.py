@@ -47,9 +47,9 @@ def main() -> None:
     now = datetime.now(timezone.utc)
     release_root = root / "release"
     release_root.mkdir(exist_ok=True)
-    destination = release_root / "LiberalCrimeSquad2026-Windows"
+    destination = release_root / "LiberalCrimeSquad-NewAge-UndergroundEdition-Windows"
     if destination.exists():
-        destination = release_root / f"LiberalCrimeSquad2026-Windows-{now:%Y%m%d-%H%M%S}"
+        destination = release_root / f"LiberalCrimeSquad-NewAge-UndergroundEdition-Windows-{now:%Y%m%d-%H%M%S}"
     shutil.copytree(build, destination)
     for name in runtime_files:
         shutil.copy2(runtime / name, destination / name)
@@ -76,7 +76,7 @@ def main() -> None:
     if flutter_license.is_file():
         shutil.copy2(flutter_license, licenses / "Flutter-LICENSE.txt")
 
-    readme = """# Liberal Crime Squad 2026 — Windows
+    readme = """# Liberal Crime Squad: New Age — The Underground Edition — Windows
 
 Extract the whole folder, then double-click **lcs_new_age.exe**.
 Keep the `data` folder and every DLL beside the executable. You do not need

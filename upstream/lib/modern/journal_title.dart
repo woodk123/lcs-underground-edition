@@ -102,7 +102,7 @@ class JournalTitlePage extends StatelessWidget {
     child: Column(
       children: [
         Text(
-          'NEW AGE · CAMPAIGN EDITION',
+          'THE UNDERGROUND EDITION',
           textAlign: TextAlign.center,
           style: JournalPalette.small.copyWith(fontSize: 11, letterSpacing: 1),
         ),
@@ -110,7 +110,7 @@ class JournalTitlePage extends StatelessWidget {
         Semantics(
           header: true,
           child: Text(
-            'Liberal Crime Squad 2026',
+            'Liberal Crime Squad: New Age',
             key: const ValueKey('journal-product-title'),
             textAlign: TextAlign.center,
             style: JournalPalette.title.copyWith(

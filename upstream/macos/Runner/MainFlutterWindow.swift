@@ -11,5 +11,6 @@ class MainFlutterWindow: NSWindow {
     RegisterGeneratedPlugins(registry: flutterViewController)
 
     super.awakeFromNib()
+    self.title = "Liberal Crime Squad: New Age — The Underground Edition"
   }
 }

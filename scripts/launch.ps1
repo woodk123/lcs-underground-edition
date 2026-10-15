@@ -56,6 +56,6 @@ if ($null -ne $health) {
         throw 'The local server reported an unexpected game directory.'
     }
 }
-Write-Host "Play Liberal Crime Squad: $url"
+Write-Host "Play Liberal Crime Squad: New Age - The Underground Edition: $url"
 Write-Host 'Use the same browser and 127.0.0.1 address to retain your saves. Export a save before clearing browser data.'
 if (-not $NoBrowser) { Start-Process $url }

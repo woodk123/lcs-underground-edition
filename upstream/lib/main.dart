@@ -24,7 +24,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
-      title: 'Liberal Crime Squad · New Age',
+      title: 'Liberal Crime Squad: New Age — The Underground Edition',
       debugShowCheckedModeBanner: false,
       theme: buildModernTheme(),
       builder: (context, child) => ValueListenableBuilder<double>(

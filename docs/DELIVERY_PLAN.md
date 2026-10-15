@@ -1,4 +1,4 @@
-# Liberal Crime Squad modernization — delivery plan
+# Liberal Crime Squad: New Age — The Underground Edition — delivery plan
 
 Plan prepared 13 October 2026. This document describes the intended product and its acceptance gates. It is not a completion report. Actual evidence belongs in dated verification reports.
 

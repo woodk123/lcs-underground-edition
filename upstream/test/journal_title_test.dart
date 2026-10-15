@@ -83,7 +83,8 @@ void main() {
     (tester) async {
       final console = titleConsole();
       await mountTitle(tester, console);
-      expect(find.text('Liberal Crime Squad 2026'), findsOneWidget);
+      expect(find.text('Liberal Crime Squad: New Age'), findsOneWidget);
+      expect(find.text('THE UNDERGROUND EDITION'), findsOneWidget);
       expect(find.text('Continue as Bernie Spitzer'), findsOneWidget);
       for (final action in console.actions) {
         final button = tester.widget<ButtonStyleButton>(

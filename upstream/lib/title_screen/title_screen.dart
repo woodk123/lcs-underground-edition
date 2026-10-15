@@ -335,6 +335,7 @@ void printTitleScreen(HighScores? highScores) {
   move(2, console.x - 7);
   setColor(RainbowFlag.lightBlue);
   addstr("NEW AGE");
+  mvaddstrCenter(3, "THE UNDERGROUND EDITION");
   setColor(midGray);
   mvaddstrCenter(4, "Maintained by Ashley S. Fox, with gratitude to:");
   mvaddstrCenter(

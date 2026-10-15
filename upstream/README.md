@@ -1,6 +1,8 @@
-# Liberal Crime Squad: New Age
+# Liberal Crime Squad: New Age — The Underground Edition
 
-Play link:
+This is **The Underground Edition**, featuring an illustrated journal interface, crew dossiers and city planning over the retained New Age engine. See [the project README](../README.md) for local play, builds and verification.
+
+Original New Age play link:
 
 > <https://www.jonathansfox.com/lcs-new-age/>
 
@@ -12,7 +14,7 @@ New Age is additionally intended to be a Radical Design Departure, a Liberal Pla
 
 ## Contributing
 
-Liberal Crime Squad: New Age welcomes the efforts of Liberal Freedom Fighters who wish to contribute to its development. 
+Liberal Crime Squad: New Age — The Underground Edition welcomes the efforts of Liberal Freedom Fighters who wish to contribute to its development.
 
 1) [Manually install Flutter](https://docs.flutter.dev/get-started/install) or let the [Flutter extension for VS Code](https://marketplace.visualstudio.com/items?itemName=Dart-Code.flutter) or [IntelliJ](https://plugins.jetbrains.com/plugin/9212-flutter) install it for you.
 2) Run `git clone https://github.com/jonathansfox/lcs-new-age.git` in a convenient location to fetch the source code, and `cd lcs-new-age` into it.

@@ -17,7 +17,7 @@ const packageRoot = resolve(argument('--package-root', ''));
 const profile = resolve(argument('--profile', ''));
 assert.ok(profile.toLowerCase().startsWith((resolve(root, '.local/browser-profiles') + sep).toLowerCase()), 'Only this project\'s isolated QA profiles may be used.');
 const packageInfo = JSON.parse(await readFile(resolve(packageRoot, 'BUILD_INFO.json'), 'utf8'));
-assert.equal(packageInfo.project, 'LiberalCrimeSquad2026');
+assert.ok(['LiberalCrimeSquad-NewAge-UndergroundEdition', 'LiberalCrimeSquad2026'].includes(packageInfo.project));
 const health = await (await fetch(new URL('__lcs_launcher_health', url))).json();
 assert.equal(health.application, 'lcs-modern-local');
 assert.equal(resolve(health.directory).toLowerCase(), resolve(packageRoot, 'web').toLowerCase());

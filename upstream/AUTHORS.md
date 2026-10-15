@@ -5,6 +5,8 @@ Liberal Crime Squad was originally created in 2002 by Tarn Adams of Bay12Games. 
 
 Liberal Crime Squad: New Age is a complete rewrite and fork of Liberal Crime Squad created in 2024 by Ashley S. Fox, a previous maintainer of Liberal Crime Squad.
 
+The Underground Edition is a modernization of Liberal Crime Squad: New Age, with an illustrated journal interface, crew portraits and dossiers, and city planning. The original game and New Age authorship credits follow.
+
 ## Liberal Crime Squad originally created by:
 
 * Tarn Adams / Toady One (www.bay12games.com)

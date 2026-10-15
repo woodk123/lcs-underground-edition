@@ -37,7 +37,7 @@ Set-Location upstream
 ..\.tools\flutter\bin\flutter.bat build windows --release --no-pub
 ```
 
-The executable is `upstream/build/windows/x64/runner/Release/lcs_new_age.exe`. The complete `Release` folder is the runtime unit; the EXE alone is insufficient. The final runner source uses the window title `Liberal Crime Squad: New Age`, with an initial 1280 × 720 window. Product metadata uses that game name and the description `Liberal Crime Squad 2026`; the executable filename remains compatible with the upstream build.
+The executable is `upstream/build/windows/x64/runner/Release/lcs_new_age.exe`. The complete `Release` folder is the runtime unit; the EXE alone is insufficient. The final runner source uses the window title `Liberal Crime Squad: New Age — The Underground Edition`, with an initial 1280 × 720 window. Product metadata uses that game name and the description `Liberal Crime Squad: New Age — The Underground Edition`; the executable filename remains compatible with the upstream build.
 
 The Windows/C++ doctor checks passed. PATH and Android license warnings did not affect the native build. No Visual Studio installation or OS configuration change was needed.
 
@@ -75,7 +75,7 @@ The repeatable packager preserves existing releases, includes all native runtime
 python scripts/package_windows.py --root . --runtime-dir 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Redist\MSVC\14.44.35112\x64\Microsoft.VC143.CRT' --source-package 'release\<final-source-package>'
 ```
 
-Omitting `--source-package` permits a local package for QA, but its corresponding-source reference must be finalized before distribution. The default output is `release/LiberalCrimeSquad2026-Windows`; if that folder exists, a new timestamped sibling is created rather than overwriting it.
+Omitting `--source-package` permits a local package for QA, but its corresponding-source reference must be finalized before distribution. The default output is `release/LiberalCrimeSquad-NewAge-UndergroundEdition-Windows`; if that folder exists, a new timestamped sibling is created rather than overwriting it.
 
 ## Verification status
 

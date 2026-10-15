@@ -1,11 +1,11 @@
 {
-  "name": "Liberal Crime Squad: New Age",
-  "short_name": "LCS:NA",
+  "name": "Liberal Crime Squad: New Age — The Underground Edition",
+  "short_name": "LCS:NA Underground",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#29251D",
   "theme_color": "#4A241E",
-  "description": "A satirical game about American politics.",
+  "description": "Liberal Crime Squad: New Age — The Underground Edition. A satirical game about American politics.",
   "orientation": "landscape",
   "prefer_related_applications": false,
   "icons": [

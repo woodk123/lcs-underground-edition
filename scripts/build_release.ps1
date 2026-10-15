@@ -18,7 +18,8 @@ function Write-BuildReport([string]$Status) {
     $report = [ordered]@{
         status = $Status
         timestamp_utc = [DateTime]::UtcNow.ToString('o')
-        project = 'LiberalCrimeSquad2026'
+        project = 'LiberalCrimeSquad-NewAge-UndergroundEdition'
+        display_name = 'Liberal Crime Squad: New Age ' + [char]0x2014 + ' The Underground Edition'
         toolchain = (Get-Content -LiteralPath (Join-Path $root 'scripts\toolchain.json') -Raw | ConvertFrom-Json)
         steps = @($steps.ToArray())
         manual_qa = 'Pending. Automated build success does not establish production readiness; see docs/RELEASE_CHECKLIST.md.'

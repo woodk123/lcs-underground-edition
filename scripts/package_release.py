@@ -78,7 +78,7 @@ def main():
             parser.error("Final QA must also verify a save-preserving update to this exact cached JavaScript hash.")
 
     now = datetime.now(timezone.utc)
-    name = f"LiberalCrimeSquad2026-{now:%Y%m%d-%H%M%S}-{digest(build / 'main.dart.js')[:8]}"
+    name = f"LiberalCrimeSquad-NewAge-UndergroundEdition-{now:%Y%m%d-%H%M%S}-{digest(build / 'main.dart.js')[:8]}"
     release_root = root / "release"
     release_root.mkdir(exist_ok=True)
     destination = release_root / name
@@ -124,7 +124,7 @@ def main():
     (source / "upstream-changes.patch").write_bytes(git_diff.stdout)
     pin = json.loads((root / "scripts/toolchain.json").read_text(encoding="utf-8"))
     attribution = (
-        "# Source and attribution\n\n"
+        "# Liberal Crime Squad: New Age — The Underground Edition — Source and attribution\n\n"
         "Liberal Crime Squad was created by Tarn Adams. Liberal Crime Squad: New Age "
         "was created by Ashley S. Fox; see AUTHORS.md for the complete upstream credits.\n\n"
         f"Upstream: {pin['upstream_repository']}\n\n"

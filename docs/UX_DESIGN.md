@@ -1,4 +1,4 @@
-# Liberal Crime Squad — UX and visual design
+# Liberal Crime Squad: New Age — The Underground Edition — UX and visual design
 
 ## Product direction
 

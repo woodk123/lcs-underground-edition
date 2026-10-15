@@ -1,6 +1,6 @@
-# Liberal Crime Squad 2026
+# Liberal Crime Squad: New Age — The Underground Edition
 
-A playable modernization of [Liberal Crime Squad: New Age](https://github.com/ashley-s-fox/lcs-new-age), with an organisation interface closely following **Gangsters: Organized Crime (1998)**. Its eight illustrated tabs, squad portrait tabs, open paper journal, brass binding, crew pool and pinned job cards follow the original manual and screens. The complete Dart gameplay engine and authored campaign content remain in place. Flutter preserves those rules without the risks of rewriting the game in another engine.
+**The Underground Edition** is a playable modernization of [Liberal Crime Squad: New Age](https://github.com/ashley-s-fox/lcs-new-age), with an organisation interface closely following **Gangsters: Organized Crime (1998)**. Its eight illustrated tabs, squad portrait tabs, open paper journal, brass binding, crew pool and pinned job cards follow the original manual and screens. The complete Dart gameplay engine and authored campaign content remain in place. Flutter preserves those rules without the risks of rewriting the game in another engine.
 
 Select a squad from the left portrait tabs and a person directly from its roster. Open Orders, browse a group and prepare a task on the facing page; the job card explains the real skills, cost, restrictions, risks and timing before Confirm. Cancel leaves the existing assignment intact. The crew pool supports arrows and drag between the facing pages, with real skill ratings. Select a known building in the Business map or City maps, choose **Visit with selected squad**, then **Confirm visit**. The destination card names the squad and explains next-day travel; inspection alone changes no assignment. Cancelling a prepared visit preserves an already queued destination. Advancing time uses the original daily engine and its siege/attack restrictions.
 
@@ -9,6 +9,8 @@ The period paper, leather, portraits, chapter illustrations and activity paintin
 [GANGSTERS_MANUAL_AUDIT.md](docs/GANGSTERS_MANUAL_AUDIT.md) records the complete 104-page research and separates original Gangsters mechanics from LCS rules. [GANGSTERS_JOURNAL_ACCEPTANCE.md](docs/GANGSTERS_JOURNAL_ACCEPTANCE.md) records the earlier packaged journal build, browser interaction/save/offline evidence and verification boundaries. Later live updates and their exact runtime checks are recorded in [GAMEPLAY_FIDELITY.md](docs/GAMEPLAY_FIDELITY.md) and `release/DELIVERY.json.current_live_update`. `release/DELIVERY.json` identifies the accepted archives. The matching Windows build is additional; native graphical playthrough remains outside the verified browser scope after the user stopped native UI control.
 
 The code is based on upstream revision `a1a2112dabf4a8d1a25e36a7a747ef99c9318b87`. Original authors and the GPL v2 license are in `upstream/AUTHORS.md` and `upstream/LICENSE` in the checkout, or `AUTHORS.md` and `LICENSE` beside this README in a release package. Releases include both credits and the corresponding modified source.
+
+New releases use the package prefix `LiberalCrimeSquad-NewAge-UndergroundEdition`. Internal identifiers such as `lcs_new_age`, existing save locations and the local browser address stay compatible with New Age. Archived packages and their verification records retain their original names.
 
 ## Play locally
 
