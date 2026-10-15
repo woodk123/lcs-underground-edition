@@ -1,6 +1,6 @@
 # Building and development
 
-These instructions use Windows PowerShell, Git and Python 3.12 or later. Run commands from the repository root, containing `upstream/`, `scripts/` and `docs/`. In a packaged release, use its `source/` folder instead.
+These instructions use Windows PowerShell, Git and Python 3.12 or later. Run commands from the repository root, containing `upstream/`, `scripts/` and `docs/`. The separate [preview source ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.15/LCS-Underground-Edition-2026.10.15-Source.zip) uses the same layout: open its extracted top-level folder. Player ZIPs contain the game and runtime; download the source ZIP to build or modify it.
 
 ## Install Flutter
 
@@ -24,7 +24,7 @@ From the repository root:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build_release.ps1
 ```
 
-The script resolves dependencies, generates save serialization code, runs tests and analysis, builds the web game and adds its offline manifest. It creates a uniquely named folder and ZIP under `release/`, including source, credits, license, checksums and build logs. Existing packages are preserved.
+The script resolves dependencies, generates save serialization code, runs tests and analysis, builds the web game and adds its offline manifest. It creates a uniquely named combined web/source folder and ZIP under `release/`, with credits, license, checksums and build logs. This is an intermediate package; the public preview uses separate player and source downloads as described below. Existing packages are preserved.
 
 Double-click **Play.cmd** at the repository root to play the built game, or extract a release ZIP and use its launcher. The source checkout launcher serves `upstream/build/web` at **http://127.0.0.1:8765/**. A packaged build needs Python 3, but no Flutter SDK or API key.
 
@@ -35,6 +35,22 @@ To stop the launcher's local server:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop.ps1
 ```
+
+For a native Windows build, see [Windows build instructions](WINDOWS_BUILD.md).
+
+## Split preview downloads
+
+The [15 October 2026 preview](https://github.com/woodk123/lcs-underground-edition/releases/tag/underground-preview-2026.10.15) has three assets: a Windows player ZIP, a browser player ZIP and one matching source ZIP. The player packages omit duplicate source, reference artwork and development reports. Runtime artwork, fonts and component notices remain included.
+
+To repackage the existing verified combined packages without rebuilding the game:
+
+```powershell
+python scripts/package_preview.py --root . --web-package 'release\<combined-web-package>' --windows-package 'release\<combined-windows-package>' --output 'release\<split-preview-output>'
+```
+
+The script writes the three ZIPs and verification metadata. Use a fresh output directory and publish all three on the same GitHub release. `SOURCE_REFERENCE.md` in each player package identifies its matching source download. Keep that source available alongside the player packages when redistributing under GPL v2. GitHub's automatic repository-source downloads are not a substitute for the prepared source asset, which also includes generated Dart serializers and the dependency lockfile.
+
+The repackaged preview keeps the original binaries; their corresponding game source matches the tree at commit `626adbef0a0f578d2ac049173185de3090036a8c`. `BUILD_INFO.json` records the original build, matching game source and packaging identities separately; repackaging adds no new gameplay test coverage. The preview's focused founder and offline browser checks passed; the complete legacy browser run remains incomplete, and the native build has not had a complete graphical playthrough or clean-machine launch check.
 
 ## Development
 

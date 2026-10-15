@@ -1,3 +1,5 @@
+> Historical verification record. Results below apply to the dated runtime and source hashes. Current player downloads, the separate source archive, packaging steps and preview coverage limits are documented in [BUILDING.md](BUILDING.md) and [WINDOWS_BUILD.md](WINDOWS_BUILD.md). Repackaging preserves the game binaries and adds no gameplay test coverage.
+
 # Gangsters journal browser acceptance
 
 Date: 14 October 2026, Europe/London. Reference: the first **Gangsters: Organized Crime (1998)** organiser. This document records the completed browser acceptance for the delivered journal interface.

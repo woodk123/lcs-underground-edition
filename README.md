@@ -29,12 +29,12 @@ The interface and artwork are being developed with AI assistance; the paintings 
 
 ## Playing
 
-Download the **[early preview release](https://github.com/woodk123/lcs-underground-edition/releases/tag/underground-preview-2026.10.15)** and extract the whole ZIP.
+The **[early preview release](https://github.com/woodk123/lcs-underground-edition/releases/tag/underground-preview-2026.10.15)** is ready to try. Download a player ZIP and extract the whole folder:
 
-- **Windows 10/11 (64-bit):** choose the Windows ZIP and double-click **lcs_new_age.exe**. No Python or Flutter needed.
-- **Browser package for Windows:** choose the Web ZIP and double-click **Play.cmd**. Requires Python 3; opens **http://127.0.0.1:8765/**.
+- **[Windows player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.15/LCS-Underground-Edition-2026.10.15-Windows-x64-Player.zip)** — Windows 10/11 (64-bit). Double-click **lcs_new_age.exe**; no Python or Flutter needed.
+- **[Browser player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.15/LCS-Underground-Edition-2026.10.15-Web-Player.zip)** — double-click **Play.cmd**. Requires Python 3; opens **http://127.0.0.1:8765/**.
 
-Both packages include the corresponding source. You can also [build from source](docs/BUILDING.md).
+The **[matching source ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.15/LCS-Underground-Edition-2026.10.15-Source.zip)** is a separate download for building or modifying the game. See [build instructions](docs/BUILDING.md). If you redistribute a player ZIP, keep its matching source available alongside it under GPL v2.
 
 **Keep the same browser profile and address to keep using your browser saves.** `localhost`, another port or another browser has separate save storage. Export important saves from the game before clearing browser data.
 

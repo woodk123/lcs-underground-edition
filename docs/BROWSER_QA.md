@@ -1,6 +1,8 @@
+> Historical verification record. Results below apply to the dated runtime and source hashes. Current player downloads, the separate source archive, packaging steps and preview coverage limits are documented in [BUILDING.md](BUILDING.md) and [WINDOWS_BUILD.md](WINDOWS_BUILD.md). Repackaging preserves the game binaries and adds no gameplay test coverage.
+
 # Browser QA
 
-## Current Gangsters journal delivery — 14 October 2026
+## Historical Gangsters journal delivery — 14 October 2026
 
 ### Final verified gates
 

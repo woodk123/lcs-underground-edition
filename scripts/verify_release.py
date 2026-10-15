@@ -1,4 +1,8 @@
-"""Verify a complete release directory, its file manifest and its ZIP archive."""
+"""Verify historical combined releases against their recorded fidelity audit.
+
+Current split player/source archives are verified by package_preview.py. This
+older verifier intentionally retains its dated source-fidelity requirements.
+"""
 from __future__ import annotations
 
 import argparse

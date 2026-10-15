@@ -13,8 +13,7 @@ $reportDir = Join-Path $root ".local\reports\build-$stamp"
 New-Item -ItemType Directory -Path $reportDir -Force | Out-Null
 $steps = [System.Collections.Generic.List[object]]::new()
 $reportPath = Join-Path $reportDir 'build-info.json'
-$sourceCommit = git -C $root rev-parse HEAD
-if ($LASTEXITCODE -ne 0) { throw 'Could not identify the source commit.' }
+$sourceCommit = Get-LcsSourceCommit -Root $root
 
 function Write-BuildReport([string]$Status) {
     $report = [ordered]@{

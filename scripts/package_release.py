@@ -1,11 +1,10 @@
-"""Package a freshly checked web build with corresponding source and attribution."""
+"""Create a combined build intermediate; use package_preview.py for public downloads."""
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
 import shutil
-import subprocess
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -117,11 +116,6 @@ def main():
                             ignore=artwork_ignore)
     for filename in ("Play.cmd", "README.md", ".gitignore", "LICENSE", "AUTHORS.md"):
         shutil.copy2(root / filename, source / filename)
-    git_diff = subprocess.run(
-        ["git", "-C", str(root / "upstream"), "diff", "--binary", "HEAD"],
-        check=True, capture_output=True,
-    )
-    (source / "upstream-changes.patch").write_bytes(git_diff.stdout)
     pin = json.loads((root / "scripts/toolchain.json").read_text(encoding="utf-8"))
     attribution = (
         "# Liberal Crime Squad: New Age — The Underground Edition — Source and attribution\n\n"
@@ -135,7 +129,7 @@ def main():
         "The corresponding modified game source, generated serialization, dependency lockfile, "
         "build scripts and documentation are included under `source/`. "
         "The original GPL v2 license is included as LICENSE. Flutter/Dart SDK downloads "
-        "are development prerequisites and are not bundled. Rebuild instructions are in README.md.\n\n"
+        "are development prerequisites and are not bundled. Rebuild instructions are in docs/BUILDING.md.\n\n"
         "Generated artwork provenance is recorded in the included documentation/asset manifests. "
         "Build-evidence logs document automated checks; release usability and offline-save checks "
         "must be assessed separately in docs/RELEASE_CHECKLIST.md.\n"

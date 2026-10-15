@@ -1,3 +1,5 @@
+> Historical verification record. Results below apply to the dated runtime and source hashes. Current player downloads, the separate source archive, packaging steps and preview coverage limits are documented in [BUILDING.md](BUILDING.md) and [WINDOWS_BUILD.md](WINDOWS_BUILD.md). Repackaging preserves the game binaries and adds no gameplay test coverage.
+
 # Organisation journal visual and usability review
 
 Reviewed 14 October 2026 against the original **Gangsters: Organized Crime (1998)** organiser. Initial, c6f41f84 and packaged deb1f3db/dbc3f95b browser builds were inspected. Source findings are resolved against the final audited snapshot below. The final dbc3f95b browser report passes all 48 checks; direct scaled-raster observations and practical reading-size limits are recorded separately.

@@ -1,22 +1,10 @@
-# GitHub early preview — 15 October 2026
+# Windows player and native builds
 
-Download the Windows ZIP from the [early preview release](https://github.com/woodk123/lcs-underground-edition/releases/tag/underground-preview-2026.10.15), extract the whole folder and run `lcs_new_age.exe`. This is a work in progress. The package includes the modified source, credits and app-local runtime DLLs; Python and Flutter are not required to play.
+Download the **[Windows player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.15/LCS-Underground-Edition-2026.10.15-Windows-x64-Player.zip)** from the [15 October 2026 early preview](https://github.com/woodk123/lcs-underground-edition/releases/tag/underground-preview-2026.10.15), extract the whole folder and run `lcs_new_age.exe`. This is a work in progress. The player package includes the game, credits, licenses and app-local runtime DLLs; Python and Flutter are not required to play.
 
-For this release, use the included `BUILD_INFO.json`, `FILES.sha256` and GitHub release notes for build identity and verification scope. The native version has not received a complete graphical playthrough or a clean-machine launch check. The dated results below describe earlier local builds.
+The **[matching source ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.15/LCS-Underground-Edition-2026.10.15-Source.zip)** is a separate download on the same release. It contains the modified game source, generated serializers, dependency lockfile, build scripts and documentation. Each player package's `SOURCE_REFERENCE.md` identifies it. Keep the matching source available alongside the player package when redistributing under GPL v2.
 
-# Historical Gangsters journal Windows build
-
-The final journal source compiled in 29.9 seconds and is packaged alongside the corresponding accepted web/source release. It passes 352 tests and clean focused/full analysis. Current build identity, test count and native archive are in `release/DELIVERY.json`; current browser evidence is in [GANGSTERS_JOURNAL_ACCEPTANCE.md](GANGSTERS_JOURNAL_ACCEPTANCE.md). Native graphical playthrough remains outside the verified scope after the user's stop instruction. No native UI automation resumed. The package includes its app-local Visual C++ runtime, fonts and license notices.
-
-## Historical previous UI build — 1aa0be78
-
-
-
-The current navigation/space/explanations source compiles successfully for Windows in 27.6 seconds; `reports/final-windows-build.log` records the final build. The matching source passes 225 tests and clean focused/full analysis. The native layout/playthrough remains outside the verified scope after the user's stop instruction; no native UI automation resumed. See `UI_FRICTION_ACCEPTANCE.md` for current browser acceptance. Native archives include the matching corresponding source and app-local runtime dependencies.
-
-The following earlier build notes remain useful setup/history, rather than the identity of the current delivery.
-
-# Native Windows build
+Use the included `BUILD_INFO.json`, `FILES.sha256` and release notes for identity and verification scope. The split player package retains the original preview binaries; their corresponding game source matches commit `626adbef0a0f578d2ac049173185de3090036a8c`; the packaging revision is recorded separately. Repackaging does not add gameplay coverage. The native version has not received a complete graphical playthrough or a clean-machine launch check. Focused founder and offline browser checks passed; the complete legacy browser run remains incomplete.
 
 ## Play
 
@@ -35,7 +23,7 @@ The tested toolchain on 13 October 2026 was:
 - Visual Studio Build Tools 2022 17.14.28, MSVC v143 x64 tools.
 - Windows SDK 10.0.26100.0.
 
-From the repository root, run the normal dependency/serialization/test workflow documented in `README.md`. Then:
+From the repository or extracted source root, run the dependency/serialization/test workflow in [Building and development](BUILDING.md). Then:
 
 ```powershell
 .\.tools\flutter\bin\flutter.bat doctor -v
@@ -43,7 +31,7 @@ Set-Location upstream
 ..\.tools\flutter\bin\flutter.bat build windows --release --no-pub
 ```
 
-The executable is `upstream/build/windows/x64/runner/Release/lcs_new_age.exe`. The complete `Release` folder is the runtime unit; the EXE alone is insufficient. The final runner source uses the window title `Liberal Crime Squad: New Age — The Underground Edition`, with an initial 1280 × 720 window. Product metadata uses that game name and the description `Liberal Crime Squad: New Age — The Underground Edition`; the executable filename remains compatible with the upstream build.
+The executable is `upstream/build/windows/x64/runner/Release/lcs_new_age.exe`. The complete `Release` folder is the runtime unit; the EXE alone is insufficient. The runner uses the window title `Liberal Crime Squad: New Age — The Underground Edition`, with an initial 1280 × 720 window. Product metadata uses that game name and description; the executable filename remains compatible with the upstream build.
 
 The Windows/C++ doctor checks passed. PATH and Android license warnings did not affect the native build. No Visual Studio installation or OS configuration change was needed.
 
@@ -75,18 +63,18 @@ Running dependency refresh with forced plugin regeneration can remove these cach
 
 ## Package
 
-The repeatable packager preserves existing releases, includes all native runtime files, app-local C++ DLLs, license/credits, documentation, Roboto/Flutter notices and SHA-256 hashes. A companion source/web release contains the corresponding modified source. Supply that package directory once final source packaging is complete:
+`package_windows.py` creates an intermediate combined package with native runtime files, app-local C++ DLLs, license/credits, component notices, documentation and SHA-256 hashes. Supply the combined web/source package created by `build_release.ps1`:
 
 ```powershell
 python scripts/package_windows.py --root . --runtime-dir 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Redist\MSVC\14.44.35112\x64\Microsoft.VC143.CRT' --source-package 'release\<final-source-package>'
 ```
 
-Omitting `--source-package` permits a local package for QA, but its corresponding-source reference must be finalized before distribution. The default output is `release/LiberalCrimeSquad-NewAge-UndergroundEdition-Windows`; if that folder exists, a new timestamped sibling is created rather than overwriting it.
+The default output is `release/LiberalCrimeSquad-NewAge-UndergroundEdition-Windows`; if that folder exists, a new timestamped sibling is created. Omitting `--source-package` is only suitable for local QA until the matching source has been supplied. For publication, use `package_preview.py` to split verified combined packages into player and source ZIPs; see [split preview downloads](BUILDING.md#split-preview-downloads). Publish the matching source on the same release as both player packages.
 
-## Verification status
+## Historical build evidence — 13 October 2026
 
-The final frozen city/crew extension source compiled successfully on 13 October 2026 in 30.6 seconds; the log is `reports/final-windows-build.log` and is copied into release build evidence. This includes selectable generated buildings and inspectors, portraits/dossiers, the eight-frame animation, responsive city layout, graphical floor map, complete articles and staged text entry. Runtime files and required deployment DLLs are checked by the packaging script. A `dumpbin /DEPENDENTS` inspection confirms the EXE's Flutter, plugin and three Visual C++ runtime dependencies match the bundled deployment set; Windows system DLLs are supplied by the supported OS. Shared game/UI logic is covered by 174 Flutter tests and the compiled browser acceptance run.
+Earlier city/crew, navigation and journal builds compiled in 30.6, 27.6 and 29.9 seconds, with 174, 225 and 352 tests respectively. These are historical snapshots, not the current preview's test counts. Browser evidence for those stages is in [UI friction acceptance](UI_FRICTION_ACCEPTANCE.md) and [Gangsters journal acceptance](GANGSTERS_JOURNAL_ACCEPTANCE.md). A historical `dumpbin /DEPENDENTS` inspection matched the EXE's Flutter, plugin and three Visual C++ runtime dependencies to the bundled deployment files; Windows system DLLs are supplied by the supported OS.
 
-An earlier native title window was inspected. Further native computer control was stopped by the user and was not resumed. The final native package has not received a complete graphical playthrough or clean-machine launch check. These are recorded limits, not claims established by compilation or the browser results.
+An earlier native title window was inspected. Further native computer control was stopped by the user and was not resumed. Compilation and browser results do not establish native graphical or clean-machine launch coverage.
 
 For native QA, the game database respects an `APPDATA` override. However, `shared_preferences_windows` uses `SHGetKnownFolderPath` for its application-support path, independently of that environment variable. An `APPDATA` override alone therefore does not guarantee that legacy preferences/migration data are isolated. Do not launch a test that could migrate legacy saves until preference isolation is also established. Never delete an existing user's game data for QA.

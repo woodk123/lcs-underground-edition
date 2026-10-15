@@ -1,4 +1,4 @@
-"""Package an existing Windows release build with app-local VC runtime files."""
+"""Create a combined Windows intermediate; use package_preview.py for public downloads."""
 from __future__ import annotations
 
 import argparse

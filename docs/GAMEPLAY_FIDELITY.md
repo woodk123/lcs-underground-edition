@@ -1,3 +1,5 @@
+> Historical verification record. Results below apply to the dated runtime and source hashes. Current player downloads, the separate source archive, packaging steps and preview coverage limits are documented in [BUILDING.md](BUILDING.md) and [WINDOWS_BUILD.md](WINDOWS_BUILD.md). Repackaging preserves the game binaries and adds no gameplay test coverage.
+
 # Gameplay fidelity and completion evidence
 
 Audit snapshot: 14 October 2026. The product retains the complete upstream Dart/Flutter game and adds a modern interface. It does not replace the simulation with a shorter Godot game. This document separates source retention, deliberate fixes and exercised scenarios; none alone establishes exhaustive production acceptance. The current Gangsters journal pass has its own source gate and runtime evidence in GANGSTERS_JOURNAL_ACCEPTANCE.md; prior city/navigation releases remain historical.
