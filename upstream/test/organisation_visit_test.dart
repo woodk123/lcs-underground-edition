@@ -232,7 +232,12 @@ void main() {
       expect(find.text('Visit ${site.getName()}'), findsOneWidget);
       expect(find.textContaining('Squad order'), findsWidgets);
       expect(find.text('Confirm order'), findsOneWidget);
+      expect(_key('journal-visit-members'), findsNothing);
+      await _tap(tester, 'journal-order-details');
       expect(_key('journal-visit-members'), findsOneWidget);
+      expect(_snapshot(), before);
+      await tester.tap(find.text('Close'));
+      await _settle(tester);
       expect(_key('journal-prepare-map-visit'), findsNothing);
       expect(find.text('Visit with selected squad'), findsNothing);
       expect(_snapshot(), before);

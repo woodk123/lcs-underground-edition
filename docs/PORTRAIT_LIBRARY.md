@@ -5,6 +5,28 @@ Image generation supplies complete painted portraits. The game selects a saved
 portrait identity using broad profession, presentation and age pools. Skills do
 not determine facial anatomy.
 
+## Age matching — 15 October 2026 feedback update
+
+Age is now a casting constraint before profession preferences or avoiding
+duplicate faces. Ordinary adult portraits stay within eight painted years of
+characters under 30, and twelve years for older adults. Children and teenagers
+retain their dedicated age pools. A young character reuses an age-suitable face
+before receiving an unused older face. Where a human specialist bank has no
+age-suitable artwork, casting uses an ordinary face of the right age instead.
+Mutants and nonhuman bodies retain their matching artwork; limited banks use
+the nearest available age rather than changing body type.
+
+Saved faces are checked against `portraitAssignedAge`, not today's age, so an
+appropriate identity survives birthdays and save/reload. Existing assignments
+with clearly incompatible painted ages are corrected once and persisted. The
+dossier now shows the actual character age alongside the portrait. Painted ages
+are approximate art-direction bands, not exact likenesses at every age.
+
+The full Flutter suite passed **571 tests** for this update, including age-cohort
+sampling, exhausted-face pools, specialist fallback, saved-face repair and
+unchanged gameplay RNG. The older counts and browser results below refer to
+their original dated snapshots.
+
 ## Source and output
 
 Original generated PNGs live in `assets/portraits-v2/source/batch_00.png` through

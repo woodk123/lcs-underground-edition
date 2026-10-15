@@ -116,9 +116,8 @@ class PortraitAppearance {
     if (missingRightEye) 'Right eye missing',
     if (missingNose) 'Nose missing',
     if (agingDecades > 0) 'Aged since this portrait was assigned',
-    if (clothing != PortraitClothing.none) 'Stylised clothing: $clothingName',
+    if (clothing != PortraitClothing.none) 'Wearing $clothingName',
     if (faceCovering) 'Face-concealing clothing equipped',
-    if (variant > 0) 'Alternate portrait border',
   ].join('. ');
 
   List<Object> get _values => [

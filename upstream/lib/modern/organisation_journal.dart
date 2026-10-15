@@ -1204,12 +1204,13 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                       actor: actor,
                       child: Row(
                         children: [
-                          Expanded(
+                          Flexible(
                             child: Text(
                               skill.displayName,
                               style: JournalPalette.small,
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             '${actor?.skill(skill) ?? 0}',
                             style: JournalPalette.body,
@@ -1224,6 +1225,68 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ],
       ),
     );
+  }
+
+  Future<void> _showOrderMechanics(ActivityMechanics help) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(widget.textScale)),
+        child: AlertDialog(
+          key: const ValueKey('journal-order-details-dialog'),
+          title: Text(help.title),
+          content: SizedBox(
+            width: 560,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(help.summary),
+                  const SizedBox(height: 8),
+                  Text(help.timing),
+                  if (help.factors.isNotEmpty) Text('Uses: ${help.factors}'),
+                  if (help.cost.isNotEmpty) Text('Cost: ${help.cost}'),
+                  if (help.requirements.isNotEmpty)
+                    Text('Needs: ${help.requirements}'),
+                  if (help.risk.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(help.risk),
+                  ],
+                  if (help.type == ActivityType.visit) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Members: ${members.map((member) => member.name).join(', ')}',
+                      key: const ValueKey('journal-visit-members'),
+                    ),
+                    const Text(
+                      'Travel to another area needs a car; intercity travel also needs enough cash. '
+                      'The site must be open and free of siege.',
+                    ),
+                  ],
+                  if (help.calculation case final calculation?) ...[
+                    const SizedBox(height: 12),
+                    ActivityCalculationView(calculation: calculation),
+                  ],
+                  if (help.details.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Text(help.details),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (mounted) _restoreInputFocus();
   }
 
   Widget _jobCard() {
@@ -1248,6 +1311,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           : actual,
     );
     final visit = _visitAction;
+    final estimatedIncome = help.calculation?.quantities['estimatedIncome'];
     return JournalSurface(
       key: const ValueKey('journal-job-card'),
       lined: true,
@@ -1273,10 +1337,16 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   style: JournalPalette.heading.copyWith(fontSize: 11),
                 ),
               ),
-              const Icon(
-                Icons.watch_later_outlined,
-                size: 18,
-                color: JournalPalette.olive,
+              IconButton(
+                key: const ValueKey('journal-order-details'),
+                tooltip: 'Order mechanics',
+                onPressed: () => _showOrderMechanics(help),
+                icon: const Icon(Icons.info_outline, size: 18),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                style: IconButton.styleFrom(
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
             ],
           ),
@@ -1320,72 +1390,26 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  MechanicsTooltip(
-                    message:
-                        '${help.summary}\n${help.factors}\n${help.cost}\n${help.requirements}\n${help.risk}\n${help.details}\n${help.calculation?.text ?? ''}',
-                    maxWidth: 520,
-                    child: const Row(
-                      children: [
-                        Icon(Icons.info_outline, size: 13),
-                        SizedBox(width: 4),
-                        Text('Order mechanics', style: JournalPalette.small),
-                      ],
-                    ),
-                  ),
-                  if (type != ActivityType.visit)
-                    Text(help.timing, style: JournalPalette.small),
+                  Text(help.timing, style: JournalPalette.small),
                   if (help.calculation case final calculation?)
-                    MechanicsTooltip(
-                      message: calculation.text,
-                      maxWidth: 520,
-                      child: Text(
-                        type == ActivityType.visit
-                            ? calculation.result.replaceFirst(
-                                'Current intercity fee:',
-                                'Travel cost:',
-                              )
-                            : calculation.result,
-                        key: const ValueKey('journal-calculation-result'),
-                        style: JournalPalette.small.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  if (type == ActivityType.visit) ...[
-                    const Text(
-                      'Runs when you advance the day.',
-                      style: JournalPalette.small,
-                    ),
-                    const Text(
-                      'Needs: an open site free of siege; travel to another area needs a car and intercity travel needs enough cash.',
-                      style: JournalPalette.small,
-                    ),
-                    if (planning)
-                      const Text(
-                        'Confirm queues this destination. Cancel keeps existing squad and individual orders.',
-                        style: JournalPalette.small,
-                      ),
-                  ],
-                  if (type == ActivityType.visit)
                     Text(
-                      'Members: ${members.map((m) => m.name).join(', ')}',
-                      key: const ValueKey('journal-visit-members'),
-                      style: JournalPalette.small,
-                    ),
-                  if (type == ActivityType.visit)
-                    const Text(
-                      'A squad visit takes precedence over individual daily tasks.',
-                      style: JournalPalette.small,
+                      estimatedIncome != null
+                          ? 'Estimated \$${estimatedIncome.round()}/day'
+                          : type == ActivityType.visit
+                          ? calculation.result.replaceFirst(
+                              'Current intercity fee:',
+                              'Travel cost:',
+                            )
+                          : calculation.result,
+                      key: const ValueKey('journal-calculation-result'),
+                      style: JournalPalette.small.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   if (help.factors.isNotEmpty)
                     Text('Uses: ${help.factors}', style: JournalPalette.small),
-                  if (help.cost.isNotEmpty)
+                  if (help.cost.isNotEmpty && help.cost != 'No activity fee')
                     Text('Cost: ${help.cost}', style: JournalPalette.small),
-                  if (help.requirements.isNotEmpty)
-                    Text(
-                      'Needs: ${help.requirements}',
-                      style: JournalPalette.small,
-                    ),
                   if (help.risk.isNotEmpty)
                     Text(
                       help.risk,
@@ -1393,18 +1417,12 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                         color: JournalPalette.danger,
                       ),
                     ),
-                  if (help.calculation case final calculation?) ...[
-                    const SizedBox(height: 6),
-                    ActivityCalculationView(
-                      calculation: calculation,
-                      compact: true,
-                    ),
-                  ],
-                  const SizedBox(height: 2),
-                  if (prepared)
-                    const Text(
-                      'Confirm applies this order. Cancel keeps the previous assignment.',
-                      style: JournalPalette.small,
+                  if (help.unavailableReason case final reason?)
+                    Text(
+                      reason,
+                      style: JournalPalette.small.copyWith(
+                        color: JournalPalette.danger,
+                      ),
                     ),
                   if (planning && visit != null && !visit.enabled)
                     Text(
@@ -1417,7 +1435,6 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               ),
             ),
           ),
-          const SizedBox(height: 2),
           Row(
             children: [
               if (prepared || planning)
@@ -1962,11 +1979,6 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             ],
           ),
         ),
-        if (activityFrame && !_compactMapText)
-          const Text(
-            'Select an order, review its job card, then confirm. Browsing changes no assignment.',
-            style: JournalPalette.small,
-          ),
       ],
     );
   }
@@ -2256,11 +2268,6 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               'City overview',
               style: _compactMapText ? JournalPalette.small : null,
             ),
-          ),
-        if (!_compactMapText)
-          const Text(
-            'Known places only · illustrative block layout',
-            style: JournalPalette.small,
           ),
       ],
     );

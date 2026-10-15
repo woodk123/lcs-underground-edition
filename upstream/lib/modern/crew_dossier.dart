@@ -280,7 +280,7 @@ class CrewInspector extends StatelessWidget {
                         ),
                         _inlineFact('Legal heat', '${person.heat}'),
                         const Text(
-                          'Blood is remaining physical condition. Legal heat is police attention, not a percentage. Inspecting changes no orders or time.',
+                          'Legal heat measures police attention, not a percentage.',
                           style: TextStyle(fontSize: 11, color: _muted),
                         ),
                       ],
@@ -622,6 +622,7 @@ class _CrewDossierState extends State<CrewDossier> {
                           children: [
                             _tag(_capitalize(person.align.name)),
                             _tag(person.type.name),
+                            _tag('Age ${person.age}'),
                             if (!person.alive) _tag('Deceased', warning: true),
                             if (person.sleeperAgent) _tag('Sleeper agent'),
                             if (person.kidnapped)
@@ -820,11 +821,6 @@ class _CrewDossierState extends State<CrewDossier> {
             if (person.hasWheelchair) _fact('Mobility aid', 'Wheelchair'),
           ]),
           _section('Attributes', Icons.tune, [
-            const Text(
-              'Current effective values · Hover for uses and calculations.',
-              style: TextStyle(fontSize: 12, color: _muted),
-            ),
-            const SizedBox(height: 6),
             for (final attribute in Attribute.values)
               AttributeTooltip(
                 attribute: attribute,
@@ -892,12 +888,7 @@ class _CrewDossierState extends State<CrewDossier> {
           'Skills & training',
           style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
         ),
-        const SizedBox(height: 4),
-        const Text(
-          'Skill levels and progress from the current campaign.',
-          style: TextStyle(color: _muted),
-        ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 14),
         for (final skill in skills)
           Padding(
             key: ValueKey('crew-dossier-skill:${skill.name}'),
@@ -908,22 +899,38 @@ class _CrewDossierState extends State<CrewDossier> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          skill.displayName,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
+                  Semantics(
+                    key: ValueKey('crew-dossier-skill-heading:${skill.name}'),
+                    container: true,
+                    label: '${skill.displayName}: level ${person.skill(skill)}',
+                    child: ExcludeSemantics(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              skill.displayName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${person.skill(skill)}',
+                            key: ValueKey(
+                              'crew-dossier-skill-level:${skill.name}',
+                            ),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: _ink,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        '${person.skill(skill)}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: _teal,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -931,20 +938,31 @@ class _CrewDossierState extends State<CrewDossier> {
                     style: const TextStyle(color: _muted, fontSize: 13),
                   ),
                   const SizedBox(height: 7),
-                  LinearProgressIndicator(
-                    value:
-                        (person.skillXP(skill) /
-                                skillXpNeeded(person.skill(skill)))
-                            .clamp(0, 1),
-                    minHeight: 4,
-                    color: _teal,
-                    backgroundColor: _rule,
-                    semanticsLabel: '${skill.displayName} experience',
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${person.skillXP(skill)} / ${skillXpNeeded(person.skill(skill))} XP · Attribute cap ${person.skillCap(skill)}',
-                    style: const TextStyle(color: _muted, fontSize: 12),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 72,
+                        child: ExcludeSemantics(
+                          child: LinearProgressIndicator(
+                            value:
+                                (person.skillXP(skill) /
+                                        skillXpNeeded(person.skill(skill)))
+                                    .clamp(0, 1),
+                            minHeight: 2,
+                            color: _muted.withValues(alpha: .5),
+                            backgroundColor: _rule.withValues(alpha: .5),
+                            semanticsLabel: '${skill.displayName} experience',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          '${person.skillXP(skill)} / ${skillXpNeeded(person.skill(skill))} XP · Attribute cap ${person.skillCap(skill)}',
+                          style: const TextStyle(color: _muted, fontSize: 11),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

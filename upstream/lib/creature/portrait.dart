@@ -43,7 +43,7 @@ class PortraitEntry {
   final PortraitBackground background;
   final Gender gender;
 
-  /// Approximate visual age, used as a soft casting preference.
+  /// Approximate painted age. New casting stays in a suitable age cohort.
   final int visualAge;
   String get asset =>
       'assets/modern/portraits_v2/batch_${(id < 250 ? id ~/ 16 : 16 + (id - 250) ~/ 16).toString().padLeft(2, '0')}.png';
@@ -263,7 +263,7 @@ int _skillAffinity(Creature person, PortraitBackground background) {
 }
 
 /// Chooses once, using an isolated RNG and the saved campaign identity.
-/// Profession and age bias casting; they do not predetermine a person's face.
+/// Age suitability precedes profession and avoiding repeated faces.
 /// Known crew, contacts and the present encounter get first claim on their faces.
 int ensurePortraitId(Creature person) {
   final saved = person.portraitId;
@@ -343,19 +343,39 @@ bool _canKeepSaved(Creature person) {
   };
   if (nonhuman) return _appropriate(person, entry);
   if (nonhumanBackgrounds.contains(entry.background)) return false;
-  // Keep saved facial identity as a human ages; only legacy identities without
-  // age metadata need correction when they have adult artwork on a minor.
-  if (person.portraitAssignedAge != null) return true;
-  if (person.age < 20) return _appropriate(person, entry);
-  return entry.id < 250 || _appropriate(person, entry);
+  // Judge saved faces against the age when they were assigned, so birthdays
+  // never reroll an appropriate identity. Repair visibly mismatched faces from
+  // the former weighted-only casting, including already-saved assignments.
+  final age = person.portraitAssignedAge ?? person.age;
+  if (age < 20) return _appropriate(person, entry, atAge: age);
+  if (entry.background == PortraitBackground.child ||
+      entry.background == PortraitBackground.teenager) {
+    return false;
+  }
+  if ((entry.visualAge - age).abs() <= _portraitAgeTolerance(age)) return true;
+  // A few specialist banks have limited age coverage. Keep the nearest
+  // available face rather than repeatedly attempting the same repair.
+  return _ageCandidates(
+    person,
+    atAge: age,
+    matchGender: false,
+  ).any((candidate) => candidate.id == entry.id);
 }
 
-PortraitEntry _choosePortrait(Creature person, Set<int> used) {
+int _portraitAgeTolerance(int age) => age < 30 ? 8 : 12;
+
+List<PortraitEntry> _ageCandidates(
+  Creature person, {
+  int? atAge,
+  bool matchGender = true,
+}) {
+  final age = atAge ?? person.age;
   final gender = person.gender.simplified;
   final compatible = portraitCatalog
-      .where((entry) => _appropriate(person, entry))
+      .where((entry) => _appropriate(person, entry, atAge: age))
       .where(
         (entry) =>
+            !matchGender ||
             person.body.type != BodyType.human ||
             person.type.animal ||
             person.type.tank ||
@@ -363,6 +383,43 @@ PortraitEntry _choosePortrait(Creature person, Set<int> used) {
             entry.gender == gender,
       )
       .toList();
+  if (person.body.type != BodyType.human ||
+      person.type.animal ||
+      person.type.tank ||
+      age < 20) {
+    return compatible;
+  }
+  final matching = compatible
+      .where(
+        (entry) => (entry.visualAge - age).abs() <= _portraitAgeTolerance(age),
+      )
+      .toList();
+  final nearest = compatible
+      .map((entry) => (entry.visualAge - age).abs())
+      .reduce(min);
+  final ageSuitable = matching.isNotEmpty
+      ? matching
+      : compatible
+            .where((entry) => (entry.visualAge - age).abs() == nearest)
+            .toList();
+  final background = portraitBackgroundFor(person);
+  if (const {
+    PortraitBackground.punk,
+    PortraitBackground.goth,
+    PortraitBackground.emo,
+    PortraitBackground.biker,
+    PortraitBackground.religious,
+  }.contains(background)) {
+    final specialist = ageSuitable
+        .where((entry) => entry.background == background)
+        .toList();
+    if (specialist.isNotEmpty) return specialist;
+  }
+  return ageSuitable;
+}
+
+PortraitEntry _choosePortrait(Creature person, Set<int> used) {
+  final compatible = _ageCandidates(person);
   final unused = compatible.where((entry) => !used.contains(entry.id)).toList();
   final candidates = unused.isNotEmpty ? unused : compatible;
   final background = portraitBackgroundFor(person);
@@ -424,7 +481,8 @@ void assignKnownPortraits() {
 int _variant(Creature person) =>
     ((gameState.uniqueGameId * 104729) ^ (person.id * 1000003)) & 0x7fffffff;
 
-bool _appropriate(Creature person, PortraitEntry entry) {
+bool _appropriate(Creature person, PortraitEntry entry, {int? atAge}) {
+  final age = atAge ?? person.age;
   final bodyBackground = switch (person.body.type) {
     BodyType.human => null,
     BodyType.canine => PortraitBackground.canine,
@@ -446,33 +504,36 @@ bool _appropriate(Creature person, PortraitEntry entry) {
   if (person.typeId == CreatureTypeIds.tank) {
     return entry.background == PortraitBackground.tank;
   }
-  if (person.age < 13) {
-    final visualAge = person.age <= 5
+  if (age < 13) {
+    final visualAge = age <= 5
         ? 4
-        : person.age <= 8
+        : age <= 8
         ? 7
-        : person.age <= 10
+        : age <= 10
         ? 10
         : 12;
     return entry.background == PortraitBackground.child &&
         entry.visualAge == visualAge;
   }
-  if (person.age < 20) {
+  if (age < 20) {
     return entry.background == PortraitBackground.teenager &&
-        (entry.visualAge - person.age).abs() <= 2 &&
-        (person.age >= 18 || entry.visualAge < 18);
+        (entry.visualAge - age).abs() <= 2 &&
+        (age >= 18 || entry.visualAge < 18);
   }
   final profession = portraitBackgroundFor(person);
-  if (const {
-    PortraitBackground.mutant,
-    PortraitBackground.punk,
-    PortraitBackground.goth,
-    PortraitBackground.emo,
-    PortraitBackground.biker,
-    PortraitBackground.religious,
-  }.contains(profession)) {
-    return entry.background == profession;
+  if (profession == PortraitBackground.mutant) {
+    return entry.background == PortraitBackground.mutant;
   }
-  if (person.age >= 75) return entry.background == PortraitBackground.elderly;
+  if (const {
+        PortraitBackground.punk,
+        PortraitBackground.goth,
+        PortraitBackground.emo,
+        PortraitBackground.biker,
+        PortraitBackground.religious,
+      }.contains(profession) &&
+      entry.background == profession) {
+    return true;
+  }
+  if (age >= 75) return entry.background == PortraitBackground.elderly;
   return entry.id < 250;
 }

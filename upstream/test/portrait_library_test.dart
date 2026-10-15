@@ -58,7 +58,7 @@ void main() {
     expect(ensurePortraitId(person), inInclusiveRange(0, 377));
   });
 
-  test('casting exhausts unused compatible faces before repeating', () {
+  test('casting exhausts age-compatible faces before repeating', () {
     game.gameState.uniqueCreatures = UniqueCreatures();
     game.pool.clear();
     game.encounter.clear();
@@ -70,7 +70,14 @@ void main() {
       game.pool.add(person);
       ids.add(ensurePortraitId(person));
     }
-    expect(ids.toSet().length, 125);
+    final suitable = portraitCatalog.where(
+      (entry) =>
+          entry.id < 250 &&
+          entry.gender == Gender.female &&
+          (entry.visualAge - adult(1).age).abs() <= 12,
+    );
+    expect(ids.toSet().length, suitable.length);
+    expect(ids.toSet(), suitable.map((entry) => entry.id).toSet());
     final next = adult(2000);
     expect(ids, contains(ensurePortraitId(next)));
   });
@@ -124,6 +131,112 @@ void main() {
       greaterThan(220),
     );
   });
+
+  test(
+    'adult casting stays in a plausible age cohort across seeds and genders',
+    () {
+      game.pool.clear();
+      game.encounter.clear();
+      for (final age in [20, 22, 28, 35, 45, 60, 73, 84, 95]) {
+        for (final gender in [Gender.female, Gender.male, Gender.nonbinary]) {
+          for (var index = 0; index < 40; index++) {
+            final person = adult(60000 + age * 100 + index)
+              ..gender = gender
+              ..typeId = CreatureTypeIds.lawyer
+              ..birthDate = DateTime(game.date.year - age);
+            final face = portraitCatalog[ensurePortraitId(person)];
+            expect(
+              (face.visualAge - person.age).abs(),
+              lessThanOrEqualTo(age < 30 ? 8 : 12),
+              reason:
+                  'Age $age must not be cast as visual age ${face.visualAge}.',
+            );
+            expect(person.portraitAssignedAge, person.age);
+          }
+        }
+      }
+    },
+  );
+
+  test(
+    'exhausting young faces reuses an appropriate face before an older one',
+    () {
+      game.pool.clear();
+      game.encounter.clear();
+      final young = portraitCatalog.where(
+        (entry) =>
+            entry.id < 250 &&
+            entry.gender == Gender.female &&
+            entry.visualAge == 25,
+      );
+      for (final face in young) {
+        game.pool.add(
+          adult(70000 + face.id)
+            ..birthDate = DateTime(game.date.year - 22)
+            ..portraitId = face.id
+            ..portraitAssignedAge = 22,
+        );
+      }
+      final newcomer = adult(71000)..birthDate = DateTime(game.date.year - 22);
+      final face = ensurePortraitId(newcomer);
+      expect(young.map((entry) => entry.id), contains(face));
+      expect(portraitCatalog[face].visualAge, 25);
+    },
+  );
+
+  test('age takes priority when a specialist bank has no suitable face', () {
+    final youngBiker = adult(72000)
+      ..typeId = CreatureTypeIds.biker
+      ..birthDate = DateTime(game.date.year - 22);
+    final olderPunk = adult(72001)
+      ..typeId = CreatureTypeIds.punk
+      ..birthDate = DateTime(game.date.year - 70);
+    expect(portraitCatalog[ensurePortraitId(youngBiker)].visualAge, 25);
+    expect(portraitCatalog[ensurePortraitId(olderPunk)].visualAge, 68);
+    // A bank with no closer mutant artwork uses its nearest compatible face
+    // and retains it, rather than repeatedly rerolling the same saved record.
+    final elderMutant = adult(72002)
+      ..typeId = CreatureTypeIds.mutant
+      ..birthDate = DateTime(game.date.year - 100);
+    final mutantFace = ensurePortraitId(elderMutant);
+    expect(portraitCatalog[mutantFace].background, PortraitBackground.mutant);
+    expect(portraitCatalog[mutantFace].visualAge, 68);
+    expect(ensurePortraitId(elderMutant), mutantFace);
+  });
+
+  test(
+    'migration repairs badly aged saved faces once and keeps appropriate identities',
+    () {
+      game.pool.clear();
+      game.encounter.clear();
+      final mismatch = adult(73000)
+        ..birthDate = DateTime(game.date.year - 22)
+        ..portraitId =
+            12 // Visual age 68 on a character assigned at 22.
+        ..portraitAssignedAge = 22;
+      final appropriate = adult(73001)
+        ..birthDate = DateTime(game.date.year - 22)
+        ..portraitId =
+            0 // Visual age 25.
+        ..portraitAssignedAge = 22;
+      game.pool.addAll([mismatch, appropriate]);
+      reseedRNG(seed: 812);
+      final expectedRolls = List.generate(8, (_) => lcsRandom(100000));
+      reseedRNG(seed: 812);
+      assignKnownPortraits();
+      expect(portraitCatalog[mismatch.portraitId!].visualAge, 25);
+      expect(appropriate.portraitId, 0);
+      expect(List.generate(8, (_) => lcsRandom(100000)), expectedRolls);
+      final corrected = mismatch.portraitId;
+      final restored = Creature.fromJson(jsonDecode(jsonEncode(mismatch)));
+      expect(ensurePortraitId(restored), corrected);
+      appropriate.birthDate = DateTime(appropriate.birthDate.year - 20);
+      expect(ensurePortraitId(appropriate), 0);
+      expect(appropriate.portraitAssignedAge, 22);
+      assignKnownPortraits();
+      expect(mismatch.portraitId, corrected);
+    },
+  );
 
   test(
     'children, teens and nonhumans receive appropriate specialist faces',
@@ -193,7 +306,7 @@ void main() {
   });
 
   test(
-    'specialist pools remain strict even after exhausting their artwork',
+    'age-compatible specialist pools remain preferred after exhausting artwork',
     () {
       game.pool.clear();
       game.encounter.clear();
@@ -208,7 +321,16 @@ void main() {
         CreatureTypeIds.mutant,
       ]) {
         for (var index = 0; index < 24; index++) {
-          final person = adult(5000 + game.pool.length)..typeId = type;
+          final age = switch (type) {
+            CreatureTypeIds.punk => 22,
+            CreatureTypeIds.goth => 30,
+            CreatureTypeIds.emo => 24,
+            CreatureTypeIds.biker => 45,
+            _ => 40,
+          };
+          final person = adult(5000 + game.pool.length)
+            ..typeId = type
+            ..birthDate = DateTime(game.date.year - age);
           game.pool.add(person);
           expect(
             portraitCatalog[ensurePortraitId(person)].background,
@@ -258,7 +380,9 @@ void main() {
       game.encounter.clear();
       final seen = <int, Set<int>>{};
       for (var i = 0; i < 60; i++) {
-        final person = adult(30000 + i)..typeId = CreatureTypeIds.punk;
+        final person = adult(30000 + i)
+          ..typeId = CreatureTypeIds.punk
+          ..birthDate = DateTime(game.date.year - 22);
         game.pool.add(person);
         final id = ensurePortraitId(person);
         final variants = seen.putIfAbsent(id, () => <int>{});

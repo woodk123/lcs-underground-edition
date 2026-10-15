@@ -140,6 +140,7 @@ void main() {
       final founder = game.pool.first;
       await mountInspector(tester, founder);
       expect(find.text(founder.name), findsOneWidget);
+      expect(find.text('Age ${founder.age}'), findsOneWidget);
       expect(
         find.text('${founder.blood} / ${founder.maxBlood}'),
         findsOneWidget,
@@ -173,6 +174,63 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  for (final reading in [
+    (const Size(1280, 800), 1.0),
+    (const Size(800, 600), 1.5),
+  ]) {
+    testWidgets(
+      'skill level stays beside its name at ${reading.$1}, ${reading.$2}x',
+      (tester) async {
+        final person = game.pool.first;
+        person.rawSkill[Skill.art] = 12;
+        final semantics = tester.ensureSemantics();
+        try {
+          await mountInspector(
+            tester,
+            person,
+            size: reading.$1,
+            textScale: reading.$2,
+          );
+          await chooseTab(tester, 1);
+          final row = find.byKey(const ValueKey('crew-dossier-skill:art'));
+          final name = find.descendant(of: row, matching: find.text('Art'));
+          final level = find.byKey(
+            const ValueKey('crew-dossier-skill-level:art'),
+          );
+          final nameRect = tester.getRect(name);
+          final levelRect = tester.getRect(level);
+          expect(levelRect.left - nameRect.right, inInclusiveRange(4, 16));
+          expect((levelRect.center.dy - nameRect.center.dy).abs(), lessThan(4));
+          expect(tester.widget<Text>(level).data, '12');
+          expect(
+            tester
+                .getSemantics(
+                  find.byKey(const ValueKey('crew-dossier-skill-heading:art')),
+                )
+                .label,
+            'Art: level 12',
+          );
+          final progress = find.descendant(
+            of: row,
+            matching: find.byType(LinearProgressIndicator),
+          );
+          expect(
+            tester.getSize(progress).width,
+            lessThan(tester.getSize(row).width / 2),
+          );
+          expect(tester.getSize(progress).height, lessThanOrEqualTo(3));
+          expect(
+            find.text('Skill levels and progress from the current campaign.'),
+            findsNothing,
+          );
+          expect(tester.takeException(), isNull);
+        } finally {
+          semantics.dispose();
+        }
+      },
+    );
+  }
 
   testWidgets('healthy non-liberal portraits do not imply available crew', (
     tester,

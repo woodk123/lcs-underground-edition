@@ -736,6 +736,56 @@ void main() {
   }
 
   testWidgets(
+    'order formulas are disclosed on request without changing assignments, input or RNG',
+    (tester) async {
+      await mount(tester, size: const Size(800, 600));
+      await business(tester);
+      await _tap(tester, 'journal-activity:donations');
+      await tester.tap(find.byTooltip('Reading size'));
+      await _settle(tester);
+      await tester.tap(find.text('150%'));
+      await _settle(tester);
+      final before = _snapshot();
+      final revision = engine.console.revision.value;
+      final help = activityMechanics(
+        ActivityType.donations,
+        actor: game.squad.first,
+      );
+      final formula = 'Calculation: ${help.calculation!.formula}';
+      expect(find.byType(ActivityCalculationView), findsNothing);
+      expect(find.text(formula), findsNothing);
+      expect(_key('journal-order-details').hitTestable(), findsOneWidget);
+      expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
+      reseedRNG(seed: 412);
+      final rolls = List.generate(8, (_) => lcsRandom(100000));
+      reseedRNG(seed: 412);
+      for (final dismissWithEscape in [false, true]) {
+        await _tap(tester, 'journal-order-details');
+        final dialog = _key('journal-order-details-dialog');
+        expect(dialog, findsOneWidget);
+        expect(find.text(formula), findsOneWidget);
+        expect(find.byType(ActivityCalculationView), findsOneWidget);
+        expect(MediaQuery.textScalerOf(tester.element(dialog)).scale(10), 15);
+        expect(_snapshot(), before);
+        expect(engine.console.revision.value, revision);
+        if (dismissWithEscape) {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        } else {
+          await tester.tap(find.text('Close'));
+        }
+        await _settle(tester);
+        expect(dialog, findsNothing);
+        expect(find.text(formula), findsNothing);
+        expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
+        expect(_snapshot(), before);
+        expect(engine.console.revision.value, revision);
+      }
+      expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     '800x600 at 150 percent shows prepared order timing inside its mechanics viewport',
     (tester) async {
       // Use the unchanged five-person save from the Chrome reproduction rather
@@ -788,7 +838,7 @@ void main() {
       );
       expect(
         find
-            .descendant(of: card, matching: find.text('Order mechanics'))
+            .descendant(of: card, matching: find.byTooltip('Order mechanics'))
             .hitTestable(),
         findsOneWidget,
         reason: 'The actual mechanics disclosure must remain reachable.',
