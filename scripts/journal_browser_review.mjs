@@ -100,8 +100,8 @@ async function button(name, scope = 'any') {
       if (!bounds) continue;
       const middle = bounds.x + bounds.width / 2;
       if (scope === 'top' && bounds.y > 110) continue;
-      if (scope === 'left' && (middle > size.width * .53 || bounds.y < 110)) continue;
-      if (scope === 'right' && (middle < size.width * .46 || bounds.y < 110)) continue;
+      if (scope === 'left' && (middle > size.width * .53 || bounds.y < 85)) continue;
+      if (scope === 'right' && (middle < size.width * .46 || bounds.y < 85)) continue;
       if (scope === 'footer' && bounds.y < size.height - 110) continue;
       return item;
     }
@@ -304,7 +304,11 @@ async function drag(source, target) {
   await page.waitForTimeout(500);
 }
 async function preparePublicVisit() {
-  await top('City maps');
+  await top('Organisation');
+  await click(/Select squad QA Field Team(?:$|\s)/);
+  await ordersFor(crew.at(-1).name);
+  await click('Operations', 'left');
+  await click('Visit a location');
   let parks = page.getByRole('button', { name: /Park\. site(?:\.|\s|$)/ });
   if (!(await parks.count())) {
     await click(/University.*\. district(?:\.|\s|$)/);
@@ -315,9 +319,7 @@ async function preparePublicVisit() {
   const park = parks.first();
   const sourceLabel = await park.getAttribute('aria-label') ?? await park.innerText();
   await park.click(); await page.waitForTimeout(180);
-  assert.equal(await page.getByRole('button', { name: 'Confirm visit', exact: true }).count(), 0, 'City-map browsing must stay read-only before an explicit order request.');
-  await click('Prepare a squad visit');
-  await inside(await button('Confirm visit'), 'Visit job card confirmation');
+  await inside(await button('Confirm order', 'left'), 'Shared squad visit job card confirmation');
   return sourceLabel;
 }
 async function archiveJourney() {
@@ -609,7 +611,7 @@ try {
     await shot('original-headquarters-commands');
     await press('Escape');
 
-    // Choose a real public site; target selection is a draft until Confirm visit.
+    // Choose a real public site through the shared squad order controls.
     await click(/Select squad QA Field Team(?:$|\s)/);
     const parkLabel = await preparePublicVisit();
     await shot('visit-target-prepared', { selectedSourceLabel: parkLabel, reference: '00913_lieutenants.png' });
@@ -617,7 +619,7 @@ try {
     const targetPreview = await exportSave('05-unconfirmed-target-save');
     assert.ok(targetPreview.lcs.squads.every(s => s.activity.type === 'none'), 'A selected but unconfirmed target must not queue a visit.');
     await preparePublicVisit();
-    await click('Confirm visit');
+    await click('Confirm order', 'left');
     await top('Organisation');
     const queued = await exportSave('06-confirmed-squad-visit');
     const field = queued.lcs.squads.find(s => s.name === 'QA Field Team');
