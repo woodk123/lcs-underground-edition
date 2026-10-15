@@ -51,7 +51,7 @@ Future<bool> talkAboutIssues(Creature a, Creature tk) async {
     addstr("\"");
   }
 
-  await getKey();
+  await acknowledge(title: 'Conversation');
 
   int difficulty = Difficulty.veryEasy;
 
@@ -86,7 +86,7 @@ Future<bool> talkAboutIssues(Creature a, Creature tk) async {
           addstr("\"That's frightening!   What can we do?\"");
         case 4:
           addstr("\"Oh, really?\" ");
-          await getKey();
+          await acknowledge(title: 'Conversation');
           mvaddstrc(y++, 1, lightGreen, "\"Yeah, really!\"");
         case 5:
           addstr("\"Oh my Science!   We've got to do something!\"");
@@ -103,12 +103,12 @@ Future<bool> talkAboutIssues(Creature a, Creature tk) async {
       }
     }
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     if (!poolAndProspects.contains(tk)) {
       mvaddstrc(++y, 1, white,
           "After more discussion, ${tk.name} agrees to come by later tonight.");
-      await getKey();
+      await acknowledge(title: 'Conversation');
       tk.nameCreature();
       RecruitmentSession recruitSession = RecruitmentSession(tk, a);
       recruitmentSessions.add(recruitSession);
@@ -116,7 +116,7 @@ Future<bool> talkAboutIssues(Creature a, Creature tk) async {
     } else {
       mvaddstrc(
           ++y, 1, white, "They chat briefly, but ${tk.name} has work to do.");
-      await getKey();
+      await acknowledge(title: 'Conversation');
     }
     return true;
   } else {
@@ -156,7 +156,7 @@ Future<bool> talkAboutIssues(Creature a, Creature tk) async {
     }
     addstrc(white, " <turns away>");
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     tk.isWillingToTalk = false;
     return true;

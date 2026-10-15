@@ -301,7 +301,7 @@ Future<void> siegeCheck() async {
             l.siege.underAttack = false;
           }
 
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
 
           //MENTION ESCALATION STATE
           if (l.siege.escalationState.index >=
@@ -311,7 +311,7 @@ Future<void> siegeCheck() async {
               1,
               "National Guard troops are replacing normal SWAT units.",
             );
-            await getKey();
+            await acknowledge(title: 'Safehouse siege');
           }
           if (l.siege.escalationState.index >= SiegeEscalation.tanks.index) {
             move(10, 1);
@@ -322,11 +322,11 @@ Future<void> siegeCheck() async {
                 "An M1 Abrams Tank takes up position outside the compound.",
               );
             }
-            await getKey();
+            await acknowledge(title: 'Safehouse siege');
           }
           if (l.siege.escalationState.index >= SiegeEscalation.bombers.index) {
             mvaddstr(11, 1, "You hear jet bombers streak overhead.");
-            await getKey();
+            await acknowledge(title: 'Safehouse siege');
           }
 
           // "You are wanted for blahblah and other crimes."
@@ -352,21 +352,21 @@ Future<void> siegeCheck() async {
               "The cops have raided the ${l.getName()}, an unoccupied safehouse.",
             );
           }
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
 
           int y = 9;
           for (Creature p in l.creaturesPresent.toList()) {
             if (!p.alive) {
               move(y++, 1);
               addstr("${p.name}'s corpse has been recovered.");
-              await getKey();
+              await acknowledge(title: 'Safehouse siege');
               pool.remove(p);
               continue;
             }
             if (p.align != Alignment.liberal) {
               move(y++, 1);
               addstr("${p.name} has been rescued.");
-              await getKey();
+              await acknowledge(title: 'Safehouse siege');
               pool.remove(p);
               p.location = p.workLocation;
               continue;
@@ -413,7 +413,7 @@ Future<void> siegeCheck() async {
           } else {
             addstr("the LCS.");
           }
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
         }
       } else if ((l.siege.timeuntilcorps > 0) && !l.siege.underSiege) {
         // Corp raid countdown!
@@ -433,7 +433,7 @@ Future<void> siegeCheck() async {
           "campaign with the goal of downsizing the LCS "
           "into a fine red mist.",
         );
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
         setColor(white);
         addparagraph(
           console.y + 1,
@@ -444,7 +444,7 @@ Future<void> siegeCheck() async {
           "${l.getName()} to seamlessly deliver live munitions into your "
           "skull.",
         );
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
         mvaddstrc(
           console.y + 1,
           1,
@@ -457,7 +457,7 @@ Future<void> siegeCheck() async {
           red,
           "Corporate mercenaries are moving to liquidate the ${l.getName()}.",
         );
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
 
         l.siege.activeSiegeType = SiegeType.corporateMercs;
         l.siege.underAttack = true;
@@ -522,7 +522,7 @@ Future<void> siegeCheck() async {
           message += " to secure payment of unpaid hospital bills.";
           setColor(white);
           addparagraph(8, 1, message);
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
         }
       } else if (l.siege.timeuntilmedical > 0 && !l.siege.underSiege) {
         // Medical raid countdown!
@@ -547,7 +547,7 @@ Future<void> siegeCheck() async {
           "while handling rifles that most of them look like they have "
           "no idea how to use.",
         );
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
         setColor(white);
         addparagraph(
           console.y + 1,
@@ -559,7 +559,7 @@ Future<void> siegeCheck() async {
           "or anything like that, but you owe us a buncha money and "
           "we're here to settle the debt!\"",
         );
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
         addparagraph(
           console.y + 1,
           1,
@@ -570,14 +570,14 @@ Future<void> siegeCheck() async {
           "Please, we don't wanna shoot anyone, we're from the finance "
           "department!\"",
         );
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
         setColor(lightBlue);
         addparagraph(
           console.y + 1,
           1,
           "Hopsital debt collectors are moving to settle with the ${l.getName()}.",
         );
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
 
         l.siege.activeSiegeType = SiegeType.medicalDebtCollectors;
         l.siege.underAttack = true;
@@ -614,7 +614,7 @@ Future<void> siegeCheck() async {
               "You have received warning from ${ccsSleeper.name} that the CCS "
               "is gearing up to attack ${l.getName()} in ${l.city.name}.",
             );
-            await getKey();
+            await acknowledge(title: 'Safehouse siege');
           }
         } else if (l.siege.timeuntilccs > 0) {
           // CCS raid countdown!
@@ -632,7 +632,7 @@ Future<void> siegeCheck() async {
             white,
             "A screeching truck pulls up to ${l.getName()}!",
           );
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
 
           if (!l.compound.bollards && oneIn(5)) {
             // CCS Carbombs safehouse!!
@@ -643,7 +643,7 @@ Future<void> siegeCheck() async {
               red,
               "The truck plows into the building and explodes!",
             );
-            await getKey();
+            await acknowledge(title: 'Safehouse siege');
 
             erase();
             mvaddstrc(0, 1, white, "CCS CAR BOMBING CASUALTY REPORT");
@@ -688,7 +688,7 @@ Future<void> siegeCheck() async {
               }
             }
 
-            await getKey();
+            await acknowledge(title: 'Safehouse siege');
           } else {
             // CCS Raids safehouse
             erase();
@@ -698,7 +698,7 @@ Future<void> siegeCheck() async {
               red,
               "CCS members pour out of the truck and shoot in the front doors!",
             );
-            await getKey();
+            await acknowledge(title: 'Safehouse siege');
 
             l.siege.activeSiegeType = SiegeType.ccs;
             l.siege.underAttack = true;
@@ -739,7 +739,7 @@ Future<void> siegeCheck() async {
             "${agentsleeper.name} has sent word that the CIA is planning ",
           );
           mvaddstr(9, 1, "to launch an attack on ${l.getName()}!");
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
         }
       } else if (l.siege.timeuntilcia > 0) {
         l.siege.timeuntilcia--; // CIA raid countdown!
@@ -757,21 +757,21 @@ Future<void> siegeCheck() async {
           "In the dead of the night, a column of unmarked black vans with "
           "tinted windows surrounds the ${l.getName()}.",
         );
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
         mvaddstrc(
           console.y + 1,
           1,
           white,
           "Hair stands on end... the air is charged with the sound of silence.",
         );
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
         if (l.compound.cameras) {
           mvaddstr(console.y + 2, 1, "The camera feeds are dead.");
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
         }
         if (l.compound.generator) {
           mvaddstr(console.y + 2, 1, "The generator won't start.");
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
         }
         if (l.compound.solarPanels) {
           mvaddstr(
@@ -779,16 +779,16 @@ Future<void> siegeCheck() async {
             1,
             "The solar batteries are suddenly reporting no charge.",
           );
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
         }
         mvaddstr(
           console.y + 2,
           1,
           "The compound is plunged into darkness as the doors spontaneously unlock.",
         );
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
         mvaddstrc(console.y + 2, 1, red, "The CIA has arrived.");
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
 
         l.siege.activeSiegeType = SiegeType.cia;
         l.siege.underAttack = true;
@@ -826,7 +826,7 @@ Future<void> siegeCheck() async {
           "A loosely-organized column of pickup trucks sporting gun racks "
           "and Confederate flags is approaching the ${l.getName()}.",
         );
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
         setColor(white);
         addparagraph(
           console.y + 1,
@@ -837,7 +837,7 @@ Future<void> siegeCheck() async {
           "deepfakes, and committing unspeakable crimes against innocent "
           "children.",
         );
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
         addparagraph(
           console.y + 1,
           1,
@@ -845,7 +845,7 @@ Future<void> siegeCheck() async {
           "media, the Conservative masses are pouring into ${l.district.name} "
           "to assault the ${l.getName()}!",
         );
-        await getKey();
+        await acknowledge(title: 'Safehouse siege');
 
         l.siege.activeSiegeType = SiegeType.angryRuralMob;
         l.siege.underAttack = true;
@@ -888,7 +888,7 @@ Future<void> siegeTurn() async {
         l.controller = SiteController.ccs; // CCS Captures warehouse
       }
 
-      await getKey();
+      await acknowledge(title: 'Safehouse siege');
 
       int y = 9;
 
@@ -898,13 +898,13 @@ Future<void> siegeTurn() async {
         if (!p.alive) {
           mvaddstr(y++, 1, p.name);
           addstr("'s corpse has been recovered.");
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
           pool.remove(p);
           continue;
         }
         if (p.align != Alignment.liberal) {
           mvaddstr(y++, 1, "${p.name} has been rescued.");
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
           pool.remove(p);
           continue;
         }
@@ -1132,7 +1132,7 @@ Future<void> siegeTurn() async {
               "Elite Journalist ${repname.firstLast} from the $newsType $publicationName "
               "got into the compound somehow!";
           addparagraph(1, 1, newsBody);
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
 
           NewsStory ns = NewsStory.unpublished(NewsStories.majorEvent);
           ns.loc = l;
@@ -1167,13 +1167,13 @@ Future<void> siegeTurn() async {
           String paragraph = "${pool[best].name} decides to give an interview.";
           newsBody += "\n\n$paragraph";
           addparagraph(console.y + 1, 1, paragraph);
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
 
           paragraph =
               "The interview is wide-ranging, covering a variety of topics.";
           newsBody += "\n\n$paragraph";
           addparagraph(console.y + 1, 1, paragraph);
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
 
           debugPrint("bestvalue: $bestvalue");
 
@@ -1231,7 +1231,7 @@ Future<void> siegeTurn() async {
             addparagraph(console.y + 1, 1, paragraph);
           }
 
-          await getKey();
+          await acknowledge(title: 'Safehouse siege');
 
           //CHECK PUBLIC OPINION
           Map<View, double> before = Map.fromEntries(
@@ -1385,7 +1385,7 @@ Future<void> siegeDefeat() async {
       }
     }
 
-    await getKey();
+    await acknowledge(title: 'Safehouse siege');
 
     for (int i = pool.length - 1; i >= 0; i--) {
       Creature p = pool[i];
@@ -1435,7 +1435,7 @@ Future<void> siegeDefeat() async {
 
     erase();
     mvaddstrc(1, 1, white, "Everyone in the ${loc.getName()} is slain.");
-    await getKey();
+    await acknowledge(title: 'Safehouse siege');
 
     NewsStory.prepare(NewsStories.massacre)
       ..loc = loc
@@ -1530,7 +1530,7 @@ Future<SallyForthResult> sallyForthPart3(Site loc) async {
       setColor(white);
       clearMessageArea();
       mvaddstr(16, 1, "You're free!");
-      await getKey();
+      await acknowledge(title: 'Safehouse siege');
       await escapeSiege(false);
       return SallyForthResult.escaped;
     case ChaseOutcome.capture:
@@ -1547,7 +1547,7 @@ Future<SallyForthResult> sallyForthPart3(Site loc) async {
       } else {
         mvaddstr(16, 1, "The siege is broken!");
       }
-      await getKey();
+      await acknowledge(title: 'Safehouse siege');
       await conquerText();
       await squadCleanup();
       await escapeSiege(true);
@@ -1584,7 +1584,7 @@ Future<void> fightHomelessCampSiege() async {
     "Press any key to Confront the Conservative Aggressors",
   );
 
-  await getKey();
+  await acknowledge(title: 'Safehouse siege');
 
   return sallyForthPart2(loc);
 }
@@ -1623,7 +1623,7 @@ Future<void> sallyForth() async {
     "Press any key to Confront the Conservative Aggressors",
   );
 
-  await getKey();
+  await acknowledge(title: 'Safehouse siege');
 
   return sallyForthPart2(loc);
 }
@@ -1753,7 +1753,7 @@ Future<void> escapeOrEngage() async {
     "Press any key to Confront the Conservative Aggressors",
   );
 
-  await getKey();
+  await acknowledge(title: 'Safehouse siege');
 
   //CRIMINALIZE
   if (loc.siege.activeSiegeType == SiegeType.police) {
@@ -1860,7 +1860,7 @@ Future<void> escapeSiege(bool won) async {
       "Press any key to split up and lay low for a few days",
     );
 
-    await getKey();
+    await acknowledge(title: 'Safehouse siege');
 
     //dump retrieved loot in homeless camp - is there anywhere better to put it?
     if (squad != null) homes?.addLootAndProcessMoney(squad.loot);
@@ -2156,5 +2156,5 @@ Future<void> stateBrokenLaws(Site loc) async {
     addstr("!");
   }
 
-  await getKey();
+  await acknowledge(title: 'Safehouse siege');
 }

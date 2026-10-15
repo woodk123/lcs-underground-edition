@@ -297,7 +297,7 @@ Future<void> sleeperSpy(Creature cr, Map<View, int> libpower) async {
         mvaddstr(6, 1, "Sleeper ${cr.name} has been caught snooping around.");
         mvaddstr(8, 1, "The Liberal is now homeless and jobless...");
       }
-      await getKey();
+      await acknowledge(title: 'Sleeper report');
 
       cr.squad = null;
       cr.location = homes;
@@ -315,7 +315,7 @@ Future<void> sleeperSpy(Creature cr, Map<View, int> libpower) async {
         mvaddstr(6, 1, "Sleeper ${cr.name} has been caught snooping around.");
         mvaddstr(8, 1, "The Liberal's infiltration score has taken a hit.");
       }
-      await getKey();
+      await acknowledge(title: 'Sleeper report');
     }
     return;
   }
@@ -342,7 +342,7 @@ Future<void> sleeperSpy(Creature cr, Map<View, int> libpower) async {
 
     cr.infiltration -= 0.2;
     addjuice(cr, 50, 1000);
-    await getKey();
+    await acknowledge(title: 'Sleeper report');
   }
 
   if (homes?.siege.underSiege != false || !canSeeThings) return;
@@ -525,7 +525,7 @@ Future<void> sleeperSteal(Creature cr, Map<View, int> libpower) async {
     } else {
       takingHeat = true;
       erase();
-      await getKey();
+      await acknowledge(title: 'Sleeper report');
     }
   }
   // Improves juice, as confidence improves
@@ -552,7 +552,7 @@ Future<void> sleeperSteal(Creature cr, Map<View, int> libpower) async {
       mvaddstr(9, 1, "The Liberal's infiltration score has taken a hit.");
     }
   }
-  await getKey();
+  await acknowledge(title: 'Sleeper report');
 }
 
 Future<void> sleeperRecruit(Creature cr, Map<View, int> libpower) async {
@@ -629,7 +629,7 @@ Future<void> sleeperRecruit(Creature cr, Map<View, int> libpower) async {
                 "has agreed to adopt &$newAlignColor${bestPossibleAlign.label}&w "
                 "policies.");
             addjuice(cr, 25, 1000);
-            await getKey();
+            await acknowledge(title: 'Sleeper report');
             return;
           } else if (bestPossibleAlign.index > currentAlign.index) {
             // Appoint the new cabinet member
@@ -672,7 +672,7 @@ Future<void> sleeperRecruit(Creature cr, Map<View, int> libpower) async {
             addjuice(
                 cr, (bestPossibleAlign.index - currentAlign.index) * 25, 1000);
 
-            await getKey();
+            await acknowledge(title: 'Sleeper report');
             return;
           }
         } else {
@@ -690,7 +690,7 @@ Future<void> sleeperRecruit(Creature cr, Map<View, int> libpower) async {
               "The President is considering other options, but lacks the "
               "votes in Congress to confirm a more Liberal appointment.");
 
-          await getKey();
+          await acknowledge(title: 'Sleeper report');
           return;
         }
       } else {
@@ -725,7 +725,7 @@ Future<void> sleeperRecruit(Creature cr, Map<View, int> libpower) async {
         mvaddstrc(8, 1, lightGray,
             "${e.name} looks forward serving the Liberal cause!");
 
-        await getKey();
+        await acknowledge(title: 'Sleeper report');
 
         if (cr.subordinatesLeft == 0) cr.activity = Activity.none();
         stats.recruits++;

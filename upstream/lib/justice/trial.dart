@@ -34,7 +34,7 @@ Future<void> trial(Creature g) async {
   erase();
   mvaddstrc(1, 1, white, g.name);
   addstr(" is standing trial.");
-  await getKey();
+  await acknowledge(title: 'Court proceedings');
 
   setColor(lightGray);
   int weakEvidencePenalty = 0;
@@ -106,7 +106,7 @@ Future<void> trial(Creature g) async {
     if (typenum == 0) charges += ".";
     setColor(red);
     addparagraph(5, 1, charges);
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
   }
 
   for (var c in g.wantedForCrimes.entries.where((e) => e.value > 0)) {
@@ -139,7 +139,7 @@ Future<void> trial(Creature g) async {
       }
     }
 
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
   }
 
   //CHOOSE DEFENSE
@@ -214,7 +214,7 @@ Future<void> trial(Creature g) async {
     //TRIAL MESSAGE
     mvaddstrc(3, 1, lightGray, "The trial proceeds.  Jury selection is first.");
 
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
 
     //JURY MAKEUP MESSAGE
     setColor(lightGray);
@@ -278,7 +278,7 @@ Future<void> trial(Creature g) async {
       }
     }
 
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
 
     //PROSECUTION MESSAGE
     // *JDS* The bigger your record, the stronger the evidence
@@ -310,7 +310,7 @@ Future<void> trial(Creature g) async {
       addstr("The volume of evidence is overwhelming and incredibly damning.");
     }
 
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
 
     jury += lcsRandom(prosecution ~/ 2 + 1) + prosecution ~/ 2;
 
@@ -405,24 +405,24 @@ Future<void> trial(Creature g) async {
         addjuice(g, 50, 1000); // That shit is legend
       }
     }
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
     mvaddstrc(12, 1, lightGray, "The jury leaves to consider the case.");
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
     erase();
     mvaddstrc(1, 1, lightGray, "The jury has returned from deliberations.");
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
 
     //HUNG JURY
     if (defensepower == jury) {
       mvaddstrc(3, 1, yellow, "But they can't reach a verdict!");
-      await getKey();
+      await acknowledge(title: 'Court proceedings');
 
       //RE-TRY
       if (oneIn(2) || scarefactor >= 10 || g.confessions > 0) {
         mvaddstrc(5, 1, lightGray, "The case will be re-tried next month.");
         trialOutcome = TrialOutcome.retrial;
 
-        await getKey();
+        await acknowledge(title: 'Court proceedings');
 
         g.location = findSiteInSameCity(g.site?.city, SiteType.courthouse);
       }
@@ -436,13 +436,13 @@ Future<void> trial(Creature g) async {
         );
         trialOutcome = TrialOutcome.acquittal;
 
-        await getKey();
+        await acknowledge(title: 'Court proceedings');
       }
     }
     //ACQUITTAL!
     else if (defensepower > jury) {
       mvaddstrc(3, 1, lightGreen, "NOT GUILTY!");
-      await getKey();
+      await acknowledge(title: 'Court proceedings');
 
       trialOutcome = TrialOutcome.acquittal;
 
@@ -470,7 +470,7 @@ Future<void> trial(Creature g) async {
     erase();
     mvaddstrc(1, 1, lightGray, "The court accepts the plea.");
 
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
 
     // Check for lenience; sleeper judge will always be merciful
     if (sleeperjudge != null || oneIn(2)) {
@@ -504,7 +504,7 @@ Future<void> trial(Creature g) async {
         );
       }
     }
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
   }
 
   //CLEAN UP LAW FLAGS
@@ -559,7 +559,7 @@ Future<void> trial(Creature g) async {
 Future<void> penalize(Creature g, bool lenient) async {
   mvaddstrc(3, 1, red, "GUILTY!");
 
-  await getKey();
+  await acknowledge(title: 'Court proceedings');
 
   int oldsentence = g.sentence;
   bool olddeathPenalty =
@@ -682,7 +682,7 @@ Future<void> penalize(Creature g, bool lenient) async {
       "During sentencing, the judge grants some leniency.",
     );
 
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
   }
 
   //MENTION SENTENCE
@@ -692,7 +692,7 @@ Future<void> penalize(Creature g, bool lenient) async {
     mvaddstrc(7, 1, red, g.properName);
     addstr(", your previous death sentence will be carried out.");
 
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
 
     mvaddstrc(
       9,
@@ -701,14 +701,14 @@ Future<void> penalize(Creature g, bool lenient) async {
       "The execution is scheduled to occur three months from now.",
     );
 
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
   } else if (g.deathPenalty) {
     g.sentence = 3;
     setColor(yellow, background: darkRed);
     mvaddstr(7, 1, g.properName);
     addstr(", you are sentenced to DEATH!");
 
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
 
     mvaddstrc(
       9,
@@ -717,7 +717,7 @@ Future<void> penalize(Creature g, bool lenient) async {
       "The execution is scheduled to occur three months from now.",
     );
 
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
   }
   // Don't give a time-limited sentence if they already have a life sentence.
   else if ((g.sentence >= 0 && oldsentence < 0) ||
@@ -731,12 +731,12 @@ Future<void> penalize(Creature g, bool lenient) async {
       "You will be returned to prison to resume serving your time.",
     );
 
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
   } else if (g.sentence == 0) {
     mvaddstrc(7, 1, lightGray, g.properName);
     addstr(", you are sentenced to time served.  You are free to go.");
 
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
   } else {
     if (g.sentence >= 36) g.sentence -= g.sentence % 12;
 
@@ -754,7 +754,7 @@ Future<void> penalize(Creature g, bool lenient) async {
         if (oldsentence >= 0) {
           addstr(".");
 
-          await getKey();
+          await acknowledge(title: 'Court proceedings');
 
           mvaddstr(9, 1, "Have a nice day, ");
           addstr(g.properName);
@@ -788,6 +788,6 @@ Future<void> penalize(Creature g, bool lenient) async {
       addstr(".");
     }
 
-    await getKey();
+    await acknowledge(title: 'Court proceedings');
   }
 }

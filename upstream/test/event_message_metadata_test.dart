@@ -135,13 +135,17 @@ void main() {
   test('ordinary nested metadata restores the previous notice', () async {
     final console = engine.console;
     console.eventMessage = 'Outer notice';
-    final showing = showMessage('Inner notice');
+    console.eventTitle = 'Outer title';
+    final showing = showMessage('Inner notice', title: 'Inner title');
     expect(console.eventMessage, 'Inner notice');
+    expect(console.eventTitle, 'Inner title');
     expect(console.sendInput('Enter'), isTrue);
     await showing;
     expect(console.eventMessage, 'Outer notice');
+    expect(console.eventTitle, 'Outer title');
     console.erase();
     expect(console.eventMessage, isNull);
+    expect(console.eventTitle, isNull);
   });
 
   test('erase during the reader never restores a stale outer notice', () async {

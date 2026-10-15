@@ -6,6 +6,7 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/gender.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/journal_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/gamestate/time.dart';
@@ -50,6 +51,25 @@ void printCreatureInfo(
     printWounds(cr);
     setColor(lightGray);
   }
+  String text(int row, int start, int end) => console.buffer[row]
+      .sublist(start, end).map((cell) => cell.glyph).join()
+      .replaceAll(RegExp(r'[—═─━]{2,}'), '').trim();
+  console.journalBodyStart = 9;
+  console.journalPeople = [
+    JournalPersonSummary(
+      person: cr,
+      name: cr.name,
+      role: cr.title,
+      health: text(1, 49, 80),
+      equipment: [for (var row = 5; row <= 7; row++) text(row, 0, 31)],
+      details: [
+        for (var row = 2; row <= 4; row++) text(row, 0, 31),
+        for (var row = 2; row <= 7; row++) text(row, 31, 49),
+        for (var row = 2; row <= 7; row++) text(row, 49, 80),
+      ].where((line) => line.isNotEmpty).toList(),
+      inspectable: knowledge == 255,
+    ),
+  ];
 }
 
 void printAttributesAsKnowledgePermits(Creature creature, int knowledge) {
@@ -251,6 +271,7 @@ Future<void> fullCreatureInfoScreen(Creature cr) async {
     if (page == 0) printFullCreatureStats(cr);
     if (page == 1) printFullCreatureSkills(cr);
     if (page == 2) printFullCreatureCrimes(cr);
+    console.journalProfile = JournalProfileContext(cr, page);
 
     addOptionText(23, 0, "N", "N - Change Name");
     addOptionText(23, 26, "G", "G - Change Gender");
@@ -259,7 +280,7 @@ Future<void> fullCreatureInfoScreen(Creature cr) async {
       addstr(" / ");
       addOptionText(23, 57, "RIGHT", "RIGHT - Other Liberals");
     }
-    mvaddstr(24, 0, "Any Other Key - Continue the Struggle");
+    addOptionText(24, 0, 'Enter', 'Enter - Continue the Struggle');
     addOptionText(24, 52, "UP", "UP");
     addstr(" / ");
     addOptionText(24, 57, "DOWN", "DOWN - More Info");

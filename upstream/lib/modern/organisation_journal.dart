@@ -2147,6 +2147,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       return JournalMapPlace(
         id: location.idString,
         name: location.getName(),
+        // SiteType.name is a display title; EnumName is the stable enum key.
+        siteType: location is Site ? EnumName(location.type).name : null,
         kind: location is Site
             ? 'site'
             : location is District

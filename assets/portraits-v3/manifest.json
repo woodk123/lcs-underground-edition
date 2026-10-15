@@ -1,0 +1,4152 @@
+{
+  "version": 3,
+  "portraitCount": 128,
+  "firstId": 250,
+  "lastId": 377,
+  "basePortraitCount": 250,
+  "combinedPortraitCount": 378,
+  "gridColumns": 4,
+  "gridRows": 4,
+  "runtimeAtlasSize": 1024,
+  "complete": true,
+  "missingAtlases": [],
+  "counts": {
+    "professionGroup": {
+      "punk": 4,
+      "goth": 4,
+      "emo": 4,
+      "biker": 4,
+      "religious": 16,
+      "mutant": 16,
+      "child": 16,
+      "teenager": 16,
+      "canine": 16,
+      "tank": 2,
+      "monster": 2,
+      "purpleGorilla": 2,
+      "warpedBear": 2,
+      "pinkElephant": 2,
+      "madCow": 2,
+      "sixLeggedPig": 2,
+      "flamingRabbit": 1,
+      "giantMosquito": 1,
+      "elderly": 16
+    },
+    "presentation": {
+      "female": 48,
+      "male": 48,
+      "unspecified": 32
+    }
+  },
+  "atlases": [
+    {
+      "batch": 16,
+      "source": "source/batch_16.png",
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "runtimeSize": [
+        1024,
+        1024
+      ],
+      "validPortraits": 16,
+      "sourceSha256": "da88504787389d3c33c3cc8e0eddc5f0aed48fa296e2969a0b1becb6885c177a",
+      "runtimeSha256": "d81dda95758f53b3d11e08f0d3745a90a47adf79b4fcff6dfd28cf47f759a98c"
+    },
+    {
+      "batch": 17,
+      "source": "source/batch_17.png",
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "runtimeSize": [
+        1024,
+        1024
+      ],
+      "validPortraits": 16,
+      "sourceSha256": "94fd2484608a9b9fdad3162572823d9a967a29b2d251ec3eefa373619758ff2e",
+      "runtimeSha256": "a3bf9bbefd3ad859e9f9642949579fa7f95baa6ad14b9c60beb42517da47f2de"
+    },
+    {
+      "batch": 18,
+      "source": "source/batch_18.png",
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "runtimeSize": [
+        1024,
+        1024
+      ],
+      "validPortraits": 16,
+      "sourceSha256": "2a44b8d2ac0dc38fcb6a7bd4890c0c7de40cd033102e2dfaada9b841cb5a8148",
+      "runtimeSha256": "70a1386df2aaa4f4b0fe076789f04ec5039f03f061256390d68c10b446cdcd4b"
+    },
+    {
+      "batch": 19,
+      "source": "source/batch_19.png",
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "runtimeSize": [
+        1024,
+        1024
+      ],
+      "validPortraits": 16,
+      "sourceSha256": "89606d0f66209eeb30cd11abfd99267768d4e876e9d1d5465758db793fadfa81",
+      "runtimeSha256": "86b6f15440e4eb595276807ace5fcad068b74b48932c76c7d7a07afcee9b9e99"
+    },
+    {
+      "batch": 20,
+      "source": "source/batch_20.png",
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "runtimeSize": [
+        1024,
+        1024
+      ],
+      "validPortraits": 16,
+      "sourceSha256": "fee5dc2615de95b459a5b2718fd6ab07f198cdcc5c744f619146734cd8370a0e",
+      "runtimeSha256": "215ca2b2aef5d8852b8eb08890338b5282964ee7b439d902f8a663ea238f1c5e"
+    },
+    {
+      "batch": 21,
+      "source": "source/batch_21.png",
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "runtimeSize": [
+        1024,
+        1024
+      ],
+      "validPortraits": 16,
+      "sourceSha256": "56d16154d46cceae706b32c4c2f60a27c96ba9abfb2a0fee58498604698ea0cf",
+      "runtimeSha256": "de450073ae06a9db8951fb793b381e52a8afef81904beb2a3c4d3f80e8f8fcd5"
+    },
+    {
+      "batch": 22,
+      "source": "source/batch_22.png",
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "runtimeSize": [
+        1024,
+        1024
+      ],
+      "validPortraits": 16,
+      "sourceSha256": "1333b8e0db70975a13c269070704fc6b09ab47d7c45f080c84b8cebb17713539",
+      "runtimeSha256": "2dba6b0531dbf85fdbad89a251f3d4d6cfb284d108fd08645c203d525287836e"
+    },
+    {
+      "batch": 23,
+      "source": "source/batch_23.png",
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "runtimeSize": [
+        1024,
+        1024
+      ],
+      "validPortraits": 16,
+      "sourceSha256": "90f8e5c15d422dfa38b19bd7ab7156a85b1a96de2d4e4d6af340f27d4e5fa78f",
+      "runtimeSha256": "676005c89581b9ee9bcef683c4ef7ef841ff97291f674e119613058c320e9e86"
+    }
+  ],
+  "portraits": [
+    {
+      "id": "portrait_250",
+      "index": 250,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 0,
+      "column": 0,
+      "professionGroup": "punk",
+      "presentation": "female",
+      "visualAge": 22,
+      "ageMin": 22,
+      "ageMax": 22,
+      "rect": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "e0ebe7ed9b1d33c7357f1b94da9d2d8fb8a53fec8089787190b2fea01e810970"
+    },
+    {
+      "id": "portrait_251",
+      "index": 251,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 0,
+      "column": 1,
+      "professionGroup": "punk",
+      "presentation": "male",
+      "visualAge": 22,
+      "ageMin": 22,
+      "ageMax": 22,
+      "rect": [
+        256,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "01749361a0ad10129cca8285ca01d9b4aec236c89e33de3a32c2c121787bf158"
+    },
+    {
+      "id": "portrait_252",
+      "index": 252,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 0,
+      "column": 2,
+      "professionGroup": "punk",
+      "presentation": "female",
+      "visualAge": 22,
+      "ageMin": 22,
+      "ageMax": 22,
+      "rect": [
+        512,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "949e1bf2f87b4be95a05f2e4ef79e2c039bce6cb633dc30dfe118b3a8ce30632"
+    },
+    {
+      "id": "portrait_253",
+      "index": 253,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 0,
+      "column": 3,
+      "professionGroup": "punk",
+      "presentation": "male",
+      "visualAge": 22,
+      "ageMin": 22,
+      "ageMax": 22,
+      "rect": [
+        768,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "0d4bffa5ce6feac4579a4947fad03d59bb615c38b53b87fe43d4a4050879bada"
+    },
+    {
+      "id": "portrait_254",
+      "index": 254,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 1,
+      "column": 0,
+      "professionGroup": "goth",
+      "presentation": "female",
+      "visualAge": 30,
+      "ageMin": 30,
+      "ageMax": 30,
+      "rect": [
+        0,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "cc5106b81d84af923e7a9571cbcb2647c44a600bb193482d3a283ccd9260f2ae"
+    },
+    {
+      "id": "portrait_255",
+      "index": 255,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 1,
+      "column": 1,
+      "professionGroup": "goth",
+      "presentation": "male",
+      "visualAge": 30,
+      "ageMin": 30,
+      "ageMax": 30,
+      "rect": [
+        256,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "560b52ef70eb84154e993ea1ab52d60b36010f4bd150bbd2b212fc0cacd25b50"
+    },
+    {
+      "id": "portrait_256",
+      "index": 256,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 1,
+      "column": 2,
+      "professionGroup": "goth",
+      "presentation": "female",
+      "visualAge": 30,
+      "ageMin": 30,
+      "ageMax": 30,
+      "rect": [
+        512,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "325186e27f6925f8f62ef032d3893c2bd633227db6fc7c973bbd94d352c9a770"
+    },
+    {
+      "id": "portrait_257",
+      "index": 257,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 1,
+      "column": 3,
+      "professionGroup": "goth",
+      "presentation": "male",
+      "visualAge": 30,
+      "ageMin": 30,
+      "ageMax": 30,
+      "rect": [
+        768,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "d840dfdd815d65b262a9d2a70e33f79324b31ec4cacc6500201b6acce761555c"
+    },
+    {
+      "id": "portrait_258",
+      "index": 258,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 2,
+      "column": 0,
+      "professionGroup": "emo",
+      "presentation": "female",
+      "visualAge": 24,
+      "ageMin": 24,
+      "ageMax": 24,
+      "rect": [
+        0,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "15727cf5b244914831cf53d703cc38ef36ff628ed4f22fd825007fc5744bfbb6"
+    },
+    {
+      "id": "portrait_259",
+      "index": 259,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 2,
+      "column": 1,
+      "professionGroup": "emo",
+      "presentation": "male",
+      "visualAge": 24,
+      "ageMin": 24,
+      "ageMax": 24,
+      "rect": [
+        256,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "b590fd0ad987ef9e4c2e3ed8089df8ed26411cbd904fa8a4dcd7fd6744f64208"
+    },
+    {
+      "id": "portrait_260",
+      "index": 260,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 2,
+      "column": 2,
+      "professionGroup": "emo",
+      "presentation": "female",
+      "visualAge": 24,
+      "ageMin": 24,
+      "ageMax": 24,
+      "rect": [
+        512,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "51e3948de2b9c8674ea19f6c6b59125d80b996c1976a641f24265ba5b8850212"
+    },
+    {
+      "id": "portrait_261",
+      "index": 261,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 2,
+      "column": 3,
+      "professionGroup": "emo",
+      "presentation": "male",
+      "visualAge": 24,
+      "ageMin": 24,
+      "ageMax": 24,
+      "rect": [
+        768,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "c455000a2ca824aea2547961a59254ad6043a10b22e458138b4fedfacfc250c8"
+    },
+    {
+      "id": "portrait_262",
+      "index": 262,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 3,
+      "column": 0,
+      "professionGroup": "biker",
+      "presentation": "female",
+      "visualAge": 45,
+      "ageMin": 45,
+      "ageMax": 45,
+      "rect": [
+        0,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "cfbc805222aca932487ef42dd0aa6fc001ce0d8f8b1824d3d8f0578c90105bca"
+    },
+    {
+      "id": "portrait_263",
+      "index": 263,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 3,
+      "column": 1,
+      "professionGroup": "biker",
+      "presentation": "male",
+      "visualAge": 45,
+      "ageMin": 45,
+      "ageMax": 45,
+      "rect": [
+        256,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "50b4ade83371e4a7ed9ba317f7e81032ef9c6d6b1a81d60c4f19953836d9b739"
+    },
+    {
+      "id": "portrait_264",
+      "index": 264,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 3,
+      "column": 2,
+      "professionGroup": "biker",
+      "presentation": "female",
+      "visualAge": 45,
+      "ageMin": 45,
+      "ageMax": 45,
+      "rect": [
+        512,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "8618cea74d9eaf9c4ec8f8dae0a2fc23a54abe5009ce3f5251f4138335c74f6b"
+    },
+    {
+      "id": "portrait_265",
+      "index": 265,
+      "batch": 16,
+      "asset": "assets/modern/portraits_v2/batch_16.png",
+      "row": 3,
+      "column": 3,
+      "professionGroup": "biker",
+      "presentation": "male",
+      "visualAge": 45,
+      "ageMin": 45,
+      "ageMax": 45,
+      "rect": [
+        768,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "88db44a894578047e0baba41abadfb19112e2dd99d6226076481362fc4b88e0c"
+    },
+    {
+      "id": "portrait_266",
+      "index": 266,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 0,
+      "column": 0,
+      "professionGroup": "religious",
+      "presentation": "female",
+      "visualAge": 25,
+      "ageMin": 25,
+      "ageMax": 25,
+      "rect": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "8a605b47a2ff494fc64c9cc0b1648ed285ac923428f531f78c75684c363ddf1c",
+      "artDirection": "nun/religious woman"
+    },
+    {
+      "id": "portrait_267",
+      "index": 267,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 0,
+      "column": 1,
+      "professionGroup": "religious",
+      "presentation": "male",
+      "visualAge": 25,
+      "ageMin": 25,
+      "ageMax": 25,
+      "rect": [
+        256,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "15847b728e27c95794bb0fadb2377d971a290475e5e35ea8aaf202ee0f426bc7",
+      "artDirection": "priest/pastor"
+    },
+    {
+      "id": "portrait_268",
+      "index": 268,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 0,
+      "column": 2,
+      "professionGroup": "religious",
+      "presentation": "female",
+      "visualAge": 25,
+      "ageMin": 25,
+      "ageMax": 25,
+      "rect": [
+        512,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "eddde22b8d8903e63bbc8ce15f517ea6cb715ce3f9572b942a7456abd4625bad",
+      "artDirection": "nun/religious woman"
+    },
+    {
+      "id": "portrait_269",
+      "index": 269,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 0,
+      "column": 3,
+      "professionGroup": "religious",
+      "presentation": "male",
+      "visualAge": 25,
+      "ageMin": 25,
+      "ageMax": 25,
+      "rect": [
+        768,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "7e4f4e3a17370c6a7369a4cf4707c29db162cf11c17c66f193e87edd1765d5ee",
+      "artDirection": "priest/pastor"
+    },
+    {
+      "id": "portrait_270",
+      "index": 270,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 1,
+      "column": 0,
+      "professionGroup": "religious",
+      "presentation": "female",
+      "visualAge": 40,
+      "ageMin": 40,
+      "ageMax": 40,
+      "rect": [
+        0,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "66481facb3c0a30d30525a65ad4ac2d9ca6d96c66966be9c6c740ffb04846738",
+      "artDirection": "nun/religious woman"
+    },
+    {
+      "id": "portrait_271",
+      "index": 271,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 1,
+      "column": 1,
+      "professionGroup": "religious",
+      "presentation": "male",
+      "visualAge": 40,
+      "ageMin": 40,
+      "ageMax": 40,
+      "rect": [
+        256,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "5b16609ceaa99eb8cde3153ef6cab4e07dd6bb79e81c0a2e1d1cbb19278ad3a9",
+      "artDirection": "priest/pastor"
+    },
+    {
+      "id": "portrait_272",
+      "index": 272,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 1,
+      "column": 2,
+      "professionGroup": "religious",
+      "presentation": "female",
+      "visualAge": 40,
+      "ageMin": 40,
+      "ageMax": 40,
+      "rect": [
+        512,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "c49a08326e68ed7acc546f0aa4721a69c83c1564506fd595b3e23d526b5eb961",
+      "artDirection": "nun/religious woman"
+    },
+    {
+      "id": "portrait_273",
+      "index": 273,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 1,
+      "column": 3,
+      "professionGroup": "religious",
+      "presentation": "male",
+      "visualAge": 40,
+      "ageMin": 40,
+      "ageMax": 40,
+      "rect": [
+        768,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "6018af485c110d40357fd0222176267c75e891c91cd887c342f64f37ffa11923",
+      "artDirection": "priest/pastor"
+    },
+    {
+      "id": "portrait_274",
+      "index": 274,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 2,
+      "column": 0,
+      "professionGroup": "religious",
+      "presentation": "female",
+      "visualAge": 55,
+      "ageMin": 55,
+      "ageMax": 55,
+      "rect": [
+        0,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "cfcbe45905ca374b3fec170deb75d68854054dde472ae7ea9f3ea57f3a271a74",
+      "artDirection": "nun/religious woman"
+    },
+    {
+      "id": "portrait_275",
+      "index": 275,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 2,
+      "column": 1,
+      "professionGroup": "religious",
+      "presentation": "male",
+      "visualAge": 55,
+      "ageMin": 55,
+      "ageMax": 55,
+      "rect": [
+        256,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "c6547410448d57b470f2c1f8364ddd0c40bc1766aa6737f9f7ec61139948128b",
+      "artDirection": "priest/pastor"
+    },
+    {
+      "id": "portrait_276",
+      "index": 276,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 2,
+      "column": 2,
+      "professionGroup": "religious",
+      "presentation": "female",
+      "visualAge": 55,
+      "ageMin": 55,
+      "ageMax": 55,
+      "rect": [
+        512,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "792779ea373d608c04c9645b4b6df98fbe6e9cfc621d64adc34d26f391d759ef",
+      "artDirection": "nun/religious woman"
+    },
+    {
+      "id": "portrait_277",
+      "index": 277,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 2,
+      "column": 3,
+      "professionGroup": "religious",
+      "presentation": "male",
+      "visualAge": 55,
+      "ageMin": 55,
+      "ageMax": 55,
+      "rect": [
+        768,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "8e51b6591d76dc87e618d7df9afed1247184787bcff675a7cbe2fea1297bd804",
+      "artDirection": "priest/pastor"
+    },
+    {
+      "id": "portrait_278",
+      "index": 278,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 3,
+      "column": 0,
+      "professionGroup": "religious",
+      "presentation": "female",
+      "visualAge": 72,
+      "ageMin": 72,
+      "ageMax": 72,
+      "rect": [
+        0,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "558f17df42dac8077dc503c1898907172f8e563304d0d2255ef719012d6bd547",
+      "artDirection": "nun/religious woman"
+    },
+    {
+      "id": "portrait_279",
+      "index": 279,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 3,
+      "column": 1,
+      "professionGroup": "religious",
+      "presentation": "male",
+      "visualAge": 72,
+      "ageMin": 72,
+      "ageMax": 72,
+      "rect": [
+        256,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "0acd154c7ee5be7f3b64bc35c119573f7efec2a9c333379a90b7c1ba41621157",
+      "artDirection": "priest/pastor"
+    },
+    {
+      "id": "portrait_280",
+      "index": 280,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 3,
+      "column": 2,
+      "professionGroup": "religious",
+      "presentation": "female",
+      "visualAge": 72,
+      "ageMin": 72,
+      "ageMax": 72,
+      "rect": [
+        512,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "80e30243b2462249d483fc4f761d1e0bb3da87b127fe5b48efb89a218f0c4a46",
+      "artDirection": "nun/religious woman"
+    },
+    {
+      "id": "portrait_281",
+      "index": 281,
+      "batch": 17,
+      "asset": "assets/modern/portraits_v2/batch_17.png",
+      "row": 3,
+      "column": 3,
+      "professionGroup": "religious",
+      "presentation": "male",
+      "visualAge": 72,
+      "ageMin": 72,
+      "ageMax": 72,
+      "rect": [
+        768,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "48953b7eeb0d224e46a1cfc73a519a9cca32443bb4081af3896bfbd8dfbfdf65",
+      "artDirection": "priest/pastor"
+    },
+    {
+      "id": "portrait_282",
+      "index": 282,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 0,
+      "column": 0,
+      "professionGroup": "mutant",
+      "presentation": "female",
+      "visualAge": 25,
+      "ageMin": 25,
+      "ageMax": 25,
+      "rect": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "e0bf82992669572cd565c723e993fe505d9eac08af320c8e47409087974b9c4e"
+    },
+    {
+      "id": "portrait_283",
+      "index": 283,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 0,
+      "column": 1,
+      "professionGroup": "mutant",
+      "presentation": "male",
+      "visualAge": 25,
+      "ageMin": 25,
+      "ageMax": 25,
+      "rect": [
+        256,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "b4c1385f2fac19a5af792736fe54b7257db2d094beac6e0d60a53a2789c33512"
+    },
+    {
+      "id": "portrait_284",
+      "index": 284,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 0,
+      "column": 2,
+      "professionGroup": "mutant",
+      "presentation": "female",
+      "visualAge": 25,
+      "ageMin": 25,
+      "ageMax": 25,
+      "rect": [
+        512,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "0e68467db6d70a0cc33662b694884f247054af8de41030b774eb3bd5a57c37fa"
+    },
+    {
+      "id": "portrait_285",
+      "index": 285,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 0,
+      "column": 3,
+      "professionGroup": "mutant",
+      "presentation": "male",
+      "visualAge": 25,
+      "ageMin": 25,
+      "ageMax": 25,
+      "rect": [
+        768,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "310e256cf0e16f774b7532301746b65643c063e3d914b8d02cb4494d8b21993f"
+    },
+    {
+      "id": "portrait_286",
+      "index": 286,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 1,
+      "column": 0,
+      "professionGroup": "mutant",
+      "presentation": "female",
+      "visualAge": 38,
+      "ageMin": 38,
+      "ageMax": 38,
+      "rect": [
+        0,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "03c16df3ab8511df13928fc2a73c460d16d966be47b8fe56a30e4afbb64de8c9"
+    },
+    {
+      "id": "portrait_287",
+      "index": 287,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 1,
+      "column": 1,
+      "professionGroup": "mutant",
+      "presentation": "male",
+      "visualAge": 38,
+      "ageMin": 38,
+      "ageMax": 38,
+      "rect": [
+        256,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "62398792088a4a48a8ee81edbfae4e420cff5a7cfbee3f2f1d3f443f760875a5"
+    },
+    {
+      "id": "portrait_288",
+      "index": 288,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 1,
+      "column": 2,
+      "professionGroup": "mutant",
+      "presentation": "female",
+      "visualAge": 38,
+      "ageMin": 38,
+      "ageMax": 38,
+      "rect": [
+        512,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "644cddac28aee8d3995543c0b5d612234cfb195027d41abb9e6188c6afb26a8f"
+    },
+    {
+      "id": "portrait_289",
+      "index": 289,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 1,
+      "column": 3,
+      "professionGroup": "mutant",
+      "presentation": "male",
+      "visualAge": 38,
+      "ageMin": 38,
+      "ageMax": 38,
+      "rect": [
+        768,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "7a3a38ef7fde87a33c580f23f5c670983b7243e3cefbfdea4479458bb4a62215"
+    },
+    {
+      "id": "portrait_290",
+      "index": 290,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 2,
+      "column": 0,
+      "professionGroup": "mutant",
+      "presentation": "female",
+      "visualAge": 53,
+      "ageMin": 53,
+      "ageMax": 53,
+      "rect": [
+        0,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "d344dc0867af5c5ae7e129abafa639168d8a583f2555b358598015619feb096c"
+    },
+    {
+      "id": "portrait_291",
+      "index": 291,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 2,
+      "column": 1,
+      "professionGroup": "mutant",
+      "presentation": "male",
+      "visualAge": 53,
+      "ageMin": 53,
+      "ageMax": 53,
+      "rect": [
+        256,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "2451943cf57cdeaae4be8a05f53a9b7915a8d284af13ef9c73d6018be22acaf8"
+    },
+    {
+      "id": "portrait_292",
+      "index": 292,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 2,
+      "column": 2,
+      "professionGroup": "mutant",
+      "presentation": "female",
+      "visualAge": 53,
+      "ageMin": 53,
+      "ageMax": 53,
+      "rect": [
+        512,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "9fb3eb3f874a8ac70f14e9cb599a5f06ae709500ec5010453851cfafe1158e64"
+    },
+    {
+      "id": "portrait_293",
+      "index": 293,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 2,
+      "column": 3,
+      "professionGroup": "mutant",
+      "presentation": "male",
+      "visualAge": 53,
+      "ageMin": 53,
+      "ageMax": 53,
+      "rect": [
+        768,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "ae399bcc4f5b121cb4a714091e70a5193f7fb2ebddb490690c89af7efbad63f9"
+    },
+    {
+      "id": "portrait_294",
+      "index": 294,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 3,
+      "column": 0,
+      "professionGroup": "mutant",
+      "presentation": "female",
+      "visualAge": 68,
+      "ageMin": 68,
+      "ageMax": 68,
+      "rect": [
+        0,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "8b26b3cac8f3012ab47828fcfc96e7dd38c4de0a7b0159fca85ad84150fb17a4"
+    },
+    {
+      "id": "portrait_295",
+      "index": 295,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 3,
+      "column": 1,
+      "professionGroup": "mutant",
+      "presentation": "male",
+      "visualAge": 68,
+      "ageMin": 68,
+      "ageMax": 68,
+      "rect": [
+        256,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "d2555b9b936d22b219c5dd2a6d5d643ea14d3796a3724ac9da6372e250a909be"
+    },
+    {
+      "id": "portrait_296",
+      "index": 296,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 3,
+      "column": 2,
+      "professionGroup": "mutant",
+      "presentation": "female",
+      "visualAge": 68,
+      "ageMin": 68,
+      "ageMax": 68,
+      "rect": [
+        512,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "7a8fbdc14c117d9ec29b1de6ae2ae98113a67ae4da9dd2f0ffd2692f77b9aeb4"
+    },
+    {
+      "id": "portrait_297",
+      "index": 297,
+      "batch": 18,
+      "asset": "assets/modern/portraits_v2/batch_18.png",
+      "row": 3,
+      "column": 3,
+      "professionGroup": "mutant",
+      "presentation": "male",
+      "visualAge": 68,
+      "ageMin": 68,
+      "ageMax": 68,
+      "rect": [
+        768,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "c0180778ce195dffc2fed85364f9bd8b808495e6581c7b8b12b557ab8c6ff9ce"
+    },
+    {
+      "id": "portrait_298",
+      "index": 298,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 0,
+      "column": 0,
+      "professionGroup": "child",
+      "presentation": "female",
+      "visualAge": 4,
+      "ageMin": 4,
+      "ageMax": 4,
+      "rect": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "02ced8438e449a4a5d33d6223590058a33aa11eebdbd16f92048755b38d14f8f"
+    },
+    {
+      "id": "portrait_299",
+      "index": 299,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 0,
+      "column": 1,
+      "professionGroup": "child",
+      "presentation": "male",
+      "visualAge": 4,
+      "ageMin": 4,
+      "ageMax": 4,
+      "rect": [
+        256,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "651727bc0d59b9a5187f5918a1fe3be2c3bea6b2058b0d7711d862c9e5139bb7"
+    },
+    {
+      "id": "portrait_300",
+      "index": 300,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 0,
+      "column": 2,
+      "professionGroup": "child",
+      "presentation": "female",
+      "visualAge": 4,
+      "ageMin": 4,
+      "ageMax": 4,
+      "rect": [
+        512,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "593f520b37a11342b963c431701b339401a23b388c43e7a381b6388b39a437fd"
+    },
+    {
+      "id": "portrait_301",
+      "index": 301,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 0,
+      "column": 3,
+      "professionGroup": "child",
+      "presentation": "male",
+      "visualAge": 4,
+      "ageMin": 4,
+      "ageMax": 4,
+      "rect": [
+        768,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "68299dd5a036ae5cb079104a7badbd1151122b8b83ca7f4b6affabcb137914ac"
+    },
+    {
+      "id": "portrait_302",
+      "index": 302,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 1,
+      "column": 0,
+      "professionGroup": "child",
+      "presentation": "female",
+      "visualAge": 7,
+      "ageMin": 7,
+      "ageMax": 7,
+      "rect": [
+        0,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "46549bf54bb93de9000862deae2287739896968890625d20565bd706feac0e9f"
+    },
+    {
+      "id": "portrait_303",
+      "index": 303,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 1,
+      "column": 1,
+      "professionGroup": "child",
+      "presentation": "male",
+      "visualAge": 7,
+      "ageMin": 7,
+      "ageMax": 7,
+      "rect": [
+        256,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "e223c39b8d27b32aa0f4e5d488b68e17b9c784d5cfcb24b3479609e003260c5a"
+    },
+    {
+      "id": "portrait_304",
+      "index": 304,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 1,
+      "column": 2,
+      "professionGroup": "child",
+      "presentation": "female",
+      "visualAge": 7,
+      "ageMin": 7,
+      "ageMax": 7,
+      "rect": [
+        512,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "6a737831693919f9db536df4736f7caa3a86a63ed6de7b2e19e19311c8bdc02c"
+    },
+    {
+      "id": "portrait_305",
+      "index": 305,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 1,
+      "column": 3,
+      "professionGroup": "child",
+      "presentation": "male",
+      "visualAge": 7,
+      "ageMin": 7,
+      "ageMax": 7,
+      "rect": [
+        768,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "3874a636522c5cb5aeba7f55e28df909fcc106039d51f683df6e14fae7636dc4"
+    },
+    {
+      "id": "portrait_306",
+      "index": 306,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 2,
+      "column": 0,
+      "professionGroup": "child",
+      "presentation": "female",
+      "visualAge": 10,
+      "ageMin": 10,
+      "ageMax": 10,
+      "rect": [
+        0,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "6c5c514c5f5f3e2aa848ba8729a9f97d0185926f7b470e5879a5b98a5fa59143"
+    },
+    {
+      "id": "portrait_307",
+      "index": 307,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 2,
+      "column": 1,
+      "professionGroup": "child",
+      "presentation": "male",
+      "visualAge": 10,
+      "ageMin": 10,
+      "ageMax": 10,
+      "rect": [
+        256,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "18f5733cc45335301d139b59bb62d2d7885b1305df4fa5af2813075b5097227e"
+    },
+    {
+      "id": "portrait_308",
+      "index": 308,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 2,
+      "column": 2,
+      "professionGroup": "child",
+      "presentation": "female",
+      "visualAge": 10,
+      "ageMin": 10,
+      "ageMax": 10,
+      "rect": [
+        512,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "2ba190e7ea92c8257a4f6aaec82b75df9d2b596dd6030c072ec1964b42f77949"
+    },
+    {
+      "id": "portrait_309",
+      "index": 309,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 2,
+      "column": 3,
+      "professionGroup": "child",
+      "presentation": "male",
+      "visualAge": 10,
+      "ageMin": 10,
+      "ageMax": 10,
+      "rect": [
+        768,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "6291f6fa900fd5bd5b1044bc9b7cbcdd4395df16b0da61a8e4c3e52183e61042"
+    },
+    {
+      "id": "portrait_310",
+      "index": 310,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 3,
+      "column": 0,
+      "professionGroup": "child",
+      "presentation": "female",
+      "visualAge": 12,
+      "ageMin": 12,
+      "ageMax": 12,
+      "rect": [
+        0,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "11d915348dae072801a60194a8ba61cca93ae67b49fc6cf0343bf6bafd887770"
+    },
+    {
+      "id": "portrait_311",
+      "index": 311,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 3,
+      "column": 1,
+      "professionGroup": "child",
+      "presentation": "male",
+      "visualAge": 12,
+      "ageMin": 12,
+      "ageMax": 12,
+      "rect": [
+        256,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "10bcb083d60e569faf33212ec963e92e33ce1cb896c74374f64dce3907831bbd"
+    },
+    {
+      "id": "portrait_312",
+      "index": 312,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 3,
+      "column": 2,
+      "professionGroup": "child",
+      "presentation": "female",
+      "visualAge": 12,
+      "ageMin": 12,
+      "ageMax": 12,
+      "rect": [
+        512,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "87fa243ca9ad33aa66addf0cf5385d2c1811e2a4db16c272b4a6e0030a1a0f8c"
+    },
+    {
+      "id": "portrait_313",
+      "index": 313,
+      "batch": 19,
+      "asset": "assets/modern/portraits_v2/batch_19.png",
+      "row": 3,
+      "column": 3,
+      "professionGroup": "child",
+      "presentation": "male",
+      "visualAge": 12,
+      "ageMin": 12,
+      "ageMax": 12,
+      "rect": [
+        768,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "0aff682c7cab883bbce43965102ab703d5404e68e91ac71fe22a93215ce82643"
+    },
+    {
+      "id": "portrait_314",
+      "index": 314,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 0,
+      "column": 0,
+      "professionGroup": "teenager",
+      "presentation": "female",
+      "visualAge": 14,
+      "ageMin": 14,
+      "ageMax": 14,
+      "rect": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "5d292bc8e6b8f9849b2694a049e9e3b2dcb15ca08542daea987bc58a1c6def85"
+    },
+    {
+      "id": "portrait_315",
+      "index": 315,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 0,
+      "column": 1,
+      "professionGroup": "teenager",
+      "presentation": "male",
+      "visualAge": 14,
+      "ageMin": 14,
+      "ageMax": 14,
+      "rect": [
+        256,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "b815425da4234e3b2562343935783f9dba541fc54f1cc57013e5992d5366a62d"
+    },
+    {
+      "id": "portrait_316",
+      "index": 316,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 0,
+      "column": 2,
+      "professionGroup": "teenager",
+      "presentation": "female",
+      "visualAge": 14,
+      "ageMin": 14,
+      "ageMax": 14,
+      "rect": [
+        512,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "1ee8bb2f5ce5a7800b6bc5fb37cba2d206ef7dc4d4ae19d21d4dda555f13dbb0"
+    },
+    {
+      "id": "portrait_317",
+      "index": 317,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 0,
+      "column": 3,
+      "professionGroup": "teenager",
+      "presentation": "male",
+      "visualAge": 14,
+      "ageMin": 14,
+      "ageMax": 14,
+      "rect": [
+        768,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "3e81fe1d3027b77c1799f0fa8b0399f5db8a69b02b5f54393e7e19f5ca53e473"
+    },
+    {
+      "id": "portrait_318",
+      "index": 318,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 1,
+      "column": 0,
+      "professionGroup": "teenager",
+      "presentation": "female",
+      "visualAge": 16,
+      "ageMin": 16,
+      "ageMax": 16,
+      "rect": [
+        0,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "08c44af442fa4ef0109958f309b3ace14af6d827c74e93a44a0a8877d333e387"
+    },
+    {
+      "id": "portrait_319",
+      "index": 319,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 1,
+      "column": 1,
+      "professionGroup": "teenager",
+      "presentation": "male",
+      "visualAge": 16,
+      "ageMin": 16,
+      "ageMax": 16,
+      "rect": [
+        256,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "fa85975c01ef995f8a59df6b47db7bde228abcf673a09379b8fd0daae40d833c"
+    },
+    {
+      "id": "portrait_320",
+      "index": 320,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 1,
+      "column": 2,
+      "professionGroup": "teenager",
+      "presentation": "female",
+      "visualAge": 16,
+      "ageMin": 16,
+      "ageMax": 16,
+      "rect": [
+        512,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "6738845c296e5097c3b32f7ae5502b59dee71b8b1c986bd9070f7b677f330e26"
+    },
+    {
+      "id": "portrait_321",
+      "index": 321,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 1,
+      "column": 3,
+      "professionGroup": "teenager",
+      "presentation": "male",
+      "visualAge": 16,
+      "ageMin": 16,
+      "ageMax": 16,
+      "rect": [
+        768,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "f891c3dcf77e661512455f0b6a2409916ce2e48a530cd350ab890ca345a86f15"
+    },
+    {
+      "id": "portrait_322",
+      "index": 322,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 2,
+      "column": 0,
+      "professionGroup": "teenager",
+      "presentation": "female",
+      "visualAge": 18,
+      "ageMin": 18,
+      "ageMax": 18,
+      "rect": [
+        0,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "5b7f365d47ea35a3acf3eb436a491d0fa57533547e8464a384127e1c26ec91dd"
+    },
+    {
+      "id": "portrait_323",
+      "index": 323,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 2,
+      "column": 1,
+      "professionGroup": "teenager",
+      "presentation": "male",
+      "visualAge": 18,
+      "ageMin": 18,
+      "ageMax": 18,
+      "rect": [
+        256,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "fab586086567f2238609c5d091fc375ca79ef5c31e2aa7309dd15d584ebb764f"
+    },
+    {
+      "id": "portrait_324",
+      "index": 324,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 2,
+      "column": 2,
+      "professionGroup": "teenager",
+      "presentation": "female",
+      "visualAge": 18,
+      "ageMin": 18,
+      "ageMax": 18,
+      "rect": [
+        512,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "c0abd89a90cd184df4cef0234ea39c8e977068c8cf336d6b6f81a6bf5cebd971"
+    },
+    {
+      "id": "portrait_325",
+      "index": 325,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 2,
+      "column": 3,
+      "professionGroup": "teenager",
+      "presentation": "male",
+      "visualAge": 18,
+      "ageMin": 18,
+      "ageMax": 18,
+      "rect": [
+        768,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "d5c0b08db1f4683f1648c9197f0e636fecddc554a3d822be88eaa75446969bfc"
+    },
+    {
+      "id": "portrait_326",
+      "index": 326,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 3,
+      "column": 0,
+      "professionGroup": "teenager",
+      "presentation": "female",
+      "visualAge": 19,
+      "ageMin": 19,
+      "ageMax": 19,
+      "rect": [
+        0,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "a7f2f2ae1845fbacd32c85c67ad5c46c047f6f7586ae36b56f984f9faeef0acc"
+    },
+    {
+      "id": "portrait_327",
+      "index": 327,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 3,
+      "column": 1,
+      "professionGroup": "teenager",
+      "presentation": "male",
+      "visualAge": 19,
+      "ageMin": 19,
+      "ageMax": 19,
+      "rect": [
+        256,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "03b521d60278fc38d358f4d8699c69ee315f6b2e3fb1965de6fab6eb56d7fbf6"
+    },
+    {
+      "id": "portrait_328",
+      "index": 328,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 3,
+      "column": 2,
+      "professionGroup": "teenager",
+      "presentation": "female",
+      "visualAge": 19,
+      "ageMin": 19,
+      "ageMax": 19,
+      "rect": [
+        512,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "375d43e73ad26c4a92da902220712e97f8fb99443d19482de36ec1d5337ab41d"
+    },
+    {
+      "id": "portrait_329",
+      "index": 329,
+      "batch": 20,
+      "asset": "assets/modern/portraits_v2/batch_20.png",
+      "row": 3,
+      "column": 3,
+      "professionGroup": "teenager",
+      "presentation": "male",
+      "visualAge": 19,
+      "ageMin": 19,
+      "ageMax": 19,
+      "rect": [
+        768,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "6973d6a03c93ee98a8620c841627087f02de7d1c661e68009f466525d751bbde"
+    },
+    {
+      "id": "portrait_330",
+      "index": 330,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 0,
+      "column": 0,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "aeb294c47d60b857870952fa869d4ea18979e08c7517cac9d642d1933bda5092"
+    },
+    {
+      "id": "portrait_331",
+      "index": 331,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 0,
+      "column": 1,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        256,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "73783869fda56e7b1066731ae1b8ec31d445837d4ba2d2b7de8004275020ca84"
+    },
+    {
+      "id": "portrait_332",
+      "index": 332,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 0,
+      "column": 2,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        512,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "57ef002cd0ce5cb95fd4240a0ec1782c31fdd93cbe1220eb54368f22ae0519c0"
+    },
+    {
+      "id": "portrait_333",
+      "index": 333,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 0,
+      "column": 3,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        768,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "ecb295b0902be8a281b5d72beadafab6b39c1e8667feb586afe7b7717ec1ec61"
+    },
+    {
+      "id": "portrait_334",
+      "index": 334,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 1,
+      "column": 0,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        0,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "395685db84df57be3ab0785475e445d0e7a838551a7e4ddee6c24bd4fc01a4ea"
+    },
+    {
+      "id": "portrait_335",
+      "index": 335,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 1,
+      "column": 1,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        256,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "2635a1f115c3dc6ed3bef70f208c2ddab612ae826eb211fc5ac95f954bb1ea50"
+    },
+    {
+      "id": "portrait_336",
+      "index": 336,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 1,
+      "column": 2,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        512,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "da19494822a09f809533d7bf2779bafe97b524e70b9379c0248d75499d1a2f21"
+    },
+    {
+      "id": "portrait_337",
+      "index": 337,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 1,
+      "column": 3,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        768,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "c72a7ed5169b3800ddcc0a03ac77767d0cf47da0ee8be12f8403491de6d8be2f"
+    },
+    {
+      "id": "portrait_338",
+      "index": 338,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 2,
+      "column": 0,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        0,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "8cdfc661794ea31ca48154078eb9eed593f536b0f58367a2dcadece4c5f10f5f"
+    },
+    {
+      "id": "portrait_339",
+      "index": 339,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 2,
+      "column": 1,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        256,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "c84fe4fdf339c1c1a529fde2a15155cb9020bdad2a836738d71d61a4195af38f"
+    },
+    {
+      "id": "portrait_340",
+      "index": 340,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 2,
+      "column": 2,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        512,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "18dbb0294f88ef91a510d9657348a2911414e01593015ddbf69680d03155d7d3"
+    },
+    {
+      "id": "portrait_341",
+      "index": 341,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 2,
+      "column": 3,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        768,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "5ac59b5bfc43fb88fc3bbf114af9b89e69adf4f5817e5442a1b8908bfef53005"
+    },
+    {
+      "id": "portrait_342",
+      "index": 342,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 3,
+      "column": 0,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        0,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "478414bf27f35007fd679444da1425cf32f87d0d54b9127b2bb86c0ca3946073"
+    },
+    {
+      "id": "portrait_343",
+      "index": 343,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 3,
+      "column": 1,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        256,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "1f77fb39e3ce07a843824b7133b616d1b44137db13edb151a1e505854735ce7d"
+    },
+    {
+      "id": "portrait_344",
+      "index": 344,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 3,
+      "column": 2,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        512,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "12685d35273dff4f8866f08c39391d865fe90a359bc3fed349460a1c718f8f20"
+    },
+    {
+      "id": "portrait_345",
+      "index": 345,
+      "batch": 21,
+      "asset": "assets/modern/portraits_v2/batch_21.png",
+      "row": 3,
+      "column": 3,
+      "professionGroup": "canine",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        768,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "d0c07f88c3ba62245f29ce2d5630c8376ea5ddc220aed658778b56c7ad3bd6b3"
+    },
+    {
+      "id": "portrait_346",
+      "index": 346,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 0,
+      "column": 0,
+      "professionGroup": "tank",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "2a3bad8e738d7eda9a772585ad19620e71cf22728174a064169bdaa271132f95"
+    },
+    {
+      "id": "portrait_347",
+      "index": 347,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 0,
+      "column": 1,
+      "professionGroup": "tank",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        256,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "7dc2477704e62e462021d870fa7a91cadac3926dacbda8bf3a3415079d6ca5be"
+    },
+    {
+      "id": "portrait_348",
+      "index": 348,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 0,
+      "column": 2,
+      "professionGroup": "monster",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        512,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "8a8c240e53a6bfb4942178c241f3c0c531c4d5ed67e1a8d45c2cd63cf815cc52"
+    },
+    {
+      "id": "portrait_349",
+      "index": 349,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 0,
+      "column": 3,
+      "professionGroup": "monster",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        768,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "b12d5f4ff53adbf1088cb2e3993597921d60e90dbb281c033561b629501d9159"
+    },
+    {
+      "id": "portrait_350",
+      "index": 350,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 1,
+      "column": 0,
+      "professionGroup": "purpleGorilla",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        0,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "1a987e8059e7c2ddc3dcb4666e25e03df2b26f3fe09f20c171d189196757c3b8"
+    },
+    {
+      "id": "portrait_351",
+      "index": 351,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 1,
+      "column": 1,
+      "professionGroup": "purpleGorilla",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        256,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "5a322054304bf788a36eee6679cdeca39ff6a81f7dfc17c14a4fa9f3aa63ace7"
+    },
+    {
+      "id": "portrait_352",
+      "index": 352,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 1,
+      "column": 2,
+      "professionGroup": "warpedBear",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        512,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "36d081fe3e7b95576a583698b79108e08678bfe65fe1e85a808280f08eba9fdd"
+    },
+    {
+      "id": "portrait_353",
+      "index": 353,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 1,
+      "column": 3,
+      "professionGroup": "warpedBear",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        768,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "3b2235574866b41f78609dd1c95e03fb88ba65e9d5573656fcd1422331af0ef2"
+    },
+    {
+      "id": "portrait_354",
+      "index": 354,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 2,
+      "column": 0,
+      "professionGroup": "pinkElephant",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        0,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "addcf10fbbdeefb7c15a007abf0b1da0f56e65963fc693de57d8ce95daf677fa"
+    },
+    {
+      "id": "portrait_355",
+      "index": 355,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 2,
+      "column": 1,
+      "professionGroup": "pinkElephant",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        256,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "9f17a78c6fcc5307694cb2a71001c0b43520c9b9bd97c184e074b4a872e0848c"
+    },
+    {
+      "id": "portrait_356",
+      "index": 356,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 2,
+      "column": 2,
+      "professionGroup": "madCow",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        512,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "920d894a7405f252e9d932eb95ffdfc3a8cad66befdffe1c288a42ec31174ad7"
+    },
+    {
+      "id": "portrait_357",
+      "index": 357,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 2,
+      "column": 3,
+      "professionGroup": "madCow",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        768,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "0cbc35bf2f332f27b0fffa60b571be3c038c4869cdd7fe918437933b728f0dfd"
+    },
+    {
+      "id": "portrait_358",
+      "index": 358,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 3,
+      "column": 0,
+      "professionGroup": "sixLeggedPig",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        0,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "969cf502674e182abb2c5fc3abc9ec78f288c83ca10248580ba2a5fca6f06ec7"
+    },
+    {
+      "id": "portrait_359",
+      "index": 359,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 3,
+      "column": 1,
+      "professionGroup": "sixLeggedPig",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        256,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "bb3adc7b8b28e981e62cc50484f3d0a35ec9c5a0b4249cf66caee217e58fc2ed"
+    },
+    {
+      "id": "portrait_360",
+      "index": 360,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 3,
+      "column": 2,
+      "professionGroup": "flamingRabbit",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        512,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "f69649dca06e120218d6f4578c2b73e1add375b1685bb990acb6d0e4d65811c4"
+    },
+    {
+      "id": "portrait_361",
+      "index": 361,
+      "batch": 22,
+      "asset": "assets/modern/portraits_v2/batch_22.png",
+      "row": 3,
+      "column": 3,
+      "professionGroup": "giantMosquito",
+      "presentation": "unspecified",
+      "visualAge": 0,
+      "ageMin": 0,
+      "ageMax": 0,
+      "rect": [
+        768,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "b9f93b30265975f845cc3dfa10606b526f14e3c42ccf105d4750ae38ea6b9ab3"
+    },
+    {
+      "id": "portrait_362",
+      "index": 362,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 0,
+      "column": 0,
+      "professionGroup": "elderly",
+      "presentation": "female",
+      "visualAge": 76,
+      "ageMin": 76,
+      "ageMax": 76,
+      "rect": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "ccbe5107aca62f22d128974f295347b60ba0241b2655648f72decb0f9529c9da"
+    },
+    {
+      "id": "portrait_363",
+      "index": 363,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 0,
+      "column": 1,
+      "professionGroup": "elderly",
+      "presentation": "male",
+      "visualAge": 76,
+      "ageMin": 76,
+      "ageMax": 76,
+      "rect": [
+        256,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "7ed4fc0c76d31078b5a54358e4b78c38328b0e56e6ca6d230a71e68a3fc682d4"
+    },
+    {
+      "id": "portrait_364",
+      "index": 364,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 0,
+      "column": 2,
+      "professionGroup": "elderly",
+      "presentation": "female",
+      "visualAge": 76,
+      "ageMin": 76,
+      "ageMax": 76,
+      "rect": [
+        512,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        0,
+        313,
+        314
+      ],
+      "cropSha256": "a843a4ab2738ef85abb0bed9b596145b61885cc10eafacd3460064a7a86d1d87"
+    },
+    {
+      "id": "portrait_365",
+      "index": 365,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 0,
+      "column": 3,
+      "professionGroup": "elderly",
+      "presentation": "male",
+      "visualAge": 76,
+      "ageMin": 76,
+      "ageMax": 76,
+      "rect": [
+        768,
+        0,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        0,
+        314,
+        314
+      ],
+      "cropSha256": "01c0d897d6bf8d6fa2374acdec6e6317db8ced4ccf60eae33d6a4e8dfa8afabf"
+    },
+    {
+      "id": "portrait_366",
+      "index": 366,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 1,
+      "column": 0,
+      "professionGroup": "elderly",
+      "presentation": "female",
+      "visualAge": 84,
+      "ageMin": 84,
+      "ageMax": 84,
+      "rect": [
+        0,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "51208df2ac02de1b42cc8525012d4093f59a355ebf7e50afe182e5fa9426b367"
+    },
+    {
+      "id": "portrait_367",
+      "index": 367,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 1,
+      "column": 1,
+      "professionGroup": "elderly",
+      "presentation": "male",
+      "visualAge": 84,
+      "ageMin": 84,
+      "ageMax": 84,
+      "rect": [
+        256,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "0de7a57da41d45ca40e532c859003071f6792cf051e3e1daea843df7ffb38abb"
+    },
+    {
+      "id": "portrait_368",
+      "index": 368,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 1,
+      "column": 2,
+      "professionGroup": "elderly",
+      "presentation": "female",
+      "visualAge": 84,
+      "ageMin": 84,
+      "ageMax": 84,
+      "rect": [
+        512,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        314,
+        313,
+        313
+      ],
+      "cropSha256": "284d2cdf69f8a28b0703c71fc5b581810222ad69e9c794c6eef33a1a1d26cd79"
+    },
+    {
+      "id": "portrait_369",
+      "index": 369,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 1,
+      "column": 3,
+      "professionGroup": "elderly",
+      "presentation": "male",
+      "visualAge": 84,
+      "ageMin": 84,
+      "ageMax": 84,
+      "rect": [
+        768,
+        256,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        314,
+        314,
+        313
+      ],
+      "cropSha256": "55a5c4e322ef0642b07631583f74a72cf5d09aa4b5079c8a9fbd7df69a805cc5"
+    },
+    {
+      "id": "portrait_370",
+      "index": 370,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 2,
+      "column": 0,
+      "professionGroup": "elderly",
+      "presentation": "female",
+      "visualAge": 92,
+      "ageMin": 92,
+      "ageMax": 92,
+      "rect": [
+        0,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "1d175a0baaa9cb62b106c148d614aaf1201c645984ff8f2460618c92275b5698"
+    },
+    {
+      "id": "portrait_371",
+      "index": 371,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 2,
+      "column": 1,
+      "professionGroup": "elderly",
+      "presentation": "male",
+      "visualAge": 92,
+      "ageMin": 92,
+      "ageMax": 92,
+      "rect": [
+        256,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "bca74429be307b955b3374ab814e1b6cc3cacb410aec64fc4d6e9dbb4df5b2fc"
+    },
+    {
+      "id": "portrait_372",
+      "index": 372,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 2,
+      "column": 2,
+      "professionGroup": "elderly",
+      "presentation": "female",
+      "visualAge": 92,
+      "ageMin": 92,
+      "ageMax": 92,
+      "rect": [
+        512,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        627,
+        313,
+        313
+      ],
+      "cropSha256": "596c99637f4ebfce3ee3235f77e22ccf042b279d0a1ccd528da76ab67619349f"
+    },
+    {
+      "id": "portrait_373",
+      "index": 373,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 2,
+      "column": 3,
+      "professionGroup": "elderly",
+      "presentation": "male",
+      "visualAge": 92,
+      "ageMin": 92,
+      "ageMax": 92,
+      "rect": [
+        768,
+        512,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        627,
+        314,
+        313
+      ],
+      "cropSha256": "09699a6c6c162ec8d95f843a853c3624e08e7f69fb08ab16e1f3747e663fbec4"
+    },
+    {
+      "id": "portrait_374",
+      "index": 374,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 3,
+      "column": 0,
+      "professionGroup": "elderly",
+      "presentation": "female",
+      "visualAge": 100,
+      "ageMin": 100,
+      "ageMax": 100,
+      "rect": [
+        0,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        0,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "aa197b1b6be977e13ba79c62daa3797e7ed6bb22140aabb31065ad6b601f9572"
+    },
+    {
+      "id": "portrait_375",
+      "index": 375,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 3,
+      "column": 1,
+      "professionGroup": "elderly",
+      "presentation": "male",
+      "visualAge": 100,
+      "ageMin": 100,
+      "ageMax": 100,
+      "rect": [
+        256,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        314,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "07a05eb7276a1ecf2a08ffe08a04fdfcd8600d344debb0b3800a9032c43fb17a"
+    },
+    {
+      "id": "portrait_376",
+      "index": 376,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 3,
+      "column": 2,
+      "professionGroup": "elderly",
+      "presentation": "female",
+      "visualAge": 100,
+      "ageMin": 100,
+      "ageMax": 100,
+      "rect": [
+        512,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        627,
+        940,
+        313,
+        314
+      ],
+      "cropSha256": "3975ac1b5e333b32c624b5c9d65cc586e4d21cc7888bb62a81d00593db9788f6"
+    },
+    {
+      "id": "portrait_377",
+      "index": 377,
+      "batch": 23,
+      "asset": "assets/modern/portraits_v2/batch_23.png",
+      "row": 3,
+      "column": 3,
+      "professionGroup": "elderly",
+      "presentation": "male",
+      "visualAge": 100,
+      "ageMin": 100,
+      "ageMax": 100,
+      "rect": [
+        768,
+        768,
+        256,
+        256
+      ],
+      "sourceRect": [
+        940,
+        940,
+        314,
+        314
+      ],
+      "cropSha256": "a1013a8de64f1f9479b66c721e9dcd080c8e99bc4743c7ca9f8a2b032f2828ef"
+    }
+  ],
+  "validation": {
+    "duplicateCrops": [],
+    "visualReviewRequired": true,
+    "geometry": "shared rounded quarter boundaries; individual cell resizing; no retouching"
+  },
+  "appearanceOverlays": {
+    "source": "source/appearance_overlays.png",
+    "asset": "assets/modern/portraits_v2/appearance_overlays.png",
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "runtimeSize": [
+      1024,
+      1024
+    ],
+    "sourceSha256": "af861dc4b12a77893e7b8dd23b677e1e0ac853d077730c51317f196f14945597",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "cropAlphaThreshold": 16,
+    "geometry": "trim to alpha>16 bounding box; preserve RGBA within crop; fit252 and centre in256 cell",
+    "overlays": [
+      {
+        "index": 0,
+        "name": "foreheadDressing",
+        "sourceRect": [
+          0,
+          0,
+          314,
+          314
+        ],
+        "trimRectInCell": [
+          41,
+          147,
+          282,
+          233
+        ],
+        "trimmedSize": [
+          241,
+          86
+        ],
+        "runtimeRect": [
+          0,
+          0,
+          256,
+          256
+        ],
+        "contentRect": [
+          2,
+          83,
+          252,
+          90
+        ],
+        "cropSha256": "861c9525b03fd12c9001f5f3e0cbbdad0d11c9a86b2153dd95a435e06e80ad2a",
+        "alphaPixels": {
+          "transparent": 74590,
+          "opaque": 21,
+          "partial": 23985
+        }
+      },
+      {
+        "index": 1,
+        "name": "leftEyeDressing",
+        "sourceRect": [
+          314,
+          0,
+          627,
+          314
+        ],
+        "trimRectInCell": [
+          38,
+          120,
+          270,
+          250
+        ],
+        "trimmedSize": [
+          232,
+          130
+        ],
+        "runtimeRect": [
+          256,
+          0,
+          256,
+          256
+        ],
+        "contentRect": [
+          258,
+          57,
+          252,
+          141
+        ],
+        "cropSha256": "beb701b435141e04fc1bc11327fa759d61366f6f07e9806dec3ca0d81dd210ca",
+        "alphaPixels": {
+          "transparent": 73386,
+          "opaque": 57,
+          "partial": 24839
+        }
+      },
+      {
+        "index": 2,
+        "name": "rightEyeDressing",
+        "sourceRect": [
+          627,
+          0,
+          940,
+          314
+        ],
+        "trimRectInCell": [
+          38,
+          121,
+          270,
+          251
+        ],
+        "trimmedSize": [
+          232,
+          130
+        ],
+        "runtimeRect": [
+          512,
+          0,
+          256,
+          256
+        ],
+        "contentRect": [
+          514,
+          57,
+          252,
+          141
+        ],
+        "cropSha256": "27c79bdf5bec064b90837419642f4d62fa666d717a24ec77a2264cae8f8232b2",
+        "alphaPixels": {
+          "transparent": 73894,
+          "opaque": 27,
+          "partial": 24361
+        }
+      },
+      {
+        "index": 3,
+        "name": "noseDressing",
+        "sourceRect": [
+          940,
+          0,
+          1254,
+          314
+        ],
+        "trimRectInCell": [
+          93,
+          83,
+          228,
+          288
+        ],
+        "trimmedSize": [
+          135,
+          205
+        ],
+        "runtimeRect": [
+          768,
+          0,
+          256,
+          256
+        ],
+        "contentRect": [
+          813,
+          2,
+          166,
+          252
+        ],
+        "cropSha256": "c9aa604c084053baf51b4e3efaec4bbb948ca087af57f1e1398f67f296d73dff",
+        "alphaPixels": {
+          "transparent": 75474,
+          "opaque": 95,
+          "partial": 23027
+        }
+      },
+      {
+        "index": 4,
+        "name": "helmet",
+        "sourceRect": [
+          0,
+          314,
+          314,
+          627
+        ],
+        "trimRectInCell": [
+          27,
+          62,
+          304,
+          266
+        ],
+        "trimmedSize": [
+          277,
+          204
+        ],
+        "runtimeRect": [
+          0,
+          256,
+          256,
+          256
+        ],
+        "contentRect": [
+          2,
+          291,
+          252,
+          186
+        ],
+        "cropSha256": "a2b3f0c6affab313aec493e53245e27ad7057411579e0947dac3c42a91784f20",
+        "alphaPixels": {
+          "transparent": 51283,
+          "opaque": 108,
+          "partial": 46891
+        }
+      },
+      {
+        "index": 5,
+        "name": "mask",
+        "sourceRect": [
+          314,
+          314,
+          627,
+          627
+        ],
+        "trimRectInCell": [
+          34,
+          124,
+          278,
+          285
+        ],
+        "trimmedSize": [
+          244,
+          161
+        ],
+        "runtimeRect": [
+          256,
+          256,
+          256,
+          256
+        ],
+        "contentRect": [
+          258,
+          301,
+          252,
+          166
+        ],
+        "cropSha256": "3d7aeb3cd23aac2f0990d14952f79e205bdadadf90631e14c38eea451e1c0167",
+        "alphaPixels": {
+          "transparent": 65911,
+          "opaque": 42,
+          "partial": 32016
+        }
+      },
+      {
+        "index": 6,
+        "name": "silverTemples",
+        "sourceRect": [
+          627,
+          314,
+          940,
+          627
+        ],
+        "trimRectInCell": [
+          36,
+          48,
+          276,
+          288
+        ],
+        "trimmedSize": [
+          240,
+          240
+        ],
+        "runtimeRect": [
+          512,
+          256,
+          256,
+          256
+        ],
+        "contentRect": [
+          514,
+          258,
+          252,
+          252
+        ],
+        "cropSha256": "581885e894a9050b9ce8f084b94a0f0b989b21af45068b44e66434b08be67db2",
+        "alphaPixels": {
+          "transparent": 75105,
+          "opaque": 12,
+          "partial": 22852
+        }
+      },
+      {
+        "index": 7,
+        "name": "wrinkles",
+        "sourceRect": [
+          940,
+          314,
+          1254,
+          627
+        ],
+        "trimRectInCell": [
+          76,
+          104,
+          244,
+          244
+        ],
+        "trimmedSize": [
+          168,
+          140
+        ],
+        "runtimeRect": [
+          768,
+          256,
+          256,
+          256
+        ],
+        "contentRect": [
+          770,
+          279,
+          252,
+          210
+        ],
+        "cropSha256": "b7edbed7d5d314575294fdef431e19df52395d2aed7d56f69a5a94653e27fb6d",
+        "alphaPixels": {
+          "transparent": 82870,
+          "opaque": 1,
+          "partial": 15411
+        }
+      },
+      {
+        "index": 8,
+        "name": "labCoat",
+        "sourceRect": [
+          0,
+          627,
+          314,
+          940
+        ],
+        "trimRectInCell": [
+          11,
+          89,
+          313,
+          270
+        ],
+        "trimmedSize": [
+          302,
+          181
+        ],
+        "runtimeRect": [
+          0,
+          512,
+          256,
+          256
+        ],
+        "contentRect": [
+          2,
+          564,
+          252,
+          151
+        ],
+        "cropSha256": "56db6b34448f104939f3d48c16a980cb2a903fc41dcb3be72c96adac5cd9eb4e",
+        "alphaPixels": {
+          "transparent": 56561,
+          "opaque": 121,
+          "partial": 41600
+        }
+      },
+      {
+        "index": 9,
+        "name": "suit",
+        "sourceRect": [
+          314,
+          627,
+          627,
+          940
+        ],
+        "trimRectInCell": [
+          8,
+          88,
+          308,
+          269
+        ],
+        "trimmedSize": [
+          300,
+          181
+        ],
+        "runtimeRect": [
+          256,
+          512,
+          256,
+          256
+        ],
+        "contentRect": [
+          258,
+          564,
+          252,
+          152
+        ],
+        "cropSha256": "d0a088945da57261f981dc0f4fb80645cc382c39b1a1c303d1222a09717c77af",
+        "alphaPixels": {
+          "transparent": 51503,
+          "opaque": 114,
+          "partial": 46352
+        }
+      },
+      {
+        "index": 10,
+        "name": "workJacket",
+        "sourceRect": [
+          627,
+          627,
+          940,
+          940
+        ],
+        "trimRectInCell": [
+          6,
+          87,
+          309,
+          270
+        ],
+        "trimmedSize": [
+          303,
+          183
+        ],
+        "runtimeRect": [
+          512,
+          512,
+          256,
+          256
+        ],
+        "contentRect": [
+          514,
+          564,
+          252,
+          152
+        ],
+        "cropSha256": "644c20a72b60fbe24727da6b5e7264ce23ac793c3b48f85165c2dfa348193bd3",
+        "alphaPixels": {
+          "transparent": 55903,
+          "opaque": 171,
+          "partial": 41895
+        }
+      },
+      {
+        "index": 11,
+        "name": "uniform",
+        "sourceRect": [
+          940,
+          627,
+          1254,
+          940
+        ],
+        "trimRectInCell": [
+          6,
+          91,
+          305,
+          270
+        ],
+        "trimmedSize": [
+          299,
+          179
+        ],
+        "runtimeRect": [
+          768,
+          512,
+          256,
+          256
+        ],
+        "contentRect": [
+          770,
+          564,
+          252,
+          151
+        ],
+        "cropSha256": "4adfd647c6eafb900c1e57085749576e92958ac65857e0efc011b3dc0bb616f5",
+        "alphaPixels": {
+          "transparent": 51012,
+          "opaque": 168,
+          "partial": 47102
+        }
+      },
+      {
+        "index": 12,
+        "name": "armor",
+        "sourceRect": [
+          0,
+          940,
+          314,
+          1254
+        ],
+        "trimRectInCell": [
+          11,
+          79,
+          313,
+          267
+        ],
+        "trimmedSize": [
+          302,
+          188
+        ],
+        "runtimeRect": [
+          0,
+          768,
+          256,
+          256
+        ],
+        "contentRect": [
+          2,
+          817,
+          252,
+          157
+        ],
+        "cropSha256": "9e487601d0231c883873c248f350c1bcdda01639f5636126feec1d1ba68f694c",
+        "alphaPixels": {
+          "transparent": 45584,
+          "opaque": 97,
+          "partial": 52915
+        }
+      },
+      {
+        "index": 13,
+        "name": "robe",
+        "sourceRect": [
+          314,
+          940,
+          627,
+          1254
+        ],
+        "trimRectInCell": [
+          6,
+          84,
+          308,
+          267
+        ],
+        "trimmedSize": [
+          302,
+          183
+        ],
+        "runtimeRect": [
+          256,
+          768,
+          256,
+          256
+        ],
+        "contentRect": [
+          258,
+          819,
+          252,
+          153
+        ],
+        "cropSha256": "a05d64f79aa9401a786847628264493b5ca548ab15ed08c3d4e4a6f1a62fc531",
+        "alphaPixels": {
+          "transparent": 48412,
+          "opaque": 193,
+          "partial": 49677
+        }
+      },
+      {
+        "index": 14,
+        "name": "casual",
+        "sourceRect": [
+          627,
+          940,
+          940,
+          1254
+        ],
+        "trimRectInCell": [
+          2,
+          81,
+          310,
+          266
+        ],
+        "trimmedSize": [
+          308,
+          185
+        ],
+        "runtimeRect": [
+          512,
+          768,
+          256,
+          256
+        ],
+        "contentRect": [
+          514,
+          820,
+          252,
+          151
+        ],
+        "cropSha256": "f2b2a742b8999e6288a06c27c784ebae7fffcf8516016627e1b9adece9ff19ce",
+        "alphaPixels": {
+          "transparent": 56535,
+          "opaque": 120,
+          "partial": 41627
+        }
+      },
+      {
+        "index": 15,
+        "name": "spareDressing",
+        "sourceRect": [
+          940,
+          940,
+          1254,
+          1254
+        ],
+        "trimRectInCell": [
+          57,
+          107,
+          259,
+          230
+        ],
+        "trimmedSize": [
+          202,
+          123
+        ],
+        "runtimeRect": [
+          768,
+          768,
+          256,
+          256
+        ],
+        "contentRect": [
+          770,
+          819,
+          252,
+          153
+        ],
+        "cropSha256": "64b69c04baeb3fd52a0ca043c93395bf7d217173f7c8fe34e48af5595f2dbe2d",
+        "alphaPixels": {
+          "transparent": 70736,
+          "opaque": 50,
+          "partial": 27810
+        }
+      }
+    ],
+    "runtimeSha256": "8f77ae2fafe91f22febcbe2a94d31d492aa8be58866a7bac764daee895169a9b"
+  }
+}

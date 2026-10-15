@@ -329,7 +329,7 @@ Future<void> advanceMonth() async {
             erase();
             mvaddstrc(8, 1, white, headline);
 
-            await getKey();
+            await acknowledge(title: 'Monthly report');
 
             mvaddstrc(
               9,
@@ -338,7 +338,7 @@ Future<void> advanceMonth() async {
               "The traitor will testify in court, and safehouses may be compromised.",
             );
 
-            await getKey();
+            await acknowledge(title: 'Monthly report');
           } else {
             logBlindEvent(headline);
           }

@@ -222,7 +222,7 @@ Future<bool> doYouComeHereOften(Creature a, Creature tk) async {
     }
   }
 
-  await getKey();
+  await acknowledge(title: 'Conversation');
 
   int difficulty = Difficulty.challenging;
   if (tk.type.majorEnemy) {
@@ -338,7 +338,7 @@ Future<bool> doYouComeHereOften(Creature a, Creature tk) async {
       addstr(" doesn't quite pick up on the subtext.");
     }
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     return true;
   }
@@ -366,7 +366,7 @@ Future<bool> doYouComeHereOften(Creature a, Creature tk) async {
       "\"Um, officer, isn't that illegal?\"",
     ].random);
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     tk.isWillingToTalk = false;
   } else if (tk.name == "Prisoner") {
@@ -383,7 +383,7 @@ Future<bool> doYouComeHereOften(Creature a, Creature tk) async {
       "\"Get a load of this idiot.\"",
     ].random);
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     tk.isWillingToTalk = false;
   } else if (succeeded || tk.type.id == CreatureTypeIds.sexWorker) {
@@ -590,12 +590,12 @@ Future<bool> doYouComeHereOften(Creature a, Creature tk) async {
       }
     }
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     mvaddstrc(
         ++y, 1, white, "${a.name} and ${tk.name} make plans for tonight.");
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     if (!poolAndProspects.contains(tk)) {
       DatingSession? newd =
@@ -942,7 +942,7 @@ Future<bool> doYouComeHereOften(Creature a, Creature tk) async {
       }
     }
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     tk.isWillingToTalk = false;
   }

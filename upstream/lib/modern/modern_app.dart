@@ -69,6 +69,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
   bool get hq => console.screen == 'headquarters';
   bool get title => console.screen == 'title';
   bool get tactical => console.screen == 'tactical';
+  bool get fieldPrompt => console.screen == 'field_prompt';
   Creature? get _inspectedPerson =>
       game.pool.where((person) => person.id == _inspectedPersonId).firstOrNull;
   bool get _canSwitchSections =>
@@ -95,6 +96,13 @@ class _ModernGameShellState extends State<ModernGameShell> {
 
   void _refresh() {
     if (!mounted) return;
+    if (fieldPrompt) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && fieldPrompt && _operationScroll.hasClients) {
+          _operationScroll.jumpTo(0);
+        }
+      });
+    }
     if (hq && game.pool.isNotEmpty) {
       _journalSession = true;
       if (_lastConsoleScreen != 'headquarters' && !_organisation.busy) {
@@ -1321,11 +1329,13 @@ class _ModernGameShellState extends State<ModernGameShell> {
             if (_canSwitchSections) _sectionStrip(),
             const SizedBox(height: 8),
             Expanded(
-              child: console.eventMessage != null
+              child: fieldPrompt
+                  ? _fieldOperation()
+                  : console.eventMessage != null
                   ? _eventMessageView()
                   : isLegislativeVoteScreen(console)
                   ? JournalLegislationView(console: console, onAction: _send)
-                  : tactical
+                  : tactical || fieldPrompt
                   ? _fieldOperation()
                   : JournalSurface(
                       padding: EdgeInsets.zero,
@@ -1350,14 +1360,23 @@ class _ModernGameShellState extends State<ModernGameShell> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Campaign update', style: JournalPalette.heading),
+        Text(
+          console.eventTitle ?? 'Campaign update',
+          style: JournalPalette.heading,
+        ),
         const SizedBox(height: 18),
         Expanded(
           child: SingleChildScrollView(
-            child: Text(
-              console.eventMessage!,
-              key: const ValueKey('journal-current-announcement'),
-              style: JournalPalette.heading.copyWith(fontSize: 20, height: 1.4),
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 840),
+                child: Text(
+                  console.eventMessage!,
+                  key: const ValueKey('journal-current-announcement'),
+                  style: const TextStyle(fontSize: 17, height: 1.55),
+                ),
+              ),
             ),
           ),
         ),
@@ -1378,7 +1397,8 @@ class _ModernGameShellState extends State<ModernGameShell> {
     builder: (context, bounds) {
       final narrow = bounds.maxWidth < 1000;
       final movementEnabled =
-          !game.siteAlarm || !game.encounter.any((person) => person.isEnemy);
+          !fieldPrompt &&
+          (!game.siteAlarm || !game.encounter.any((person) => person.isEnemy));
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1401,51 +1421,121 @@ class _ModernGameShellState extends State<ModernGameShell> {
                   child: JournalSurface(
                     key: const ValueKey('journal-operation-report'),
                     padding: const EdgeInsets.all(10),
-                    child: Scrollbar(
-                      controller: _operationScroll,
-                      thumbVisibility: true,
-                      child: SingleChildScrollView(
-                        controller: _operationScroll,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Text(
-                              'Squad & orders',
-                              style: JournalPalette.heading,
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              key: const ValueKey('journal-operation-crew'),
-                              spacing: 8,
-                              runSpacing: 6,
-                              children: [
-                                for (final person in game.squad)
-                                  Tooltip(
-                                    message:
-                                        '${person.name} · ${person.blood}/${person.maxBlood} blood',
-                                    child: InkWell(
-                                      onTap: () => _openDossier(person),
-                                      child: CrewPortrait(
-                                        person: person,
-                                        size: 40,
-                                      ),
-                                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: Scrollbar(
+                            controller: _operationScroll,
+                            thumbVisibility: true,
+                            child: SingleChildScrollView(
+                              controller: _operationScroll,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    fieldPrompt
+                                        ? console.eventTitle ?? 'Field decision'
+                                        : 'Squad & orders',
+                                    key: fieldPrompt
+                                        ? const ValueKey('journal-field-prompt')
+                                        : null,
+                                    style: JournalPalette.heading,
                                   ),
-                              ],
+                                  const SizedBox(height: 8),
+                                  if (!fieldPrompt)
+                                    Wrap(
+                                      key: const ValueKey(
+                                        'journal-operation-crew',
+                                      ),
+                                      spacing: 8,
+                                      runSpacing: 6,
+                                      children: [
+                                        for (final person in game.squad)
+                                          Tooltip(
+                                            message:
+                                                '${person.name} · ${person.blood}/${person.maxBlood} blood',
+                                            child: InkWell(
+                                              onTap: () => _openDossier(person),
+                                              child: CrewPortrait(
+                                                person: person,
+                                                size: 40,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  const SizedBox(height: 10),
+                                  if (fieldPrompt &&
+                                      console.eventMessage != null)
+                                    Text(
+                                      console.eventMessage!,
+                                      key: const ValueKey(
+                                        'journal-field-announcement',
+                                      ),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        height: 1.5,
+                                      ),
+                                    )
+                                  else
+                                    DirectContent(
+                                      console: console,
+                                      onAction: _send,
+                                      onInspect: _openDossier,
+                                      hiddenRows: {
+                                        if (fieldPrompt) ...{
+                                          for (var row = 0; row < 9; row++) row,
+                                          23,
+                                          24,
+                                        } else
+                                          for (var row = 11; row <= 22; row++)
+                                            row,
+                                      },
+                                      leadingActionRows: fieldPrompt
+                                          ? const {}
+                                          : const {23, 24},
+                                      rowMaxColumns: fieldPrompt
+                                          ? {
+                                              for (
+                                                var row = 11;
+                                                row <= 22;
+                                                row++
+                                              )
+                                                row: 55,
+                                            }
+                                          : const {},
+                                      showActions: !fieldPrompt,
+                                    ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: 10),
-                            DirectContent(
-                              console: console,
-                              onAction: _send,
-                              onInspect: _openDossier,
-                              hiddenRows: {
-                                for (var row = 11; row <= 22; row++) row,
-                              },
-                              leadingActionRows: const {23, 24},
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
+                        if (fieldPrompt &&
+                            console.eventMessage == null &&
+                            console.actions.isNotEmpty)
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight: bounds.maxHeight * .45,
+                            ),
+                            child: SingleChildScrollView(
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final action in console.actions)
+                                    _actionButton(action),
+                                ],
+                              ),
+                            ),
+                          ),
+                        if (fieldPrompt &&
+                            (console.eventMessage != null ||
+                                console.textInput ||
+                                console.actions.isEmpty))
+                          _inputBar(),
+                      ],
                     ),
                   ),
                 ),
@@ -1464,6 +1554,54 @@ class _ModernGameShellState extends State<ModernGameShell> {
   );
 
   Widget _workspace(bool classic, bool compact) {
+    final profile = console.journalProfile;
+    if (!classic && profile != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: console.textInput
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      'Rename ${profile.person.name}',
+                      style: JournalPalette.heading,
+                    ),
+                  )
+                : CrewDossier(
+                    person: profile.person,
+                    embedded: true,
+                    page: profile.page,
+                    onPage: (next) {
+                      final delta = (next - profile.page) % 3;
+                      if (delta != 0) _send(delta == 1 ? 'Down' : 'Up');
+                    },
+                  ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: console.textInput
+                ? _inputBar()
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final action in console.actions)
+                        if (!{'Up', 'Down'}.contains(action.key))
+                          _actionButton(
+                            action,
+                            label: switch (action.key) {
+                              'Left' => 'Previous crew member',
+                              'Right' => 'Next crew member',
+                              _ => null,
+                            },
+                          ),
+                    ],
+                  ),
+          ),
+        ],
+      );
+    }
     final journal = !classic;
     final planning = !classic && console.screen == 'planning';
     final article =
@@ -1477,6 +1615,8 @@ class _ModernGameShellState extends State<ModernGameShell> {
         ? 'Field operation'
         : console.screen == 'article'
         ? 'Media report'
+        : console.journalPeople.isNotEmpty && console.recruitment == null
+        ? 'Crew & choices'
         : _screenHeading(rows);
     return Padding(
       padding: EdgeInsets.all(compact ? 12 : 16),
@@ -1722,16 +1862,24 @@ class _ModernGameShellState extends State<ModernGameShell> {
         IconButton.outlined(
           tooltip: 'Move ${direction.toLowerCase()}',
           onPressed:
-              game.siteAlarm && game.encounter.any((person) => person.isEnemy)
+              fieldPrompt ||
+                  (game.siteAlarm &&
+                      game.encounter.any((person) => person.isEnemy))
               ? null
               : () => _send(direction),
           icon: Icon(icon, size: 20),
         ),
-      Text(
-        game.siteAlarm && game.encounter.any((person) => person.isEnemy)
-            ? 'Resolve the encounter or choose Flee.'
-            : 'Click an adjacent tile or use the arrow keys.',
-        style: const TextStyle(color: muted, fontSize: 12),
+      SizedBox(
+        width: 280,
+        height: 36 * _textScale,
+        child: Text(
+          fieldPrompt
+              ? 'Answer the current prompt to continue.'
+              : game.siteAlarm && game.encounter.any((person) => person.isEnemy)
+              ? 'Resolve the encounter or choose Flee.'
+              : 'Click an adjacent tile or use the arrow keys.',
+          style: const TextStyle(color: muted, fontSize: 12),
+        ),
       ),
     ],
   );
@@ -1799,46 +1947,54 @@ class _ModernGameShellState extends State<ModernGameShell> {
       ],
     ),
   );
-  Widget _actionButton(ConsoleAction a, {bool full = false}) => OutlinedButton(
-    onPressed: a.enabled ? () => _send(a.key) : null,
-    style: OutlinedButton.styleFrom(
-      backgroundColor: a.enabled ? const Color(0xFFFCFAF5) : Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
-      alignment: Alignment.centerLeft,
-    ),
-    child: Row(
-      mainAxisSize: full ? MainAxisSize.max : MainAxisSize.min,
-      children: [
-        _keycap(a.key == 'Enter' ? '↵' : a.key.toUpperCase()),
-        const SizedBox(width: 10),
-        if (full)
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _clean(a.label),
-                  style: const TextStyle(fontSize: 13, height: 1.35),
-                ),
-                if (a.label.endsWith(':') && _selection(a).isNotEmpty) ...[
-                  const SizedBox(height: 5),
-                  Text(
-                    '${_selection(a)}  ↻',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: teal,
-                      height: 1.4,
+  Widget _actionButton(ConsoleAction a, {bool full = false, String? label}) =>
+      OutlinedButton(
+        onPressed: a.enabled ? () => _send(a.key) : null,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: a.enabled
+              ? const Color(0xFFFCFAF5)
+              : Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+          alignment: Alignment.centerLeft,
+        ),
+        child: Row(
+          mainAxisSize: full ? MainAxisSize.max : MainAxisSize.min,
+          children: [
+            _keycap(a.key == 'Enter' ? '↵' : a.key.toUpperCase()),
+            const SizedBox(width: 10),
+            if (full)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label ?? _clean(a.label),
+                      style: const TextStyle(fontSize: 13, height: 1.35),
                     ),
-                  ),
-                ],
-              ],
-            ),
-          )
-        else
-          Text(_clean(a.label), style: const TextStyle(fontSize: 12)),
-      ],
-    ),
-  );
+                    if (a.label.endsWith(':') && _selection(a).isNotEmpty) ...[
+                      const SizedBox(height: 5),
+                      Text(
+                        '${_selection(a)}  ↻',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: teal,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              )
+            else
+              Flexible(
+                child: Text(
+                  label ?? _clean(a.label),
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+      );
   String _selection(ConsoleAction action) {
     if (action.y < 0 || action.y >= console.height) return '';
     final row = console.buffer[action.y].map((c) => c.glyph).join();

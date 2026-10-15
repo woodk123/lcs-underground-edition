@@ -149,7 +149,7 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
   }
   addparagraph(1, 1, x2: console.width - 2, message);
 
-  await getKey();
+  await acknowledge(title: 'Social report');
 
   int dateCount =
       d.dates.where((c) => c.type.id != CreatureTypeIds.sexWorker).length;
@@ -168,7 +168,7 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
         addstr(p.name);
         addstr(".  An ambush was set for the lying dog...");
 
-        await getKey();
+        await acknowledge(title: 'Social report');
       case 1:
         move(console.y + 1, 0);
         if (dateCount > 2) {
@@ -180,7 +180,7 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
         move(console.y + 1, 0);
         addstr("Ruh roh...");
 
-        await getKey();
+        await acknowledge(title: 'Social report');
       default:
         move(console.y + 1, 0);
         addstr(p.name);
@@ -202,7 +202,7 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
         move(console.y + 1, 0);
         addstr("Things go downhill fast.");
 
-        await getKey();
+        await acknowledge(title: 'Social report');
     }
 
     const List<String> dateFail = [
@@ -230,7 +230,7 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
     addstr(p.name);
     addstr(dateFailList.random);
 
-    await getKey();
+    await acknowledge(title: 'Social report');
 
     return true;
   }
@@ -445,14 +445,14 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
           bonus += min(5, p.skill(Skill.martialArts) - 1);
         }
 
-        await getKey();
+        await acknowledge(title: 'Social report');
 
         Future<void> successfulKidnap(int y) async {
           move(y++, 0);
           addstr(p.name);
           addstr(" kidnaps the Conservative!");
 
-          await getKey();
+          await acknowledge(title: 'Social report');
 
           //Kidnapped wearing normal clothes and no weapon
           e.dropWeaponAndAmmo();
@@ -479,7 +479,7 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
             addstr(" struggles and yells for help, but nobody comes.");
           }
 
-          await getKey();
+          await acknowledge(title: 'Social report');
 
           await successfulKidnap(y);
           break;
@@ -493,7 +493,7 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
             addstr("${e.name} struggles and they both tumble to the ground!");
           }
           if (weapon != "") {
-            await getKey();
+            await acknowledge(title: 'Social report');
             if (unseriousWeapon) {
               move(y++, 0);
               addstrc(yellow, "The $weapon is knocked away uselessly.");
@@ -502,7 +502,7 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
               addstrc(yellow, "The two struggle for control of the $weapon!");
             }
           }
-          await getKey();
+          await acknowledge(title: 'Social report');
 
           int martialArtsDiff =
               p.skill(Skill.martialArts) - e.skill(Skill.martialArts);
@@ -515,7 +515,7 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
             setColor(lightGreen);
             move(y++, 0);
             addstr("${p.name} overpowers ${e.name} after a struggle.");
-            await getKey();
+            await acknowledge(title: 'Social report');
             await successfulKidnap(y);
             break;
           } else if (roll > Difficulty.automatic) {
@@ -529,7 +529,7 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
             p.wantedForCrimes[Crime.kidnapping] =
                 p.wantedForCrimes[Crime.kidnapping]! + 1;
 
-            await getKey();
+            await acknowledge(title: 'Social report');
 
             d.dates.remove(e);
             break;
@@ -540,7 +540,7 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
               addstrc(
                   red, "The Conservative manages to wrest the $weapon away!");
               move(y++, 0);
-              await getKey();
+              await acknowledge(title: 'Social report');
               if (p.weapon.type.attacks.any((a) => a.bruises)) {
                 addstr(
                     "${e.name} swings the $weapon and knocks ${p.name} out!");
@@ -553,7 +553,7 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
               addstr("'s fist is the last thing ");
               addstr(p.name);
               addstr(" remembers seeing!");
-              await getKey();
+              await acknowledge(title: 'Social report');
             }
             move(y++, 0);
             addstr("The Liberal wakes up in the police station...");
@@ -572,7 +572,7 @@ Future<bool> completeDate(DatingSession d, Creature p) async {
             // Charge with kidnapping
             criminalize(p, Crime.kidnapping);
 
-            await getKey();
+            await acknowledge(title: 'Social report');
 
             d.dates.remove(e);
             return true;
@@ -634,7 +634,7 @@ Future<DateResult> dateResult(int aroll, int troll, DatingSession d, Creature e,
       addstr("'s unique life philosophy...");
     }
 
-    await getKey();
+    await acknowledge(title: 'Social report');
 
     if (p.subordinatesLeft <= 0 && eIsSexworker && e.isWillingToTalk) {
       mvaddstrc(y++, 0, yellow,
@@ -646,7 +646,7 @@ Future<DateResult> dateResult(int aroll, int troll, DatingSession d, Creature e,
           "This won't go anywhere, but it can continue for \"educational purposes\".");
       e.isWillingToTalk = false;
 
-      await getKey();
+      await acknowledge(title: 'Social report');
 
       return DateResult.meetTomorrow;
     } else if (p.relationshipsLeft <= 0 && !eIsSexworker) {
@@ -670,13 +670,13 @@ Future<DateResult> dateResult(int aroll, int troll, DatingSession d, Creature e,
       }
       addstr(" relationship.");
 
-      await getKey();
+      await acknowledge(title: 'Social report');
       setColor(lightGray);
 
       move(y++, 0);
       addstr("It was fun though. They agree to part ways amicably.");
 
-      await getKey();
+      await acknowledge(title: 'Social report');
 
       d.dates.remove(e);
 
@@ -707,7 +707,7 @@ Future<DateResult> dateResult(int aroll, int troll, DatingSession d, Creature e,
       e.workSite?.mapped = true;
       e.workSite?.hidden = false;
 
-      await getKey();
+      await acknowledge(title: 'Social report');
 
       if (!eIsSexworker) e.seduced = true;
       e.hireId = p.id;
@@ -780,7 +780,7 @@ Future<DateResult> dateResult(int aroll, int troll, DatingSession d, Creature e,
         addstr("They'll meet again tomorrow.");
       }
 
-      await getKey();
+      await acknowledge(title: 'Social report');
 
       return DateResult.meetTomorrow;
     }
@@ -820,7 +820,7 @@ Future<DateResult> dateResult(int aroll, int troll, DatingSession d, Creature e,
     move(y++, 0);
     addstr("${e.gender.heSheCap} did still promise to meet up again tomorrow.");
 
-    await getKey();
+    await acknowledge(title: 'Social report');
 
     return DateResult.meetTomorrow;
   } else {
@@ -843,7 +843,7 @@ Future<DateResult> dateResult(int aroll, int troll, DatingSession d, Creature e,
         }
       }
 
-      await getKey();
+      await acknowledge(title: 'Social report');
     }
 
     //BREAK UP
@@ -853,7 +853,7 @@ Future<DateResult> dateResult(int aroll, int troll, DatingSession d, Creature e,
       mvaddstrc(y++, 0, red,
           "${e.name} was leaking information to the police the whole time!");
 
-      await getKey();
+      await acknowledge(title: 'Social report');
 
       move(y++, 0);
       Site? ps = findSiteInSameCity(p.location!.city, SiteType.policeStation);
@@ -870,7 +870,7 @@ Future<DateResult> dateResult(int aroll, int troll, DatingSession d, Creature e,
         p.dropWeaponAndAmmo();
         p.activity = Activity.none();
 
-        await getKey();
+        await acknowledge(title: 'Social report');
 
         d.dates.remove(e);
 
@@ -921,7 +921,7 @@ Future<DateResult> dateResult(int aroll, int troll, DatingSession d, Creature e,
       }
     }
 
-    await getKey();
+    await acknowledge(title: 'Social report');
 
     d.dates.remove(e);
 

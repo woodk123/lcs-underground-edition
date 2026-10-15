@@ -130,7 +130,7 @@ Future<void> surrenderAndDie(Site loc) async {
 
   erase();
   mvaddstrc(1, 1, lightGray, "Everyone in the ${loc.name} is slain.");
-  await getKey();
+  await acknowledge(title: 'Safehouse siege');
 
   if (killNumber > 3) {
     NewsStory.prepare(NewsStories.massacre)

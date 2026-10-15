@@ -57,7 +57,7 @@ Future<void> noticeCheck({
 
       siteAlarm = true;
 
-      await getKey();
+      await acknowledge(title: 'Operation report');
 
       break;
     }
@@ -122,7 +122,7 @@ Future<bool> alienationCheck(bool evenIfNoWitnesses) async {
 
       printEncounter();
 
-      await getKey();
+      await acknowledge(title: 'Operation report');
     }
   }
 
@@ -291,7 +291,7 @@ Future<void> disguisecheck(int timer) async {
         }
         addstr(" fades into the shadows.");
 
-        await getKey();
+        await acknowledge(title: 'Operation report');
       }
     } else {
       for (Creature p in squad) {
@@ -317,7 +317,7 @@ Future<void> disguisecheck(int timer) async {
           ].random,
         );
 
-        await getKey();
+        await acknowledge(title: 'Operation report');
       } else if (!noticed) {
         /*
         setColor(lightBlue);
@@ -330,7 +330,7 @@ Future<void> disguisecheck(int timer) async {
         }
         addstr(" acts natural.");
 
-        await getKey();
+        await acknowledge(title: 'Operation report');
         */
       }
     }
@@ -397,7 +397,7 @@ Future<void> disguisecheck(int timer) async {
       siteAlarm = true;
     }
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
   }
 }
 

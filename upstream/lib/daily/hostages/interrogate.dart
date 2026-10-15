@@ -34,7 +34,7 @@ Future<void> handleFirmInterrogation(
   addparagraph(y, 0, message);
   y = console.y + 1;
 
-  await getKey();
+  await acknowledge(title: 'Daily report');
 
   if (!cr.attributeCheck(Attribute.wisdom, forceroll)) {
     if (cr.skillCheck(Skill.religion, forceroll)) {
@@ -56,7 +56,7 @@ Future<void> handleFirmInterrogation(
             "${cr.name} reveals everything ${cr.gender.heShe} knows about the ${workSite!.name}.");
         y = console.y + 1;
 
-        await getKey();
+        await acknowledge(title: 'Daily report');
 
         workSite.mapped = true;
         workSite.hidden = false;
@@ -69,11 +69,11 @@ Future<void> handleFirmInterrogation(
             "it doesn't seem like ${cr.gender.heShe} knows anything new.");
         y = console.y + 1;
 
-        await getKey();
+        await acknowledge(title: 'Daily report');
       }
     }
   } else {
     mvaddstr(y++, 0, "${cr.name} holds firm.");
-    await getKey();
+    await acknowledge(title: 'Daily report');
   }
 }

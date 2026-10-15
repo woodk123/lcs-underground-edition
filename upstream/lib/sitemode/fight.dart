@@ -251,7 +251,7 @@ Future<bool> enemyMemberAttacks(
       printParty();
       printEncounter();
 
-      await getKey();
+      await acknowledge(title: 'Operation report');
 
       return true;
     } else if (e.nonCombatant && e.cantRunAway) {
@@ -261,7 +261,7 @@ Future<bool> enemyMemberAttacks(
         clearMessageArea();
         mvaddstrc(9, 1, white, e.name);
         addstr(cowerInCombat.random);
-        await getKey();
+        await acknowledge(title: 'Operation report');
       }
       return true;
     }
@@ -457,7 +457,7 @@ Future<bool> attack(
     printParty();
     printEncounter();
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     return false;
   }
@@ -600,7 +600,7 @@ Future<bool> attack(
   }
   addstr("!");
 
-  await getKey();
+  await acknowledge(title: 'Operation report');
 
   int bonus =
       0; // Accuracy bonus or penalty that does NOT affect damage or counterattack chance
@@ -767,7 +767,7 @@ Future<bool> attack(
 
         //Instant juice!! Way to take the bullet!!
         addjuice(alternate, 10, 1000);
-        await getKey();
+        await acknowledge(title: 'Operation report');
 
         t = alternate;
         break;
@@ -870,7 +870,7 @@ Future<bool> attack(
     } else {
       addstr("$str.");
     }
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     bool aliveBefore = t.alive;
     for (int i = 0; i < bursthits; i++) {
@@ -928,7 +928,7 @@ Future<bool> attack(
       printParty();
       printEncounter();
       addDeathMessage(t);
-      await getKey();
+      await acknowledge(title: 'Operation report');
     }
   } else {
     setColor(white);
@@ -939,7 +939,7 @@ Future<bool> attack(
         t.human &&
         t.getAttack(false, true, true) != null) {
       mvaddstr(10, 1, "${t.name} knocks the blow aside and counters!");
-      await getKey();
+      await acknowledge(title: 'Operation report');
       await attack(t, a, false, forceMelee: true);
     } else {
       move(10, 1);
@@ -980,7 +980,7 @@ Future<bool> attack(
       printParty();
       printEncounter();
 
-      await getKey();
+      await acknowledge(title: 'Operation report');
     }
   }
 
@@ -1153,7 +1153,7 @@ Future<void> hit(
       mvaddstrc(9, 1, a.align.color, str);
       printParty();
       printEncounter();
-      await getKey();
+      await acknowledge(title: 'Operation report');
     }
 
     if ((hitPart.critical && hitPart.missing) || target.blood <= 0) {
@@ -1275,7 +1275,7 @@ Future<void> hit(
                 addstr("'s face is removed!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.missingLeftEye = true;
               body.missingRightEye = true;
@@ -1310,7 +1310,7 @@ Future<void> hit(
                 addstr("knocked out!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.teeth -= teethminus;
             }
@@ -1329,7 +1329,7 @@ Future<void> hit(
                 addstr("'s right eye is removed!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.missingRightEye = true;
               maxBlood(0.5);
@@ -1349,7 +1349,7 @@ Future<void> hit(
                 addstr("'s left eye is removed!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.missingLeftEye = true;
               maxBlood(0.5);
@@ -1369,7 +1369,7 @@ Future<void> hit(
                 addstr("'s tongue is removed!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.missingTongue = true;
               maxBlood(0.5);
@@ -1389,7 +1389,7 @@ Future<void> hit(
                 addstr("'s nose is removed!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.missingNose = true;
               maxBlood(0.5);
@@ -1403,7 +1403,7 @@ Future<void> hit(
                 addstr("'s neck is broken!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.neck = InjuryState.untreated;
               maxBlood(0.2);
@@ -1427,7 +1427,7 @@ Future<void> hit(
                 addstr("'s upper spine is broken!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.upperSpine = InjuryState.untreated;
               maxBlood(0.2);
@@ -1441,7 +1441,7 @@ Future<void> hit(
                 addstr("'s lower spine is broken!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.lowerSpine = InjuryState.untreated;
               maxBlood(0.2);
@@ -1457,7 +1457,7 @@ Future<void> hit(
                 addstr("'s right lung is punctured!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.puncturedRightLung = true;
               maxBlood(0.2);
@@ -1473,7 +1473,7 @@ Future<void> hit(
                 addstr("'s left lung is punctured!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.puncturedLeftLung = true;
               maxBlood(0.2);
@@ -1489,7 +1489,7 @@ Future<void> hit(
                 addstr("'s heart is punctured!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.puncturedHeart = true;
               if (target.blood > 3) {
@@ -1507,7 +1507,7 @@ Future<void> hit(
                 addstr("'s liver is punctured!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.puncturedLiver = true;
               maxBlood(0.5);
@@ -1523,7 +1523,7 @@ Future<void> hit(
                 addstr("'s stomach is punctured!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.puncturedStomach = true;
               maxBlood(0.5);
@@ -1539,7 +1539,7 @@ Future<void> hit(
                 addstr("'s right kidney is punctured!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.puncturedRightKidney = true;
               maxBlood(0.5);
@@ -1555,7 +1555,7 @@ Future<void> hit(
                 addstr("'s left kidney is punctured!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.puncturedLeftKidney = true;
               maxBlood(0.5);
@@ -1571,7 +1571,7 @@ Future<void> hit(
                 addstr("'s spleen is punctured!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.puncturedSpleen = true;
               maxBlood(0.5);
@@ -1601,7 +1601,7 @@ Future<void> hit(
                 addstr("broken!");
               }
 
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               body.ribs -= ribminus;
             }
@@ -1732,7 +1732,7 @@ Future<bool> socialAttack(Creature a, Creature t, Attack attackUsed) async {
   printParty();
   printEncounter();
 
-  await getKey();
+  await acknowledge(title: 'Operation report');
 
   siteCrime += 3;
   addjuice(a, 1, 200);
@@ -1752,7 +1752,7 @@ Future<void> severloot(Creature cr, List<Item> loot) async {
     mvaddstr(10, 1, cr.name);
     addstr("'s grasp.");
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     if (mode == GameMode.site) {
       cr.dropWeaponAndAmmo(lootPile: loot);
@@ -1775,7 +1775,7 @@ Future<void> severloot(Creature cr, List<Item> loot) async {
     addstr(cr.clothing.shortName);
     addstr(" has been destroyed.");
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     cr.strip();
   }
@@ -2082,7 +2082,7 @@ Future<bool> incapacitated(Creature a, bool noncombat) async {
     printParty();
     printEncounter();
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
   }
 
   return incapacitated;

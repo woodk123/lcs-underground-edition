@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:lcs_new_age/modern/journal_site_art.dart';
 
 const _street = Color(0xFF32352F);
 const _pavement = Color(0xFF777B66);
@@ -18,17 +20,19 @@ class JournalMapPlace {
     required this.name,
     required this.kind,
     required this.enabled,
+    this.siteType,
     this.current = false,
     this.queued = false,
     this.details = const [],
   }) : assert(kind == 'city' || kind == 'district' || kind == 'site');
 
   final String id, name, kind;
+  final String? siteType;
   final bool enabled, current, queued;
   final List<String> details;
 }
 
-/// Original top-down notebook cartography, built entirely from code.
+/// Top-down notebook cartography with reusable painted district illustrations.
 ///
 /// Every selectable block comes from [places]. The decorative roofs and roads
 /// express neither actual geography nor travel distance. Selecting a block only
@@ -277,7 +281,14 @@ class _JournalCityPlanState extends State<JournalCityPlan> {
           side: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.focused)
                 ? const BorderSide(color: Colors.white, width: 4)
-                : BorderSide(color: border, width: selected ? 4 : 2),
+                : BorderSide(
+                    color: selected
+                        ? _red
+                        : place.queued
+                        ? _gold
+                        : border,
+                    width: selected ? 4 : 2,
+                  ),
           ),
           backgroundColor: WidgetStatePropertyAll(
             selected
@@ -297,6 +308,23 @@ class _JournalCityPlanState extends State<JournalCityPlan> {
           child: Stack(
             fit: StackFit.expand,
             children: [
+              Padding(
+                padding: const EdgeInsets.all(3),
+                child: Opacity(
+                  opacity: place.enabled ? 1 : .55,
+                  child: place.kind == 'site'
+                      ? ColoredBox(
+                          color: journalSiteArtPaper,
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              bottom: widget.showLabels ? 32 : 0,
+                            ),
+                            child: JournalSiteArtwork(siteType: place.siteType),
+                          ),
+                        )
+                      : _DistrictArtwork(place: place),
+                ),
+              ),
               if (place.current || place.queued)
                 Positioned(
                   top: 7,
@@ -328,9 +356,7 @@ class _JournalCityPlanState extends State<JournalCityPlan> {
                     ),
                     child: Text(
                       place.name,
-                      maxLines: 1,
-                      softWrap: false,
-                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
                       style: TextStyle(
                         fontSize: 12 * labelScale,
                         height: 1.1,
@@ -431,6 +457,70 @@ class _JournalCityPlanState extends State<JournalCityPlan> {
   );
 }
 
+// Atlas order: shopping, downtown, industrial / campus, residential, rural.
+// These are symbolic illustrations, never a claim about real site geography.
+class _DistrictArtwork extends StatelessWidget {
+  const _DistrictArtwork({required this.place});
+  final JournalMapPlace place;
+
+  int get _cell {
+    final name = place.name.toLowerCase();
+    if (RegExp(
+      r'shopping|store|shop|mall|dealer|cafe|bar\b|cosmetics|co-op',
+    ).hasMatch(name)) {
+      return 0;
+    }
+    if (RegExp(
+      r'industrial|warehouse|factory|plant|mill|genetics|laboratory',
+    ).hasMatch(name)) {
+      return 2;
+    }
+    if (RegExp(r'university|college|campus|school|park\b').hasMatch(name)) {
+      return 3;
+    }
+    if (RegExp(
+      r'outskirts|rural|country|eastern|farm|mountain|desert',
+    ).hasMatch(name)) {
+      return 5;
+    }
+    if (RegExp(
+      r'residen|apartment|house|shelter|suburb|nursing|home\b',
+    ).hasMatch(name)) {
+      return 4;
+    }
+    return 1;
+  }
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, bounds) => ClipRect(
+      child: OverflowBox(
+        // Preserve the square atlas's proportions, cropping the middle of
+        // each portrait cell to the landscape lot rather than squashing roofs.
+        alignment: Alignment(
+          (_cell % 3) - 1.0,
+          ((_cell ~/ 3) * 2.0 - 1) *
+              (bounds.maxWidth * 1.5) /
+              (bounds.maxWidth * 3 - bounds.maxHeight),
+        ),
+        minWidth: bounds.maxWidth * 3,
+        maxWidth: bounds.maxWidth * 3,
+        minHeight: bounds.maxWidth * 3,
+        maxHeight: bounds.maxWidth * 3,
+        child: Image.asset(
+          'assets/modern/district_atlas_v1.png',
+          width: bounds.maxWidth * 3,
+          height: bounds.maxWidth * 3,
+          fit: BoxFit.fill,
+          excludeFromSemantics: true,
+          filterQuality: FilterQuality.medium,
+          errorBuilder: (context, error, stack) => const SizedBox.shrink(),
+        ),
+      ),
+    ),
+  );
+}
+
 class _PlanLayout {
   _PlanLayout(List<JournalMapPlace> places, Size viewport) {
     final count = math.max(12, places.length);
@@ -484,23 +574,28 @@ class _PlanPainter extends CustomPainter {
           108,
         );
         final seed = _stableHash('$row:$col');
-        canvas.drawRect(block.inflate(6), Paint()..color = _pavement);
+        canvas.drawRect(
+          block.inflate(6),
+          Paint()..color = const Color(0xFF484D40),
+        );
         canvas.drawRect(
           block.inflate(3),
           Paint()
             ..style = PaintingStyle.stroke
             ..strokeWidth = 1
-            ..color = const Color(0xFFABAB85),
+            ..color = const Color(0xFF626650),
         );
-        canvas.drawRect(block, Paint()..color = const Color(0xFF525441));
+        canvas.drawRect(block, Paint()..color = const Color(0xFF3C4237));
+        // Painted known places provide the detail. Filler blocks stay quiet.
+        if (layout.rects.values.contains(block)) continue;
         // Small buildings form an original varied top-down block texture.
-        for (var by = 0; by < 3; by++) {
-          for (var bx = 0; bx < 3; bx++) {
+        for (var by = 0; by < 2; by++) {
+          for (var bx = 0; bx < 2; bx++) {
             final roof = Rect.fromLTWH(
-              block.left + 4 + bx * 39.0,
-              block.top + 4 + by * 33.0,
-              30 + ((seed >> (bx + by)) % 5).toDouble(),
-              24 + ((seed >> (bx * 2 + by)) % 4).toDouble(),
+              block.left + 12 + bx * 56.0,
+              block.top + 12 + by * 47.0,
+              37 + ((seed >> (bx + by)) % 5).toDouble(),
+              30 + ((seed >> (bx * 2 + by)) % 4).toDouble(),
             );
             _roof(canvas, roof, (seed + bx * 7 + by * 13) % 6);
           }
@@ -522,12 +617,12 @@ class _PlanPainter extends CustomPainter {
 
   void _roof(Canvas canvas, Rect roof, int tone) {
     const shades = [
-      Color(0xFF8E8D6C),
-      Color(0xFF6F785F),
-      Color(0xFFA3A18A),
-      Color(0xFF6D705D),
-      Color(0xFF898E7C),
-      Color(0xFF9B946D),
+      Color(0xFF535744),
+      Color(0xFF505A48),
+      Color(0xFF5D604F),
+      Color(0xFF4C5444),
+      Color(0xFF545E4E),
+      Color(0xFF605E47),
     ];
     canvas.drawRect(
       roof.shift(const Offset(2, 3)),
@@ -546,7 +641,7 @@ class _PlanPainter extends CustomPainter {
       roof.topRight,
       Paint()
         ..strokeWidth = 2
-        ..color = const Color(0xFFB7B59A),
+        ..color = const Color(0xFF71745E),
     );
     canvas.drawRect(
       Rect.fromLTWH(roof.left + 8, roof.top + 8, 6, 5),
@@ -554,12 +649,13 @@ class _PlanPainter extends CustomPainter {
     );
     canvas.drawRect(
       Rect.fromLTWH(roof.right - 9, roof.bottom - 10, 4, 6),
-      Paint()..color = const Color(0xFFB6AB83),
+      Paint()..color = const Color(0xFF72745B),
     );
   }
 
   @override
   bool shouldRepaint(_PlanPainter oldDelegate) =>
       oldDelegate.layout.columns != layout.columns ||
-      oldDelegate.layout.rows != layout.rows;
+      oldDelegate.layout.rows != layout.rows ||
+      !mapEquals(oldDelegate.layout.rects, layout.rects);
 }

@@ -80,7 +80,7 @@ Future<void> handleRansomNote(
       "for a response...");
   y = console.y + 1;
 
-  await getKey();
+  await acknowledge(title: 'Daily report');
 
   intr.ransomDemanded = true;
   if (!cr.kidnapped) {
@@ -98,7 +98,7 @@ Future<bool> handleRansomResponse(
   addparagraph(
       y, 0, "A response has been received from ${cr.name}'s relatives:");
   y = console.y + 1;
-  await getKey();
+  await acknowledge(title: 'Daily report');
 
   if (!oneIn(5)) {
     bool success = await handleRansomPayment(intr, cr, y);
@@ -117,7 +117,7 @@ Future<bool> handleRansomResponse(
     y = console.y + 1;
     setColor(lightGray);
 
-    await getKey();
+    await acknowledge(title: 'Daily report');
     intr.ransomPaid = true;
     return false;
   }
@@ -192,7 +192,7 @@ Future<bool> handleRansomPayment(
   }
   y = console.y + 1;
 
-  await getKey();
+  await acknowledge(title: 'Daily report');
 
   bool success = await handleRansomAmbush(
       intr, lead, cr, y, pickedGoodLocation, approachedCarefully);
@@ -332,7 +332,7 @@ Future<bool> handleRansomAmbush(
             ].random}.");
         y = console.y + 1;
 
-        await getKey();
+        await acknowledge(title: 'Daily report');
 
         await handleRansomArrest(lead, y);
       } else {
@@ -348,7 +348,7 @@ Future<bool> handleRansomAmbush(
             ].random}...");
         y = console.y + 1;
 
-        await getKey();
+        await acknowledge(title: 'Daily report');
 
         // Narrow escape consequences
         lead.heat += 75;
@@ -372,7 +372,7 @@ Future<bool> handleRansomAmbush(
           ].random}.");
       y = console.y + 1;
 
-      await getKey();
+      await acknowledge(title: 'Daily report');
 
       await handleRansomArrest(lead, y);
     }
@@ -403,6 +403,6 @@ Future<bool> handleRansomAmbush(
 
   intr.ransomPaid = true;
 
-  await getKey();
+  await acknowledge(title: 'Daily report');
   return gotMoney;
 }

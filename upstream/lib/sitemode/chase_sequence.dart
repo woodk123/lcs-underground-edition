@@ -229,7 +229,7 @@ Future<ChaseOutcome> carChaseSequence() async {
   mvaddstrc(
       0, 0, white, "As you pull away from the site, you notice that you are ");
   mvaddstr(1, 0, "being followed by Conservative swine!");
-  await getKey();
+  await acknowledge(title: 'Pursuit report');
 
   if (chase.location is Site) {
     chase.location = (chase.location as Site).district;
@@ -411,7 +411,7 @@ Future<ChaseOutcome> carChaseSequence() async {
               addstrc(red, "${5 * nearestVehicleDistance} feet away");
           }
           addstrc(lightGray, "!");
-          await getKey();
+          await acknowledge(title: 'Pursuit report');
           await combatRound(enemiesInNearestVehicle);
           for (Vehicle v in chaseSequence!.enemycar) {
             chaseSequence!.enemyCarDistance[v] =
@@ -518,7 +518,7 @@ Future<ChaseOutcome> footChaseSequence({
     mvaddstrc(0, 0, white, "As you exit the site, you notice that you are ");
     move(1, 0);
     addstr("being followed by Conservative swine!");
-    await getKey();
+    await acknowledge(title: 'Pursuit report');
   }
 
   bool ranAway = false;
@@ -602,7 +602,7 @@ Future<ChaseOutcome> footChaseSequence({
           } else {
             mvaddstr(9, 1, "It looks like you've lost them!");
           }
-          await getKey();
+          await acknowledge(title: 'Pursuit report');
         }
         for (BodyPart w in pool.expand((p) => p.body.parts)) {
           w.bleeding = 0;
@@ -719,7 +719,7 @@ Future<bool> enemyCarUpdate() async {
           "${enemyCar.fullName()} tries to box you in!",
         ].random,
       );
-      await getKey();
+      await acknowledge(title: 'Pursuit report');
 
       Creature yourDriver = squad.where((p) => p.isDriver).toList().random;
       Vehicle yourCar = yourDriver.car!;
@@ -731,7 +731,7 @@ Future<bool> enemyCarUpdate() async {
         mvaddstrc(10, 1, red,
             "${yourCar.fullName().toUpperCase()}'S DRIVER IS DEAD!");
         chaseSequence!.crash();
-        await getKey();
+        await acknowledge(title: 'Pursuit report');
         await crashfriendlycar(yourCar);
         return true;
       } else if (attack > defense + 15) {
@@ -745,7 +745,7 @@ Future<bool> enemyCarUpdate() async {
               "Your ${yourCar.fullName()} fishtails wildly!!!",
               "${yourDriver.name} loses control of the ${yourCar.fullName()}!!!",
             ].random);
-        await getKey();
+        await acknowledge(title: 'Pursuit report');
         chaseSequence!.crash();
         if (oneIn(3)) {
           await crashfriendlycar(yourCar);
@@ -762,10 +762,10 @@ Future<bool> enemyCarUpdate() async {
                 "${yourCar.fullName()} comes to a rest facing backwards.",
                 "${yourCar.fullName()} crashes into some greenery.",
               ].random);
-          await getKey();
+          await acknowledge(title: 'Pursuit report');
           mvaddstrc(
               10, 1, lightGray, "The squad will have to face them on foot!");
-          await getKey();
+          await acknowledge(title: 'Pursuit report');
         }
         abandonCars();
         return true;
@@ -779,10 +779,10 @@ Future<bool> enemyCarUpdate() async {
               "${enemyCarDriver.name} sends ${yourDriver.name} into a spin!",
             ].random);
         chaseSequence!.crash();
-        await getKey();
+        await acknowledge(title: 'Pursuit report');
         mvaddstrc(
             11, 1, lightGray, "The squad will have to face them on foot!");
-        await getKey();
+        await acknowledge(title: 'Pursuit report');
         abandonCars();
         return true;
       } else if (defense > attack + 5) {
@@ -796,7 +796,7 @@ Future<bool> enemyCarUpdate() async {
               "${yourDriver.name} sends ${enemyCar.fullName()} out of control!",
               "${enemyCar.fullName()} spins out of control!",
             ].random);
-        await getKey();
+        await acknowledge(title: 'Pursuit report');
         await crashenemycar(enemyCar);
       } else {
         mvaddstrc(
@@ -809,7 +809,7 @@ Future<bool> enemyCarUpdate() async {
               "${yourDriver.name} swerves, but recovers!",
               "${yourDriver.name} and ${enemyCar.fullName()} race inches apart!",
             ].random);
-        await getKey();
+        await acknowledge(title: 'Pursuit report');
       }
     }
   }
@@ -849,7 +849,7 @@ Future<void> evasiverun() async {
         addstr("You suddenly dart into an alley!");
     }
 
-    await getKey();
+    await acknowledge(title: 'Pursuit report');
   }
 
   for (int i = encounter.length - 1; i >= 0; i--) {
@@ -873,7 +873,7 @@ Future<void> evasiverun() async {
           addstr(" destroys everything in its path to keep up!");
       }
 
-      await getKey();
+      await acknowledge(title: 'Pursuit report');
     } else if (chaser < yourworst) {
       clearMessageArea();
       mvaddstrc(9, 1, lightBlue, e.name);
@@ -884,12 +884,12 @@ Future<void> evasiverun() async {
       }
       encounter.removeAt(i);
       printChaseEncounter();
-      await getKey();
+      await acknowledge(title: 'Pursuit report');
     } else {
       clearMessageArea();
       mvaddstrc(9, 1, yellow, e.name);
       addstr(" is still on your tail!");
-      await getKey();
+      await acknowledge(title: 'Pursuit report');
     }
   }
 
@@ -906,7 +906,7 @@ Future<void> evasiverun() async {
         clearMessageArea();
         mvaddstrc(9, 1, lightBlue, p.name);
         addstr(" breaks away!");
-        await getKey();
+        await acknowledge(title: 'Pursuit report');
 
         //Unload hauled hostage or body when they get back to the safehouse
         if (p.prisoner != null) {
@@ -978,7 +978,7 @@ Future<void> evasiverun() async {
         printChaseEncounter();
         mvaddstrc(9, 1, lightBlue, message);
 
-        await getKey();
+        await acknowledge(title: 'Pursuit report');
       } else {
         othersleft++;
       }
@@ -1019,7 +1019,7 @@ Future<bool> drivingupdate() async {
         clearMessageArea();
         mvaddstrc(9, 1, yellow, "${p.name} takes over the wheel.");
         printParty();
-        await getKey();
+        await acknowledge(title: 'Pursuit report');
       }
     }
     if (driver == null) {
@@ -1197,7 +1197,7 @@ Future<bool> obstacledrive(
     chaseSequence!.turn--;
     chaseSequence!.enemyCarDistance
         .updateAll((key, value) => max(value - 5, 0));
-    await getKey();
+    await acknowledge(title: 'Pursuit report');
   }
 
   switch (obstacle) {
@@ -1224,10 +1224,10 @@ Future<bool> obstacledrive(
       } else if (reaction == CarChaseReaction.speedUp) {
         clearMessageArea();
         mvaddstrc(9, 1, yellow, "Fruit smashes all over the windshield!");
-        await getKey();
+        await acknowledge(title: 'Pursuit report');
         if (oneIn(5)) {
           mvaddstrc(10, 1, red, "A fruit seller is squashed!");
-          await getKey();
+          await acknowledge(title: 'Pursuit report');
           criminalizeAll(squad.where((p) => p.isDriver), Crime.murder);
           addDramaToSiteStory(Drama.killedSomebody);
         }
@@ -1250,7 +1250,7 @@ Future<bool> dodgedrive(
   } else if (style == CarChaseReaction.speedUp) {
     mvaddstrc(9, 1, yellow, "You ride the accelerator!");
   }
-  await getKey();
+  await acknowledge(title: 'Pursuit report');
 
   for (Vehicle v in chaseSequence!.friendcar.toList()) {
     Creature? driver =
@@ -1296,7 +1296,7 @@ Future<void> crashfriendlycar(Vehicle v) async {
   addstr(crashesFlavorText.random);
   printParty();
 
-  await getKey();
+  await acknowledge(title: 'Pursuit report');
 
   for (int i = squad.length - 1; i >= 0; i--) {
     Creature p = squad[i];
@@ -1331,7 +1331,7 @@ Future<void> crashfriendlycar(Vehicle v) async {
           mvaddstrc(9, 1, red, p.prisoner!.name);
           addstr(diesFlavorText.random);
           printParty();
-          await getKey();
+          await acknowledge(title: 'Pursuit report');
         }
 
         // Record death if living Liberal is hauled
@@ -1359,7 +1359,7 @@ Future<void> crashfriendlycar(Vehicle v) async {
         }
         printParty();
 
-        await getKey();
+        await acknowledge(title: 'Pursuit report');
 
         p.die();
 
@@ -1393,7 +1393,7 @@ Future<void> crashfriendlycar(Vehicle v) async {
             p.dropWeapon();
         }
         printParty();
-        await getKey();
+        await acknowledge(title: 'Pursuit report');
       }
     }
   }
@@ -1438,7 +1438,7 @@ Future<void> crashenemycar(Vehicle v) async {
   chaseSequence?.enemycar.remove(v);
   chaseSequence?.enemyCarDistance.remove(v);
   printChaseEncounter();
-  await getKey();
+  await acknowledge(title: 'Pursuit report');
 }
 
 Future<void> chaseGiveUp() async {
@@ -1478,7 +1478,7 @@ Future<void> chaseGiveUp() async {
       addstr(" is free.");
     }
   }
-  await getKey();
+  await acknowledge(title: 'Pursuit report');
 }
 
 Future<ChaseOutcome> soloChaseSequence(Creature cr, int pursuitStrength,
@@ -1560,7 +1560,7 @@ Future<void> backOffEnemyCar(Vehicle v) async {
       ].random,
     );
   }
-  await getKey();
+  await acknowledge(title: 'Pursuit report');
   encounter.removeWhere((e) => e.carId == v.id);
   chaseSequence!.enemycar.remove(v);
 }

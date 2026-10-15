@@ -262,7 +262,7 @@ Future<void> supremeCourt() async {
   if (canSeeThings) {
     mvaddstrc(23, 0, lightGray, "Press any key to watch the decisions unfold.");
     checkKey();
-    await getKey();
+    await acknowledge(title: 'Political report');
   }
 
   for (c = 0; c < cnum; c++) {
@@ -321,7 +321,7 @@ Future<void> supremeCourt() async {
     mvaddstrc(
         23, 0, lightGray, "Press any key to reflect on what has happened.");
     checkKey();
-    await getKey();
+    await acknowledge(title: 'Political report');
   }
 
   //CHANGE A JUSTICE 50% OF THE TIME
@@ -341,7 +341,7 @@ Future<void> supremeCourt() async {
 
       mvaddstrc(7, 0, lightGray, "Press any key to see what happens.");
       checkKey();
-      await getKey();
+      await acknowledge(title: 'Political report');
     }
 
     double president = exec[Exec.president]!.index.toDouble();
@@ -384,7 +384,7 @@ Future<void> supremeCourt() async {
       mvaddstrc(
           7, 0, lightGray, "Press any key to reflect on what has happened.");
       checkKey();
-      await getKey();
+      await acknowledge(title: 'Political report');
     }
     // Sort justices by alignment
     Map<FullName, DeepAlignment> justices = {

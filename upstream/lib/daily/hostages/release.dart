@@ -49,7 +49,7 @@ Future<void> handleRelease(
       "There is a brief commotion as ${cr.name} is led to safety, but "
       "aside from that, there's no change in the situation.",
     );
-    await getKey();
+    await acknowledge(title: 'Daily report');
     return;
   }
 
@@ -114,7 +114,7 @@ Future<void> handleRelease(
   );
   y = console.y + 1;
 
-  await getKey();
+  await acknowledge(title: 'Daily report');
 
   // If the hostage is liberal (heart > wisdom) and has rapport with the lead,
   // they might become a sleeper agent
@@ -136,7 +136,7 @@ Future<void> handleRelease(
     cr.sleeperAgent = true;
     liberalize(cr);
     stats.recruits++;
-    await getKey();
+    await acknowledge(title: 'Daily report');
   } else {
     // Otherwise they'll be released
     pool.remove(cr);

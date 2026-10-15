@@ -205,7 +205,7 @@ Future<void> handleLoveBombing(
   addparagraph(y, 0, message);
   y = console.y + 1;
 
-  await getKey();
+  await acknowledge(title: 'Daily report');
 
   //Target is swayed by Liberal Reason -- skilled interrogators, time held,
   //and rapport contribute to the likelihood of this
@@ -245,7 +245,7 @@ Future<void> handleLoveBombing(
       " never really thought about things this way before.",
     ].random);
 
-    await getKey();
+    await acknowledge(title: 'Daily report');
   }
   //Target is not sold on the LCS arguments and holds firm
   //This is the worst possible outcome if you use props
@@ -340,7 +340,7 @@ Future<void> handleLoveBombing(
     }
     addparagraph(y, 0, description);
     y = console.y + 1;
-    await getKey();
+    await acknowledge(title: 'Daily report');
   }
   //Target actually wins the argument so successfully that the Liberal
   //interrogator's convictions are the ones that are shaken
@@ -358,6 +358,6 @@ Future<void> handleLoveBombing(
     y = console.y + 1;
 
     mvaddstrc(y++, 0, red, "${lead.name} has been tainted with wisdom!");
-    await getKey();
+    await acknowledge(title: 'Daily report');
   }
 }

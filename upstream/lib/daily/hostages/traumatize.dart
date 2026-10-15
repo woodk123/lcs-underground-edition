@@ -45,7 +45,7 @@ Future<int> traumatize(Creature lead, String action, int y) async {
     String name = lead.name;
     if (!gameOptions.lighterTone) {
       mvaddstrc(y++, 0, lightGray, "$name leaves the safehouse in a daze.");
-      await getKey();
+      await acknowledge(title: 'Daily report');
       String wandering;
       wandering = [
         "$name wanders the streets all night, lost in thought.",
@@ -79,7 +79,7 @@ Future<int> traumatize(Creature lead, String action, int y) async {
         "\"I used to think I was a good person...\"",
       ].random;
       mvaddstrc(y++, 2, midGray, wandering);
-      await getKey();
+      await acknowledge(title: 'Daily report');
     }
     if (oneIn(2)) {
       if (oneIn(2)) {
@@ -135,7 +135,7 @@ Future<int> traumatize(Creature lead, String action, int y) async {
       mvaddstrx(y++, 0, "&w${lead.name} &mdoesn't really &Kfeel anything...");
     }
   }
-  await getKey();
+  await acknowledge(title: 'Daily report');
   if (!lead.alive) {
     await dispersalCheck();
   }

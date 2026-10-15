@@ -9,6 +9,7 @@ import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/modern/attribute_help.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
+import 'package:lcs_new_age/modern/equipment_help.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
@@ -352,10 +353,20 @@ class CrewInspector extends StatelessWidget {
 }
 
 class CrewDossier extends StatefulWidget {
-  const CrewDossier({super.key, required this.person, this.actions = const []});
+  const CrewDossier({
+    super.key,
+    required this.person,
+    this.actions = const [],
+    this.embedded = false,
+    this.page = 0,
+    this.onPage,
+  });
 
   final Creature person;
   final List<CrewDossierAction> actions;
+  final bool embedded;
+  final int page;
+  final ValueChanged<int>? onPage;
 
   @override
   State<CrewDossier> createState() => _CrewDossierState();
@@ -374,104 +385,156 @@ class _CrewDossierState extends State<CrewDossier> {
   @override
   Widget build(BuildContext context) => Theme(
     data: buildJournalTheme(),
-    child: Shortcuts(
-      shortcuts: const {
-        SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
-      },
-      child: Actions(
-        actions: {
-          DismissIntent: CallbackAction<DismissIntent>(
-            onInvoke: (_) {
-              Navigator.of(context).pop();
-              return null;
+    child: widget.embedded
+        ? _journalContents()
+        : Shortcuts(
+            shortcuts: const {
+              SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
             },
-          ),
-        },
-        child: Dialog(
-          key: const ValueKey('crew-dossier'),
-          backgroundColor: JournalPalette.leather,
-          surfaceTintColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(20),
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-            side: const BorderSide(color: JournalPalette.brassDark),
-          ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 920,
-              maxHeight: MediaQuery.sizeOf(context).height - 40,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(5),
-              child: JournalSurface(
-                padding: EdgeInsets.zero,
-                child: DefaultTextStyle.merge(
-                  style: const TextStyle(
-                    fontFamily: JournalPalette.serif,
-                    fontFamilyFallback: ['ModernSans'],
-                    color: _ink,
-                    fontSize: 15,
-                    height: 1.45,
+            child: Actions(
+              actions: {
+                DismissIntent: CallbackAction<DismissIntent>(
+                  onInvoke: (_) {
+                    Navigator.of(context).pop();
+                    return null;
+                  },
+                ),
+              },
+              child: Dialog(
+                key: const ValueKey('crew-dossier'),
+                backgroundColor: JournalPalette.leather,
+                surfaceTintColor: Colors.transparent,
+                insetPadding: const EdgeInsets.all(20),
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  side: const BorderSide(color: JournalPalette.brassDark),
+                ),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: 920,
+                    maxHeight: MediaQuery.sizeOf(context).height - 40,
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _topBar(),
-                      Flexible(
-                        child: SingleChildScrollView(
-                          key: const ValueKey('crew-dossier-scroll'),
-                          controller: _scroll,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _header(),
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  24,
-                                  0,
-                                  24,
-                                  16,
-                                ),
-                                child: Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
+                  child: Padding(
+                    padding: const EdgeInsets.all(5),
+                    child: JournalSurface(
+                      padding: EdgeInsets.zero,
+                      child: DefaultTextStyle.merge(
+                        style: const TextStyle(
+                          fontFamily: JournalPalette.serif,
+                          fontFamilyFallback: ['ModernSans'],
+                          color: _ink,
+                          fontSize: 15,
+                          height: 1.45,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _topBar(),
+                            Flexible(
+                              child: SingleChildScrollView(
+                                key: const ValueKey('crew-dossier-scroll'),
+                                controller: _scroll,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
-                                    _tabButton(
-                                      0,
-                                      'Overview',
-                                      Icons.person_outline,
+                                    _header(),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        24,
+                                        0,
+                                        24,
+                                        16,
+                                      ),
+                                      child: Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: [
+                                          _tabButton(
+                                            0,
+                                            'Overview',
+                                            Icons.person_outline,
+                                          ),
+                                          _tabButton(
+                                            1,
+                                            'Skills',
+                                            Icons.auto_graph,
+                                          ),
+                                          _tabButton(
+                                            2,
+                                            'Campaign record',
+                                            Icons.history_edu,
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    _tabButton(1, 'Skills', Icons.auto_graph),
-                                    _tabButton(
-                                      2,
-                                      'Campaign record',
-                                      Icons.history_edu,
+                                    const Divider(height: 1, color: _rule),
+                                    Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: switch (_tab) {
+                                        1 => _skills(),
+                                        2 => _record(),
+                                        _ => _overview(),
+                                      },
                                     ),
                                   ],
                                 ),
                               ),
-                              const Divider(height: 1, color: _rule),
-                              Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: switch (_tab) {
-                                  1 => _skills(),
-                                  2 => _record(),
-                                  _ => _overview(),
-                                },
-                              ),
-                            ],
-                          ),
+                            ),
+                            _footer(),
+                          ],
                         ),
                       ),
-                      _footer(),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
+  );
+
+  Widget _journalContents() => Material(
+    key: const ValueKey('journal-personnel-profile'),
+    color: Colors.transparent,
+    child: Scrollbar(
+      controller: _scroll,
+      thumbVisibility: true,
+      child: SingleChildScrollView(
+        controller: _scroll,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _header(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final (index, label) in [
+                    (0, 'Overview'),
+                    (1, 'Skills'),
+                    (2, 'Campaign record'),
+                  ])
+                    ChoiceChip(
+                      label: Text(label),
+                      selected: widget.page == index,
+                      onSelected: (_) => widget.onPage?.call(index),
+                    ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: switch (widget.page) {
+                1 => _skills(),
+                2 => _record(),
+                _ => _overview(),
+              },
+            ),
+          ],
         ),
       ),
     ),
@@ -696,13 +759,16 @@ class _CrewDossierState extends State<CrewDossier> {
                 ),
               ],
             ),
-            _fact(
-              'Weapon',
-              person.equippedWeapon == null
-                  ? 'No equipped weapon'
-                  : stripConsoleColors(
-                      person.equippedWeapon!.equipTitle(full: true),
-                    ),
+            EquipmentTooltip(
+              type: person.equippedWeapon?.type,
+              child: _fact(
+                'Weapon',
+                person.equippedWeapon == null
+                    ? 'No equipped weapon'
+                    : stripConsoleColors(
+                        person.equippedWeapon!.equipTitle(full: true),
+                      ),
+              ),
             ),
             if (person.equippedWeapon?.type.usesAmmo == true)
               _fact(
@@ -711,9 +777,13 @@ class _CrewDossierState extends State<CrewDossier> {
                     ? 'Unloaded'
                     : '${person.equippedWeapon!.ammo} rounds · ${person.equippedWeapon!.loadedAmmoType?.name ?? 'Type not recorded'}',
               ),
-            _fact(
-              'Clothing',
-              person.equippedClothing?.type.name ?? 'No equipped clothing',
+            EquipmentTooltip(
+              type: person.equippedClothing?.type,
+              armor: person.equippedClothing?.armor,
+              child: _fact(
+                'Clothing',
+                person.equippedClothing?.type.name ?? 'No equipped clothing',
+              ),
             ),
             if (person.equippedClothing != null) ...[
               _fact(

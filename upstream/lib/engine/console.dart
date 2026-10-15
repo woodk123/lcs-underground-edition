@@ -8,6 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:lcs_new_age/engine/console_char.dart';
 import 'package:lcs_new_age/engine/console_graphic.dart';
 import 'package:lcs_new_age/engine/creation_context.dart';
+import 'package:lcs_new_age/engine/journal_context.dart';
+import 'package:lcs_new_age/engine/recruitment_context.dart';
 import 'package:lcs_new_age/utils/colors.dart';
 import 'package:lcs_new_age/utils/game_options.dart';
 
@@ -163,9 +165,56 @@ class Console {
   ConsoleNavigation? navigation;
   ConsoleArticle? article;
   CreationContext? creation;
+  RecruitmentContext? recruitment;
   // Full text of the current original showMessage acknowledgement. This is
   // presentation metadata only; the retained buffer and input reader remain.
   String? eventMessage;
+  String? eventTitle;
+  List<JournalPersonSummary> journalPeople = [];
+  JournalProfileContext? journalProfile;
+  int journalBodyStart = 0;
+  final Set<(int, int)> _writtenCells = {};
+
+  /// Text written since the preceding reader, excluding retained menus and
+  /// status furniture. Reading this never changes the original console buffer.
+  String currentReportText() {
+    final lines = <String>[];
+    final printedChoices = actions
+        .where(
+          (a) =>
+              a.y >= 0 &&
+              a.y < height &&
+              a.x >= 0 &&
+              a.x + a.width <= width &&
+              buffer[a.y].skip(a.x).take(a.width).map((c) => c.glyph).join() ==
+                  a.label.substring(0, min(a.width, a.label.length)),
+        )
+        .toList();
+    final end = height;
+    for (var row = journalBodyStart; row < end; row++) {
+      final text = StringBuffer();
+      final columns = screen == 'field_prompt' && row >= 11 && row <= 22
+          ? 55
+          : width;
+      for (var col = 0; col < columns; col++) {
+        final isChoice = printedChoices.any(
+          (a) => a.y == row && col >= a.x && col < a.x + a.width,
+        );
+        text.write(
+          _writtenCells.contains((row, col)) && !isChoice
+              ? buffer[row][col].glyph
+              : ' ',
+        );
+      }
+      final line = text
+          .toString()
+          .replaceAll(RegExp(r'[\u2500-\u259f]'), ' ')
+          .replaceAll(RegExp(r'[—═─━=]{3,}'), ' ')
+          .trim();
+      if (line.isNotEmpty) lines.add(line);
+    }
+    return lines.join('\n');
+  }
 
   void showArticle({
     required String title,
@@ -338,10 +387,16 @@ class Console {
   }
 
   void erase() {
+    journalProfile = null;
+    journalPeople = [];
+    journalBodyStart = 0;
+    _writtenCells.clear();
     navigation = null;
     article = null;
     creation = null;
+    recruitment = null;
     eventMessage = null;
+    eventTitle = null;
     for (List<ConsoleChar> row in buffer) {
       row.fillRange(0, CONSOLE_WIDTH, ConsoleChar.blank());
     }
@@ -359,6 +414,10 @@ class Console {
     int endY = CONSOLE_HEIGHT,
     int endX = CONSOLE_WIDTH,
   }) {
+    if (startY <= 1 && endY >= 8 && startX <= 0 && endX >= width) {
+      journalPeople = [];
+      journalBodyStart = 0;
+    }
     for (int y = max(startY, 0); y < min(endY, buffer.length); y++) {
       for (int x = max(startX, 0); x < min(endX, buffer[y].length); x++) {
         buffer[y][x] = ConsoleChar.blank();
@@ -385,6 +444,7 @@ class Console {
   void addchar(String c, {String? mouseClickKey}) {
     if (y < 0 || y >= buffer.length) return;
     if (x < 0 || x >= buffer[y].length) return;
+    _writtenCells.add((y, x));
     if (c == '█') {
       buffer[y][x] = ConsoleChar(
         ' ',
@@ -564,6 +624,7 @@ class Console {
   }
 
   Future<KeyEvent> getKeyEvent() async {
+    _writtenCells.clear();
     _readingInput = true;
     try {
       flush();
@@ -580,10 +641,16 @@ class Console {
     } finally {
       _readingInput = false;
       navigation = null;
-      if (screen == 'headquarters' || screen == 'tactical') actions.clear();
+      if (screen == 'headquarters' ||
+          screen == 'tactical' ||
+          screen == 'field_prompt') {
+        actions.clear();
+      }
       // Main-screen markers describe one awaited decision. Notifications and
       // nested prompts may reuse the buffer without calling erase().
-      screen = 'generic';
+      // Inline field prompts can read again after an invalid key without
+      // redrawing. Retain their map context until the next scene or erase().
+      if (screen != 'field_prompt') screen = 'generic';
     }
   }
 

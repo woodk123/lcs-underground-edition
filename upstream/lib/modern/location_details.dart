@@ -4,6 +4,7 @@ import 'package:lcs_new_age/items/item_type.dart';
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
+import 'package:lcs_new_age/modern/equipment_help.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/location_catalog.dart';
 import 'package:lcs_new_age/modern/location_help.dart';
@@ -132,9 +133,7 @@ class _LocationDetailsState extends State<_LocationDetails> {
             .map(locationFeatureLabel)
             .toSet()
             .toList();
-    final loot = (locationLootCatalog[site.type] ?? const <String>[])
-        .map((id) => itemTypes[id]?.name ?? id)
-        .toList();
+    final loot = locationLootCatalog[site.type] ?? const <String>[];
     final shop = shopTypes[locationShopId(site.type)];
     return Dialog(
       child: ConstrainedBox(
@@ -279,7 +278,13 @@ class _LocationDetailsState extends State<_LocationDetails> {
                       for (final item in loot)
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
-                          child: Text('• $item', style: JournalPalette.body),
+                          child: EquipmentTooltip(
+                            type: itemTypes[item],
+                            child: Text(
+                              '• ${itemTypes[item]?.name ?? item}',
+                              style: JournalPalette.body,
+                            ),
+                          ),
                         ),
                     ],
                   ],
@@ -330,11 +335,14 @@ class _LocationDetailsState extends State<_LocationDetails> {
     if (shop.allowSelling)
       const Text('You can also sell items here.', style: JournalPalette.small),
     for (final item in shop.items.where((item) => item.isAvailable()))
-      ListTile(
-        contentPadding: EdgeInsets.zero,
-        dense: true,
-        title: Text(item.description ?? item.itemId),
-        trailing: Text('\$${item.price(false)}'),
+      EquipmentTooltip(
+        type: itemTypes[item.itemId],
+        child: ListTile(
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          title: Text(item.description ?? item.itemId),
+          trailing: Text('\$${item.price(false)}'),
+        ),
       ),
     for (final department in shop.departments)
       ExpansionTile(

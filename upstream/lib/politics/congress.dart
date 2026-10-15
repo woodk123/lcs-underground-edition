@@ -173,7 +173,7 @@ Future<void> congress() async {
 
   if (canSeeThings) {
     mvaddstrc(23, 0, lightGray, "Press any key to watch the votes unfold.");
-    await getKey();
+    await acknowledge(title: 'Political report');
     mvaddstr(0, 62, "House");
     mvaddstr(0, 70, "Senate");
   }
@@ -292,7 +292,7 @@ Future<void> congress() async {
       mvaddstrc(23, 0, lightGray,
           "Press any key to watch the President.                   ");
 
-      await getKey();
+      await acknowledge(title: 'Political report');
 
       mvaddstr(0, 35, "President");
 
@@ -338,14 +338,14 @@ Future<void> congress() async {
       mvaddstrc(23, 0, lightGray,
           "Press any key to reflect on what has happened.    ");
       checkKey();
-      await getKey();
+      await acknowledge(title: 'Political report');
     }
   } else if (canSeeThings) {
     mvaddstrc(
         23, 0, lightGray, "None of the items made it to the President's desk.");
     mvaddstr(24, 0, "Press any key to reflect on what has happened.    ");
     checkKey();
-    await getKey();
+    await acknowledge(title: 'Political report');
   }
 
   //CONGRESS CONSTITUTION CHANGES

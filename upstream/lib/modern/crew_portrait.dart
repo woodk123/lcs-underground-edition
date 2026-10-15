@@ -7,19 +7,18 @@ import 'package:lcs_new_age/creature/gender.dart';
 import 'package:lcs_new_age/creature/portrait.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
+import 'package:lcs_new_age/modern/portrait_appearance.dart';
+import 'package:lcs_new_age/modern/portrait_face_frames.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 
 const _portraitAsset = 'assets/modern/crew_portraits_v1.png';
+const _appearanceAsset = 'assets/modern/portraits_v2/appearance_overlays.png';
 const _ink = JournalPalette.ink;
 const _teal = JournalPalette.olive;
 const _red = JournalPalette.danger;
 
-/// A visual identity, not a simulated appearance or an extra campaign roll.
-///
-/// IDs survive saves and renames, so the same person keeps the same illustration.
-/// The finite illustration bank can be shared by multiple people. Actual age,
-/// gender, injuries and other traits are always given by the dossier's text.
-int stablePortraitIndex(Creature person) => ensurePortraitId(person);
+/// A saved visual identity; appearance updates never reroll the painted face.
+int stablePortraitIndex(Creature person) => portraitIdForDisplay(person);
 
 int _legacyPortraitIndex(Creature person) {
   final choices = switch (person.gender.simplified) {
@@ -31,6 +30,12 @@ int _legacyPortraitIndex(Creature person) {
 }
 
 final _atlases = <String, Future<ui.Image?>>{};
+final _portraitLayers = <String, Future<List<ui.Image?>>>{};
+Future<List<ui.Image?>> _loadPortraitLayers(String asset) =>
+    _portraitLayers.putIfAbsent(
+      asset,
+      () => Future.wait([_loadAtlas(asset), _loadAtlas(_appearanceAsset)]),
+    );
 Future<ui.Image?> _loadAtlas(String asset) => _atlases.putIfAbsent(
   asset,
   () async {
@@ -48,8 +53,9 @@ Future<ui.Image?> _loadAtlas(String asset) => _atlases.putIfAbsent(
 
 /// A compact illustrated crew identity, with a factual availability indicator.
 ///
-/// Adults use a generated editorial illustration bank. Children and nonhuman
-/// creatures use initials or an appropriate symbol rather than an adult face.
+/// All supported ages and bodies use their corresponding illustration bank.
+/// Human injury and clothing details are stylised overlays; the dossier gives
+/// the full medical and equipment record.
 class CrewPortrait extends StatelessWidget {
   const CrewPortrait({
     super.key,
@@ -68,10 +74,9 @@ class CrewPortrait extends StatelessWidget {
   Widget build(BuildContext context) {
     final journal = Theme.of(context).extension<JournalVisuals>();
     final asset = journal?.portraitAsset ?? _portraitAsset;
-    final portraitId = person.human && person.age >= 18
-        ? stablePortraitIndex(person)
-        : -1;
-    final portrait = portraitId >= 0 ? portraitCatalog[portraitId] : null;
+    final portraitId = stablePortraitIndex(person);
+    final portrait = portraitCatalog[portraitId];
+    final appearance = PortraitAppearance.fromPerson(person);
     final radius = journal != null && borderRadius == 12 ? 3.0 : borderRadius;
     final status = !person.alive
         ? 'Deceased'
@@ -92,12 +97,11 @@ class CrewPortrait extends StatelessWidget {
         : _teal;
     return Semantics(
       image: true,
-      label: '${person.name} portrait. $status.',
+      label: '${person.name} portrait. $status. ${appearance.description}',
       child: MechanicsTooltip(
         excludeFromSemantics: true,
-        message: crewAvailabilityHelp(
-          person,
-        ).split('\n\n').take(3).join('\n\n'),
+        message:
+            '${crewAvailabilityHelp(person).split('\n\n').take(3).join('\n\n')}\n\n${appearance.description}',
         child: ExcludeSemantics(
           child: SizedBox.square(
             dimension: size,
@@ -114,34 +118,47 @@ class CrewPortrait extends StatelessWidget {
                     borderRadius: BorderRadius.circular(
                       (radius - 1).clamp(0, radius),
                     ),
-                    child: person.human && person.age >= 18
-                        ? FutureBuilder<ui.Image?>(
-                            key: ValueKey(portrait!.asset),
-                            future: _loadAtlas(portrait.asset),
-                            builder: (context, snapshot) =>
-                                snapshot.connectionState != ConnectionState.done
+                    child: FutureBuilder<List<ui.Image?>>(
+                      key: ValueKey(portrait.asset),
+                      future: _loadPortraitLayers(portrait.asset),
+                      builder: (context, snapshot) =>
+                          snapshot.connectionState != ConnectionState.done
+                          ? _fallback()
+                          : snapshot.data?[0] == null
+                          ? portraitId >= 250 ||
+                                    !person.human ||
+                                    person.age < 20
                                 ? _fallback()
-                                : snapshot.data == null
-                                ? FutureBuilder<ui.Image?>(
+                                : FutureBuilder<ui.Image?>(
                                     future: _loadAtlas(asset),
                                     builder: (context, legacy) =>
                                         legacy.data == null
                                         ? _fallback()
                                         : CustomPaint(
+                                            foregroundPainter:
+                                                PortraitAppearancePainter(
+                                                  appearance,
+                                                  overlayAtlas:
+                                                      snapshot.data?[1],
+                                                ),
                                             painter: _PortraitPainter(
                                               legacy.data!,
                                               _legacyPortraitIndex(person),
                                             ),
                                           ),
                                   )
-                                : CustomPaint(
-                                    painter: _PortraitPainter(
-                                      snapshot.data!,
-                                      portrait.cell,
-                                    ),
-                                  ),
-                          )
-                        : _fallback(),
+                          : CustomPaint(
+                              foregroundPainter: PortraitAppearancePainter(
+                                appearance,
+                                faceFrame: portraitFaceFrames[portraitId],
+                                overlayAtlas: snapshot.data?[1],
+                              ),
+                              painter: _PortraitPainter(
+                                snapshot.data![0]!,
+                                portrait.cell,
+                              ),
+                            ),
+                    ),
                   ),
                 ),
                 if (showStatus)

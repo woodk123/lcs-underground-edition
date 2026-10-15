@@ -10,6 +10,33 @@ Future<int> getKey({Map<String, String>? choices}) async {
   return (await console.getkey()).codePoint;
 }
 
+/// An authored any-key pause presented as a current journal report. This keeps
+/// precisely one original reader and leaves the classic console unchanged.
+Future<void> acknowledge({String? title}) async {
+  final reportConsole = console;
+  if (const {'full_map', 'article', 'title'}.contains(reportConsole.screen)) {
+    await getKey();
+    return;
+  }
+  final message = reportConsole.currentReportText();
+  if (message.isEmpty) {
+    await getKey();
+    return;
+  }
+  final previousMessage = reportConsole.eventMessage;
+  final previousTitle = reportConsole.eventTitle;
+  reportConsole.eventMessage = message;
+  reportConsole.eventTitle = title;
+  try {
+    await getKey();
+  } finally {
+    if (reportConsole.eventMessage == message) {
+      reportConsole.eventMessage = previousMessage;
+      reportConsole.eventTitle = previousTitle;
+    }
+  }
+}
+
 Future<KeyEvent> getKeyEvent() async => await console.getKeyEvent();
 Future<String> getKeyCaseSensitive() async => console.getkey();
 int checkKey() => console.checkkey().codePoint;

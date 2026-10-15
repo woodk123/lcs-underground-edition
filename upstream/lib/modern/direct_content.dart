@@ -6,6 +6,7 @@ import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/item_help_context.dart';
+import 'package:lcs_new_age/engine/journal_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/items/ammo.dart';
@@ -15,8 +16,10 @@ import 'package:lcs_new_age/location/compound_upgrades.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
+import 'package:lcs_new_age/modern/journal_person_summary.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
+import 'package:lcs_new_age/modern/recruitment_card.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 import 'package:lcs_new_age/utils/colors.dart' as legacy;
 
@@ -42,6 +45,8 @@ class DirectContent extends StatelessWidget {
     this.hiddenRows = const {},
     this.leadingActionRows = const {},
     this.maxColumn = CONSOLE_WIDTH,
+    this.rowMaxColumns = const {},
+    this.showActions = true,
   });
 
   final Console console;
@@ -51,9 +56,21 @@ class DirectContent extends StatelessWidget {
   final Set<int> hiddenRows;
   final Set<int> leadingActionRows;
   final int maxColumn;
+  final Map<int, int> rowMaxColumns;
+  final bool showActions;
 
   @override
   Widget build(BuildContext context) {
+    final recruitment = console.recruitment;
+    final prospectActions = <int, ConsoleAction>{};
+    if (recruitment != null && showActions) {
+      for (final prospect in recruitment.prospects) {
+        if (prospect.choiceKey == null) continue;
+        final key = normalizeConsoleKey(prospect.choiceKey!);
+        final action = console.actions.where((a) => a.key == key).firstOrNull;
+        if (action != null) prospectActions[prospect.person.id] = action;
+      }
+    }
     final assignment = console.actions
         .where(
           (action) => const {
@@ -89,14 +106,55 @@ class DirectContent extends StatelessWidget {
                 ? true
                 : null,
           );
+    final List<JournalPersonSummary> people =
+        recruitment == null &&
+            assignment == null &&
+            showActions &&
+            console.actions.every(
+              (a) =>
+                  a.y >= 9 ||
+                  (a.entityType == 'person' && a.intentLabel == null),
+            ) &&
+            console.screen != 'tactical' &&
+            console.screen != 'field_prompt'
+        ? console.journalPeople
+        : const [];
     final omittedRows = {
       ...hiddenRows,
+      if (people.isNotEmpty)
+        for (var row = 0; row < 8; row++) row,
+      if (recruitment != null) ...[
+        for (var row = 1; row < 9; row++) row,
+        for (final action in prospectActions.values) action.y,
+      ],
       if (assignment != null && help != null) ...[22, 23, 24],
       if (assignment != null && actor != null && help != null)
         for (var row = 0; row < 10; row++) row,
     };
-    final frame = _ContentFrame(console, omittedRows, maxColumn);
+    final frame = _ContentFrame(
+      console,
+      omittedRows,
+      maxColumn,
+      rowMaxColumns,
+      showActions,
+    );
     final content = <Widget>[];
+    for (final summary in people) {
+      final action = console.actions
+          .where((a) => a.key == summary.choiceKey && a.entityType == 'person')
+          .firstOrNull;
+      content.add(
+        JournalPersonCard(
+          summary: summary,
+          onSelect: action?.enabled == true
+              ? () => onAction(action!.key)
+              : null,
+          onInspect: onInspect == null
+              ? null
+              : () => onInspect!(summary.person),
+        ),
+      );
+    }
     final guideActor =
         actor ?? game.activeSquadMember ?? game.squad.firstOrNull;
     final guideTopics = <DecisionTopic>{
@@ -123,6 +181,43 @@ class DirectContent extends StatelessWidget {
       );
     }
     final used = <ConsoleAction>{};
+    if (recruitment != null) {
+      content.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Text(
+            recruitment.followUp
+                ? 'Get to know your prospect'
+                : 'People to meet',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+        ),
+      );
+      for (final prospect in recruitment.prospects) {
+        final person = prospect.person;
+        final action = prospectActions[person.id];
+        if (action != null) used.add(action);
+        content.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: RecruitmentCard(
+              person: person,
+              recruiter: recruitment.recruiter,
+              followUp: recruitment.followUp,
+              shortcut: action?.key,
+              onMeet: action?.enabled == true
+                  ? () => onAction(action!.key)
+                  : null,
+              onInspect: () {
+                // Prospects are not in the crew pool used by the workspace's
+                // inspector. Open a local read-only dossier for this exact NPC.
+                unawaited(showCrewDossier(context, person: person));
+              },
+            ),
+          ),
+        );
+      }
+    }
     if (leadingActionRows.isNotEmpty) {
       final commands = console.actions
           .where((action) => leadingActionRows.contains(action.y))
@@ -1221,6 +1316,7 @@ class DirectContent extends StatelessWidget {
       }
       final clean = row
           .substring(left, right ?? frame.width)
+          .replaceAll(RegExp(r'[\u2500-\u259f|]'), ' ')
           .replaceAllMapped(
             RegExp(r'[—═─━]{3,}'),
             (match) => ' ' * match.group(0)!.length,
@@ -1281,12 +1377,21 @@ class DirectContent extends StatelessWidget {
 }
 
 class _ContentFrame {
-  _ContentFrame(this.console, Set<int> hiddenRows, int maxColumn)
-    : width = maxColumn.clamp(1, console.width),
-      revision = console.revision.value {
+  _ContentFrame(
+    this.console,
+    Set<int> hiddenRows,
+    int maxColumn, [
+    Map<int, int> rowMaxColumns = const {},
+    bool showActions = true,
+  ]) : width = maxColumn.clamp(1, console.width),
+       revision = console.revision.value {
     rows = [
-      for (final row in console.buffer)
-        row.take(width).map((cell) => cell.glyph).join(),
+      for (var y = 0; y < console.height; y++)
+        console.buffer[y]
+            .take((rowMaxColumns[y] ?? width).clamp(0, width))
+            .map((cell) => cell.glyph)
+            .join()
+            .padRight(width),
     ];
     final indices = {
       for (var i = 0; i < console.actions.length; i++) console.actions[i]: i,
@@ -1295,8 +1400,9 @@ class _ContentFrame {
         console.actions
             .where(
               (action) =>
+                  showActions &&
                   !hiddenRows.contains(action.y) &&
-                  action.x < width &&
+                  action.x < (rowMaxColumns[action.y] ?? width) &&
                   action.y >= 0 &&
                   action.y < rows.length,
             )
@@ -1396,7 +1502,9 @@ class _ContentFrame {
       if (foreground != color || background != bg) append();
       foreground = color;
       background = bg;
-      run += cell.glyph;
+      run += RegExp(r'[\u2500-\u259f|]').hasMatch(cell.glyph)
+          ? ' '
+          : cell.glyph;
     }
     append();
     return spans;

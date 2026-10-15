@@ -79,10 +79,11 @@ Future<void> hospitalize(Site loc, Creature patient) async {
     patient.location = loc;
     patient.activity = Activity.none();
 
-    makeDelimiter();
-    mvaddstrc(8, 1, white, "${patient.name} is admitted to ${loc.name}.");
-
-    await getKey();
+    await showMessage(
+      "${patient.name} is admitted to ${loc.name}.",
+      title: 'Hospital admission',
+      color: white,
+    );
   }
 }
 
@@ -216,7 +217,7 @@ Future<void> dealership(Site loc) async {
           mvaddstrc(1, 1, darkRed, "You don't have enough money!");
           carchoice = -1;
 
-          await getKey();
+          await acknowledge(title: 'Daily report');
         } else {
           break;
         }

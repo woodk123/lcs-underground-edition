@@ -95,7 +95,7 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
       reasonKey: "threatening hostages",
     );
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     bool noretreat = false;
 
@@ -161,7 +161,7 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
           }
         }
 
-        await getKey();
+        await acknowledge(title: 'Conversation');
 
         noretreat = true;
       }
@@ -173,7 +173,7 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
             encounter.removeAt(i);
           }
         }
-        await getKey();
+        await acknowledge(title: 'Conversation');
       } else {
         clearSceneAreas();
         mvaddstrc(9, 1, lightGray, "How should ${liberal.name} respond?");
@@ -220,7 +220,7 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
             addstr("CRUNCH!");
           }
 
-          await getKey();
+          await acknowledge(title: 'Conversation');
 
           mvaddstrc(
             10,
@@ -238,7 +238,7 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
             offendedAngryRuralMobs = true;
           }
           makeLoot(executer.prisoner!, groundLoot);
-          await getKey();
+          await acknowledge(title: 'Conversation');
 
           executer.prisoner = null;
 
@@ -271,7 +271,7 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
               }
             }
 
-            await getKey();
+            await acknowledge(title: 'Conversation');
           }
         } else if (c == 'b'.codePoint) {
           move(9, 1);
@@ -295,7 +295,7 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
               addstr("\"I just want out of here, yeah?\"");
           }
 
-          await getKey();
+          await acknowledge(title: 'Conversation');
 
           if (e.type.edgelord) {
             clearMessageArea();
@@ -315,7 +315,7 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
                 addstr("\"It's a deal.\"");
             }
 
-            await getKey();
+            await acknowledge(title: 'Conversation');
           } else {
             clearMessageArea();
             mvaddstrc(9, 1, white, "${e.name}: ");
@@ -332,7 +332,7 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
                 addstr("\"No tricks, okay?\"");
             }
 
-            await getKey();
+            await acknowledge(title: 'Conversation');
 
             for (int i = encounter.length - 1; i >= 0; i--) {
               if (encounter[i].alive && encounter[i].isEnemy) {
@@ -357,7 +357,7 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
               addstr("The squad releases the hostage in the trade.");
             }
 
-            await getKey();
+            await acknowledge(title: 'Conversation');
           }
         }
       }
@@ -367,7 +367,7 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
       move(9, 1);
       addstr("${target.name} isn't interested in your pathetic threats.");
 
-      await getKey();
+      await acknowledge(title: 'Conversation');
     }
   } else if (c == 'c'.codePoint) {
     setColor(white);
@@ -445,7 +445,7 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
       }
     }
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     bool fooled = true;
 
@@ -480,11 +480,11 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
         }
       }
 
-      await getKey();
+      await acknowledge(title: 'Conversation');
     } else {
       clearMessageArea();
       mvaddstrc(9, 1, lightGreen, "The Enemy is fooled and departs.");
-      await getKey();
+      await acknowledge(title: 'Conversation');
 
       for (int i = encounter.length - 1; i >= 0; i--) {
         if (encounter[i].alive && encounter[i].isEnemy) {
@@ -495,7 +495,7 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
   } else {
     clearMessageArea();
     mvaddstrc(9, 1, white, "The Squad surrenders and is arrested.");
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     int stolen = 0;
     // Police assess stolen goods in inventory
@@ -601,7 +601,7 @@ Future<void> intimidate(Creature liberal) async {
       );
     }
   }
-  await getKey();
+  await acknowledge(title: 'Conversation');
 
   for (int i = encounter.length - 1; i >= 0; i--) {
     Creature e = encounter[i];
@@ -628,7 +628,7 @@ Future<void> intimidate(Creature liberal) async {
         encounter.removeAt(i);
         addjuice(liberal, 2, 1000); // Instant juice!
 
-        await getKey();
+        await acknowledge(title: 'Conversation');
       }
     }
   }

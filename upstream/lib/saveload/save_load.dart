@@ -271,7 +271,7 @@ Future<void> _showSaveError(
     y2: 20,
   );
   addOptionText(23, 1, 'Enter', 'Enter - Back');
-  await getKey();
+  await acknowledge(title: 'Saved campaigns');
 }
 
 String _nameOfFounder(GameState gameState) {
@@ -512,7 +512,7 @@ Future<SaveFile?> importSaveBytes(Uint8List bytes) async {
     erase();
     mvaddstrc(1, 1, lightGray, 'Save imported successfully.');
     addOptionText(3, 1, 'Enter', 'Enter - Continue');
-    await getKey();
+    await acknowledge(title: 'Saved campaigns');
     return save;
   } catch (error) {
     await _showSaveError('The save could not be imported.', error);

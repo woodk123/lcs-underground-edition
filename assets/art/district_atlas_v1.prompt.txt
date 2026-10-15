@@ -1,0 +1,9 @@
+Generator: built-in image_gen tool, 15 October 2026.
+Runtime asset: upstream/assets/modern/district_atlas_v1.png
+Original: C:/Users/sheer/.codex/generated_images/01a14105-4014-7261-ad27-ab22c820f3e4/exec-1743b3d1-d0e0-4415-a76b-eda69f4d71c3.png
+Atlas: 1254 x 1254 pixels, 3 columns x 2 rows. Cells are 418 x 627.
+Order: shopping, downtown, industrial / university, residential, rural.
+Rendering preserves image proportions and crops the centre of each cell to the lot.
+
+Generation prompt:
+Use case: stylized-concept. Asset type: a SINGLE game cartography texture atlas for a parchment dossier city map. Create one square image divided into an exact 3 columns x 2 rows grid of six equally sized square district illustrations, edge to edge, no gutters or borders. Every cell is an overhead architectural ink-and-wash map illustration, near vertical top-down with subtle roof depth, muted faded olive, warm cream, brown and dusty blue, delicate hand-inked outlines and readable broad silhouettes at thumbnail size. Upper left: shopping district, small stores around an open plaza, striped awnings. Upper middle: downtown, several dense office towers with different roof heights, wider roads. Upper right: industrial district, large sawtooth warehouses, loading yards and smokestacks. Lower left: university campus, substantial academic buildings surrounding green lawns and a central courtyard with paths. Lower middle: residential district, small houses, gardens and tree lined narrow streets. Lower right: rural district, patchwork fields, a barn, small settlement and country road. All six cells same scale and visual language, soft pale aged paper ground, buildings fill central 85 percent of each cell. This is reusable symbolic city art, no actual city geography. NO text, NO labels, NO lettering, NO numbers, NO icons, NO compass, NO watermarks. Do not draw a UI or a mockup; output only the six-cell illustration atlas.

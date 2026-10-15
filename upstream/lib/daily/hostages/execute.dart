@@ -50,7 +50,7 @@ Future<int> handleExecution(
 
     y = console.y + 1;
 
-    await getKey();
+    await acknowledge(title: 'Daily report');
 
     y = await traumatize(lead, "execution", y);
     if (lead.activity.type == ActivityType.none) {
@@ -61,12 +61,12 @@ Future<int> handleExecution(
     mvaddstr(y++, 0, "There is no one able to get up the nerve to ");
     mvaddstr(y++, 0, "execute ${cr.name} in cold blood.");
 
-    await getKey();
+    await acknowledge(title: 'Daily report');
   }
 
   mvaddstrc(24, 0, lightGray, "Press any key to reflect on this.");
 
-  await getKey();
+  await acknowledge(title: 'Daily report');
 
   return y;
 }

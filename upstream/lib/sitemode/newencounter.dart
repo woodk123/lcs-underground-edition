@@ -1147,7 +1147,7 @@ Future<bool> addsiegeencounter(int type) async {
                 addstr("Siege type ");
                 addstr(activeSite!.siege.activeSiegeType.toString());
                 addstr(" missing!\n");
-                await getKey();
+                await acknowledge(title: 'Operation report');
                 return false;
             }
           } else {

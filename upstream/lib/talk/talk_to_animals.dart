@@ -35,13 +35,13 @@ Future<bool> heyMisterAnimal(List<(String, String)> goodTalk,
 
   mvaddstrc(9, 1, white, "${liberal.name}: ");
   mvaddstrc(10, 1, lightGreen, pitch);
-  await getKey();
+  await acknowledge(title: 'Conversation');
 
   clearMessageArea();
 
   mvaddstrc(9, 1, white, "${target.name}: ");
   mvaddstrc(10, 1, targetColor, response);
-  await getKey();
+  await acknowledge(title: 'Conversation');
 
   if (success) {
     if (target.align != Alignment.liberal) {

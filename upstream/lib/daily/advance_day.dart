@@ -536,13 +536,13 @@ Future<void> dispersalCheck() async {
               white,
               "${p.name} lost touch with the Liberal Crime Squad.",
             );
-            await getKey();
+            await acknowledge(title: 'Daily report');
             mvaddstrc(9, 1, lightGreen, "The Liberal has gone into hiding...");
-            await getKey();
+            await acknowledge(title: 'Daily report');
             logBlindEvent("${p.name} lost touch with the Liberal Crime Squad.");
           } else if (dispersalStatus[p] == DispersalTypes.abandonLCS) {
             mvaddstrc(8, 1, white, "${p.name} abandoned the LCS.");
-            await getKey();
+            await acknowledge(title: 'Daily report');
             logBlindEvent("${p.name} abandoned the LCS.");
           } else if (dispersalStatus[p] == DispersalTypes.noContact) {
             mvaddstrc(
@@ -551,7 +551,7 @@ Future<void> dispersalCheck() async {
               white,
               "${p.name} lost touch with the Liberal Crime Squad.",
             );
-            await getKey();
+            await acknowledge(title: 'Daily report');
             logBlindEvent("${p.name} lost touch with the Liberal Crime Squad.");
           }
         }
@@ -615,13 +615,13 @@ Future<Creature?> _promoteSubordinates(Creature cr) async {
     {
       erase();
       mvaddstrc(8, 1, white, "${cr.name} has died.");
-      await getKey();
+      await acknowledge(title: 'Daily report');
       mvaddstr(
         10,
         1,
         "There are none left with the courage and conviction to lead....",
       );
-      await getKey();
+      await acknowledge(title: 'Daily report');
     }
     return null;
   }
@@ -649,11 +649,11 @@ Future<Creature?> _promoteSubordinates(Creature cr) async {
       mvaddstr(11, 1, "${newboss.name} will take over for ");
       addstr("${cr.name} in the command chain.");
     }
-    await getKey();
+    await acknowledge(title: 'Daily report');
   } else {
     // Founder level promotion
     mvaddstrc(8, 1, white, "${cr.name} has died.");
-    await getKey();
+    await acknowledge(title: 'Daily report');
 
     mvaddstr(
       10,
@@ -661,7 +661,7 @@ Future<Creature?> _promoteSubordinates(Creature cr) async {
       "${newboss.name} is the new leader "
       "of the Liberal Crime Squad!",
     );
-    await getKey();
+    await acknowledge(title: 'Daily report');
 
     cr.hireId = newboss.id; // Make dead founder not founder.
   }
@@ -912,7 +912,7 @@ Future<void> _dailyHealing() async {
         setColor(white);
         mvaddstr(8, 1, "${p.name}'s injuries require professional treatment.");
         p.activity = Activity(ActivityType.clinic);
-        await getKey();
+        await acknowledge(title: 'Daily report');
       }
     }
     // Discharge a hospitalized Liberal as soon as they are fully healed

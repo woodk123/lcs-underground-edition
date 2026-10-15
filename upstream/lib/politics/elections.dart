@@ -186,7 +186,7 @@ Future<void> presidentialElection() async {
       mvaddstrc(8, 0, lightGray, "Press any key to watch the election unfold.");
 
       checkKey();
-      await getKey();
+      await acknowledge(title: 'Political report');
     } else {
       await pause(200);
     }
@@ -253,7 +253,7 @@ Future<void> presidentialElection() async {
     mvaddstrc(8, 0, lightGray, "Press any key to continue the elections.    ");
 
     checkKey();
-    await getKey();
+    await acknowledge(title: 'Political report');
   }
 
   //CONSTRUCT EXECUTIVE BRANCH
@@ -349,7 +349,7 @@ Future<void> ballotMeasures() async {
   if (canSeeThings) {
     mvaddstrc(23, 0, lightGray, "Press any key to watch the elections unfold.");
     checkKey();
-    await getKey();
+    await acknowledge(title: 'Political report');
   }
 
   List<int> yesVotesP = List.filled(pnum, 0);
@@ -411,7 +411,7 @@ Future<void> ballotMeasures() async {
     mvaddstrc(
         23, 0, lightGray, "Press any key to reflect on what has happened.");
     checkKey();
-    await getKey();
+    await acknowledge(title: 'Political report');
   }
 }
 
@@ -448,7 +448,7 @@ Future<void> senateElections(int senmod) async {
   if (canSeeThings) {
     mvaddstrc(23, 0, lightGray, "Press any key to watch the elections unfold.");
     checkKey();
-    await getKey();
+    await acknowledge(title: 'Political report');
   }
 
   int vote;
@@ -504,7 +504,7 @@ Future<void> senateElections(int senmod) async {
     _showWinner(change, mood, 2);
     mvaddstr(23, 0, "Press any key to continue the elections.    ");
     checkKey();
-    await getKey();
+    await acknowledge(title: 'Political report');
   }
 }
 
@@ -538,7 +538,7 @@ Future<void> houseElections() async {
   if (canSeeThings) {
     mvaddstrc(23, 0, lightGray, "Press any key to watch the elections unfold.");
     checkKey();
-    await getKey();
+    await acknowledge(title: 'Political report');
   }
 
   int vote;
@@ -592,7 +592,7 @@ Future<void> houseElections() async {
       mvaddstr(23, 0, "Press any key to continue the elections.    ");
 
       checkKey();
-      await getKey();
+      await acknowledge(title: 'Political report');
     } else {
       await pause(800);
     }

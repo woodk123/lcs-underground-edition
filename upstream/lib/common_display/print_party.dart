@@ -3,6 +3,7 @@ import 'package:lcs_new_age/common_display/print_creature_info.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/journal_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/utils/colors.dart';
@@ -21,6 +22,7 @@ void printParty({
     printCreatureInfo(activeSquadMember!, showCarPrefs: showCarPrefs);
     mvaddstrc(1, 0, white, (activeSquadMemberIndex + 1).toString());
   } else {
+    console.journalPeople = [];
     addHeader({
       0: "#",
       2: "CODE NAME",
@@ -50,9 +52,26 @@ void printParty({
       setColor(lightGray);
       move(p + 2, 70);
       printTransportation(party[p], showCarPrefs);
+      String text(int start, int end) => console.buffer[p + 2]
+          .sublist(start, end).map((cell) => cell.glyph).join()
+          .replaceAll(RegExp(r'[—═─━]{2,}'), '').trim();
+      console.journalPeople.add(JournalPersonSummary(
+        person: party[p],
+        name: party[p].name,
+        role: party[p].title,
+        health: text(59, 70),
+        equipment: [
+          'Weapon: ${text(29, 44)}',
+          'Armor: ${text(44, 59)}',
+          'Transport: ${text(70, 80)}',
+        ],
+        details: ['Skill: ${text(23, 29)}'],
+        choiceKey: '${p + 1}',
+      ));
     }
   }
   makeDelimiter();
+  console.journalBodyStart = 9;
 }
 
 void printSkillSummary(

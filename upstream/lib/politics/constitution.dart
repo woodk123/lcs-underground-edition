@@ -31,7 +31,7 @@ Future<void> tryToPurgeSupremeCourt() async {
       "The Elite Liberal Congress is proposing an ELITE LIBERAL AMENDMENT!",
     );
 
-    await getKey();
+    await acknowledge(title: 'Political report');
   }
 
   //STATE THE AMENDMENT
@@ -107,7 +107,7 @@ Future<void> tryToPurgeSupremeCourt() async {
   if (canSeeThings) {
     mvaddstr(24, 0, "Press any key to reflect on what has happened.");
 
-    await getKey();
+    await acknowledge(title: 'Political report');
   }
 }
 
@@ -126,7 +126,7 @@ Future<void> tryToPassTermLimits() async {
       "A National Convention has proposed an ELITE LIBERAL AMENDMENT!",
     );
 
-    await getKey();
+    await acknowledge(title: 'Political report');
   }
 
   //STATE THE AMENDMENT
@@ -177,7 +177,7 @@ Future<void> tryToPassTermLimits() async {
         0,
         "Press any key to hold new elections!                           ",
       );
-      await getKey();
+      await acknowledge(title: 'Political report');
     }
     await senateElections(0);
     await senateElections(1);
@@ -186,7 +186,7 @@ Future<void> tryToPassTermLimits() async {
   } else if (canSeeThings) {
     mvaddstr(24, 0, "Press any key to reflect on what has happened.");
 
-    await getKey();
+    await acknowledge(title: 'Political report');
   }
 }
 
@@ -202,7 +202,7 @@ Future<void> tryToRepealConstitution() async {
       "The Arch-Conservative Congress is proposing an ARCH-CONSERVATIVE AMENDMENT!",
     );
 
-    await getKey();
+    await acknowledge(title: 'Political report');
 
     //STATE THE AMENDMENT
     amendmentHeading();
@@ -277,7 +277,7 @@ Future<void> tryToRepealConstitution() async {
         "Press any key to reflect on what has happened ONE LAST TIME.",
       );
 
-      await getKey();
+      await acknowledge(title: 'Political report');
     }
 
     politics.constitutionalAmendments = 0; // Constitution repealed...
@@ -391,7 +391,7 @@ Future<void> tryToRepealConstitution() async {
         "Press any key to breathe a sigh of relief.                   ",
       );
 
-      await getKey();
+      await acknowledge(title: 'Political report');
     }
   }
 }
@@ -433,7 +433,7 @@ Future<bool> ratifyConstitutionalAmendment(
         0,
         "Press any key to watch the Congressional votes unfold.     ",
       );
-      await getKey();
+      await acknowledge(title: 'Political report');
     }
 
     bool yesWinHouse = false, yesWinSenate = false;
@@ -547,7 +547,7 @@ Future<bool> ratifyConstitutionalAmendment(
         "Press any key to watch the State votes unfold.              ",
       );
 
-      await getKey();
+      await acknowledge(title: 'Political report');
     }
 
     Color forColor = level.color;

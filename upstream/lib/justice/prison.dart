@@ -32,7 +32,7 @@ Future<void> _prisonSceneLine(String text) async {
   if (canSeeThings) {
     erase();
     mvaddstrc(8, 1, white, text);
-    await getKey();
+    await acknowledge(title: 'Prison report');
     erase();
   } else {
     logBlindEvent(text);
@@ -98,7 +98,7 @@ Future<void> prison(Creature g) async {
       addstr("'s death sentence has been commuted to life, ");
       mvaddstr(9, 1, "due to the abolition of the death penalty.");
 
-      await getKey();
+      await acknowledge(title: 'Prison report');
 
       g.sentence = -1;
       g.deathPenalty = false;
@@ -126,7 +126,7 @@ Future<void> prison(Creature g) async {
         mvaddstr(9, 1, "Today, the Conservative Machine executed ${g.name}");
         mvaddstr(10, 1, "by $method.");
 
-        await getKey();
+        await acknowledge(title: 'Prison report');
 
         //dejuice boss
         Creature? boss = pool.firstWhereOrNull((p) => p.id == g.hireId);
@@ -144,7 +144,7 @@ Future<void> prison(Creature g) async {
             "If you can't protect your own people, who can you protect?",
           );
 
-          await getKey();
+          await acknowledge(title: 'Prison report');
 
           addjuice(boss, -50, -50);
         }
@@ -163,7 +163,7 @@ Future<void> prison(Creature g) async {
           "No doubt there are some mental scars, but the Liberal is back.",
         );
 
-        await getKey();
+        await acknowledge(title: 'Prison report');
 
         Clothing clothes = Clothing("CLOTHING_CLOTHES");
         g.giveArmor(clothes, null);
@@ -190,7 +190,7 @@ Future<void> prison(Creature g) async {
             "${g.name} is due to be executed next month.",
           );
 
-          await getKey();
+          await acknowledge(title: 'Prison report');
         } else {
           logBlindEvent("${g.name} is due to be executed next month.");
         }
@@ -200,7 +200,7 @@ Future<void> prison(Creature g) async {
           mvaddstrc(8, 1, white, g.name);
           addstr(" is due to be released next month.");
 
-          await getKey();
+          await acknowledge(title: 'Prison report');
         } else {
           logBlindEvent("${g.name} is due to be released next month.");
         }
@@ -212,7 +212,7 @@ Future<void> prison(Creature g) async {
           mvaddstrc(8, 1, yellow, g.name);
           addstr(" is due to be executed in ${g.sentence} months.");
 
-          await getKey();
+          await acknowledge(title: 'Prison report');
         } else {
           logBlindEvent(
             "${g.name} is due to be executed in ${g.sentence} months.",
@@ -331,18 +331,18 @@ Future<void> laborCamp(Creature g) async {
     erase();
     mvaddstrc(8, 1, white, g.name);
     addstr(experience);
-    await getKey();
+    await acknowledge(title: 'Prison report');
 
     if (experience2 != null) {
       mvaddstrc(9, 1, white, g.name);
       addstr(experience2);
-      await getKey();
+      await acknowledge(title: 'Prison report');
     }
 
     move(10, 1);
     escape(g, escaped == 2);
 
-    await getKey();
+    await acknowledge(title: 'Prison report');
 
     erase();
     return;
@@ -465,12 +465,12 @@ Future<void> prisonScene(Creature g) async {
     mvaddstrc(8, 1, white, g.name);
     addstr(experience);
 
-    await getKey();
+    await acknowledge(title: 'Prison report');
 
     move(10, 1);
     escape(g, escaped == 2);
 
-    await getKey();
+    await acknowledge(title: 'Prison report');
 
     erase();
     return;

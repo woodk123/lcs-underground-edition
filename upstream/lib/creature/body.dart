@@ -148,7 +148,13 @@ class TankBody extends Body {
   factory TankBody.fromJson(Map<String, dynamic> json) =>
       _$TankBodyFromJson(json);
   @override
-  Map<String, dynamic> toJson() => _$TankBodyToJson(this);
+  Map<String, dynamic> toJson() => {
+    ..._$TankBodyToJson(this),
+    // The polymorphic loader dispatches on this discriminator. The generated
+    // serializer omits read-only getters, so tank exports must add it here.
+    'type': type.name,
+    'typeName': typeName,
+  };
   @override
   BodyType get type => BodyType.tank;
   @override

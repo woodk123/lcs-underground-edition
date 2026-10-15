@@ -569,7 +569,7 @@ class Shop extends ShopOption {
         if (fenceamount > 0) {
           mvaddstrc(8, 1, white, "You add \$$fenceamount to Liberal Funds.");
 
-          await getKey();
+          await acknowledge(title: 'Shopping report');
 
           ledger.addFunds(fenceamount, Income.pawn);
         }

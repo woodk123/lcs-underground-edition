@@ -568,7 +568,7 @@ Future<void> reviewMode(ReviewMode mode) async {
               // Release squad member
               addOptionText(22, 0, "Enter", "${tempp.name} has been released.");
 
-              await getKey();
+              await acknowledge(title: 'Crew management report');
 
               Creature? boss = tempp.boss;
               // Chance of member going to police if boss has criminal record and
@@ -588,7 +588,7 @@ Future<void> reviewMode(ReviewMode mode) async {
                 addstr("to testify against ");
                 addstr(boss!.name);
                 addstr(" in court.");
-                await getKey();
+                await acknowledge(title: 'Crew management report');
 
                 criminalize(boss, Crime.racketeering);
                 boss.confessions++;
@@ -654,7 +654,7 @@ Future<void> reviewMode(ReviewMode mode) async {
                   addstr("cold execution.");
               }
 
-              await getKey();
+              await acknowledge(title: 'Crew management report');
               eraseArea(startY: 22);
               await traumatize(boss, "execution", 22);
               await dispersalCheck();
@@ -914,7 +914,7 @@ Future<void> assembleSquad(Squad? cursquad) async {
             mvaddstrCenter(
                 23, "Liberals must be in the same location to form a squads.");
 
-            await getKey();
+            await acknowledge(title: 'Crew management report');
 
             conf = false;
           }
@@ -924,7 +924,7 @@ Future<void> assembleSquad(Squad? cursquad) async {
           setColor(red);
           mvaddstrCenter(23, "Squad Liberals must be able to move around.");
 
-          await getKey();
+          await acknowledge(title: 'Crew management report');
 
           conf = false;
         }

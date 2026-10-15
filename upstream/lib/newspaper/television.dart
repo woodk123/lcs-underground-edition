@@ -56,7 +56,7 @@ Future<void> runTelevisionNewsStories() async {
                 "└───────────────────────────────────────────────────┘",
               );
 
-              await getKey();
+              await acknowledge(title: 'Media report');
 
               del = true;
             }
@@ -141,7 +141,7 @@ Future<void> runTelevisionNewsStories() async {
               13,
               "└───────────────────────────────────────────────────┘",
             );
-            await getKey();
+            await acknowledge(title: 'Media report');
             del = true;
           default:
         }
@@ -182,7 +182,7 @@ Future<void> runTelevisionNewsStories() async {
               13,
               "└───────────────────────────────────────────────────┘",
             );
-            await getKey();
+            await acknowledge(title: 'Media report');
             del = true;
           case View.cableNews:
             newsStories[n].publication = Publication.cableNews;
@@ -219,7 +219,7 @@ Future<void> runTelevisionNewsStories() async {
               13,
               "└───────────────────────────────────────────────────┘",
             );
-            await getKey();
+            await acknowledge(title: 'Media report');
             del = true;
           case View.nuclearPower:
             newsStories[n].publication = Publication.cableNews;
@@ -262,7 +262,7 @@ Future<void> runTelevisionNewsStories() async {
               11,
               "└───────────────────────────────────────────────────────┘",
             );
-            await getKey();
+            await acknowledge(title: 'Media report');
             del = true;
           default:
         }

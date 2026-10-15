@@ -54,6 +54,8 @@ class Creature {
 
   /// Saved illustration identity. Older campaigns receive one during migration.
   int? portraitId;
+  int? portraitVariant;
+  int? portraitAssignedAge;
 
   int? hireId;
   int? squadId;

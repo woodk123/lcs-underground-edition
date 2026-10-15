@@ -4,9 +4,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/common_display/common_display.dart';
+import 'package:lcs_new_age/daily/shopsnstuff.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
+import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
+import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/journal_legislation.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
@@ -36,6 +39,44 @@ void main() {
   }
 
   for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+    testWidgets('hospital admission is a focused journal notice at $size', (
+      tester,
+    ) async {
+      game.mode = GameMode.base;
+      final patient = game.squad.first;
+      patient.blood = 26;
+      final clinic = game.sites.firstWhere((s) => s.type == SiteType.clinic);
+      engine.console.screen = 'headquarters';
+      engine.mvaddstr(0, 0, 'STALE location and Going to the Hospital');
+      engine.mvaddstr(3, 0, 'STALE body and skill table');
+      engine.addOptionText(23, 0, 'w', 'W - STALE headquarters commands');
+      final mainReader = engine.console.getkey();
+      await mount(tester, size);
+      engine.console.sendInput('w');
+      await mainReader;
+      final admission = hospitalize(clinic, patient);
+      final admittedState = jsonEncode(game.gameState.toJson());
+      journalReadingScale.value = 1.5;
+      await tester.pumpAndSettle();
+      expect(find.text('Hospital admission'), findsOneWidget);
+      expect(
+        find.text('${patient.name} is admitted to ${clinic.name}.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('STALE'), findsNothing);
+      expect(find.text('Continue').hitTestable(), findsOneWidget);
+      expect(patient.squad, isNull);
+      expect(patient.location, clinic);
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      await admission;
+      expect(jsonEncode(game.gameState.toJson()), admittedState);
+      expect(engine.console.eventMessage, isNull);
+      expect(engine.console.eventTitle, isNull);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
     testWidgets('required notice precedes stale transcript at $size / 150%', (
       tester,
     ) async {

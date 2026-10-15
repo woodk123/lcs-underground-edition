@@ -127,7 +127,7 @@ Future<bool> wannaHearSomethingDisturbing(Creature a, Creature tk) async {
   mvaddstrc(9, 1, white, "${a.name} says, ");
   mvaddstrc(10, 1, lightGreen, "\"Do you want to hear something disturbing?\"");
 
-  await getKey();
+  await acknowledge(title: 'Conversation');
 
   bool interested = tk.type.talkReceptive ||
       a.skillCheck(Skill.persuasion, Difficulty.average);
@@ -149,13 +149,13 @@ Future<bool> wannaHearSomethingDisturbing(Creature a, Creature tk) async {
       addstr(" doesn't understand.");
     }
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
     return true;
   } else if (tk.name != "Prisoner" && interested) {
     mvaddstrc(12, 1, white, "${tk.name} responds, ");
     mvaddstrc(13, 1, lightBlue, "\"What?\"");
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     return talkAboutIssues(a, tk);
   } else {
@@ -174,7 +174,7 @@ Future<bool> wannaHearSomethingDisturbing(Creature a, Creature tk) async {
       tk.isWillingToTalk = false;
     }
     addstrc(white, " <turns away>");
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     return true;
   }
@@ -186,7 +186,7 @@ Future<bool> heyIWantToRentARoom(Creature a, Creature tk) async {
   addstr(" says, ");
   mvaddstrc(10, 1, lightGreen, "\"I'd like to rent a room.\"");
 
-  await getKey();
+  await acknowledge(title: 'Conversation');
 
   if (a.indecent) {
     mvaddstrc(12, 1, white, tk.name);
@@ -194,7 +194,7 @@ Future<bool> heyIWantToRentARoom(Creature a, Creature tk) async {
     mvaddstrc(
         13, 1, lightBlue, "\"Put some clothes on before I call the cops.\"");
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     return true;
   }
@@ -215,7 +215,7 @@ Future<bool> heyIWantToRentARoom(Creature a, Creature tk) async {
 
   mvaddstr(14, 1, "I'll need \$$rent now as a security deposit.\"");
 
-  await getKey();
+  await acknowledge(title: 'Conversation');
 
   clearSceneAreas();
 
@@ -238,7 +238,7 @@ Future<bool> heyIWantToRentARoom(Creature a, Creature tk) async {
         addstr(" says, ");
         mvaddstrc(10, 1, lightGreen, "\"I'll take it.\"");
 
-        await getKey();
+        await acknowledge(title: 'Conversation');
 
         mvaddstrc(12, 1, white, tk.name);
         addstr(" responds, ");
@@ -250,7 +250,7 @@ Future<bool> heyIWantToRentARoom(Creature a, Creature tk) async {
         setColor(white);
         addstr(" <turns away>");
 
-        await getKey();
+        await acknowledge(title: 'Conversation');
 
         ledger.subtractFunds(rent, Expense.rent);
         activeSite?.controller = SiteController.lcs;
@@ -267,7 +267,7 @@ Future<bool> heyIWantToRentARoom(Creature a, Creature tk) async {
         mvaddstrc(10, 1, lightGreen,
             "\"Whoa, I was looking for something cheaper.\"");
 
-        await getKey();
+        await acknowledge(title: 'Conversation');
 
         mvaddstrc(12, 1, white, tk.name);
         addstr(" responds, ");
@@ -275,7 +275,7 @@ Future<bool> heyIWantToRentARoom(Creature a, Creature tk) async {
         setColor(white);
         addstr(" <turns away>");
 
-        await getKey();
+        await acknowledge(title: 'Conversation');
 
         return true;
 
@@ -290,14 +290,14 @@ Future<bool> heyIWantToRentARoom(Creature a, Creature tk) async {
           addstr(armedLiberal.weapon.getName(sidearm: true));
           addstr(".");
 
-          await getKey();
+          await acknowledge(title: 'Conversation');
           clearSceneAreas();
         }
         mvaddstr(9, 1, "${a.name} says, ");
         mvaddstrc(10, 1, lightGreen,
             "\"What's the price for the Liberal Crime Squad?\"");
 
-        await getKey();
+        await acknowledge(title: 'Conversation');
 
         int roll = a.skillRoll(Skill.persuasion);
         int difficulty = Difficulty.formidable;
@@ -316,7 +316,7 @@ Future<bool> heyIWantToRentARoom(Creature a, Creature tk) async {
           setColor(white);
           addstr(" <crosses arms>");
 
-          await getKey();
+          await acknowledge(title: 'Conversation');
 
           tk.isWillingToTalk = false;
           return true;
@@ -325,7 +325,7 @@ Future<bool> heyIWantToRentARoom(Creature a, Creature tk) async {
           addstr(" responds, ");
           mvaddstrc(13, 1, lightBlue, "\"Jesus... it's yours...\"");
 
-          await getKey();
+          await acknowledge(title: 'Conversation');
 
           int rent;
 
@@ -357,7 +357,7 @@ Future<bool> heyIWantToCancelMyRoom(Creature a, Creature tk) async {
   addstr(" says, ");
   mvaddstrc(10, 1, lightGreen, "\"I'd like to cancel my room.\"");
 
-  await getKey();
+  await acknowledge(title: 'Conversation');
 
   if (a.indecent) {
     mvaddstrc(12, 1, white, tk.name);
@@ -365,7 +365,7 @@ Future<bool> heyIWantToCancelMyRoom(Creature a, Creature tk) async {
     mvaddstrc(
         13, 1, lightBlue, "\"Put some clothes on before I call the cops.\"");
 
-    await getKey();
+    await acknowledge(title: 'Conversation');
 
     return true;
   }
@@ -374,12 +374,12 @@ Future<bool> heyIWantToCancelMyRoom(Creature a, Creature tk) async {
   addstr(" responds, ");
   mvaddstrc(13, 1, lightBlue, "\"Fine.  Clear out your room.\"");
 
-  await getKey();
+  await acknowledge(title: 'Conversation');
 
   mvaddstrc(15, 1, white,
       "<Your possessions at this location have been moved to the homeless camp.>");
 
-  await getKey();
+  await acknowledge(title: 'Conversation');
 
   activeSite!.controller = SiteController.unaligned;
 
@@ -403,27 +403,27 @@ Future<bool> heyINeedAGun(Creature a, Creature tk) async {
   mvaddstrc(9, 1, white, a.name);
   addstr(" says, ");
   mvaddstrc(10, 1, lightGreen, "\"Hey, I need a gun.\"");
-  await getKey();
+  await acknowledge(title: 'Conversation');
 
   if (a.indecent) {
     mvaddstrc(12, 1, white, tk.name);
     addstr(" responds, ");
     mvaddstrc(13, 1, lightBlue, "\"Jesus...\"");
-    await getKey();
+    await acknowledge(title: 'Conversation');
     return true;
   }
   if (a.clothing.type.police) {
     mvaddstrc(12, 1, white, tk.name);
     addstr(" responds, ");
     mvaddstrc(13, 1, lightBlue, "\"I don't sell guns, officer.\"");
-    await getKey();
+    await acknowledge(title: 'Conversation');
     return true;
   }
   if (siteAlarm) {
     mvaddstrc(12, 1, white, tk.name);
     addstr(" responds, ");
     mvaddstrc(13, 1, lightBlue, "\"We can talk when things are calm.\"");
-    await getKey();
+    await acknowledge(title: 'Conversation');
     return true;
   }
   SiteType? siteType = activeSite?.type;
@@ -441,7 +441,7 @@ Future<bool> heyINeedAGun(Creature a, Creature tk) async {
       mvaddstrc(12, 1, white, tk.name);
       addstr(" responds, ");
       mvaddstrc(13, 1, lightBlue, "\"What exactly do you need?\"");
-      await getKey();
+      await acknowledge(title: 'Conversation');
       Squad? oldSquad;
       Squad? newSquad;
       if (activeSquad == null) {
@@ -467,7 +467,7 @@ Future<bool> heyINeedAGun(Creature a, Creature tk) async {
       mvaddstrc(12, 1, white, tk.name);
       addstr(" responds, ");
       mvaddstrc(13, 1, lightBlue, "\"Uhhh... not a good place for this.\"");
-      await getKey();
+      await acknowledge(title: 'Conversation');
       return true;
   }
 }
@@ -521,7 +521,7 @@ Future<bool> talkToBankTeller(Creature a, Creature tk) async {
           addstr("ROBBERY. GIVE ME CASH. NO FUNNY MONEY.");
       }
 
-      await getKey();
+      await acknowledge(title: 'Conversation');
 
       if (activeSite!.hasHighSecurity) {
         mvaddstrc(11, 1, white, "The bank teller reads the note, ");
@@ -540,7 +540,7 @@ Future<bool> talkToBankTeller(Creature a, Creature tk) async {
         mvaddstr(
             12, 1, "and dives for cover as the guards move in on the squad!");
 
-        await getKey();
+        await acknowledge(title: 'Conversation');
 
         siteAlarm = true;
         addPotentialCrime(squad, Crime.bankRobbery);
@@ -567,7 +567,7 @@ Future<bool> talkToBankTeller(Creature a, Creature tk) async {
         mvaddstr(
             12, 1, "and slips several bricks of cash into the squad's bag.");
 
-        await getKey();
+        await acknowledge(title: 'Conversation');
 
         addPotentialCrime(squad, Crime.bankRobbery);
         addDramaToSiteStory(Drama.bankTellerRobbery);
@@ -585,14 +585,14 @@ Future<bool> talkToBankTeller(Creature a, Creature tk) async {
       if (armedLiberal != null) {
         String weaponName = armedLiberal.weapon.getName(sidearm: true);
         mvaddstr(9, 1, "${armedLiberal.name} brandishes the $weaponName.");
-        await getKey();
+        await acknowledge(title: 'Conversation');
         clearMessageArea();
       }
       mvaddstr(10, 1, "${a.name} says, ");
       mvaddstrc(11, 1, lightGreen, "\"$slogan");
       mvaddstr(12, 1, "OPEN THE VAULT, NOW!\"");
 
-      await getKey();
+      await acknowledge(title: 'Conversation');
 
       int roll = a.skillRoll(Skill.persuasion);
       int difficulty = Difficulty.veryEasy;
@@ -610,7 +610,7 @@ Future<bool> talkToBankTeller(Creature a, Creature tk) async {
         mvaddstrc(9, 1, white, "The bank teller dives for cover as ");
         mvaddstr(10, 1, "guards move in on the squad!");
 
-        await getKey();
+        await acknowledge(title: 'Conversation');
 
         siteAlarm = true;
         addPotentialCrime(squad, Crime.bankRobbery);
@@ -623,9 +623,9 @@ Future<bool> talkToBankTeller(Creature a, Creature tk) async {
         }
       } else {
         mvaddstrc(9, 1, white, "The bank employees hesitantly cooperate!");
-        await getKey();
+        await acknowledge(title: 'Conversation');
         mvaddstr(10, 1, "The vault is open!");
-        await getKey();
+        await acknowledge(title: 'Conversation');
 
         addPotentialCrime(squad, Crime.bankRobbery);
         addDramaToSiteStory(Drama.bankStickup);

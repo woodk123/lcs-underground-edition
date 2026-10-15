@@ -85,7 +85,7 @@ Future<UnlockResult> unlock(UnlockTypes type) async {
         }
       }
 
-      await getKey();
+      await acknowledge(title: 'Operation report');
 
       return UnlockResult.unlocked;
     } else {
@@ -107,7 +107,7 @@ Future<UnlockResult> unlock(UnlockTypes type) async {
 
       if (i == 3) addstr("${p.name} can't figure the lock out.");
 
-      await getKey();
+      await acknowledge(title: 'Operation report');
 
       return UnlockResult.failed;
     }
@@ -115,7 +115,7 @@ Future<UnlockResult> unlock(UnlockTypes type) async {
     clearMessageArea();
     mvaddstrc(9, 1, white, "You can't find anyone to do the job.");
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
   }
 
   return UnlockResult.noAttempt;
@@ -202,7 +202,7 @@ Future<UnlockResult> bash(BashTypes type) async {
     }
     addstr("!");
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     int timer = 5;
     if (crowable) timer = 20;
@@ -222,7 +222,7 @@ Future<UnlockResult> bash(BashTypes type) async {
       setColor(red);
       addstr("Alarms go off!");
 
-      await getKey();
+      await acknowledge(title: 'Operation report');
     }
 
     return UnlockResult.bashed;
@@ -239,7 +239,7 @@ Future<UnlockResult> bash(BashTypes type) async {
     }
     addstr("!");
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     if (siteAlarmTimer < 0) siteAlarmTimer = 25;
 
@@ -276,7 +276,7 @@ Future<UnlockResult> hack(HackTypes type) async {
       mvaddstrc(9, 1, white, hacker.name);
       if (hacker.skill(Skill.computers) < 2) {
         addstr(" presses buttons randomly...");
-        await getKey();
+        await acknowledge(title: 'Operation report');
         mvaddstr(10, 1, "...and accidentally");
       }
       switch (type) {
@@ -290,7 +290,7 @@ Future<UnlockResult> hack(HackTypes type) async {
       }
       addstr("!");
 
-      await getKey();
+      await acknowledge(title: 'Operation report');
 
       return UnlockResult.unlocked;
     } else {
@@ -298,7 +298,7 @@ Future<UnlockResult> hack(HackTypes type) async {
       mvaddstrc(9, 1, white, hacker.name);
       if (hacker.skill(Skill.computers) < 2) {
         addstr(" presses buttons randomly...");
-        await getKey();
+        await acknowledge(title: 'Operation report');
         mvaddstr(
             10,
             1,
@@ -325,7 +325,7 @@ Future<UnlockResult> hack(HackTypes type) async {
         }
       }
 
-      await getKey();
+      await acknowledge(title: 'Operation report');
 
       return UnlockResult.failed;
     }
@@ -333,7 +333,7 @@ Future<UnlockResult> hack(HackTypes type) async {
     clearMessageArea();
     mvaddstrc(9, 1, white, "You can't find anyone to do the job.");
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
   }
 
   return UnlockResult.noAttempt;

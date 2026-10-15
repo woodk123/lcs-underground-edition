@@ -6,6 +6,7 @@ import 'package:lcs_new_age/creature/conversion.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/recruitment_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/gamestate/ledger.dart';
 import 'package:lcs_new_age/location/site.dart';
@@ -125,6 +126,14 @@ Future<void> meetWithPotentialRecruits() async {
 
 /* daily - recruit - recruit meeting */
 Future<bool> completeRecruitMeeting(RecruitmentSession r, Creature p) async {
+  try {
+    return await _completeRecruitMeeting(r, p);
+  } finally {
+    console.recruitment = null;
+  }
+}
+
+Future<bool> _completeRecruitMeeting(RecruitmentSession r, Creature p) async {
   erase();
   setColor(white);
   move(0, 0);
@@ -166,6 +175,11 @@ Future<bool> completeRecruitMeeting(RecruitmentSession r, Creature p) async {
 
   printCreatureInfo(r.recruit, showCarPrefs: ShowCarPrefs.onFoot);
   makeDelimiter();
+  console.recruitment = RecruitmentContext(
+    recruiter: p,
+    prospects: [RecruitmentProspect(r.recruit)],
+    followUp: true,
+  );
 
   move(10, 0);
   addstr(r.recruit.name);

@@ -748,7 +748,7 @@ Future<void> _siteModeAux() async {
                         mvaddstrc(9, 1, white, encounter[tk].name);
                         addstr(" won't talk to you.");
 
-                        await getKey();
+                        await acknowledge(title: 'Operation report');
                       } else if (!encounter[tk].isEnemy && siteAlarm && enemy) {
                         clearSceneAreas();
 
@@ -759,7 +759,7 @@ Future<void> _siteModeAux() async {
                           "You have to deal with the enemies first.",
                         );
 
-                        await getKey();
+                        await acknowledge(title: 'Operation report');
                       } else {
                         break;
                       }
@@ -819,7 +819,7 @@ Future<void> _siteModeAux() async {
         }
 
         console.screen = 'full_map';
-        await getKey();
+        await acknowledge(title: 'Operation report');
       }
 
       if (enemy && (c == Key.f)) {
@@ -927,7 +927,7 @@ Future<void> _siteModeAux() async {
           addstr(" from the Conservatives.");
 
           if (actgot < followers) {
-            await getKey();
+            await acknowledge(title: 'Operation report');
 
             clearMessageArea();
 
@@ -950,7 +950,7 @@ Future<void> _siteModeAux() async {
             juiceparty((followers - actgot) * 3, 200);
           }
 
-          await getKey();
+          await acknowledge(title: 'Operation report');
         }
       } else if (c == Key.r && hostages > 00) {
         await releasehostage();
@@ -1061,7 +1061,7 @@ Future<void> _siteModeAux() async {
               "The squad sneaks past the conservatives!",
             );
 
-            await getKey();
+            await acknowledge(title: 'Operation report');
           } else {
             await enemyattack(encounter);
           }
@@ -1225,7 +1225,7 @@ Future<void> _siteModeAux() async {
 
           mvaddstrc(9, 1, lightGreen, "The CCS has been broken!");
 
-          await getKey();
+          await acknowledge(title: 'Operation report');
 
           activeSite!.controller = SiteController.lcs;
           activeSite!.closed = 0;
@@ -1555,7 +1555,7 @@ Future<void> _siteModeAux() async {
             );
             mvaddstr(10, 1, "the power of your Liberal Convictions!");
 
-            await getKey();
+            await acknowledge(title: 'Operation report');
 
             await conquerText();
             await escapeSiege(true);
@@ -1576,11 +1576,11 @@ Future<void> _siteModeAux() async {
               if (siteAlarm || siteAlienated.alienated) {
                 addstr("The computer has been unplugged.");
 
-                await getKey();
+                await acknowledge(title: 'Operation report');
               } else {
                 addstr("The computer is occupied.");
 
-                await getKey();
+                await acknowledge(title: 'Operation report');
 
                 prepareEncounter(siteType, false);
                 if (encounter.length > 1) {
@@ -1597,7 +1597,7 @@ Future<void> _siteModeAux() async {
               } else {
                 addstr("The table is occupied.");
               }
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               prepareEncounter(siteType, false);
             case TileSpecial.tent:
@@ -1610,7 +1610,7 @@ Future<void> _siteModeAux() async {
               } else {
                 addstr("Someone is in the tent.");
               }
-              await getKey();
+              await acknowledge(title: 'Operation report');
 
               prepareEncounter(siteType, false, num: 1);
             case TileSpecial.parkBench:
@@ -1621,11 +1621,11 @@ Future<void> _siteModeAux() async {
               if (siteAlarm || siteAlienated.alienated) {
                 addstr("The bench is empty.");
 
-                await getKey();
+                await acknowledge(title: 'Operation report');
               } else {
                 addstr("There are people sitting here.");
 
-                await getKey();
+                await acknowledge(title: 'Operation report');
 
                 prepareEncounter(siteType, false);
               }
@@ -1659,13 +1659,13 @@ Future<void> _siteModeAux() async {
                 }
                 addstr("The CEO must have fled to a panic room.");
 
-                await getKey();
+                await acknowledge(title: 'Operation report');
               } else {
                 if (uniqueCreatures.ceo.alive &&
                     uniqueCreatures.ceo.location == activeSite) {
                   addstr("The CEO is in his study.");
 
-                  await getKey();
+                  await acknowledge(title: 'Operation report');
 
                   encounter.clear();
                   if (uniqueCreatures.ceo.formerHostage &&
@@ -1691,7 +1691,7 @@ Future<void> _siteModeAux() async {
                 } else {
                   addstr("The CEO's study lies empty.");
 
-                  await getKey();
+                  await acknowledge(title: 'Operation report');
                 }
               }
             case TileSpecial.apartmentLandlord:
@@ -1706,10 +1706,10 @@ Future<void> _siteModeAux() async {
                   !landlord.alive ||
                   landlord.location != activeSite) {
                 addstr("The landlord is out of the office.");
-                await getKey();
+                await acknowledge(title: 'Operation report');
               } else {
                 addstr("The landlord is in.");
-                await getKey();
+                await acknowledge(title: 'Operation report');
                 encounter.clear();
                 // At high security the landlord keeps PMC bodyguards close.
                 if (activeSite!.hasHighSecurity &&
@@ -1910,7 +1910,7 @@ Future<void> _resolveSite() async {
           p.base = squad[0].base;
           p.location = p.base;
 
-          await getKey();
+          await acknowledge(title: 'Operation report');
         }
       }
     }
@@ -1968,7 +1968,7 @@ Future<void> _fightSubdued() async {
     }
   }
 
-  await getKey();
+  await acknowledge(title: 'Operation report');
 }
 
 /* behavior when the player bumps into a door in sitemode */
@@ -1984,7 +1984,7 @@ Future<void> _openDoor(bool restricted) async {
 
     mvaddstrc(9, 1, white, "The vault door is impenetrable.");
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     return;
   }
@@ -2014,7 +2014,7 @@ Future<void> _openDoor(bool restricted) async {
     }
 
     while (true) {
-      int c = await getKey();
+      int c = await getKey(choices: const {'y': 'Yes', 'n': 'No'});
 
       if (c == Key.y) {
         break;
@@ -2039,7 +2039,7 @@ Future<void> _openDoor(bool restricted) async {
         addstr("Try to pick the lock? (Yes or No)");
       }
 
-      int c = await getKey();
+      int c = await getKey(choices: const {'y': 'Yes', 'n': 'No'});
 
       clearMessageArea();
 
@@ -2078,7 +2078,7 @@ Future<void> _openDoor(bool restricted) async {
             mvaddstrc(10, 1, white, "Your tampering sets off the alarm!");
 
             siteAlarm = true;
-            await getKey();
+            await acknowledge(title: 'Operation report');
           }
         }
 
@@ -2107,7 +2107,7 @@ Future<void> _openDoor(bool restricted) async {
 
       mvaddstr(10, 1, "Force it open? (Yes or No)");
 
-      int c = await getKey();
+      int c = await getKey(choices: const {'y': 'Yes', 'n': 'No'});
 
       if (c == Key.y) {
         UnlockResult result = await bash(BashTypes.door);
@@ -2124,7 +2124,7 @@ Future<void> _openDoor(bool restricted) async {
 
             siteAlarm = true;
 
-            await getKey();
+            await acknowledge(title: 'Operation report');
           }
           siteCrime++;
           addDramaToSiteStory(Drama.brokeDownDoor);
@@ -2165,7 +2165,7 @@ Future<void> _openDoor(bool restricted) async {
 
       siteAlarm = true;
 
-      await getKey();
+      await acknowledge(title: 'Operation report');
     }
   }
 }

@@ -348,7 +348,7 @@ Future<void> tendHostage(InterrogationSession intr) async {
         "As the pitch goes on, ${cr.gender.heShe} $reaction");
     y = console.y + 1;
 
-    await getKey();
+    await acknowledge(title: 'Daily report');
 
     if (lcsRandom(100) < successChance) {
       String reaction = [
@@ -427,7 +427,7 @@ Future<void> tendHostage(InterrogationSession intr) async {
       }
     }
 
-    await getKey();
+    await acknowledge(title: 'Daily report');
     return;
   }
 
@@ -512,7 +512,7 @@ Future<void> tendHostage(InterrogationSession intr) async {
     y++;
     //show_interrogation_sidebar(cr,a);
 
-    await getKey();
+    await acknowledge(title: 'Daily report');
 
     y = await traumatize(lead, "death", y);
   }
@@ -524,7 +524,7 @@ Future<void> tendHostage(InterrogationSession intr) async {
   }
 
   mvaddstrc(24, 0, lightGray, "Press any key to reflect on this.");
-  await getKey();
+  await acknowledge(title: 'Daily report');
 }
 
 Future<int> maybeRevealSecrets(Creature cr, Creature lead, int y) async {
@@ -538,7 +538,7 @@ Future<int> maybeRevealSecrets(Creature cr, Creature lead, int y) async {
 
     workSite.mapped = true;
     workSite.hidden = false;
-    await getKey();
+    await acknowledge(title: 'Daily report');
   }
   return y;
 }

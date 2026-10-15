@@ -21,6 +21,7 @@ Future<void> showMessage(
   String message, {
   Color color = lightGray,
   bool delimeter = true,
+  String? title,
 }) async {
   if (clearScreenOnNextMessage) {
     erase();
@@ -30,7 +31,9 @@ Future<void> showMessage(
   mvaddstrc(8, 1, color, message);
   final messageConsole = console;
   final previousMessage = messageConsole.eventMessage;
+  final previousTitle = messageConsole.eventTitle;
   messageConsole.eventMessage = message;
+  messageConsole.eventTitle = title;
   try {
     await getKey();
   } finally {
@@ -38,6 +41,7 @@ Future<void> showMessage(
     // old metadata over that screen; ordinary nested notices restore theirs.
     if (messageConsole.eventMessage == message) {
       messageConsole.eventMessage = previousMessage;
+      messageConsole.eventTitle = previousTitle;
     }
   }
 }
@@ -640,6 +644,23 @@ Future<void> pagedInterface({
         letterAPlus(i ~/ linesPerOption),
         i + page * pageSize,
       );
+      // Some older lists only paint their label. The helper already owns the
+      // exact letter-to-index mapping, so expose that same choice to the UI.
+      final optionKey = letterAPlus(i ~/ linesPerOption);
+      if (!console.actions.any((a) =>
+          a.key == optionKey.toLowerCase() || a.key == optionKey)) {
+        final optionY = i + 2 + topY;
+        if (optionY < console.height) {
+          final label = console.buffer[optionY]
+              .map((cell) => cell.glyph).join().trimRight();
+          if (label.trim().isNotEmpty) {
+            final cursor = (console.y, console.x);
+            move(optionY, 0);
+            console.addAction(optionKey, label);
+            move(cursor.$1, cursor.$2);
+          }
+        }
+      }
     }
     setColor(lightGray);
     eraseLine(pageSize + 3 + topY);
@@ -688,19 +709,19 @@ Future<void> defeatMessages(String bright, String medium, String dark,
   if (gameOptions.lighterTone && gentle != null) {
     erase();
     mvaddstrc(12, 6, white, gentle);
-    await getKey();
+    await acknowledge(title: 'Campaign outcome');
     return;
   }
 
   erase();
   mvaddstrc(12, 6, white, bright);
-  await getKey();
+  await acknowledge(title: 'Campaign outcome');
 
   erase();
   mvaddstrc(12, 8, lightGray, medium);
-  await getKey();
+  await acknowledge(title: 'Campaign outcome');
 
   erase();
   mvaddstrc(12, 10, darkGray, dark);
-  await getKey();
+  await acknowledge(title: 'Campaign outcome');
 }

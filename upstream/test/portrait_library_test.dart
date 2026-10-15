@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lcs_new_age/creature/body.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/creature_type.dart';
 import 'package:lcs_new_age/creature/gender.dart';
@@ -27,14 +28,14 @@ void main() {
     ..gender = Gender.female
     ..birthDate = DateTime(1985);
 
-  test('250 stable catalog IDs map only to valid atlas cells', () {
-    expect(portraitCatalog.length, 250);
-    expect(portraitCatalog.map((entry) => entry.id).toSet().length, 250);
-    expect(portraitCatalog.last.asset, endsWith('batch_15.png'));
-    expect(portraitCatalog.last.cell, 9);
+  test('378 stable catalog IDs preserve original atlas cells', () {
+    expect(portraitCatalog.length, 378);
+    expect(portraitCatalog.map((entry) => entry.id).toSet().length, 378);
+    expect(portraitCatalog[249].asset, endsWith('batch_15.png'));
+    expect(portraitCatalog[249].cell, 9);
     expect(
       portraitCatalog.where((entry) => entry.gender == Gender.female).length,
-      125,
+      189,
     );
   });
 
@@ -54,7 +55,7 @@ void main() {
     expect(ensurePortraitId(clone), portrait);
     expect(ensurePortraitId(person), portrait);
     person.portraitId = 10000;
-    expect(ensurePortraitId(person), inInclusiveRange(0, 249));
+    expect(ensurePortraitId(person), inInclusiveRange(0, 377));
   });
 
   test('casting exhausts unused compatible faces before repeating', () {
@@ -120,18 +121,30 @@ void main() {
     );
     expect(
       entries.where((entry) => entry.visualAge == 68).length,
-      greaterThan(300),
+      greaterThan(220),
     );
   });
 
-  test('children and nonhuman creatures do not acquire adult faces', () {
-    final child = adult(1000)..birthDate = DateTime(2010);
-    expect(ensurePortraitId(child), -1);
-    expect(child.portraitId, isNull);
-    final animal = adult(1001)..typeId = CreatureTypeIds.guardDog;
-    expect(ensurePortraitId(animal), -1);
-    expect(animal.portraitId, isNull);
-  });
+  test(
+    'children, teens and nonhumans receive appropriate specialist faces',
+    () {
+      final child = adult(1000)..birthDate = DateTime(game.date.year - 7);
+      expect(
+        portraitCatalog[ensurePortraitId(child)].background,
+        PortraitBackground.child,
+      );
+      final teen = adult(1001)..birthDate = DateTime(game.date.year - 16);
+      expect(
+        portraitCatalog[ensurePortraitId(teen)].background,
+        PortraitBackground.teenager,
+      );
+      final animal = adult(1002)..typeId = CreatureTypeIds.guardDog;
+      expect(
+        portraitCatalog[ensurePortraitId(animal)].background,
+        PortraitBackground.canine,
+      );
+    },
+  );
 
   test(
     'migration reserves saved faces and reconciles duplicate NPC records',
@@ -160,9 +173,169 @@ void main() {
     },
   );
 
+  test('all shipped creature professions have explicit portrait mappings', () {
+    expect(
+      creatureTypes.keys.toSet().difference(
+        portraitProfessionBackgrounds.keys.toSet(),
+      ),
+      isEmpty,
+    );
+  });
+
+  test('specialist atlas offsets do not consume missing original cells', () {
+    expect(portraitCatalog[250].asset, endsWith('batch_16.png'));
+    expect(portraitCatalog[250].cell, 0);
+    expect(portraitCatalog[377].asset, endsWith('batch_23.png'));
+    expect(portraitCatalog[377].cell, 15);
+    for (final entry in portraitCatalog) {
+      expect(entry.cell, inInclusiveRange(0, 15));
+    }
+  });
+
+  test(
+    'specialist pools remain strict even after exhausting their artwork',
+    () {
+      game.pool.clear();
+      game.encounter.clear();
+      for (final type in [
+        CreatureTypeIds.punk,
+        CreatureTypeIds.goth,
+        CreatureTypeIds.emo,
+        CreatureTypeIds.biker,
+        CreatureTypeIds.nun,
+        CreatureTypeIds.priest,
+        CreatureTypeIds.televangelist,
+        CreatureTypeIds.mutant,
+      ]) {
+        for (var index = 0; index < 24; index++) {
+          final person = adult(5000 + game.pool.length)..typeId = type;
+          game.pool.add(person);
+          expect(
+            portraitCatalog[ensurePortraitId(person)].background,
+            portraitBackgroundFor(person),
+          );
+        }
+      }
+    },
+  );
+
+  test('every nonhuman body receives matching artwork', () {
+    for (final type in BodyType.values.where(
+      (type) => type != BodyType.human,
+    )) {
+      final person = adult(10000 + type.index);
+      if (type == BodyType.tank) {
+        person.body = TankBody();
+      } else {
+        person.body = HumanoidBody()..type = type;
+      }
+      expect(
+        portraitCatalog[ensurePortraitId(person)].background.name,
+        type.name,
+      );
+    }
+  });
+
+  test('cosmetic identity and assignment age survive save and age changes', () {
+    final person = adult(20000);
+    ensurePortraitId(person);
+    final originalId = person.portraitId;
+    final originalAge = person.portraitAssignedAge;
+    final originalVariant = person.portraitVariant;
+    final clone = Creature.fromJson(
+      jsonDecode(jsonEncode(person)) as Map<String, dynamic>,
+    );
+    clone.birthDate = DateTime(clone.birthDate.year - 20);
+    expect(ensurePortraitId(clone), originalId);
+    expect(clone.portraitAssignedAge, originalAge);
+    expect(clone.portraitVariant, originalVariant);
+  });
+
+  test(
+    'repeated base portraits have distinct persistent cosmetic variants',
+    () {
+      game.pool.clear();
+      game.encounter.clear();
+      final seen = <int, Set<int>>{};
+      for (var i = 0; i < 60; i++) {
+        final person = adult(30000 + i)..typeId = CreatureTypeIds.punk;
+        game.pool.add(person);
+        final id = ensurePortraitId(person);
+        final variants = seen.putIfAbsent(id, () => <int>{});
+        expect(variants.add(person.portraitVariant!), isTrue);
+      }
+      expect(seen.length, 2);
+    },
+  );
+
+  test(
+    'display lookup is deterministic and never assigns or changes state',
+    () {
+      final person = adult(41000)..birthDate = DateTime(game.date.year - 7);
+      final before = jsonEncode(person);
+      final selected = portraitIdForDisplay(person);
+      expect(portraitCatalog[selected].background, PortraitBackground.child);
+      expect(portraitIdForDisplay(person), selected);
+      expect(jsonEncode(person), before);
+      person.portraitId = 0;
+      final invalidBefore = jsonEncode(person);
+      expect(portraitIdForDisplay(person), selected);
+      expect(jsonEncode(person), invalidBefore);
+    },
+  );
+
+  test(
+    'migration repairs legacy adult artwork on minors and nonhuman bodies',
+    () {
+      game.pool.clear();
+      game.encounter.clear();
+      final child = adult(42000)
+        ..birthDate = DateTime(game.date.year - 7)
+        ..portraitId = 0;
+      final dog = adult(42001)
+        ..body = dogBody()
+        ..portraitId = 1;
+      final tank = adult(42002)
+        ..body = TankBody()
+        ..portraitId = 2;
+      game.pool.addAll([child, dog, tank]);
+      assignKnownPortraits();
+      expect(
+        portraitCatalog[child.portraitId!].background,
+        PortraitBackground.child,
+      );
+      expect(
+        portraitCatalog[dog.portraitId!].background,
+        PortraitBackground.canine,
+      );
+      expect(
+        portraitCatalog[tank.portraitId!].background,
+        PortraitBackground.tank,
+      );
+      final ids = [child.portraitId, dog.portraitId, tank.portraitId];
+      assignKnownPortraits();
+      expect([child.portraitId, dog.portraitId, tank.portraitId], ids);
+    },
+  );
+
+  test('tank JSON retains its body discriminator and saved illustration', () {
+    final person = adult(43000)
+      ..typeId = CreatureTypeIds.tank
+      ..body = TankBody();
+    final portrait = ensurePortraitId(person);
+    final json = jsonDecode(jsonEncode(person)) as Map<String, dynamic>;
+    expect((json['body'] as Map<String, dynamic>)['type'], 'tank');
+    final restored = Creature.fromJson(json);
+    expect(restored.body, isA<TankBody>());
+    expect(restored.body.type, BodyType.tank);
+    expect(ensurePortraitId(restored), portrait);
+    expect(portraitCatalog[portrait].background, PortraitBackground.tank);
+    expect(restored.portraitVariant, person.portraitVariant);
+  });
+
   test('negative legacy identity values still produce a valid portrait', () {
     game.gameState.uniqueGameId = -123;
     final person = adult(-1000);
-    expect(ensurePortraitId(person), inInclusiveRange(0, 249));
+    expect(ensurePortraitId(person), inInclusiveRange(0, 377));
   });
 }

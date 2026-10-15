@@ -385,7 +385,7 @@ Future<void> specialBouncerAssessSquad() async {
         );
     }
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
   } else {
     encounter.removeAt(0);
   }
@@ -464,7 +464,7 @@ Future<void> specialReadSign(TileSpecial sign) async {
       mvaddstr(9, 1, "\"The best way not to fail is to succeed.\"");
   }
 
-  await getKey();
+  await acknowledge(title: 'Operation report');
 }
 
 Future<void> specialNuclearOnOff() async {
@@ -496,20 +496,20 @@ Future<void> specialNuclearOnOff() async {
   if (maxs != null) {
     mvaddstrc(9, 1, white, maxs.name);
     addstr(" presses the big red button!");
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     mvaddstr(10, 1, ".");
-    await getKey();
+    await acknowledge(title: 'Operation report');
     addstr(".");
-    await getKey();
+    await acknowledge(title: 'Operation report');
     addstr(".");
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     if (laws[Law.nuclearPower] == DeepAlignment.eliteLiberal) {
       mvaddstr(9, 1, "Nuclear waste is released into the water!");
-      await getKey();
+      await acknowledge(title: 'Operation report');
       mvaddstr(10, 1, "But why?  The squad feels a bit Conservative.");
-      await getKey();
+      await acknowledge(title: 'Operation report');
 
       changePublicOpinion(View.nuclearPower, 15);
       changePublicOpinion(View.lcsLiked, -50);
@@ -845,7 +845,7 @@ Future<void> specialIntelSupercomputer() async {
     Item it = Loot(LootTypeIds.intHqDisk);
     activeSquad!.loot.add(it);
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
   }
 
   if (result != UnlockResult.noAttempt) {
@@ -903,7 +903,7 @@ Future<bool> sitemodePromptOneLine(String line) async {
   mvaddstrc(9, 1, white, line);
 
   while (true) {
-    int c = await getKey();
+    int c = await getKey(choices: const {'y': 'Yes', 'n': 'No'});
 
     if (c == Key.y) return true;
     if (c == Key.n) return false;
@@ -918,7 +918,7 @@ Future<bool> sitemodePrompt(String line1, String line2) async {
   mvaddstr(10, 1, line2);
 
   while (true) {
-    int c = await getKey();
+    int c = await getKey(choices: const {'y': 'Yes', 'n': 'No'});
 
     if (c == Key.y) return true;
     if (c == Key.n) return false;
@@ -938,7 +938,7 @@ Future<void> encounterMessage(
     mvaddstr(10, 1, line2);
   }
 
-  await getKey();
+  await acknowledge(title: 'Operation report');
 }
 
 void delayedSuspicion(int time) {
@@ -1385,7 +1385,7 @@ Future<void> specialNursingHomeManager() async {
   if (admin.alive && admin.location == activeSite) {
     addstr("The administrator is present.");
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     encounter.clear();
     if (admin.formerHostage && admin.align == Alignment.conservative) {
@@ -1420,7 +1420,7 @@ Future<void> specialNursingHomeManager() async {
   } else {
     addstr("The administrative office is empty.");
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
   }
 }
 
@@ -1560,7 +1560,7 @@ Future<void> specialInsuranceCEO() async {
   if (ceo.alive && ceo.location == activeSite) {
     addstr("The Insurance CEO is in his office.");
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     encounter.clear();
     if (ceo.formerHostage && ceo.align == Alignment.conservative) {
@@ -1584,7 +1584,7 @@ Future<void> specialInsuranceCEO() async {
   } else {
     addstr("The Insurance CEO's office is empty.");
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
   }
 }
 
@@ -1868,7 +1868,7 @@ Future<void> specialSecurity(bool metaldetect) async {
   }
   printEncounter();
 
-  await getKey();
+  await acknowledge(title: 'Operation report');
 
   int rejectReason = NOT_REJECTED;
   void reject(int newReason) {
@@ -1969,7 +1969,7 @@ Future<void> specialSecurity(bool metaldetect) async {
       if (metaldetect) {
         addstr("-BEEEP- -BEEEP- -BEEEP-");
         if (politics.laws[Law.gunControl] == DeepAlignment.archConservative) {
-          await getKey();
+          await acknowledge(title: 'Operation report');
           clearMessageArea();
           mvaddstrc(
             9,
@@ -2043,7 +2043,7 @@ Future<void> specialSecurity(bool metaldetect) async {
       );
   }
 
-  await getKey();
+  await acknowledge(title: 'Operation report');
 
   setColor(white);
   for (SiteTile tile in adjacentTiles(locx, locy, locz)) {
@@ -2238,7 +2238,7 @@ Future<void> specialBankMoney() async {
       encounter.add(Creature.fromId(CreatureTypeIds.swat));
     }
     printEncounter();
-    await getKey();
+    await acknowledge(title: 'Operation report');
   }
 }
 
@@ -2270,7 +2270,7 @@ Future<void> specialOvalOffice() async {
       encounter.add(Creature.fromId(CreatureTypeIds.secretService));
     }
     printEncounter();
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     await enemyattack(encounter);
     await creatureadvance();
@@ -2379,7 +2379,7 @@ Future<void> lootGroundSite() async {
     move(10, 1);
     item.printEquipTitle();
 
-    await getKey(); //wait for key press before clearing.
+    await acknowledge(title: 'Operation report'); //wait for key press before clearing.
   }
 }
 

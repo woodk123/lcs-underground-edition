@@ -92,12 +92,12 @@ class CarTheftScene {
         if (cr.skillCheck(Skill.security, Difficulty.average)) {
           cr.train(Skill.security, 25);
           mvaddstrc(16, 0, white, "${cr.name} jimmies the car door open.");
-          await getKey();
+          await acknowledge(title: 'Vehicle report');
           entered = true;
         } else {
           mvaddstrc(
               16, 0, white, "${cr.name} fiddles with the lock with no luck.");
-          await getKey();
+          await acknowledge(title: 'Vehicle report');
         }
       }
       //BREAK WINDOW
@@ -112,7 +112,7 @@ class CarTheftScene {
           }
           addstr(".");
           windowDamage = 10;
-          await getKey();
+          await acknowledge(title: 'Vehicle report');
           entered = true;
         } else {
           mvaddstrc(16, 0, white, cr.name);
@@ -122,7 +122,7 @@ class CarTheftScene {
           }
           addstr(" but it is still somewhat intact.");
           windowDamage++;
-          await getKey();
+          await acknowledge(title: 'Vehicle report');
         }
       }
 
@@ -130,7 +130,7 @@ class CarTheftScene {
       int y = 17;
       if ((touchAlarm || senseAlarm) && !alarmOn) {
         mvaddstrc(y++, 0, yellow, "An alarm suddenly starts blaring!");
-        await getKey();
+        await acknowledge(title: 'Vehicle report');
         alarmOn = true;
       }
 
@@ -138,7 +138,7 @@ class CarTheftScene {
       if (oneIn(50) || (oneIn(5) && alarmOn)) {
         mvaddstrc(y++, 0, red, cr.name);
         addstr(" has been spotted by a passerby!");
-        await getKey();
+        await acknowledge(title: 'Vehicle report');
 
         //FOOT CHASE
         sitestory = NewsStory.prepare(NewsStories.carTheft);
@@ -205,7 +205,7 @@ class CarTheftScene {
         if (cr.skillCheck(Skill.security, Difficulty.hard)) {
           cr.train(Skill.security, 50);
           mvaddstrc(y++, 0, white, "${cr.name} hotwires the car!");
-          await getKey();
+          await acknowledge(title: 'Vehicle report');
           started = true;
         } else {
           mvaddstrc(y++, 0, white, cr.name);
@@ -225,7 +225,7 @@ class CarTheftScene {
               addstr(
                   " manages to turn on some dash lights, but the car doesn't start.");
           }
-          await getKey();
+          await acknowledge(title: 'Vehicle report');
         }
       }
       //KEYS
@@ -262,7 +262,7 @@ class CarTheftScene {
           setColor(lightGreen);
           mvaddstrc(y++, 0, lightGreen,
               "Holy ${noProfanity ? "[Car Keys]" : "Shit"}!  ${cr.name} found the keys $location");
-          await getKey();
+          await acknowledge(title: 'Vehicle report');
           started = true;
         } else {
           timesSearchedForKeys++;
@@ -293,7 +293,7 @@ class CarTheftScene {
             ].random);
           }
 
-          await getKey();
+          await acknowledge(title: 'Vehicle report');
         }
       }
 
@@ -302,7 +302,7 @@ class CarTheftScene {
         mvaddstrc(y++, 0, red, cr.name);
         addstr(" has been spotted by a passerby!");
 
-        await getKey();
+        await acknowledge(title: 'Vehicle report');
 
         //FOOT CHASE
         sitestory = NewsStory.prepare(NewsStories.carTheft);
@@ -327,7 +327,7 @@ class CarTheftScene {
           case 2:
             addstr(" sees a police car driving around a few blocks away.");
         }
-        await getKey();
+        await acknowledge(title: 'Vehicle report');
       }
     }
   }
@@ -369,7 +369,7 @@ class CarTheftScene {
     } else {
       mvaddstr(11, 0, "${cr.name} found a ${cartype.longName}.");
     }
-    await getKey();
+    await acknowledge(title: 'Vehicle report');
     cr.train(Skill.streetSmarts, 10);
     v = Vehicle(cartype.idName);
     alarmOn = false;
@@ -382,7 +382,7 @@ class CarTheftScene {
     _addCarTheftHeader();
     mvaddstrc(10, 0, lightGray,
         "${cr.name} looks around for an accessible vehicle...");
-    await getKey();
+    await acknowledge(title: 'Vehicle report');
   }
 
   void _addCarTheftHeader() {

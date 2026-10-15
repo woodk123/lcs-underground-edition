@@ -156,14 +156,14 @@ Future<void> kidnapattempt() async {
 
         kidnapper.prisoner = target;
 
-        await getKey();
+        await acknowledge(title: 'Operation report');
 
         setColor(red);
         move(10, 1);
         addstr(target.name);
         addstr(" is struggling and screaming!");
 
-        await getKey();
+        await acknowledge(title: 'Operation report');
 
         success = true;
       } else {
@@ -231,7 +231,7 @@ Future<void> kidnapattempt() async {
 
       kidnapper.prisoner = target;
 
-      await getKey();
+      await acknowledge(title: 'Operation report');
 
       success = true;
     }
@@ -289,7 +289,7 @@ Future<void> releasehostage() async {
     move(9, 1);
     addstr("No hostages are being held.");
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     return;
   }
@@ -324,7 +324,7 @@ Future<void> releasehostage() async {
     move(9, 1);
     addstr("The hostage shouts for help!");
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
 
     siteAlarm = true;
     await alienationCheck(false);
@@ -385,7 +385,7 @@ Future<void> freehostage(Creature cr, FreeHostageMessage situation) async {
     printParty();
     printEncounter();
 
-    await getKey();
+    await acknowledge(title: 'Operation report');
   }
 }
 
@@ -405,7 +405,7 @@ Future<void> squadHaulImmobileAllies(bool dead) async {
       addstr(p.prisoner!.name);
       addstr(".");
 
-      await getKey();
+      await acknowledge(title: 'Operation report');
 
       await freehostage(p.prisoner!, FreeHostageMessage.newLine);
     }
@@ -466,7 +466,7 @@ Future<void> squadHaulImmobileAllies(bool dead) async {
         squad.remove(p);
         printParty();
 
-        await getKey();
+        await acknowledge(title: 'Operation report');
         removed = true;
         break;
       }

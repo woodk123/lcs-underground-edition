@@ -4,12 +4,21 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/creature_type.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/recruitment_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/talk/talk.dart';
 import 'package:lcs_new_age/utils/colors.dart';
 import 'package:lcs_new_age/utils/interface_options.dart';
 
 Future<void> doActivityRecruit(Creature cr) async {
+  try {
+    await _doActivityRecruit(cr);
+  } finally {
+    console.recruitment = null;
+  }
+}
+
+Future<void> _doActivityRecruit(Creature cr) async {
   activeSite = cr.site;
 
   RecruitData recruit = cr.activity.recruitData ?? recruitableCreatures.first;
@@ -32,8 +41,8 @@ Future<void> doActivityRecruit(Creature cr) async {
 
   if (difficulty < 10) {
     // Generate recruitment candidates
-    recruitCount =
-        (cr.skillRoll(Skill.streetSmarts, take10: true) / difficulty).round();
+    recruitCount = (cr.skillRoll(Skill.streetSmarts, take10: true) / difficulty)
+        .round();
     if (recruitCount > 10) recruitCount = 10;
     for (int i = 0; i < recruitCount; i++) {
       encounter.add(Creature.fromId(recruit.type.id));
@@ -46,16 +55,18 @@ Future<void> doActivityRecruit(Creature cr) async {
     return;
   } else if (recruitCount == 1) {
     mvaddstr(11, 0, "${cr.name} managed to set up a meeting with ");
-    addstrc(encounter[0].align.color,
-        "${encounter[0].name} ${creatureAgeAndGender(encounter[0])}");
+    addstrc(
+      encounter[0].align.color,
+      "${encounter[0].name} ${creatureAgeAndGender(encounter[0])}",
+    );
     addstrc(lightGray, ".");
+    console.recruitment = RecruitmentContext(
+      recruiter: cr,
+      prospects: [RecruitmentProspect(encounter[0])],
+    );
     await getKey();
 
-    erase();
-    mvaddstrc(0, 0, white, "Adventures in Liberal Recruitment");
-    printCreatureInfo(encounter[0], showCarPrefs: ShowCarPrefs.onFoot);
-    makeDelimiter();
-    await talk(cr, encounter[0]);
+    await _introduceRecruit(cr, encounter[0]);
   } else {
     while (true) {
       erase();
@@ -63,15 +74,34 @@ Future<void> doActivityRecruit(Creature cr) async {
       printCreatureInfo(cr, showCarPrefs: ShowCarPrefs.onFoot);
       makeDelimiter();
 
-      mvaddstrc(10, 0, lightGray,
-          "${cr.name} was able to get information on multiple people.");
+      mvaddstrc(
+        10,
+        0,
+        lightGray,
+        "${cr.name} was able to get information on multiple people.",
+      );
       for (int i = 0; i < recruitCount; i++) {
         String letter = letterAPlus(i);
-        addOptionText(12 + i, 0, letter,
-            "$letter - &${ColorKey.fromColor(encounter[i].align.color)}${encounter[i].name} ${creatureAgeAndGender(encounter[i])}");
+        addOptionText(
+          12 + i,
+          0,
+          letter,
+          "$letter - &${ColorKey.fromColor(encounter[i].align.color)}${encounter[i].name} ${creatureAgeAndGender(encounter[i])}",
+        );
       }
-      addOptionText(12 + recruitCount + 1, 0, "Enter/Escape",
-          "Enter/Escape - Call it a day");
+      addOptionText(
+        12 + recruitCount + 1,
+        0,
+        "Enter/Escape",
+        "Enter/Escape - Call it a day",
+      );
+      console.recruitment = RecruitmentContext(
+        recruiter: cr,
+        prospects: [
+          for (var i = 0; i < recruitCount; i++)
+            RecruitmentProspect(encounter[i], choiceKey: letterAPlus(i)),
+        ],
+      );
 
       int c = await getKey();
 
@@ -82,18 +112,29 @@ Future<void> doActivityRecruit(Creature cr) async {
         siteAlienated = SiteAlienation.none;
 
         Creature target = encounter[c];
-        erase();
-        mvaddstrc(0, 0, white, "Adventures in Liberal Recruitment");
-        printCreatureInfo(target, showCarPrefs: ShowCarPrefs.onFoot);
-        makeDelimiter();
-
-        await talk(cr, target);
+        await _introduceRecruit(cr, target);
         encounter.remove(target);
         recruitCount--;
         if (recruitCount <= 0) break;
       }
     }
     encounter.clear();
+  }
+}
+
+Future<void> _introduceRecruit(Creature recruiter, Creature target) async {
+  erase();
+  mvaddstrc(0, 0, white, 'Adventures in Liberal Recruitment');
+  printCreatureInfo(target, showCarPrefs: ShowCarPrefs.onFoot);
+  makeDelimiter();
+  console.recruitment = RecruitmentContext(
+    recruiter: recruiter,
+    prospects: [RecruitmentProspect(target)],
+  );
+  try {
+    await talk(recruiter, target);
+  } finally {
+    console.recruitment = null;
   }
 }
 
@@ -131,6 +172,7 @@ List<RecruitData> get recruitableCreatures {
     }
   }
   recruitData.sort(
-      (a, b) => (a.difficulty - b.difficulty) * 2 + a.name.compareTo(b.name));
+    (a, b) => (a.difficulty - b.difficulty) * 2 + a.name.compareTo(b.name),
+  );
   return recruitData;
 }

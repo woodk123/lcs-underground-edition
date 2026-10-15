@@ -273,7 +273,7 @@ Future<void> helpOnActivity(ActivityType type) async {
       _body("This activity is not yet documented.");
   }
   _footer();
-  await getKey();
+  await acknowledge(title: 'Field guide');
 }
 
 Future<void> helpOnSitemode() async {
@@ -292,5 +292,5 @@ Future<void> helpOnSitemode() async {
       "your ability to influence public opinion in the future. Mix up your "
       "tactics to maintain positive sentiment toward your squad.");
   _footer();
-  await getKey();
+  await acknowledge(title: 'Field guide');
 }

@@ -1109,6 +1109,9 @@ void clearCommandArea() {
 
 void clearMessageArea() {
   eraseArea(startY: 9, endY: 11, startX: 0, endX: 80);
+  // Inline field decisions share the current map; full-screen menus call erase.
+  if (mode == GameMode.site) console.screen = 'field_prompt';
+  if (mode == GameMode.site) console.journalBodyStart = 9;
 }
 
 void clearEncounterArea() {

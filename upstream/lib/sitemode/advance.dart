@@ -41,7 +41,7 @@ Future<void> creatureadvance() async {
           if (p.prisoner!.type.majorEnemy) siteCrime += 30;
           p.prisoner = null;
 
-          await getKey();
+          await acknowledge(title: 'Operation report');
         }
       }
     }
@@ -95,7 +95,7 @@ Future<void> creatureadvance() async {
 
         printEncounter();
 
-        await getKey();
+        await acknowledge(title: 'Operation report');
       }
     }
 
@@ -235,7 +235,7 @@ Future<void> advancecreature(Creature cr) async {
         topmedical.train(Skill.firstAid, 50);
         w.bleeding = 0;
 
-        await getKey();
+        await acknowledge(title: 'Operation report');
       } else {
         bleed += w.bleeding;
         w.relativeHealth -= w.bleeding / cr.maxBlood;
@@ -278,7 +278,7 @@ Future<void> advancecreature(Creature cr) async {
       addstr(cr.name);
       addstr(" is burned!");
 
-      await getKey();
+      await acknowledge(title: 'Operation report');
     }
   }
 
@@ -321,7 +321,7 @@ Future<void> creatureDie(Creature cr, bool blameParty) async {
   }
   addDeathMessage(cr);
 
-  await getKey();
+  await acknowledge(title: 'Operation report');
 
   if (cr.prisoner != null) {
     await freehostage(cr, FreeHostageMessage.newLine);
