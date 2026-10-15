@@ -40,7 +40,7 @@ jobs:
         run: |
           $pin = Get-Content scripts/toolchain.json -Raw | ConvertFrom-Json
           New-Item -ItemType Directory -Force .tools | Out-Null
-          git clone --depth 1 --branch $pin.flutter_version $pin.flutter_repository .tools/flutter
+          git clone -c core.longpaths=true --depth 1 --branch $pin.flutter_version $pin.flutter_repository .tools/flutter
           if ($LASTEXITCODE -ne 0) { throw 'Flutter checkout failed.' }
           .tools/flutter/bin/flutter.bat config --no-analytics --enable-windows-desktop
           if ($LASTEXITCODE -ne 0) { throw 'Flutter setup failed.' }
