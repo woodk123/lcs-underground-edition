@@ -514,7 +514,7 @@ try {
     await drag(await button(new RegExp(`Inspect pool member ${escape(transferName)}(?:$|\\s)`), 'right'), await button(`Select crew ${crew[0].name}`, 'left'));
     await wait(/Crew · 5\/6/);
     await shot('pool-drag-to-squad');
-    await drag(await button(`Select crew ${transferName}`, 'left'), await button(/^Sort:/, 'right'));
+    await drag(await button(`Select crew ${transferName}`, 'left'), await button(/Sort:/, 'right'));
     await wait(/Crew · 4\/6/);
     await shot('squad-drag-to-pool');
     await click(new RegExp(`Inspect pool member ${escape(transferName)}(?:$|\\s)`), 'right');
