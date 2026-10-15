@@ -493,7 +493,7 @@ class _HeadquartersViewState extends State<HeadquartersView> {
           children: [
             Positioned.fill(
               child: Image.asset(
-                'assets/modern/safehouse.png',
+                'assets/modern/safehouse.webp',
                 fit: BoxFit.cover,
               ),
             ),

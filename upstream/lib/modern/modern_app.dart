@@ -924,7 +924,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
                     fit: StackFit.expand,
                     children: [
                       Image.asset(
-                        'assets/modern/city_panorama.png',
+                        'assets/modern/city_panorama.webp',
                         fit: BoxFit.cover,
                       ),
                       Container(

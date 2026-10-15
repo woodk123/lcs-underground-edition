@@ -46,7 +46,7 @@ class PortraitEntry {
   /// Approximate painted age. New casting stays in a suitable age cohort.
   final int visualAge;
   String get asset =>
-      'assets/modern/portraits_v2/batch_${(id < 250 ? id ~/ 16 : 16 + (id - 250) ~/ 16).toString().padLeft(2, '0')}.png';
+      'assets/modern/portraits_v2/batch_${(id < 250 ? id ~/ 16 : 16 + (id - 250) ~/ 16).toString().padLeft(2, '0')}.webp';
   int get cell => id < 250 ? id % 16 : (id - 250) % 16;
 }
 

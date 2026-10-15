@@ -79,7 +79,7 @@ class JournalSiteArtwork extends StatelessWidget {
                   minHeight: imageSide,
                   maxHeight: imageSide,
                   child: Image.asset(
-                    'assets/modern/site_atlas_${art.atlas}_v1.png',
+                    'assets/modern/site_atlas_${art.atlas}_v1.webp',
                     width: imageSide,
                     height: imageSide,
                     fit: BoxFit.fill,

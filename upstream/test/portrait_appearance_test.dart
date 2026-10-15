@@ -176,14 +176,14 @@ void main() {
 
   test('render appearance review sheet', () async {
     final bytes = await File(
-      'assets/modern/portraits_v2/batch_00.png',
+      'assets/modern/portraits_v2/batch_00.webp',
     ).readAsBytes();
     final codec = await ui.instantiateImageCodec(bytes);
     final atlas = (await codec.getNextFrame()).image;
     codec.dispose();
     ui.Image? overlays;
     final overlayFile = File(
-      'assets/modern/portraits_v2/appearance_overlays.png',
+      'assets/modern/portraits_v2/appearance_overlays.webp',
     );
     if (overlayFile.existsSync()) {
       final overlayCodec = await ui.instantiateImageCodec(

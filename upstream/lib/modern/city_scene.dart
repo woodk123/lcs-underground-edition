@@ -13,8 +13,8 @@ const _worldSize = Size(1320, 910);
 
 // Alpha bounds of the generated sprites plus four pixels of soft-edge padding.
 // The atlas has deliberately uneven spacing: uniform cells would clip roofs.
-const cityBuildingAsset = 'assets/modern/building_sprites_v2.png';
-const cityPedestrianAsset = 'assets/modern/pedestrian_walk_v2.png';
+const cityBuildingAsset = 'assets/modern/building_sprites_v2.webp';
+const cityPedestrianAsset = 'assets/modern/pedestrian_walk_v2.webp';
 const _walkFootAnchors = <Offset>[
   Offset(223, 476),
   Offset(207.5, 466),

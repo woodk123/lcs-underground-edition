@@ -2,11 +2,11 @@
   "schema_version": 2,
   "created_utc_date": "2026-10-13",
   "generator": "ChatGPT built-in image_gen.imagegen",
-  "postprocessing": "None. PNG bytes copied verbatim; crop rectangles are renderer metadata only.",
+  "postprocessing": "Runtime WebP copies use scripts/build_runtime_art.py; PNG masters, dimensions and crop rectangles are preserved.",
   "assets": {
     "buildings": {
-      "runtime_path": "upstream/assets/modern/building_sprites_v2.png",
-      "original_path": "upstream/assets/modern/building_sprites_v2.png",
+      "runtime_path": "upstream/assets/modern/building_sprites_v2.webp",
+      "original_path": "assets/runtime-art/source/building_sprites_v2.png",
       "prompt_path": "assets/art-city-v2/building_sprites_v2.prompt.txt",
       "width": 1254,
       "height": 1254,
@@ -356,11 +356,12 @@
             275
           ]
         }
-      ]
+      ],
+      "runtime_sha256": "94754b45f4f0b64883af5aecc8dec32d3575dcd4bc9309f5d0bed3eca070976c"
     },
     "portraits": {
-      "runtime_path": "upstream/assets/modern/crew_portraits_v1.png",
-      "original_path": "upstream/assets/modern/crew_portraits_v1.png",
+      "runtime_path": "upstream/assets/modern/crew_portraits_v1.webp",
+      "original_path": "assets/runtime-art/source/crew_portraits_v1.png",
       "prompt_path": "assets/art-city-v2/crew_portraits_v1.prompt.txt",
       "width": 1254,
       "height": 1254,
@@ -535,11 +536,12 @@
           ]
         }
       ],
-      "usage": "Stable illustrative likeness selected from existing creature presentation fields; never changes or invents simulation attributes."
+      "usage": "Stable illustrative likeness selected from existing creature presentation fields; never changes or invents simulation attributes.",
+      "runtime_sha256": "3c7f85adacc7aea7b0917a21982fd243bc546dc8139f98bdf23c96d8eb5b74d6"
     },
     "pedestrian_walk": {
-      "runtime_path": "upstream/assets/modern/pedestrian_walk_v2.png",
-      "original_path": "upstream/assets/modern/pedestrian_walk_v2.png",
+      "runtime_path": "upstream/assets/modern/pedestrian_walk_v2.webp",
+      "original_path": "assets/runtime-art/source/pedestrian_walk_v2.png",
       "prompt_path": "assets/art-city-v2/pedestrian_walk_v2.prompt.txt",
       "width": 1536,
       "height": 1024,
@@ -674,7 +676,8 @@
         }
       ],
       "usage": "Actual image frame animation with common pixel scale and per-frame foot anchors. Do not stretch each frame independently. Decorative street pedestrian, does not imply crew movement or change campaign time.",
-      "inspection": "Eight distinct narrow/wide stride poses and alternating arm swings. Initial repeated-stride sheet rejected. Fully transparent background; dark RGB under alpha0 is intentionally preserved and invisible with correct alpha compositing."
+      "inspection": "Eight distinct narrow/wide stride poses and alternating arm swings. Initial repeated-stride sheet rejected. Fully transparent background; dark RGB under alpha0 is intentionally preserved and invisible with correct alpha compositing.",
+      "runtime_sha256": "034f0427c15b2f7b802d51746c13b5b618e6775c735b9665cd62bf8b9566d2ba"
     }
   }
 }

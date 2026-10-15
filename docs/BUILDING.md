@@ -22,6 +22,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build_release.ps1
 
 This resolves dependencies, generates save serializers, runs Flutter tests and analysis, builds the web game, injects the offline manifest and creates **Web Player + Source** ZIPs with checksum sidecars under a new `release/` directory. Player packages contain the game/runtime, licenses and source-download references; source, tools and build evidence are provided once in the matching Source ZIP.
 
+Before creating the offline manifest, the injector removes renderer files proven unused by the current JavaScript/CanvasKit build. Both standard and Chromium CanvasKit variants remain available. A build with Wasm or an unknown renderer retains its renderer files.
+
+Each release writes `size-report.json` beside the ZIPs and `release-sizes.json` in its build evidence. These account for compressed and extracted sizes by artwork, portraits, renderer, code and other data. Player size limits are in `scripts/release_sizes.py`; exceeding either download or extracted-size limits fails packaging. Source archives are reported separately without a player-size limit. Review the artwork and report before deliberately raising a budget.
+
 Double-click **Play.cmd** in the checkout or extracted browser player. It serves `upstream/build/web` in a checkout, or `web/` in a player package, at **http://127.0.0.1:8765/**. Playing requires Python 3 but no Flutter SDK.
 
 Use the same browser profile and address for existing saves. Export important saves before clearing browser data. Do not open `index.html` directly.

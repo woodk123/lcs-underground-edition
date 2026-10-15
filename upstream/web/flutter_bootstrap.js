@@ -111,6 +111,7 @@ function bootApp() {
   _flutter.loader.load({
     config: {
       canvasKitBaseUrl: 'canvaskit/',
+      preferWebParagraph: false,
     },
   });
 }

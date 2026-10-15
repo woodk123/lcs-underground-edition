@@ -5,10 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 
-const journalOrderIconAsset = 'assets/modern/journal_order_icons_v1.png';
-const journalBrownieIconAsset = 'assets/modern/journal_weed_brownies_v1.png';
+const journalOrderIconAsset = 'assets/modern/journal_order_icons_v1.webp';
+const journalBrownieIconAsset = 'assets/modern/journal_weed_brownies_v1.webp';
 const journalExtraOrderIconAsset =
-    'assets/modern/journal_order_icons_extra_v1.png';
+    'assets/modern/journal_order_icons_extra_v1.webp';
 
 /// Cosmetic classification of exact existing activity types. No labels are
 /// parsed and no campaign state, activity, input, or random stream is changed.

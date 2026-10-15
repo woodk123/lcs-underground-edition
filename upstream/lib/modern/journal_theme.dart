@@ -24,8 +24,8 @@ abstract final class JournalPalette {
   static const olive = Color(0xFF455D35);
   static const selected = Color(0xFFF2DFA2);
   static const danger = Color(0xFF9B312D);
-  static const paperAsset = 'assets/modern/journal_paper_v1.png';
-  static const leatherAsset = 'assets/modern/journal_leather_v1.png';
+  static const paperAsset = 'assets/modern/journal_paper_v1.webp';
+  static const leatherAsset = 'assets/modern/journal_leather_v1.webp';
   static const serif = 'JournalSerif';
 
   static const title = TextStyle(
@@ -66,8 +66,8 @@ abstract final class JournalPalette {
 @immutable
 class JournalVisuals extends ThemeExtension<JournalVisuals> {
   const JournalVisuals({
-    this.portraitAsset = 'assets/modern/journal_portraits_v1.png',
-    this.iconAsset = 'assets/modern/journal_icons_v1.png',
+    this.portraitAsset = 'assets/modern/journal_portraits_v1.webp',
+    this.iconAsset = 'assets/modern/journal_icons_v1.webp',
   });
   final String portraitAsset;
   final String iconAsset;

@@ -11,8 +11,8 @@ import 'package:lcs_new_age/modern/portrait_appearance.dart';
 import 'package:lcs_new_age/modern/portrait_face_frames.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 
-const _portraitAsset = 'assets/modern/crew_portraits_v1.png';
-const _appearanceAsset = 'assets/modern/portraits_v2/appearance_overlays.png';
+const _portraitAsset = 'assets/modern/crew_portraits_v1.webp';
+const _appearanceAsset = 'assets/modern/portraits_v2/appearance_overlays.webp';
 const _ink = JournalPalette.ink;
 const _teal = JournalPalette.olive;
 const _red = JournalPalette.danger;

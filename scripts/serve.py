@@ -16,6 +16,7 @@ class GameHandler(SimpleHTTPRequestHandler):
         ".js": "text/javascript",
         ".json": "application/json",
         ".bin": "application/octet-stream",
+        ".webp": "image/webp",
     }
 
     def do_GET(self):

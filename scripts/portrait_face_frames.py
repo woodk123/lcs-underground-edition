@@ -10,7 +10,7 @@ root = Path(__file__).resolve().parents[1]
 cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 entries = []
 missing = []
-for path in sorted((root/'upstream/assets/modern/portraits_v2').glob('batch_*.png')):
+for path in sorted((root/'upstream/assets/modern/portraits_v2').glob('batch_*.webp')):
     batch = int(path.stem.split('_')[1])
     if batch in (21,22):
         continue  # Animals, tanks and monsters do not have human facial landmarks.

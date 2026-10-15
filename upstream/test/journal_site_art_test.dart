@@ -79,7 +79,7 @@ void main() {
       final art = journalSiteArt[entry.value]!;
       expect(
         (image.image as AssetImage).assetName,
-        'assets/modern/site_atlas_${art.atlas}_v1.png',
+        'assets/modern/site_atlas_${art.atlas}_v1.webp',
       );
     }
     expect(tester.takeException(), isNull);

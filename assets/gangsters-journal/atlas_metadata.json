@@ -2,30 +2,32 @@
   "schema_version": 2,
   "created_uk_date": "2026-10-14",
   "generator": "ChatGPT built-in image_gen.imagegen",
-  "postprocessing": "None. PNG bytes copied verbatim. Crop rectangles are renderer metadata only.",
+  "postprocessing": "Runtime WebP copies use scripts/build_runtime_art.py; PNG masters, dimensions and crop rectangles are preserved.",
   "source_reference": "Gangsters: Organized Crime (1998) original organiser layout and manual; no original game bitmap is shipped.",
   "assets": {
     "journal_leather_v1.png": {
-      "runtime_path": "upstream/assets/modern/journal_leather_v1.png",
-      "original_path": "upstream/assets/modern/journal_leather_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_leather_v1.webp",
+      "original_path": "assets/runtime-art/source/journal_leather_v1.png",
       "prompt_path": "assets/gangsters-journal/journal_leather.prompt.txt",
       "width": 1254,
       "height": 1254,
       "mode": "RGB",
-      "sha256": "c2b5275322ab51be597e2349a3e3bb83bdff4eb9c4a93add1fb3932f9be4518b"
+      "sha256": "c2b5275322ab51be597e2349a3e3bb83bdff4eb9c4a93add1fb3932f9be4518b",
+      "runtime_sha256": "9c387011e116229ad4b2221dc2dd6b2309c44ddd8b8461f62c0469c335283bd3"
     },
     "journal_paper_v1.png": {
-      "runtime_path": "upstream/assets/modern/journal_paper_v1.png",
-      "original_path": "upstream/assets/modern/journal_paper_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_paper_v1.webp",
+      "original_path": "assets/runtime-art/source/journal_paper_v1.png",
       "prompt_path": "assets/gangsters-journal/journal_paper.prompt.txt",
       "width": 1254,
       "height": 1254,
       "mode": "RGB",
-      "sha256": "4ded547ed5561c66fc504858416ac1a49d38073a7ff3aa2e5d60f28126ab824d"
+      "sha256": "4ded547ed5561c66fc504858416ac1a49d38073a7ff3aa2e5d60f28126ab824d",
+      "runtime_sha256": "26238e07b68d95eecfb37217c0debccc81851347dff9437dc376ef51a883cf31"
     },
     "journal_portraits_v1.png": {
-      "runtime_path": "upstream/assets/modern/journal_portraits_v1.png",
-      "original_path": "upstream/assets/modern/journal_portraits_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_portraits_v1.webp",
+      "original_path": "assets/runtime-art/source/journal_portraits_v1.png",
       "prompt_path": "assets/gangsters-journal/journal_portrait.prompt.txt",
       "width": 1254,
       "height": 1254,
@@ -220,11 +222,12 @@
           ]
         }
       ],
-      "usage": "Cosmetic adult likeness only; same stable existing gender-index banks. Do not infer biography, consume RNG, or replace factual text. Preserve child/nonhuman fallback."
+      "usage": "Cosmetic adult likeness only; same stable existing gender-index banks. Do not infer biography, consume RNG, or replace factual text. Preserve child/nonhuman fallback.",
+      "runtime_sha256": "4b644863e923fb83c66c1a4e247811009783723a00bc26a1104327e0eb538961"
     },
     "journal_icons_v1.png": {
-      "runtime_path": "upstream/assets/modern/journal_icons_v1.png",
-      "original_path": "upstream/assets/modern/journal_icons_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_icons_v1.webp",
+      "original_path": "assets/runtime-art/source/journal_icons_v1.png",
       "prompt_path": "assets/gangsters-journal/journal_icon.prompt.txt",
       "width": 1448,
       "height": 1086,
@@ -371,11 +374,12 @@
         }
       ],
       "inspection": "Twelve separate principal alpha>=32 connected components inspected. Source rectangles include each complete illustration plus eight pixels of transparent margin; portraits/labels are not embedded in controls.",
-      "usage": "Decorative pictorial art in live labelled controls. No input handler or extra focus stop."
+      "usage": "Decorative pictorial art in live labelled controls. No input handler or extra focus stop.",
+      "runtime_sha256": "6261229712f0a8ea53320f2e0a0ed97c6b92a1b41bcfbeac85467fac22690d30"
     },
     "journal_order_icons_v1.png": {
-      "runtime_path": "upstream/assets/modern/journal_order_icons_v1.png",
-      "original_path": "upstream/assets/modern/journal_order_icons_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_order_icons_v1.webp",
+      "original_path": "assets/runtime-art/source/journal_order_icons_v1.png",
       "prompt_path": "assets/gangsters-journal/journal_order_icons_v1.prompt.txt",
       "width": 1254,
       "height": 1254,
@@ -624,7 +628,8 @@
       ],
       "inspection": "All sixteen pictorial symbols inspected at full resolution. Seventeen principal alpha>=32 components: donation hands form two separate components. Explicit crops preserve each complete symbol; no pixel processing.",
       "usage": "Pure exact ActivityType enum mapping in journal_order_icon.dart. Unsupported types use accurate Material icon fallbacks. Art never invents an action, writes an activity, handles input, changes time, or consumes RNG.",
-      "rights_provenance": "Original art commissioned/generated for this project with built-in ChatGPT image generation; style reference is the project original generated atlas, not any copyrighted original-game bitmap."
+      "rights_provenance": "Original art commissioned/generated for this project with built-in ChatGPT image generation; style reference is the project original generated atlas, not any copyrighted original-game bitmap.",
+      "runtime_sha256": "03be40c634006f9f41eb14adf32f7ccb1b382cc3506394734ed7417e91c902ba"
     }
   },
   "fonts": {

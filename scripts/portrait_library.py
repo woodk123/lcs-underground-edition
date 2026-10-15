@@ -15,6 +15,8 @@ import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
+from runtime_images import RUNTIME_ENCODING, save_runtime_image
+
 ROOT = Path(__file__).resolve().parents[1]
 GROUPS = (["professional"] * 3 + ["trades"] * 3 +
           ["academicMedical"] * 2 + ["streetCreative"] * 3 +
@@ -103,7 +105,7 @@ def build(source: Path, output: Path, review: Path, atlas_size: int, partial: bo
             seen[crop_hash] = index
             age_min, age_max = AGES[row]
             entry = {"id": f"portrait_{index:03}", "index": index, "batch": batch,
-                     "asset": f"assets/modern/portraits_v2/batch_{batch:02}.png",
+                     "asset": f"assets/modern/portraits_v2/batch_{batch:02}.webp",
                      "row": row, "column": column, "professionGroup": GROUPS[batch],
                      "presentation": "female" if column % 2 == 0 else "male",
                      "ageMin": age_min, "ageMax": age_max,
@@ -112,16 +114,16 @@ def build(source: Path, output: Path, review: Path, atlas_size: int, partial: bo
             entries.append(entry)
             tiles.append((entry, crop))
         atlases.append({"batch": batch, "source": f"source/{path.name}",
-                        "asset": f"assets/modern/portraits_v2/{path.name}",
+                        "asset": f"assets/modern/portraits_v2/{path.stem}.webp",
                         "sourceSize": [width, height], "runtimeSize": [atlas_size, atlas_size],
                         "validPortraits": valid, "sourceSha256": source_hash})
-        prepared.append((path.name, runtime))
+        prepared.append((path.stem + '.webp', runtime))
     if duplicates:
         raise ValueError(f"Exact duplicate portrait crops: {duplicates}")
     if not partial and (len(entries) != COUNT or len({e['id'] for e in entries}) != COUNT):
         raise ValueError("Complete manifest must contain exactly 250 distinct entries")
     manifest = {"version": 2, "portraitCount": len(entries), "gridColumns": GRID,
-                "gridRows": GRID, "runtimeAtlasSize": atlas_size,
+                "gridRows": GRID, "runtimeAtlasSize": atlas_size, "runtimeEncoding": RUNTIME_ENCODING,
                 "complete": not missing, "missingAtlases": missing,
                 "counts": {"professionGroup": dict(Counter(e["professionGroup"] for e in entries)),
                            "presentation": dict(Counter(e["presentation"] for e in entries))},
@@ -136,7 +138,7 @@ def build(source: Path, output: Path, review: Path, atlas_size: int, partial: bo
     else:
         output.mkdir(parents=True, exist_ok=True)
         for name, atlas in prepared:
-            atlas.save(output / name, optimize=True)
+            save_runtime_image(atlas, output / name)
         for atlas in manifest["atlases"]:
             atlas["runtimeSha256"] = digest((output / Path(atlas["asset"]).name).read_bytes())
         write_json(output / "manifest.json", manifest)

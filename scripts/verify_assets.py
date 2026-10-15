@@ -28,13 +28,22 @@ def verify(root: Path) -> dict:
                  'assets/gangsters-journal/atlas_metadata.json'):
         metadata = read(name)
         for asset in metadata['assets'].values():
-            file(root, asset['runtime_path'], asset['sha256'])
+            file(root, asset['runtime_path'], asset.get('runtime_sha256', asset['sha256']))
             file(root, asset['original_path'], asset['sha256'])
             for key in ('prompt_path', 'initial_prompt_path'):
                 if key in asset:
                     file(root, asset[key])
         for font in metadata.get('fonts', {}).values():
             file(root, font['runtime_path'], font['sha256'])
+
+    runtime_art = read('assets/runtime-art/manifest.json')
+    runtime_paths = set()
+    for asset in runtime_art['assets']:
+        file(root, asset['original_path'], asset['original_sha256'])
+        file(root, asset['runtime_path'], asset['runtime_sha256'])
+        runtime_paths.add(asset['runtime_path'])
+    if len(runtime_paths) != len(runtime_art['assets']):
+        raise ValueError('Duplicated runtime artwork references')
 
     ids = []
     atlases = set()
@@ -49,6 +58,7 @@ def verify(root: Path) -> dict:
             file(root / 'upstream', atlas['asset'], atlas['runtimeSha256'])
             assets.add(atlas['asset'])
             atlases.add(atlas['asset'])
+            runtime_paths.add('upstream/' + atlas['asset'])
         portraits = metadata['portraits']
         if sorted(p['index'] for p in portraits) != list(range(first, first + count)):
             raise ValueError(f'Missing or duplicated portrait IDs: {library}')
@@ -61,8 +71,14 @@ def verify(root: Path) -> dict:
         if overlay:
             file(root / 'assets' / library, overlay['source'], overlay['sourceSha256'])
             file(root / 'upstream', overlay['asset'], overlay['runtimeSha256'])
+            runtime_paths.add('upstream/' + overlay['asset'])
+    actual_paths = {path.relative_to(root).as_posix()
+                    for path in (root / 'upstream/assets/modern').rglob('*')
+                    if path.is_file() and path.suffix.lower() in {'.png', '.webp', '.jpg', '.jpeg'}}
+    if actual_paths != runtime_paths:
+        raise ValueError(f'Unexpected or missing runtime images: {sorted(actual_paths ^ runtime_paths)}')
     return {'status': 'passed', 'verified_files': len(checked),
-            'portrait_atlases': len(atlases), 'portraits': len(ids)}
+            'runtime_images': len(runtime_paths), 'portrait_atlases': len(atlases), 'portraits': len(ids)}
 
 
 def main() -> None:

@@ -31,7 +31,7 @@ void main() {
   test('378 stable catalog IDs preserve original atlas cells', () {
     expect(portraitCatalog.length, 378);
     expect(portraitCatalog.map((entry) => entry.id).toSet().length, 378);
-    expect(portraitCatalog[249].asset, endsWith('batch_15.png'));
+    expect(portraitCatalog[249].asset, endsWith('batch_15.webp'));
     expect(portraitCatalog[249].cell, 9);
     expect(
       portraitCatalog.where((entry) => entry.gender == Gender.female).length,
@@ -296,9 +296,9 @@ void main() {
   });
 
   test('specialist atlas offsets do not consume missing original cells', () {
-    expect(portraitCatalog[250].asset, endsWith('batch_16.png'));
+    expect(portraitCatalog[250].asset, endsWith('batch_16.webp'));
     expect(portraitCatalog[250].cell, 0);
-    expect(portraitCatalog[377].asset, endsWith('batch_23.png'));
+    expect(portraitCatalog[377].asset, endsWith('batch_23.webp'));
     expect(portraitCatalog[377].cell, 15);
     for (final entry in portraitCatalog) {
       expect(entry.cell, inInclusiveRange(0, 15));

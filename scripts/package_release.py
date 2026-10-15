@@ -14,6 +14,7 @@ from release_common import (
     WEB_SCRIPTS, archive_package, cache_ignore, copy_file, digest, file_hashes,
     filtered_source_hashes, require_files, runtime_hashes, source_reference, write_json,
 )
+from release_sizes import report_sizes
 
 
 def vc_runtime() -> Path:
@@ -135,6 +136,7 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
     # Neither packaging pass may mutate the corresponding game source.
     if before != filtered_source_hashes(root / 'upstream'):
         raise ValueError('Game source changed while packaging.')
+    report_sizes(output, results, report)
     assets = []
     for result in results:
         archive = Path(result['archive'])

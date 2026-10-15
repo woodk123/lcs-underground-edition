@@ -508,7 +508,7 @@ class _DistrictArtwork extends StatelessWidget {
         minHeight: bounds.maxWidth * 3,
         maxHeight: bounds.maxWidth * 3,
         child: Image.asset(
-          'assets/modern/district_atlas_v1.png',
+          'assets/modern/district_atlas_v1.webp',
           width: bounds.maxWidth * 3,
           height: bounds.maxWidth * 3,
           fit: BoxFit.fill,

@@ -19,7 +19,7 @@ python -m unittest discover -s scripts -p 'test_*.py' -v
 python scripts/verify_assets.py
 ```
 
-The tests exercise archive integrity/tampering, complete source snapshots, local and nightly packaging, unchanged-input detection and safe publication. No live GitHub release is modified by these tests.
+The tests exercise archive integrity/tampering, complete source snapshots, local and nightly packaging, release-size accounting and limits, unchanged-input detection and safe publication. Flutter regressions also decode every runtime WebP, check atlas dimensions and native alpha fidelity, and exercise conservative web renderer pruning. No live GitHub release is modified by these tests.
 
 ## Browser regressions
 

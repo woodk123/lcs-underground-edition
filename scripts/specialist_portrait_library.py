@@ -14,6 +14,7 @@ import sys
 
 from PIL import Image, ImageDraw, ImageFont
 from portrait_library import ROOT, digest, write_json
+from runtime_images import RUNTIME_ENCODING, save_runtime_image
 
 AGES = {16: [22, 30, 24, 45], 17: [25, 40, 55, 72],
         18: [25, 38, 53, 68], 19: [4, 7, 10, 12],
@@ -66,7 +67,7 @@ def overlay_atlas(source: Path) -> tuple[Image.Image, dict] | None:
                         'alphaPixels': {'transparent': histogram[0], 'opaque': histogram[255],
                                         'partial': sum(histogram[1:255])}})
     return runtime, {'source': 'source/appearance_overlays.png',
-                     'asset': 'assets/modern/portraits_v2/appearance_overlays.png',
+                     'asset': 'assets/modern/portraits_v2/appearance_overlays.webp',
                      'sourceSize': list(image.size), 'runtimeSize': [1024, 1024],
                      'sourceSha256': digest(path.read_bytes()),
                      'alphaRange': list(alpha.getextrema()), 'cropAlphaThreshold': 16,
@@ -141,7 +142,7 @@ def build(source: Path, output: Path, review: Path, partial: bool, manifest_path
             runtime.paste(crop.resize((256, 256), Image.Resampling.LANCZOS), (column * 256, row * 256))
             age = AGES.get(batch, [0] * 4)[row]
             entry = {'id': f'portrait_{index:03}', 'index': index, 'batch': batch,
-                     'asset': f'assets/modern/portraits_v2/{path.name}',
+                     'asset': f'assets/modern/portraits_v2/{path.stem}.webp',
                      'row': row, 'column': column, 'professionGroup': background(batch, slot),
                      'presentation': ('female' if column % 2 == 0 else 'male') if batch not in (21, 22) else 'unspecified',
                      'visualAge': age, 'ageMin': age, 'ageMax': age,
@@ -152,17 +153,17 @@ def build(source: Path, output: Path, review: Path, partial: bool, manifest_path
             entries.append(entry)
             tiles.append((entry, crop))
         atlases.append({'batch': batch, 'source': f'source/{path.name}',
-                        'asset': f'assets/modern/portraits_v2/{path.name}',
+                        'asset': f'assets/modern/portraits_v2/{path.stem}.webp',
                         'sourceSize': [width, height], 'runtimeSize': [1024, 1024],
                         'validPortraits': 16, 'sourceSha256': source_hash})
-        prepared.append((path.name, runtime))
+        prepared.append((path.stem + '.webp', runtime))
     manifest = {'version': 3, 'portraitCount': len(entries), 'firstId': 250, 'lastId': 377,
                 'basePortraitCount': 250, 'combinedPortraitCount': 250 + len(entries),
                 'gridColumns': 4, 'gridRows': 4, 'runtimeAtlasSize': 1024,
                 'complete': not missing, 'missingAtlases': missing,
                 'counts': {'professionGroup': dict(Counter(e['professionGroup'] for e in entries)),
                            'presentation': dict(Counter(e['presentation'] for e in entries))},
-                'atlases': atlases, 'portraits': entries,
+                'atlases': atlases, 'portraits': entries, 'runtimeEncoding': RUNTIME_ENCODING,
                 'validation': {'duplicateCrops': [], 'visualReviewRequired': True,
                                'geometry': 'shared rounded quarter boundaries; individual cell resizing; no retouching'}}
     if overlays is not None:
@@ -189,10 +190,10 @@ def build(source: Path, output: Path, review: Path, partial: bool, manifest_path
             raise ValueError('Expected exactly 128 supplemental portraits')
         output.mkdir(parents=True, exist_ok=True)
         for name, atlas in prepared:
-            atlas.save(output / name, optimize=True)
+            save_runtime_image(atlas, output / name)
         if overlays is not None:
-            overlays[0].save(output / 'appearance_overlays.png', optimize=True)
-            overlays[1]['runtimeSha256'] = digest((output / 'appearance_overlays.png').read_bytes())
+            save_runtime_image(overlays[0], output / 'appearance_overlays.webp')
+            overlays[1]['runtimeSha256'] = digest((output / 'appearance_overlays.webp').read_bytes())
         for atlas in atlases:
             atlas['runtimeSha256'] = digest((output / Path(atlas['asset']).name).read_bytes())
         write_json(manifest_path or review / 'manifest.json', manifest)

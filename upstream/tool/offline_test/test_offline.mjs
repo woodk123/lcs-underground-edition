@@ -23,6 +23,7 @@ const MIME = {
   '.json': 'application/json',
   '.wasm': 'application/wasm',
   '.png': 'image/png',
+  '.webp': 'image/webp',
   '.ico': 'image/x-icon',
   '.xml': 'application/xml',
   '.svg': 'image/svg+xml',

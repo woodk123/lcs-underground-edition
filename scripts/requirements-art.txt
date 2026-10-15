@@ -1,0 +1,2 @@
+# Regeneration only. Player builds and asset/hash verification do not need Pillow.
+Pillow==12.2.0
