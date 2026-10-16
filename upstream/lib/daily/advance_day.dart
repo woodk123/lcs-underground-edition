@@ -912,6 +912,9 @@ Future<void> _dailyHealing() async {
           p.align == Alignment.liberal &&
           p.site!.controller == SiteController.lcs &&
           p.site!.type != SiteType.universityHospital) {
+        // Recovery starts a new reader after a mission. A retained field body
+        // starts below this notice's row and would hide the acknowledgement.
+        erase();
         setColor(white);
         mvaddstr(8, 1, "${p.name}'s injuries require professional treatment.");
         p.activity = Activity(ActivityType.clinic);

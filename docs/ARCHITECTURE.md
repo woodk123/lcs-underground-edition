@@ -25,7 +25,11 @@ Field movement, escape directions, speaker and conversation choices belong to th
 
 Hospital admission, discharge and court defense publish `RecoveryContext` snapshots in `engine/recovery_context.dart`. The journal reuses those people, text, costs, skill values and exact action objects; healing, billing, custody and verdicts remain in their original handlers. Full charges and medical mechanics are available on demand. Discharged patients return to their base without automatically rejoining a squad, and leaving a bill unpaid retains the debt.
 
-On-foot pursuits publish `PursuitContext` snapshots in `engine/pursuit_context.dart`. They expose only crew and encounter information already printed by the current source reader. The pursuit journal retains action identity/revision checks across retries and nested status/equipment readers; its dossier is a read-only modal. Street arrests still come from the original daily activity checks and surrender handler.
+Daily professional-treatment warnings clear the departing reader before authoring their notice. A field screen's body boundary must not hide the warning or leave the engine waiting without a current Continue action.
+
+On-foot and car pursuits publish `PursuitContext` snapshots in `engine/pursuit_context.dart`. They expose only crew, road conditions, vehicle gaps and encounter information already printed by the current source reader. The pursuit journal retains action identity/revision checks across retries and nested status/equipment readers; its dossier is a read-only modal. Obstacle controls retain their current source meanings, including F for slowing down. Street arrests still come from the original daily activity checks and surrender handler.
+
+Car road animation is cosmetic. It repaints its captured console only while the car reader awaits input, without consuming campaign RNG, changing command revisions or contributing glyphs to authored reports. Nested readers own the console while open. The chase stops and awaits animation cleanup on every exit; driving, combat, obstacles and capture remain in the original handlers.
 
 Free Clinic patients remain admitted until the existing healed/60-day discharge condition. Clinic support remains 6 at an ordinary non-LCS site and generates no new treatment bill; university hospitals retain support 16 and law-dependent charges. Sleeper staff at their own clinic workplace are distinguished from admitted patients.
 

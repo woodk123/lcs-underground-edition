@@ -2,21 +2,25 @@ import 'package:flutter/foundation.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/journal_context.dart';
 
-/// A snapshot of one original on-foot pursuit reader. The source supplies the
+/// A snapshot of one original pursuit reader. The source supplies the
 /// visible crew, encounter text and available controls; this owns no game rules.
 @immutable
 class PursuitContext {
   PursuitContext({
+    this.title = 'On-foot pursuit',
     required this.location,
     required this.note,
+    Iterable<String> statusLines = const [],
     required Iterable<JournalPersonSummary> people,
     required Iterable<String> encounterLines,
     required Iterable<ConsoleAction> actions,
-  }) : people = List.unmodifiable(people),
+  }) : statusLines = List.unmodifiable(statusLines),
+       people = List.unmodifiable(people),
        encounterLines = List.unmodifiable(encounterLines),
        actions = List.unmodifiable(actions);
 
-  final String location, note;
+  final String title, location, note;
+  final List<String> statusLines;
   final List<JournalPersonSummary> people;
   final List<String> encounterLines;
   final List<ConsoleAction> actions;

@@ -6,7 +6,7 @@ import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/journal_person_summary.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 
-/// The original foot-pursuit reader in the journal. Only source-authored
+/// The original pursuit reader in the journal. Only source-authored
 /// controls can advance it; inspecting a crew member consumes no input.
 class JournalPursuitView extends StatefulWidget {
   const JournalPursuitView({
@@ -64,7 +64,7 @@ class _JournalPursuitViewState extends State<JournalPursuitView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('On-foot pursuit', style: JournalPalette.heading),
+              Text(frame.title, style: JournalPalette.heading),
               Text(frame.location, style: JournalPalette.small),
               const SizedBox(height: 6),
               Text(frame.note, style: JournalPalette.body),
@@ -73,6 +73,24 @@ class _JournalPursuitViewState extends State<JournalPursuitView> {
                 child: ListView(
                   key: const ValueKey('journal-pursuit-scroll'),
                   children: [
+                    if (frame.statusLines.isNotEmpty)
+                      Container(
+                        key: const ValueKey('journal-pursuit-status'),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: JournalPalette.card,
+                          border: Border.all(color: JournalPalette.rule),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            for (final line in frame.statusLines)
+                              Text(line, style: JournalPalette.body),
+                          ],
+                        ),
+                      ),
                     for (final summary in frame.people)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10),

@@ -13,6 +13,8 @@ The Underground Edition retains the original Dart/Flutter engine and campaign co
 - Completed campaign totals are recorded once.
 - Guilty and lenient trial outcomes retain the full charged counts in conviction history, including earlier cases. Acquittals and retrials add no convictions; sentencing calculations are unchanged.
 - Free Clinic admissions persist across daily turns, exclude patients from ordinary work/squad allocation, and discharge through the existing recovery handler. The clinic's original support and free treatment are preserved; university treatment and billing remain unchanged. Clinic sleeper staff remain at work.
+- Car pursuit animation preserves gameplay RNG, command revisions and authored report text, yields at a positive cadence, bounds overlapping cars and stops on all exits. Departing pursuers are removed from the distance map; enemy obstacle crashes also work without an active site story. Driving and combat calculations are unchanged.
+- A severe-injury notice after an operation starts with a fresh reader, so its professional-treatment warning and Continue control cannot be hidden by the preceding field screen.
 
 ## Interface and portrait behavior
 
@@ -28,6 +30,7 @@ The Underground Edition retains the original Dart/Flutter engine and campaign co
 - Hospital admission, discharge bills and court defense use journal pages with contextual notes, portraits, condition and concise source-authored choices. Unpaid bills are explicit; full charges and health/legal mechanics remain available on demand. Court defense begins on a fresh page so long charge lists cannot hide its choices or Law/Persuasion values.
 - Intermediate map-generation frames show a journal progress note until the next source reader is ready, retaining the selected person and organisation layout.
 - On-foot pursuit decisions use a journal page with current source controls, visible pursuers and working read-only dossiers. Street arrests use an appropriate pursuit introduction; stale pursuit controls cannot reach later readers.
+- Car pursuits share the journal page with current road conditions, vehicle gaps and contextual obstacle controls. Equipment, orders, bailout and surrender expose the availability already accepted by the original reader. Solo car introductions describe the person being pursued; retries and nested equipment/status readers retain command isolation.
 - Full formulas and requirements are available through Order mechanics; cards keep key timing, estimates, costs and risks visible.
 - Portrait age compatibility takes precedence over avoiding duplicates. Clearly mismatched saved assignments are repaired once; appropriate identities persist across saves and birthdays.
 - The founder identity page previews and rerolls an age-compatible portrait alongside the generated names. The selected face survives background creation and saves without consuming gameplay RNG.

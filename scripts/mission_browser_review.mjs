@@ -281,7 +281,17 @@ try {
       assert.ok(patients.length > 0, 'Actual combat injuries must reach the real admission handler.');
       const bills = [];
       let healingDays = 0;
+      let interruptedBySiege = false;
       while (recovered.lcs.pool.some(p => p.alive && p.locationId === 'Site12') && healingDays < 62) {
+        const activeSieges = recovered.cities.flatMap(city => city.districts.flatMap(district => district.sites))
+          .filter(site => site.siege?.underAttack);
+        if (activeSieges.length && !await available(/^(?:Wait a day|Carry out your plans)/)) {
+          assert.match(await uiText(), /Day advance unavailable/);
+          interruptedBySiege = true;
+          await recordDecision(); await capture('actual-care-interrupted-by-siege');
+          report.scenarios.operation.actualSiege = activeSieges.map(site => ({ id: site.id, type: site.siege.activeSiegeType }));
+          break;
+        }
         bills.push(...await day());
         recovered = (await exportGame(`actual-care-${++healingDays}`)).state;
       }
@@ -289,7 +299,8 @@ try {
         const returned = recovered.lcs.pool.find(p => p.id === admitted.id);
         assert.ok(returned, 'Retain each admitted crew identity.');
         if (returned.alive) {
-          assert.equal(returned.locationId, `Site${returned.baseId}`);
+          if (interruptedBySiege) assert.ok([`Site${returned.baseId}`, 'Site12'].includes(returned.locationId));
+          else assert.equal(returned.locationId, `Site${returned.baseId}`);
           assert.equal(returned.squadId, null);
           assert.ok(returned._blood >= admitted._blood);
           assert.deepEqual(returned.equippedWeapon, admitted.equippedWeapon);
@@ -297,8 +308,10 @@ try {
           assert.equal(returned.portraitId, admitted.portraitId);
         }
       }
-      report.scenarios.operation.actualRecovery = { healingDays, bills, patientIds: patients.map(p => p.id) };
-      check('actually sustained mission injuries receive hospital care and return through original discharge decisions');
+      report.scenarios.operation.actualRecovery = { healingDays, bills, interruptedBySiege, patientIds: patients.map(p => p.id) };
+      check(interruptedBySiege
+        ? 'actual mission injuries receive hospital care; a natural siege explicitly interrupts further day advancement'
+        : 'actually sustained mission injuries receive hospital care and return through original discharge decisions');
       await roundTrip('actual-recovery-complete');
     }
   }
