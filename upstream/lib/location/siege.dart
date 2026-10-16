@@ -295,7 +295,7 @@ Future<void> surrenderToAuthorities(Site loc) async {
     );
     mvaddstr(++y, 1, "The homeless people here are left with nothing.");
   }
-  await pressAnyKey();
+  await acknowledge(title: 'Safehouse siege');
   for (Creature p in present) {
     if (kidnapped.contains(p)) {
       for (Creature p2 in pool.where(

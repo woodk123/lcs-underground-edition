@@ -32,6 +32,7 @@ import 'package:lcs_new_age/sitemode/fight.dart';
 import 'package:lcs_new_age/sitemode/haul_kidnap.dart';
 import 'package:lcs_new_age/sitemode/map_specials.dart';
 import 'package:lcs_new_age/sitemode/miscactions.dart';
+import 'package:lcs_new_age/sitemode/operation_cleanup.dart';
 import 'package:lcs_new_age/sitemode/site_display.dart';
 import 'package:lcs_new_age/sitemode/sitemap.dart';
 import 'package:lcs_new_age/title_screen/game_over.dart';
@@ -528,7 +529,9 @@ Future<ChaseOutcome> carChaseSequence({String? introduction}) async {
           .length;
       if (partyalive > 0 && baddiecount == 0) {
         await encounterMessage("It looks like you've lost them!");
-        for (BodyPart w in pool.expand((p) => p.body.parts)) {
+        for (BodyPart w in operationParticipants(
+          siegeSite: chaseSequence?.site,
+        ).expand((p) => p.body.parts)) {
           w.bleeding = 0;
         }
         mode = GameMode.base;
@@ -767,7 +770,9 @@ Future<ChaseOutcome> footChaseSequence({
           }
           await acknowledge(title: 'Pursuit report');
         }
-        for (BodyPart w in pool.expand((p) => p.body.parts)) {
+        for (BodyPart w in operationParticipants(
+          siegeSite: chaseSequence?.site,
+        ).expand((p) => p.body.parts)) {
           w.bleeding = 0;
         }
         mode = GameMode.base;
@@ -1527,6 +1532,7 @@ Future<void> crashfriendlycar(Vehicle v) async {
         p.die();
 
         // Remove dead Liberal from squad
+        p.squadId = null;
         squad.remove(p);
       } else {
         // Inform the player of character survival
@@ -1605,6 +1611,7 @@ Future<void> crashenemycar(Vehicle v) async {
 }
 
 Future<void> chaseGiveUp() async {
+  final participants = operationParticipants(siegeSite: chaseSequence?.site);
   Site? ps =
       findSiteInSameCity(chaseSequence!.location.city, SiteType.policeStation);
   vehiclePool.removeWhere((v) => chaseSequence!.friendcar.contains(v));
@@ -1621,7 +1628,7 @@ Future<void> chaseGiveUp() async {
       await freehostage(p, FreeHostageMessage.none);
     }
   }
-  for (BodyPart w in pool.expand((p) => p.body.parts)) {
+  for (BodyPart w in participants.expand((p) => p.body.parts)) {
     w.bleeding = 0;
   }
   clearMessageArea();
@@ -1682,6 +1689,7 @@ Future<ChaseOutcome> soloChaseSequence(Creature cr, int pursuitStrength,
   if (ret.won) {
     cr.squadId = oldSquad?.id;
   } else {
+    cr.squadId = null;
     oldSquad?.members.remove(cr);
   }
   activeSquad = oact;

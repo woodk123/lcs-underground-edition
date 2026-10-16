@@ -17,7 +17,7 @@ const url = assertQaUrl(arg('--url', undefined));
 const expected = arg('--expected-hash', '');
 assert.match(expected, /^[a-f0-9]{64}$/i, 'Provide the exact compiled QA main.dart.js SHA-256.');
 const only = arg('--only', 'all');
-assert.ok(['all', 'escape', 'fight', 'surrender'].includes(only));
+assert.ok(['all', 'remaining', 'escape', 'fight', 'surrender', 'bailout', 'fight-to-end'].includes(only));
 const baselineRun = args.includes('--baseline');
 const maxAttempts = 40;
 const output = resolve(root, arg('--out', `reports/car-chase-20261016/browser-${Date.now()}`));
@@ -54,7 +54,7 @@ const report = {
     + 'cleared car preferences/orders/charges/heat. Original attributes, skills, body, blood and juice preserved. '
     + 'Supplied a clone of the founder AK47 (30 loaded rounds) and spare ammunition stack8. '
     + 'No supplied vehicle, selected RNG, forced pursuit, healing, balance or outcome.' }],
-  checks: [], issues: [], attempts: [], outcomes: {}, decisions: [], screenshots: [],
+  checks: [], issues: [], attempts: [], outcomes: {}, decisions: [], chosenControls: [], screenshots: [],
   pageErrors: [], consoleErrors: [], failedRequests: [],
 };
 const response = await fetch(new URL('main.dart.js', url));
@@ -85,6 +85,8 @@ async function click(name) {
   const deadline = Date.now() + 12000;
   while (!await available(name) && Date.now() < deadline) await page.waitForTimeout(80);
   assert.ok(await available(name), `Need current enabled control ${name}: ${await text()}`);
+  report.chosenControls.push({ scene, attempt: attemptNumber,
+    label: await button(name).getAttribute('aria-label') ?? await button(name).innerText() });
   await button(name).click(); await page.mouse.move(2, 2); await page.waitForTimeout(140);
 }
 async function decision(kind = 'reader') {
@@ -142,11 +144,12 @@ async function enlarged() {
   await page.waitForTimeout(200);
 }
 const pullOver = /^(?:P[-\s]*)?Pull over and surrender$/i;
+const bailOut = /^(?:B[-\s]*)?Bail out and run$/i;
 const fight = /^(?:F[-\s]*)?Fight$/i;
 const drive = /^(?:D[-\s]*)?Drive hard to escape$/i;
 const loseOnFoot = /^(?:D[-\s]*)?(?:Try to lose them|Try to lose them)$/i;
 const footSurrender = /^(?:G[-\s]*)?Give up(?: and surrender)?$/i;
-const carActive = async () => await available(pullOver) || await available(/^(?:B[-\s]*)?Bail out and run$/i);
+const carActive = async () => await available(pullOver) || await available(bailOut);
 
 async function orderTheft() {
   await click(/^Select crew Teachlocks(?:\s|$)/);
@@ -213,15 +216,27 @@ async function inspectAndEnlarge() {
 async function finishCar(mode) {
   let carTurns = 0, fightingTurns = 0, footFallback = false, surrendered = false;
   let sawShot = false, sawEscape = false, ammoAfterCombat;
-  for (let step = 0; step < 350; step++) {
-    if (await available(/^Save & exit/)) return { carTurns, fightingTurns, footFallback, surrendered, sawShot, sawEscape, ammoAfterCombat };
+  let bailoutSelected = false, footCombatTurns = 0, footEscapeTurns = 0;
+  let lastCondition;
+  function observeCondition(current) {
+    const health = current.match(/Health:\s*([^\n]+)/);
+    const weapon = current.match(/Weapon:\s*([^\n]+)/);
+    if (health || weapon) lastCondition = { health: health?.[1], weapon: weapon?.[1] };
+  }
+  const terminalReports = [];
+  for (let step = 0; step < 700; step++) {
+    if (await available(/^Save & exit/)) return { carTurns, fightingTurns, footFallback, surrendered, sawShot, sawEscape,
+      ammoAfterCombat, bailoutSelected, footCombatTurns, footEscapeTurns, terminalReports, lastCondition };
     if (await available(/^Continue$/)) {
       const current = await decision('pursuit-report');
       sawShot ||= /open fire on the/.test(current);
       sawEscape ||= /looks like you've lost them|A Liberal outcome|can't keep up|couldn't keep up/.test(current);
+      if (/lost them|Liberal outcome|arrested|dies|dead|killed|crash|bleed|squashed|crushed|seized|handcuffed|runs.*off the road|gives up|pulls over/.test(current))
+        terminalReports.push(current);
       await click(/^Continue$/);
     } else if (await carActive()) {
       const current = await decision('car-decision');
+      observeCondition(current);
       if (fightingTurns > 0 && ammoAfterCombat === undefined) {
         const ammunition = current.match(/Weapon:\s*[^\n]*?\b(\d+)\/(\d+)\b/);
         assert.ok(ammunition, `The current source crew card must expose ammunition: ${current}`);
@@ -230,28 +245,42 @@ async function finishCar(mode) {
         await capture('after-combat-ammunition');
         check('current source crew card shows ammunition consumed by the actual car fight');
       }
-      if (baselineRun || mode === 'surrender' || (mode === 'fight' && fightingTurns > 0)) {
+      if (mode === 'bailout' && !bailoutSelected && !baselineRun) {
+        await capture('before-bailout'); await click(bailOut); bailoutSelected = true;
+      } else if (baselineRun || mode === 'surrender' || (mode === 'fight' && fightingTurns > 0)) {
         assert.ok(await available(pullOver)); await click(pullOver); surrendered = true;
         if (baselineRun && await carActive()) {
           issue('Current surrender click is rejected while the classic car animation is running.');
           await capture('animation-rejected-surrender'); return { baselineStopped: true };
         }
-      } else if (mode === 'fight' && await available(fight)) {
+      } else if (['fight', 'fight-to-end'].includes(mode) && await available(fight)) {
         await click(fight); fightingTurns++; carTurns++;
-      } else if (await available(drive)) { await click(drive); carTurns++; }
+      } else if (mode !== 'fight-to-end' && await available(drive)) { await click(drive); carTurns++; }
       else {
         // Obstacle controls have their own authored meanings; F can mean slow
         // down, so never infer a combat action from its key.
         const obstacle = /^(?:D[-\s]*)?(?:Swerve(?: around| into an alley| into traffic)|Run the light)$/i;
-        if (await available(obstacle)) await click(obstacle);
+        if (mode === 'fight-to-end' && await available(/^(?:F[-\s]*)?Slow down$/i))
+          await click(/^(?:F[-\s]*)?Slow down$/i);
+        else if (await available(obstacle)) await click(obstacle);
         else if (await available(/^(?:F[-\s]*)?Slow down$/i)) await click(/^(?:F[-\s]*)?Slow down$/i);
         else throw Error(`No authored obstacle choice: ${await text()}`);
         carTurns++;
       }
     } else if (await available(footSurrender) || await available(loseOnFoot)) {
-      footFallback = true; await decision('actual-on-foot-transition'); await capture('on-foot-transition');
-      if (mode === 'escape' && await available(loseOnFoot)) await click(loseOnFoot);
+      footFallback = true; observeCondition(await decision('actual-on-foot-transition')); await capture('on-foot-transition');
+      if (mode === 'fight-to-end') {
+        assert.ok(await available(fight), 'Continue actual combat after a forced transition to foot.');
+        await click(fight); footCombatTurns++;
+      } else if (['escape', 'bailout'].includes(mode) && await available(loseOnFoot)) {
+        await click(loseOnFoot); footEscapeTurns++;
+      }
       else { await click(footSurrender); surrendered = true; }
+    } else if (await available(/Reflect on your Conservative (?:driving|ineptitude)/i)) {
+      const current = await decision('source-defeat-reflection');
+      footFallback ||= /On-foot pursuit/.test(current);
+      await capture('source-defeat-reflection');
+      await click(/Reflect on your Conservative (?:driving|ineptitude)/i);
     } else await page.waitForTimeout(100);
   }
   throw Error(`Car pursuit failed to resolve: ${await text()}`);
@@ -288,9 +317,16 @@ async function runScenario(mode) {
     const final = (await snapshot('resolved')).state;
     const person = final.lcs.pool.find(candidate => candidate.id === actor.id);
     verifyFounder(final, ordered);
-    assert.equal(person.alive, true, 'This completed scenario must retain the actor.');
+    if (!['bailout', 'fight-to-end'].includes(mode))
+      assert.equal(person.alive, true, 'This completed scenario must retain the actor.');
     assert.ok(final.nextVehicleId > ordered.nextVehicleId, 'The original theft/pursuit handlers created actual vehicles.');
     const localDecisions = report.decisions.filter(record => record.scene === scene && record.attempt === attemptNumber);
+    const selected = report.chosenControls.filter(record => record.scene === scene && record.attempt === attemptNumber);
+    if (mode === 'fight-to-end') {
+      assert.ok(selected.every(record => !pullOver.test(record.label) && !footSurrender.test(record.label)
+        && !bailOut.test(record.label) && !drive.test(record.label)),
+      'The recorded terminal-combat journey must never select surrender, voluntary bailout or driving escape.');
+    }
     assert.ok(localDecisions.some(record => /hotwires the car|found the keys/.test(record.text)),
       'The car must have been started through actual theft gameplay.');
     assert.ok(localDecisions.some(record => /by car|pull away from the site/.test(record.text)));
@@ -304,7 +340,71 @@ async function runScenario(mode) {
       report.attempts.push({ scene, attempt: attemptNumber, result: 'car-lost-continued-on-foot', details: result });
       continue; // Recorded honestly; try another natural car escape.
     }
-    if (mode === 'escape') {
+    if (!person) {
+      assert.ok(['bailout', 'fight-to-end'].includes(mode));
+      assert.equal(result.surrendered, false);
+      assert.ok(localDecisions.some(record => record.kind === 'source-defeat-reflection'),
+        'A removed actor requires the actual terminal defeat reader.');
+      assert.equal(final.stats.martyrs, ordered.stats.martyrs + 1,
+        'The original engine must record the actor death once before removing an unrecovered body.');
+      assert.equal(final.lcs.vehiclePool.length, 0);
+      assert.deepEqual(final.lcs.squads[0].members, ordered.lcs.squads[0].members.filter(id => id !== actor.id));
+      assert.deepEqual(final.lcs.squads.map(squad => squad.id), ordered.lcs.squads.map(squad => squad.id));
+      if (mode === 'bailout') assert.ok(result.bailoutSelected && result.footFallback && result.footEscapeTurns > 0);
+      else assert.ok(result.fightingTurns > 0 && result.sawShot && !result.bailoutSelected);
+      report.outcomes[scene] = { attempt: attemptNumber, ...result, personId: actor.id,
+        terminal: 'death', alive: false, bodyRecovered: false, removedFromPool: true,
+        date: final.date, cars: final.lcs.vehiclePool, funds: final.ledger._funds,
+        martyrsBefore: ordered.stats.martyrs, martyrsAfter: final.stats.martyrs,
+        loadedAmmoBefore: initialActor.equippedWeapon?.ammo, finalCondition: 'Unrecovered body removed by original engine' };
+      await capture('resolved-headquarters-after-unrecovered-death');
+      check('actual terminal combat defeat removes the unrecovered body and abandoned car, records one martyr and restores the original squad');
+      check('save/export/reload retains the real defeat outcome while the founder and other crew remain at HQ');
+      return;
+    }
+    const police = final.cities.flatMap(city => city.districts.flatMap(district => district.sites))
+      .find(site => site.type === 'policeStation' && `Site${site.id}` === person.locationId);
+    const terminal = !person.alive ? 'death' : police ? 'custody'
+      : person.locationId === `Site${person.baseId}` ? 'headquarters' : 'other';
+    if (['bailout', 'fight-to-end'].includes(mode)) {
+      assert.equal(result.surrendered, false, 'These scenarios never select voluntary surrender.');
+      assert.notEqual(terminal, 'other', 'The original pursuit must resolve into HQ, custody or death.');
+      if (mode === 'bailout') {
+        assert.equal(result.bailoutSelected, true);
+        assert.equal(result.footFallback, true, 'Bailout must actually enter the on-foot pursuit reader.');
+        assert.ok(result.footEscapeTurns > 0);
+        assert.equal(final.lcs.vehiclePool.length, 0, 'Bailing out abandons the actual stolen car.');
+        check('current Bail out action abandons the stolen car and enters a real on-foot pursuit');
+      } else {
+        assert.equal(result.bailoutSelected, false);
+        assert.ok(result.fightingTurns > 0 && result.sawShot);
+        check('repeated original Fight controls resolve the pursuit without voluntary surrender, bailout or driving escape');
+      }
+      if (terminal === 'headquarters') {
+        assert.equal(person.squadId, initialActor.squadId);
+        if (mode === 'bailout') {
+          assert.equal(person.equippedWeapon.typeName, initialActor.equippedWeapon.typeName);
+          assert.equal(person.equippedWeapon.ammo, initialActor.equippedWeapon.ammo);
+          assert.deepEqual(person.spareAmmo, initialActor.spareAmmo);
+        }
+      } else if (terminal === 'custody') {
+        assert.equal(person.squadId, null);
+        assert.ok(person.carId == null || person.carId === -1,
+          'An automatic on-foot arrest can retain the original -1 no-car sentinel.');
+        assert.equal(person.equippedWeapon, null); assert.equal(person.spareAmmo, null);
+        assert.equal(person.activity.type, 'none');
+      } else {
+        // A retained corpse can remain at its original location. The original
+        // engine distinguishes it from an unrecovered body removed from pool.
+        assert.ok(person.locationId == null || person.locationId === `Site${person.baseId}`);
+        assert.equal(final.stats.martyrs, ordered.stats.martyrs + 1);
+        assert.equal(person.squadId, null, 'A dead driver must not retain a dangling temporary pursuit squad.');
+        assert.ok(!final.lcs.vehiclePool.some(car => car.id === person.carId),
+          'The historical corpse car reference must not identify a live vehicle.');
+      }
+      if (result.footFallback || !person.alive) assert.equal(final.lcs.vehiclePool.length, 0);
+      check(`original ${mode} consequences resolve to ${terminal} with saved condition, equipment and squad state`);
+    } else if (mode === 'escape') {
       assert.ok(result.carTurns > 0 && result.sawEscape);
       assert.equal(result.surrendered, false);
       assert.equal(person.locationId, `Site${person.baseId}`); assert.equal(person.squadId, initialActor.squadId);
@@ -319,8 +419,6 @@ async function runScenario(mode) {
       assert.equal(person.squadId, null); assert.equal(person.carId, null);
       assert.equal(person.equippedWeapon, null); assert.equal(person.spareAmmo, null);
       assert.equal(person.activity.type, 'none'); assert.equal(final.lcs.vehiclePool.length, 0);
-      const police = final.cities.flatMap(city => city.districts.flatMap(district => district.sites))
-        .find(site => site.type === 'policeStation' && `Site${site.id}` === person.locationId);
       assert.ok(police, 'Surrender places the driver in original police custody.');
       assert.deepEqual(final.lcs.squads[0].members, ordered.lcs.squads[0].members.filter(id => id !== person.id));
       if (mode === 'fight') {
@@ -343,8 +441,12 @@ async function runScenario(mode) {
     assert.deepEqual(person.portraitId, initialActor.portraitId);
     assert.deepEqual(final.lcs.squads.map(squad => squad.id), ordered.lcs.squads.map(squad => squad.id));
     report.outcomes[scene] = { attempt: attemptNumber, ...result, personId: person.id,
-      date: final.date, locationId: person.locationId, blood: person._blood,
+      terminal, alive: person.alive, date: final.date, locationId: person.locationId, blood: person._blood,
       cars: final.lcs.vehiclePool, crimes: person.wantedForCrimes, funds: final.ledger._funds,
+      body: person.body, squadId: person.squadId, carId: person.carId,
+      weapon: person.equippedWeapon, spareAmmo: person.spareAmmo, activity: person.activity,
+      bodyRetainedInPool: !person.alive || undefined,
+      corpseStatus: !person.alive ? 'Retained corpse at original base or no location' : undefined,
       loadedAmmoBefore: initialActor.equippedWeapon?.ammo, loadedAmmoAfter: person.equippedWeapon?.ammo ?? null };
     await capture('resolved-headquarters');
     check('save/export/reload observes the resulting custody or HQ state and preserves the founder and squad');
@@ -360,7 +462,9 @@ try {
   assert.deepEqual(normalizedActor.rawAttributes, actor.rawAttributes);
   assert.equal(normalizedActor.juice, actor.juice);
   check('fixture normalization preserves the experienced driver original skills and attributes');
-  for (const mode of only === 'all' ? ['escape', 'fight', 'surrender'] : [only]) await runScenario(mode);
+  const modes = only === 'all' ? ['escape', 'fight', 'surrender', 'bailout', 'fight-to-end']
+    : only === 'remaining' ? ['bailout', 'fight-to-end'] : [only];
+  for (const mode of modes) await runScenario(mode);
   assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.consoleErrors, []); assert.deepEqual(report.failedRequests, []);
   report.status = report.issues.length ? 'baseline-issues-reproduced' : 'passed';
 } catch (error) {

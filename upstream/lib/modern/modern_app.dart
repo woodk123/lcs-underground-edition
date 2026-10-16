@@ -228,9 +228,10 @@ class _ModernGameShellState extends State<ModernGameShell> {
       setState(() => _inspectedPersonId = null);
       return KeyEventResult.handled;
     }
-    if (_inspectedPersonId != null && game.mode == GameMode.site) {
-      // A field dossier is a read-only overlay; its scrolling and navigation
-      // keys must not become orders to the awaited operation reader.
+    if (_inspectedPersonId != null &&
+        (game.mode == GameMode.site ||
+            headquartersFrame(console)?.siege != null)) {
+      // Inspection keys must not become field orders or a siege surrender.
       return KeyEventResult.ignored;
     }
     if (_entryFocus.hasFocus) {

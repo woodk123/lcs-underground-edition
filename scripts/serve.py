@@ -9,6 +9,12 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 
+class GameServer(ThreadingHTTPServer):
+    # A fresh Flutter page requests many assets at once. Queue a bounded burst
+    # while the accept loop is busy starting request threads.
+    request_queue_size = 128
+
+
 class GameHandler(SimpleHTTPRequestHandler):
     extensions_map = {
         **SimpleHTTPRequestHandler.extensions_map,
@@ -62,7 +68,7 @@ def main():
     if not 1 <= args.port <= 65535:
         parser.error("Port must be between 1 and 65535")
     handler = partial(GameHandler, directory=str(directory))
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), handler)
+    server = GameServer(("127.0.0.1", args.port), handler)
     print(f"LCS local game: http://127.0.0.1:{args.port}/", flush=True)
     try:
         server.serve_forever()

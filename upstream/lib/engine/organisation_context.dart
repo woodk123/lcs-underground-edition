@@ -122,21 +122,38 @@ _HeadquartersScope _currentHeadquartersScope() {
   );
 }
 
-/// The exact W/F/C capabilities authored by the last matching HQ frame.
+/// Read-only siege information authored alongside one original HQ reader.
+@immutable
+class SiegeBriefing {
+  SiegeBriefing({
+    required this.location,
+    required this.title,
+    required this.note,
+    required Iterable<String> statusLines,
+  }) : statusLines = List.unmodifiable(statusLines);
+
+  final String location, title, note;
+  final List<String> statusLines;
+}
+
+/// The exact W/F/G/C capabilities authored by the last matching HQ frame.
 ///
 /// Its scope is a fingerprint, never an eligibility calculation. A changed
 /// team, site, date, roster, queued order or siege invalidates the snapshot; UI
 /// must return to the source HQ to refresh rather than guess a new command.
 @immutable
 class HeadquartersFrame {
-  HeadquartersFrame.capture(Iterable<ConsoleAction> actions)
+  HeadquartersFrame.capture(Iterable<ConsoleAction> actions, {this.siege})
     : _scope = _currentHeadquartersScope(),
       actions = List.unmodifiable(
-        actions.where((action) => const {'w', 'f', 'c'}.contains(action.key)),
+        actions.where(
+          (action) => const {'w', 'f', 'g', 'c'}.contains(action.key),
+        ),
       );
 
   final _HeadquartersScope _scope;
   final List<ConsoleAction> actions;
+  final SiegeBriefing? siege;
   int? get squadId => _scope.squadId;
   String? get locationId => _scope.locationId;
   DateTime get date => _scope.date;

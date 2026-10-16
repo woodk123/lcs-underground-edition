@@ -2302,7 +2302,11 @@ void autopromote(Site loc) {
 
   if (partysize == libnum) return;
 
-  squad.removeWhere((e) => !e.alive);
+  squad.removeWhere((person) {
+    if (person.alive) return false;
+    person.squadId = null;
+    return true;
+  });
 
   for (int i = 0; i < 6 - partyalive; i++) {
     for (int pl = 0; pl < pool.length; pl++) {

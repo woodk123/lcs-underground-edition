@@ -84,15 +84,14 @@ Future<bool> baseMode() async {
           await planSiteVisit();
         } else if (siege?.underSiege == true &&
             siege?.activeSiegeType == SiegeType.police &&
-            (activeSafehouse ?? activeSquad?.site)?.type ==
-                SiteType.homelessEncampment) {
-          await fightHomelessCampSiege();
+            loc?.type == SiteType.homelessEncampment) {
+          await fightHomelessCampSiege(loc);
           cleanGoneSquads();
         } else if (siege?.underAttack ?? false) {
-          await escapeOrEngage();
+          await escapeOrEngage(loc);
           cleanGoneSquads();
         } else if (siege?.underSiege ?? false) {
-          await sallyForth();
+          await sallyForth(loc);
           cleanGoneSquads();
         }
       case Key.z:
@@ -434,8 +433,7 @@ void baseModeOptionsDisplay(Site? loc) {
       1,
       "f",
       "F - Fight/Escape",
-      enabledWhen:
-          squadSize > 0 || pool.any((p) => p.site?.siege.underAttack ?? false),
+      enabledWhen: pool.any((p) => p.location == site && p.isActiveLiberal),
     );
     addOptionText(19, 23, "g", "G - Give Up");
   } else {
@@ -449,7 +447,7 @@ void baseModeOptionsDisplay(Site? loc) {
   }
 
   if (cannotWait) {
-    if (sieged) {
+    if (site?.siege.underAttack == true) {
       mvaddstrc(23, 1, red, "Cannot Wait until Siege Resolved");
     } else {
       addOptionText(
@@ -496,7 +494,61 @@ void baseModeOptionsDisplay(Site? loc) {
   if (loc != null) {
     printSafehouseSecurityBox(loc);
   }
-  describeHeadquarters(console, HeadquartersFrame.capture(console.actions));
+  describeHeadquarters(
+    console,
+    HeadquartersFrame.capture(
+      console.actions,
+      siege: loc?.siege.underSiege == true ? _siegeBriefing(loc!) : null,
+    ),
+  );
+}
+
+SiegeBriefing _siegeBriefing(Site loc) {
+  final siege = loc.siege;
+  final raiders = switch (siege.activeSiegeType) {
+    SiegeType.police =>
+      siege.escalationState == SiegeEscalation.police
+          ? 'Police'
+          : 'Military forces',
+    SiegeType.cia => 'CIA forces',
+    SiegeType.angryRuralMob => 'An angry mob',
+    SiegeType.corporateMercs => 'Corporate mercenaries',
+    SiegeType.medicalDebtCollectors => 'Medical debt collectors',
+    SiegeType.ccs => 'CCS forces',
+    SiegeType.none => '',
+  };
+  final surrender = switch (siege.activeSiegeType) {
+    SiegeType.police =>
+      loc.type == SiteType.homelessEncampment
+          ? 'Giving up means arrest for the Liberals here and confiscation of local equipment and vehicles.'
+          : 'Giving up lets the police confiscate local equipment and vehicles. Wanted Liberals here face arrest.',
+    SiegeType.medicalDebtCollectors =>
+      'Giving up lets the collectors take available funds toward hospital debt and confiscate local supplies and vehicles.',
+    _ => 'Giving up to these attackers will kill everyone at this location.',
+  };
+  return SiegeBriefing(
+    location: loc.getName(includeCity: true),
+    title: siege.underAttack
+        ? 'Safehouse under attack'
+        : 'Safehouse under siege',
+    note: '$surrender Crew at other locations are outside this response.',
+    statusLines: [
+      '$raiders ${siege.underAttack ? 'are attacking now.' : 'have surrounded the safehouse.'}',
+      if (loc.upgradable && numberEating(loc) > 0)
+        '${numberEating(loc)} people here · ${loc.compound.rations} rations · ${foodDaysLeft(loc)} days of food',
+      if (loc.compound.fortified) 'Fortifications are in place.',
+      if (loc.compound.boobyTraps) 'Booby traps are in place.',
+      if (siege.lightsOff) 'Power is cut.',
+      if (loc.compound.cameras && siege.camerasOff)
+        'Security cameras are offline.',
+      if (loc.compound.cameras && !siege.camerasOff)
+        'Security cameras are online.',
+      if (siege.underAttack)
+        'Respond before advancing time.'
+      else
+        'You may fight, try to escape, give up, or wait if the current orders allow it.',
+    ],
+  );
 }
 
 void addFlagButton(int y, int x, Site loc) {

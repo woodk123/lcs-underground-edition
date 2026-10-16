@@ -1555,8 +1555,8 @@ Future<SallyForthResult> sallyForthPart3(Site loc) async {
   }
 }
 
-Future<void> fightHomelessCampSiege() async {
-  Site? loc = activeSafehouse ?? activeSquad?.members.firstOrNull?.site;
+Future<void> fightHomelessCampSiege([Site? target]) async {
+  Site? loc = target ?? activeSafehouse ?? activeSquad?.members.firstOrNull?.site;
   if (loc == null) return;
 
   //GIVE INFO SCREEN
@@ -1590,8 +1590,8 @@ Future<void> fightHomelessCampSiege() async {
 }
 
 /* siege - prepares for exiting the siege to fight the attackers head on */
-Future<void> sallyForth() async {
-  Site? loc = activeSafehouse ?? activeSquad?.members.firstOrNull?.site;
+Future<void> sallyForth([Site? target]) async {
+  Site? loc = target ?? activeSafehouse ?? activeSquad?.members.firstOrNull?.site;
   if (loc == null) return;
 
   //GIVE INFO SCREEN
@@ -1637,27 +1637,7 @@ Future<void> sallyForthPart2(Site loc) async {
     );
   }
 
-  // Select a squad to use
-  activeSquad ??= squads.firstWhereOrNull(
-    (s) => s.members.isNotEmpty && s.members.first.location == loc,
-  );
-
-  // No squads at the location? Form a new one.
-  if (activeSquad == null) {
-    squads.add(Squad());
-    squads.last.name = "${activeSafehouse!.getName(short: true)} Defense";
-    int i = 0;
-    for (Creature p in pool) {
-      if (p.location == activeSafehouse &&
-          p.alive &&
-          p.align == Alignment.liberal) {
-        squads.last.members.add(p);
-        p.squadId = squads.last.id;
-        if (++i >= 6) break;
-      }
-    }
-    activeSquad = squads.last;
-  }
+  if (!_selectLocalSiegeSquad(loc)) return;
 
   //MAKE SURE PARTY IS ORGANIZED
   autopromote(loc);
@@ -1681,8 +1661,8 @@ Future<void> sallyForthPart2(Site loc) async {
 }
 
 /* siege - prepares for entering site mode to fight the siege */
-Future<void> escapeOrEngage() async {
-  Site? loc = activeSafehouse ?? activeSquad?.members.firstOrNull?.site;
+Future<void> escapeOrEngage([Site? target]) async {
+  Site? loc = target ?? activeSafehouse ?? activeSquad?.members.firstOrNull?.site;
   if (loc == null) return;
 
   //GIVE INFO SCREEN
@@ -1763,26 +1743,7 @@ Future<void> escapeOrEngage() async {
     );
   }
 
-  // Select a squad to use
-  activeSquad ??= squads.firstWhereOrNull(
-    (s) => s.members.isNotEmpty && s.members.first.location == loc,
-  );
-
-  // No squads at the location? Form a new one.
-  if (activeSquad == null) {
-    squads.add(Squad());
-    squads.last.name = "${activeSafehouse!.getName(short: true)} Defense";
-    for (Creature p in activeSafehouse!.creaturesPresent.where(
-      (p) => p.isActiveLiberal,
-    )) {
-      if (squads.last.members.length < 6) {
-        p.squad = squads.last;
-      } else {
-        break;
-      }
-    }
-    activeSquad = squads.last;
-  }
+  if (!_selectLocalSiegeSquad(loc)) return;
 
   //MAKE SURE PARTY IS ORGANIZED
   autopromote(loc);
@@ -1798,6 +1759,28 @@ Future<void> escapeOrEngage() async {
         ..loc = loc
         ..siegetype = loc.siege.activeSiegeType;
   await siteMode(loc);
+}
+
+/// A siege response uses people physically at that safehouse. A previously
+/// selected squad elsewhere must never be sent into this encounter.
+bool _selectLocalSiegeSquad(Site loc) {
+  if (activeSquad?.site != loc) activeSquad = null;
+  activeSquad ??= squads.firstWhereOrNull(
+    (s) => s.members.isNotEmpty && s.members.first.location == loc,
+  );
+  if (activeSquad != null) return true;
+  final defenders = loc.creaturesPresent
+      .where((p) => p.alive && p.align == Alignment.liberal)
+      .take(6)
+      .toList();
+  if (defenders.isEmpty) return false;
+  final defense = Squad()..name = '${loc.getName(short: true)} Defense';
+  squads.add(defense);
+  for (final person in defenders) {
+    person.squad = defense;
+  }
+  activeSquad = defense;
+  return true;
 }
 
 /* siege - what happens when you escaped the siege */

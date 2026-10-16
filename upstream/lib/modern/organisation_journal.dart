@@ -1641,12 +1641,74 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ? widget.detail!
         : allocating || _pool
         ? _poolPage()
+        : console.screen == 'headquarters' &&
+              controller.headquarters?.siege != null
+        ? _siegeResponse()
         : _orders || activityFrame || planning
         ? _orderContext(narrow)
         : _showReports || widget.section == 5
         ? _reportsContext(narrow)
         : _mapContext(),
   );
+
+  Widget _siegeResponse() {
+    final frame = controller.headquarters!;
+    final briefing = frame.siege!;
+    final revision = console.revision.value;
+    return ListView(
+      key: const ValueKey('journal-siege-response'),
+      children: [
+        Text(briefing.title, style: JournalPalette.heading),
+        const SizedBox(height: 5),
+        Text(briefing.location, style: JournalPalette.small),
+        const Divider(height: 20),
+        if (briefing.statusLines.isNotEmpty)
+          Text(briefing.statusLines.first, style: JournalPalette.body),
+        const SizedBox(height: 12),
+        for (final key in const ['f', 'g', 'w'])
+          if (frame.action(key) case final action?)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: OutlinedButton(
+                key: ValueKey('journal-siege-action:$key'),
+                onPressed: action.enabled && !controller.busy
+                    ? () {
+                        if (widget.inspectedPerson == null &&
+                            identical(controller.headquarters, frame) &&
+                            console.screen == 'headquarters') {
+                          unawaited(
+                            controller.sendAction(action, revision: revision),
+                          );
+                        }
+                      }
+                    : null,
+                child: Text(action.intentLabel ?? _clean(action.label)),
+              ),
+            ),
+        const SizedBox(height: 5),
+        Text(briefing.note, style: JournalPalette.small),
+        if (briefing.statusLines.length > 1)
+          Material(
+            type: MaterialType.transparency,
+            child: ExpansionTile(
+              key: const ValueKey('journal-siege-details'),
+              tilePadding: EdgeInsets.zero,
+              title: const Text('Siege details', style: JournalPalette.body),
+              children: [
+                for (final line in briefing.statusLines.skip(1))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(line, style: JournalPalette.body),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
 
   Widget _poolPage() {
     final memberIds = members.map((member) => member.id).toSet();

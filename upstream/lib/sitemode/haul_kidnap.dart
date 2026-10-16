@@ -463,6 +463,7 @@ Future<void> squadHaulImmobileAllies(bool dead) async {
         }
 
         //SHUFFLE SQUAD
+        if (!p.alive) p.squadId = null;
         squad.remove(p);
         printParty();
 

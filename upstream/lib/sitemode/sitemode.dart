@@ -33,6 +33,7 @@ import 'package:lcs_new_age/sitemode/haul_kidnap.dart';
 import 'package:lcs_new_age/sitemode/map_specials.dart';
 import 'package:lcs_new_age/sitemode/miscactions.dart';
 import 'package:lcs_new_age/sitemode/newencounter.dart';
+import 'package:lcs_new_age/sitemode/operation_cleanup.dart';
 import 'package:lcs_new_age/sitemode/site_display.dart';
 import 'package:lcs_new_age/sitemode/sitemap.dart';
 import 'package:lcs_new_age/sitemode/stealth.dart';
@@ -1999,7 +2000,7 @@ Future<void> _resolveSite() async {
 }
 
 Future<void> _fightSubdued() async {
-  int p;
+  final participants = operationParticipants(siegeSite: activeSite);
   //int ps=find_police_station(chaseseq.location);
 
   chaseSequence?.friendcar.removeWhere((e) => vehiclePool.contains(e));
@@ -2016,8 +2017,8 @@ Future<void> _fightSubdued() async {
     await captureCreature(c);
   }
   squad.clear();
-  for (p = 0; p < pool.length; p++) {
-    for (var w in pool[p].body.parts) {
+  for (final person in participants) {
+    for (var w in person.body.parts) {
       w.bleeding = 0;
     }
   }
@@ -2238,6 +2239,7 @@ Future<void> _openDoor(bool restricted) async {
 }
 
 Future<void> squadCleanup() async {
+  final participants = operationParticipants(siegeSite: activeSite);
   //Check for hauled prisoners/corpses
   for (Creature p in squad.toList()) {
     p.location = p.base;
@@ -2258,7 +2260,7 @@ Future<void> squadCleanup() async {
     }
   }
   //Clear all bleeding and prison escape flags
-  for (Creature p in pool) {
+  for (Creature p in participants) {
     p.justEscaped = false;
     for (var bp in p.body.parts) {
       bp.bleeding = 0;

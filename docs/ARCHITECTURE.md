@@ -31,6 +31,10 @@ On-foot and car pursuits publish `PursuitContext` snapshots in `engine/pursuit_c
 
 Car road animation is cosmetic. It repaints its captured console only while the car reader awaits input, without consuming campaign RNG, changing command revisions or contributing glyphs to authored reports. Nested readers own the console while open. The chase stops and awaits animation cleanup on every exit; driving, combat, obstacles and capture remain in the original handlers.
 
+Siege responses stay in the headquarters journal with the squad leader rail on the left. The original headquarters reader publishes an immutable `SiegeBriefing` and its exact F/G/W capabilities in `HeadquartersFrame`. The journal shows the current attack, consequences and responses; supply/security detail expands on demand. Responses retain their source action and revision, and inspection blocks battle/surrender keys. The source passes the displayed site into its response initializer and forms defense from people physically there, preserving other squads and hospital patients.
+
+Operation cleanup snapshots participants before custody, hauling or relocation changes their membership. Stabilization and prison-escape flag cleanup apply to that roster, including hauled people and local siege reserves. People at other sites keep their condition. Defeated solo pursuits, uncarried casualties, reserve promotion and fatal car crashes clear dead actors' reverse squad membership when removing them. Living hauled people retain their in-operation ownership. Police siege confiscation reports use one authored acknowledgement reader so Continue remains available.
+
 Free Clinic patients remain admitted until the existing healed/60-day discharge condition. Clinic support remains 6 at an ordinary non-LCS site and generates no new treatment bill; university hospitals retain support 16 and law-dependent charges. Sleeper staff at their own clinic workplace are distinguished from admitted patients.
 
 ## Development
