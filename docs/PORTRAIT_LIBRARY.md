@@ -28,6 +28,8 @@ Preserve these IDs and append new art rather than inserting it. Base IDs use `ba
 
 Rendering lives in `modern/crew_portrait.dart`. Supported equipment, injuries and ageing use overlays without rerolling the face; the dossier remains the authoritative medical/equipment record.
 
+The founder identity page offers a portrait preview and **Reroll portrait** (`F`) beside the name controls. Options follow the starting campaign age and selected presentation. Cycling uses an isolated seed/catalog order and leaves names, stats, campaign state and gameplay RNG alone. The chosen face carries through background answers and the public-name page into saves. Decorative crew/personnel icons use a separate activist-group illustration and do not assign character identities.
+
 ## Regenerate
 
 Install the regeneration dependency with `python -m pip install -r scripts/requirements-art.txt`. From the repository root:

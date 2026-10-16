@@ -322,6 +322,39 @@ int portraitIdForDisplay(Creature person) {
   return _choosePortrait(person, const {}).id;
 }
 
+/// A cosmetic choice for the identity page, before the founder's birthday is
+/// chosen. Cycling uses catalog order and an isolated seed, never gameplay RNG.
+int chooseFounderPortrait({
+  required Gender gender,
+  required int age,
+  required int seed,
+  int? after,
+}) {
+  final choices = portraitCatalog.where((entry) {
+    final human = age < 20
+        ? entry.background == PortraitBackground.teenager &&
+              (entry.visualAge - age).abs() <= 2 &&
+              (age >= 18 || entry.visualAge < 18)
+        : entry.id < 250 ||
+              const {
+                PortraitBackground.punk,
+                PortraitBackground.goth,
+                PortraitBackground.emo,
+                PortraitBackground.biker,
+              }.contains(entry.background);
+    return human &&
+        (gender.simplified == Gender.nonbinary ||
+            entry.gender == gender.simplified) &&
+        (entry.visualAge - age).abs() <= _portraitAgeTolerance(age);
+  }).toList();
+  if (choices.isEmpty) throw StateError('No suitable founder portraits');
+  final previous = choices.indexWhere((entry) => entry.id == after);
+  return choices[previous < 0
+          ? Random(seed).nextInt(choices.length)
+          : (previous + 1) % choices.length]
+      .id;
+}
+
 bool _canKeepSaved(Creature person) {
   if (!_validPortrait(person.portraitId)) return false;
   final entry = portraitCatalog[person.portraitId!];

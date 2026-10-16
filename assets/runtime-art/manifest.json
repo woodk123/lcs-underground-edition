@@ -9,6 +9,18 @@
   },
   "assets": [
     {
+      "original_path": "assets/runtime-art/source/activist_crew_v1.png",
+      "runtime_path": "upstream/assets/modern/activist_crew_v1.webp",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "lossless": true,
+      "original_sha256": "c512f56a0258b77f1fc7240487bce23ce309af6d81c09149b7848ba21a05998b",
+      "runtime_sha256": "58d08349ed59bc6030145a381742e86a7edf24625ab75e6963db05c73c225d0d",
+      "original_bytes": 2819385,
+      "runtime_bytes": 1837942
+    },
+    {
       "original_path": "assets/runtime-art/source/building_sprites_v2.png",
       "runtime_path": "upstream/assets/modern/building_sprites_v2.webp",
       "width": 1254,

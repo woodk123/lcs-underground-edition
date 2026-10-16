@@ -66,12 +66,27 @@ async function capture(name) {
   report.checks.push({ name, status: 'passed', viewport: page.viewportSize() });
   console.log(`PASS ${name}`);
 }
+async function rerollPortrait(prefix) {
+  const preview = page.getByRole('img', { name: 'Founder portrait preview', exact: true });
+  await preview.waitFor();
+  await page.waitForTimeout(300);
+  const beforeText = await text();
+  const before = createHash('sha256').update(await preview.screenshot()).digest('hex');
+  await click(/^Reroll portrait$/);
+  await page.mouse.move(2, 2);
+  await page.waitForTimeout(350);
+  const after = createHash('sha256').update(await preview.screenshot()).digest('hex');
+  assert.notEqual(after, before, 'Reroll must visibly change the portrait');
+  assert.equal(await text(), beforeText, 'Reroll must leave names and settings unchanged');
+  report.checks.push({ name: `${prefix}-portrait-reroll`, status: 'passed' });
+}
 async function founderFlow({ fate, prefix, name }) {
   await click(/^Start a New Game/); await wait(/Campaign dossier/);
   await capture(`${prefix}-01-settings`);
   await click(/^Continue to founder/); await wait(/The founder/);
   assert.match(await text(), /Given name/);
   assert.doesNotMatch(await text(), /Founder dossier/);
+  await rerollPortrait(prefix);
   if (fate) {
     await click(/^Tragic origin/); await wait(/Let Fate Decide/);
   }
@@ -124,6 +139,7 @@ try {
   await page.setViewportSize({width:800,height:600});await page.waitForTimeout(250);
   await capture('large-01-settings');
   await click(/^Continue to founder/);await wait(/The founder/);
+  await rerollPortrait('large');
   await click(/^Tragic origin/);await wait(/Let Fate Decide/);
   await capture('large-02-identity');await click(/^Begin background/);
   for(let step=1;step<=10;step++) {

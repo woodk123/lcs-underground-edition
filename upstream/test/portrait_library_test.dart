@@ -58,6 +58,41 @@ void main() {
     expect(ensurePortraitId(person), inInclusiveRange(0, 377));
   });
 
+  test(
+    'founder rerolls stay human, age-compatible and presentation-compatible',
+    () {
+      for (final age in [18, 21, 22, 35]) {
+        for (final gender in [Gender.male, Gender.female, Gender.nonbinary]) {
+          int? previous;
+          for (var count = 0; count < 12; count++) {
+            final selected = chooseFounderPortrait(
+              gender: gender,
+              age: age,
+              seed: 18001,
+              after: previous,
+            );
+            final entry = portraitCatalog[selected];
+            expect(selected, isNot(previous));
+            if (gender != Gender.nonbinary) expect(entry.gender, gender);
+            expect(
+              (entry.visualAge - age).abs(),
+              lessThanOrEqualTo(
+                age < 20
+                    ? 2
+                    : age < 30
+                    ? 8
+                    : 12,
+              ),
+            );
+            expect(entry.background, isNot(PortraitBackground.mutant));
+            expect(entry.visualAge, greaterThan(0));
+            previous = selected;
+          }
+        }
+      }
+    },
+  );
+
   test('casting exhausts age-compatible faces before repeating', () {
     game.gameState.uniqueCreatures = UniqueCreatures();
     game.pool.clear();

@@ -11,7 +11,8 @@ import 'package:lcs_new_age/modern/skill_help.dart';
 
 /// The original campaign/founder readers presented as an open journal.
 /// Selections dispatch one existing key. Reading the dossier never dispatches,
-/// rolls, constructs a new person, trains or modifies the founder.
+/// rolls, constructs a new person or trains the founder. Portrait choices are
+/// dispatched to the identity reader as explicit cosmetic actions.
 class JournalCreationPage extends StatefulWidget {
   const JournalCreationPage({
     super.key,
@@ -157,7 +158,9 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
                           SizedBox(
                             width: dossierWidth,
                             child: creation.founder == null
-                                ? _chapterNotes(creation)
+                                ? creation.portraitId != null
+                                      ? _portraitChooser(creation, revision)
+                                      : _chapterNotes(creation)
                                 : _founderDossier(creation, creation.founder!),
                           ),
                         ],
@@ -376,6 +379,34 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
     ),
   );
 
+  Widget _portraitChooser(CreationContext creation, int revision) =>
+      JournalSurface(
+        child: SingleChildScrollView(
+          primary: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Founder portrait', style: JournalPalette.heading),
+              const SizedBox(height: 18),
+              Center(
+                child: FounderPortraitPreview(
+                  key: const ValueKey('creation-portrait-preview'),
+                  portraitId: creation.portraitId!,
+                ),
+              ),
+              const SizedBox(height: 14),
+              if (creation.portraitRerollKey case final key?)
+                OutlinedButton.icon(
+                  key: const ValueKey('creation-reroll-portrait'),
+                  onPressed: _dispatch(key, revision, creation),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Reroll portrait'),
+                ),
+            ],
+          ),
+        ),
+      );
+
   Widget _chapterNotes(CreationContext creation) => JournalSurface(
     lined: true,
     child: SingleChildScrollView(
@@ -479,75 +510,93 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
               ),
               const SizedBox(height: 14),
               const Text('Attributes', style: JournalPalette.heading),
-              const Text(
-                'Hover an attribute for its uses and calculations.',
-                style: JournalPalette.small,
-              ),
               const Divider(height: 12),
-              for (final attribute in Attribute.values)
-                AttributeTooltip(
-                  attribute: attribute,
-                  actor: founder,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _capitalized(attribute.name),
-                            style: JournalPalette.small,
-                          ),
-                        ),
-                        Text(
-                          '${founder.attribute(attribute)}',
-                          key: ValueKey('creation-attribute:${attribute.name}'),
-                          style: JournalPalette.body.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
+              _statTable([
+                for (final attribute in Attribute.values)
+                  AttributeTooltip(
+                    attribute: attribute,
+                    actor: founder,
+                    child: _statEntry(
+                      _capitalized(attribute.name),
+                      founder.attribute(attribute),
+                      valueKey: ValueKey(
+                        'creation-attribute:${attribute.name}',
+                      ),
                     ),
                   ),
-                ),
+              ]),
               const SizedBox(height: 14),
               const Text('Skills', style: JournalPalette.heading),
-              const Text(
-                'Hover a skill for its uses and calculations.',
-                style: JournalPalette.small,
-              ),
               const Divider(height: 12),
-              for (final skill in skills)
-                SkillTooltip(
-                  key: ValueKey('creation-skill:${skill.name}'),
-                  skill: skill,
-                  actor: founder,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            skill.displayName,
-                            style: JournalPalette.small,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${founder.skill(skill)}',
-                          style: JournalPalette.body.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
+              _statTable([
+                for (final skill in skills)
+                  SkillTooltip(
+                    key: ValueKey('creation-skill:${skill.name}'),
+                    skill: skill,
+                    actor: founder,
+                    child: _statEntry(skill.displayName, founder.skill(skill)),
                   ),
-                ),
+              ]),
             ],
           ),
         ),
       ),
     );
   }
+
+  Widget _statTable(List<Widget> entries) => LayoutBuilder(
+    builder: (context, bounds) {
+      final columns =
+          bounds.maxWidth / MediaQuery.textScalerOf(context).scale(1) >= 260
+          ? 2
+          : 1;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var index = 0; index < entries.length; index += columns)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: entries[index]),
+                  if (columns == 2) ...[
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: index + 1 < entries.length
+                          ? entries[index + 1]
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      );
+    },
+  );
+
+  Widget _statEntry(String label, int value, {Key? valueKey}) => Semantics(
+    label: '$label: $value',
+    excludeSemantics: true,
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Flexible(child: Text(label, style: JournalPalette.small)),
+        const SizedBox(width: 6),
+        Text(
+          '$value',
+          key: valueKey,
+          style: JournalPalette.small.copyWith(
+            color: JournalPalette.ink,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _footer(
     CreationContext creation,

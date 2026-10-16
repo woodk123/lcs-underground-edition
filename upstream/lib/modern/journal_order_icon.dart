@@ -129,6 +129,10 @@ class JournalOrderIcon extends StatelessWidget {
     if (type == ActivityType.visit) {
       return JournalIllustratedIcon(icon: JournalIcon.city, size: size);
     }
+    if (type == ActivityType.recruiting ||
+        type == ActivityType.sleeperRecruit) {
+      return JournalIllustratedIcon(icon: JournalIcon.personnel, size: size);
+    }
     final index = journalOrderIconIndex(type);
     final fallback = Icon(
       _fallback(type),

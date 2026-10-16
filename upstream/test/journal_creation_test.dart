@@ -12,6 +12,7 @@ import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/creation_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/modern/attribute_help.dart';
+import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_creation.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
@@ -159,6 +160,68 @@ void main() {
     expect(reader.sent, ['a']);
     expect(reader.received, 'a');
     expect(find.byType(Dialog), findsNothing);
+  });
+
+  testWidgets(
+    'portrait reroll uses its source action once on the name screen',
+    (tester) async {
+      final reader = _Reader(
+        CreationContext(
+          stage: CreationStage.identity,
+          title: 'The founder',
+          portraitId: 1,
+          portraitRerollKey: 'F',
+          fields: const [
+            CreationField(key: 'A', label: 'Given name', value: 'Alex'),
+          ],
+        ),
+        actions: [_action('a'), _action('f')],
+      );
+      await _mount(tester, reader);
+      expect(find.byType(FounderPortraitPreview), findsOneWidget);
+      expect(_key('creation-field:A'), findsOneWidget);
+      final button = tester.widget<OutlinedButton>(
+        _key('creation-reroll-portrait'),
+      );
+      button.onPressed!();
+      button.onPressed!();
+      await _settle(tester);
+      expect(reader.sent, ['f']);
+      expect(reader.received, 'f');
+    },
+  );
+
+  testWidgets('founder values form two close label/value columns', (
+    tester,
+  ) async {
+    final founder = game.pool.first;
+    final reader = _Reader(
+      CreationContext(
+        stage: CreationStage.background,
+        title: 'Background',
+        founder: founder,
+        step: 2,
+      ),
+    );
+    await _mount(tester, reader);
+    final strength = tester.getRect(_key('creation-attribute:strength'));
+    final agility = tester.getRect(_key('creation-attribute:agility'));
+    final intelligence = tester.getRect(
+      _key('creation-attribute:intelligence'),
+    );
+    expect((strength.top - agility.top).abs(), lessThan(1));
+    expect(agility.left, greaterThan(strength.right));
+    expect(intelligence.top, greaterThan(strength.bottom));
+    final label = tester.getRect(find.text('Strength'));
+    expect(strength.left - label.right, inInclusiveRange(5, 7));
+    expect(find.textContaining('Hover an attribute'), findsNothing);
+    expect(find.textContaining('Hover a skill'), findsNothing);
+    final skills = find.byType(SkillTooltip);
+    final first = tester.getRect(skills.at(0));
+    final second = tester.getRect(skills.at(1));
+    expect((first.top - second.top).abs(), lessThan(1));
+    expect(second.left, greaterThan(first.right));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('a background answer sends once with its complete effects visible', (

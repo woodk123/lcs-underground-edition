@@ -251,6 +251,15 @@ Future<void> makeCharacter() async {
     Gender.nonbinary,
   ];
   founder.giveClothingType("CLOTHING_CLOTHES");
+  // Background answers choose a birthday in 2004. Use the youngest possible
+  // age for this preview so either birthday retains an age-compatible face.
+  final portraitAge = gameState.date.year - 2004 - 1;
+  final portraitSeed = gameState.uniqueGameId ^ founder.id;
+  var portraitId = chooseFounderPortrait(
+    gender: sex,
+    age: portraitAge,
+    seed: portraitSeed,
+  );
   String sexDesc() {
     return switch (sex) {
       Gender.male => "Male",
@@ -318,6 +327,14 @@ Future<void> makeCharacter() async {
     );
 
     addOptionText(
+      17,
+      2,
+      "F",
+      "Reroll portrait",
+      baseColorKey: ColorKey.midGray,
+    );
+
+    addOptionText(
       19,
       2,
       "Any Other Key",
@@ -329,6 +346,8 @@ Future<void> makeCharacter() async {
       stage: CreationStage.identity,
       title: 'The founder',
       subtitle: 'Open a personnel file for the movement’s first member',
+      portraitId: portraitId,
+      portraitRerollKey: 'F',
       fields: [
         CreationField(
           key: 'A',
@@ -357,9 +376,7 @@ Future<void> makeCharacter() async {
           value: startingCity.getName(includeCity: true),
         ),
       ],
-      choices: const [
-        CreationChoice(key: 'Enter', label: 'Begin background'),
-      ],
+      choices: const [CreationChoice(key: 'Enter', label: 'Begin background')],
     );
 
     int c = await getKey();
@@ -369,10 +386,22 @@ Future<void> makeCharacter() async {
       last = lastName();
     } else if (c == Key.c) {
       sex = sexOptions[(sexOptions.indexOf(sex) + 1) % sexOptions.length];
+      portraitId = chooseFounderPortrait(
+        gender: sex,
+        age: portraitAge,
+        seed: portraitSeed,
+      );
     } else if (c == Key.d) {
       letMeChoose = !letMeChoose;
     } else if (c == Key.e) {
       startingCity = cities[(cities.indexOf(startingCity) + 1) % cities.length];
+    } else if (c == Key.f) {
+      portraitId = chooseFounderPortrait(
+        gender: sex,
+        age: portraitAge,
+        seed: portraitSeed,
+        after: portraitId,
+      );
     } else {
       break;
     }
@@ -385,6 +414,8 @@ Future<void> makeCharacter() async {
   founder.gender = founder.genderAssignedAtBirth = sex;
   founder.properName = "${first[sex]!} $last";
   founder.name = founder.properName;
+  founder.portraitId = portraitId;
+  founder.portraitAssignedAge = portraitAge;
   squads.add(Squad()..name = "The Liberal Crime Squad");
   founder.squad = squads.first;
   activeSquad = squads.first;
@@ -435,8 +466,8 @@ Future<void> makeCharacter() async {
   }
 
   await characterCreationQuestions(founder, letMeChoose);
-  // Creation answers can change age and gender before the founder is introduced.
-  founder.portraitId = null;
+  // Retain the chosen face after the birthday and background answers.
+  founder.portraitAssignedAge = founder.age;
   ensurePortraitId(founder);
 
   if (debugMartialArtsMaster) {

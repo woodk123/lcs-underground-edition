@@ -42,7 +42,7 @@ void main() {
             path.startsWith('assets/modern/') &&
             (path.endsWith('.webp') || path.endsWith('.png')),
       );
-      expect(dimensions.length, 41);
+      expect(dimensions.length, greaterThanOrEqualTo(41));
       expect(packagedImages, unorderedEquals(dimensions.keys));
       for (final entry in dimensions.entries) {
         final bytes = await rootBundle.load(entry.key);

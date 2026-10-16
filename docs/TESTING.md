@@ -41,7 +41,7 @@ node scripts/creation_browser_review.mjs --url http://127.0.0.1:18879/ --expecte
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop.ps1 -Port 18879
 ```
 
-The first helper uses installed Microsoft Edge. The creation helper exercises manual and random backgrounds, public-name entry and playable headquarters at normal size and 800×600 with 150% text. Use only the isolated QA port when stopping a test server.
+The first helper uses installed Microsoft Edge. The creation helper exercises visible portrait rerolls without changing name/settings text, manual and random backgrounds, public-name entry and playable headquarters at normal size and 800×600 with 150% text. Use only the isolated QA port when stopping a test server.
 
 ## Release checks
 

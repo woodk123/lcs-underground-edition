@@ -46,6 +46,8 @@ class CreationContext {
     List<CreationChoice> choices = const [],
     List<String> body = const [],
     this.founder,
+    this.portraitId,
+    this.portraitRerollKey,
   }) : fields = List.unmodifiable(fields),
        choices = List.unmodifiable(choices),
        body = List.unmodifiable(body);
@@ -60,4 +62,8 @@ class CreationContext {
   final List<CreationChoice> choices;
   final List<String> body;
   final Creature? founder;
+
+  /// Cosmetic identity preview; the founder has not joined the campaign yet.
+  final int? portraitId;
+  final String? portraitRerollKey;
 }

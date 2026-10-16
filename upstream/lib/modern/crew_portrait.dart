@@ -214,6 +214,53 @@ class CrewPortrait extends StatelessWidget {
   }
 }
 
+/// Identity-page art without constructing a campaign creature or assigning stats.
+class FounderPortraitPreview extends StatelessWidget {
+  const FounderPortraitPreview({
+    super.key,
+    required this.portraitId,
+    this.size = 144,
+  });
+
+  final int portraitId;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final entry = portraitCatalog[portraitId];
+    return Semantics(
+      image: true,
+      label: 'Founder portrait preview',
+      child: ExcludeSemantics(
+        child: SizedBox.square(
+          dimension: size,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: JournalPalette.inset,
+              border: Border.all(color: JournalPalette.rule),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(2),
+              child: FutureBuilder<ui.Image?>(
+                future: _loadAtlas(entry.asset),
+                builder: (context, snapshot) => snapshot.data == null
+                    ? const Icon(
+                        Icons.person_outline,
+                        color: JournalPalette.brassDark,
+                      )
+                    : CustomPaint(
+                        painter: _PortraitPainter(snapshot.data!, entry.cell),
+                      ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _PortraitPainter extends CustomPainter {
   const _PortraitPainter(this.image, this.index);
 

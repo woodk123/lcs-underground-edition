@@ -22,7 +22,7 @@ The game always reminded me a little of Gangsters: Organized Crime, so I started
 
 - A paper-and-leather journal for managing your organisation, crew and orders.
 - Painted portraits, crew dossiers, city maps and job cards explaining assignments.
-- Characters keep their portraits across saves, with supported injuries and equipment reflected visually.
+- Choose your founder’s portrait; characters keep their faces across saves, with supported injuries and equipment reflected visually.
 - Bug fixes along the way, including crafting consuming cloth when you couldn't afford the job, and fixes to save importing and recovery.
 
 The interface and artwork are being developed with AI assistance; the paintings and portraits are AI-generated. The project builds on Ashley S. Fox's New Age and the work of the wider LCS community.

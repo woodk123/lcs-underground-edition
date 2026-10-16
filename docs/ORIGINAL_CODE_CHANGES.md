@@ -19,5 +19,8 @@ The Underground Edition retains the original Dart/Flutter engine and campaign co
 - Skill levels sit next to their names; XP is secondary.
 - Full formulas and requirements are available through Order mechanics; cards keep key timing, estimates, costs and risks visible.
 - Portrait age compatibility takes precedence over avoiding duplicates. Clearly mismatched saved assignments are repaired once; appropriate identities persist across saves and birthdays.
+- The founder identity page previews and rerolls an age-compatible portrait alongside the generated names. The selected face survives background creation and saves without consuming gameplay RNG.
+- Founder attributes and skills use two compact columns when space permits; values stay beside their labels and detailed help remains in tooltips.
+- Crew and personnel illustrations depict contemporary grassroots activists.
 
 See [architecture](ARCHITECTURE.md), [testing](TESTING.md) and [portrait details](PORTRAIT_LIBRARY.md). Detailed development history and retired reviews remain available through Git history and the original release artifacts.

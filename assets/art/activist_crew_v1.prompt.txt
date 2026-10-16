@@ -1,0 +1,13 @@
+Generator: built-in image_gen tool.
+Purpose: grassroots activist imagery for the crew and personnel illustrations.
+Source master: assets/runtime-art/source/activist_crew_v1.png
+Runtime: upstream/assets/modern/activist_crew_v1.webp
+Encoding: lossless WebP preserving the generated RGBA pixels.
+
+Use case: stylized-concept.
+Asset type: a single small transparent painted group illustration for the crew/people icon and title-page hero in a political strategy game's paper-and-leather journal.
+Primary request: replace the impression of a 1930s mafia family with a believable group of three present-day grassroots activists: a college student with a canvas bag strap and casual sweater, a punk with a modest dyed short hairstyle and worn jacket, and a long-haired hippie in a simple earthy overshirt. Mixed genders and varied skin tones, adults roughly 20–35, thoughtful ordinary people working together. No caricature.
+Style/medium: detailed hand-painted gouache and ink, softly shaded realistic faces, slightly aged illustration texture that reads clearly at 40–126 pixels; muted olive, burgundy, charcoal and cream, compatible with parchment and brown leather.
+Composition/framing: tightly grouped head-and-shoulders busts, all three faces fully visible, one slightly forward, wide compact triangular silhouette, front/three-quarter views; generous transparent margin, no separate panels or enclosing frame.
+Scene/backdrop: truly transparent alpha background, including around shoulders and hair.
+Constraints: no mafiosos, fedoras, period suits, ties, weapons, slogan text, logos, flags, placards, labels, paper background or decorative UI. Output only the group illustration.

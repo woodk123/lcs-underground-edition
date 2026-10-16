@@ -68,16 +68,22 @@ class JournalVisuals extends ThemeExtension<JournalVisuals> {
   const JournalVisuals({
     this.portraitAsset = 'assets/modern/journal_portraits_v1.webp',
     this.iconAsset = 'assets/modern/journal_icons_v1.webp',
+    this.crewAsset = 'assets/modern/activist_crew_v1.webp',
   });
   final String portraitAsset;
   final String iconAsset;
+  final String crewAsset;
 
   @override
-  JournalVisuals copyWith({String? portraitAsset, String? iconAsset}) =>
-      JournalVisuals(
-        portraitAsset: portraitAsset ?? this.portraitAsset,
-        iconAsset: iconAsset ?? this.iconAsset,
-      );
+  JournalVisuals copyWith({
+    String? portraitAsset,
+    String? iconAsset,
+    String? crewAsset,
+  }) => JournalVisuals(
+    portraitAsset: portraitAsset ?? this.portraitAsset,
+    iconAsset: iconAsset ?? this.iconAsset,
+    crewAsset: crewAsset ?? this.crewAsset,
+  );
 
   @override
   JournalVisuals lerp(covariant JournalVisuals? other, double t) =>
@@ -143,9 +149,10 @@ class JournalIllustratedIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final asset =
-        Theme.of(context).extension<JournalVisuals>()?.iconAsset ??
-        const JournalVisuals().iconAsset;
+    final visuals =
+        Theme.of(context).extension<JournalVisuals>() ?? const JournalVisuals();
+    final isCrew = icon == JournalIcon.crew || icon == JournalIcon.personnel;
+    final asset = isCrew ? visuals.crewAsset : visuals.iconAsset;
     return ExcludeSemantics(
       child: IgnorePointer(
         child: SizedBox.square(
@@ -155,7 +162,17 @@ class JournalIllustratedIcon extends StatelessWidget {
             builder: (context, snapshot) => snapshot.data == null
                 ? Icon(_fallbackIcon(icon), color: JournalPalette.brassDark)
                 : CustomPaint(
-                    painter: _JournalIconPainter(snapshot.data!, icon),
+                    painter: _JournalIconPainter(
+                      snapshot.data!,
+                      isCrew
+                          ? Rect.fromLTWH(
+                              0,
+                              0,
+                              snapshot.data!.width.toDouble(),
+                              snapshot.data!.height.toDouble(),
+                            )
+                          : journalIconSourceRects[icon.index],
+                    ),
                   ),
           ),
         ),
@@ -179,13 +196,12 @@ class JournalIllustratedIcon extends StatelessWidget {
 }
 
 class _JournalIconPainter extends CustomPainter {
-  const _JournalIconPainter(this.image, this.icon);
+  const _JournalIconPainter(this.image, this.source);
   final ui.Image image;
-  final JournalIcon icon;
+  final Rect source;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final source = journalIconSourceRects[icon.index];
     final fitted = applyBoxFit(BoxFit.contain, source.size, size);
     final destination = Alignment.center.inscribe(
       fitted.destination,
@@ -201,7 +217,7 @@ class _JournalIconPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _JournalIconPainter oldDelegate) =>
-      oldDelegate.image != image || oldDelegate.icon != icon;
+      oldDelegate.image != image || oldDelegate.source != source;
 }
 
 ThemeData buildJournalTheme() {
