@@ -9,6 +9,25 @@ import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 
+const _effectAttributes = {
+  'Strength': Attribute.strength,
+  'Agility': Attribute.agility,
+  'Intelligence': Attribute.intelligence,
+  'Int': Attribute.intelligence,
+  'Charisma': Attribute.charisma,
+  'Wisdom': Attribute.wisdom,
+  'Heart': Attribute.heart,
+};
+final _effectSkills = {
+  for (final skill in Skill.values) skill.displayName: skill,
+};
+final _effectNames = [..._effectAttributes.keys, ..._effectSkills.keys]
+  ..sort((a, b) => b.length.compareTo(a.length));
+final _effectPattern = RegExp(
+  r'(?:[-+−]\d+\s+)?\b(' + _effectNames.map(RegExp.escape).join('|') + r')\b',
+);
+final _effectClausePattern = RegExp(r'[-+−]\d+\s+[^,]+');
+
 /// The original campaign/founder readers presented as an open journal.
 /// Selections dispatch one existing key. Reading the dossier never dispatches,
 /// rolls, constructs a new person or trains the founder. Portrait choices are
@@ -251,8 +270,16 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
               ),
               const SizedBox(height: 13),
             ],
-            for (final paragraph in creation.body) ...[
-              Text(paragraph, style: JournalPalette.body),
+            for (var index = 0; index < creation.body.length; index++) ...[
+              if (creation.stage == CreationStage.background && index == 1)
+                _effects(
+                  creation.body[index],
+                  key: 'fate',
+                  actor: creation.founder,
+                  style: JournalPalette.body,
+                )
+              else
+                Text(creation.body[index], style: JournalPalette.body),
               const SizedBox(height: 14),
             ],
             for (final field in creation.fields) ...[
@@ -365,11 +392,11 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
               ),
               if (answer.description.isNotEmpty) ...[
                 const SizedBox(height: 7),
-                Text(
-                  'Effects: ${answer.description}',
-                  style: JournalPalette.small.copyWith(
-                    color: JournalPalette.olive,
-                  ),
+                _effects(
+                  answer.description,
+                  key: answer.key,
+                  prefix: 'Effects: ',
+                  actor: creation.founder,
                 ),
               ],
             ],
@@ -378,6 +405,66 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
       ],
     ),
   );
+
+  /// Match display labels only to attach passive help. The source reader still
+  /// owns every effect and choice; no bonus is calculated or applied here.
+  Widget _effects(
+    String description, {
+    required String key,
+    Creature? actor,
+    String prefix = '',
+    TextStyle? style,
+  }) {
+    final textStyle =
+        style ?? JournalPalette.small.copyWith(color: JournalPalette.olive);
+    final spans = <InlineSpan>[TextSpan(text: prefix)];
+    var offset = 0;
+    for (final clause in _effectClausePattern.allMatches(description)) {
+      for (final match in _effectPattern.allMatches(clause.group(0)!)) {
+        final start = clause.start + match.start;
+        spans.add(TextSpan(text: description.substring(offset, start)));
+        final name = match.group(1)!;
+        final text = Text(
+          match.group(0)!,
+          style: textStyle.copyWith(
+            decoration: TextDecoration.underline,
+            decorationStyle: TextDecorationStyle.dotted,
+          ),
+        );
+        final skill = _effectSkills[name];
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.baseline,
+            baseline: TextBaseline.alphabetic,
+            child: skill != null
+                ? SkillTooltip(skill: skill, actor: actor, child: text)
+                : AttributeTooltip(
+                    attribute: _effectAttributes[name]!,
+                    actor: actor,
+                    child: text,
+                  ),
+          ),
+        );
+        offset = clause.start + match.end;
+      }
+    }
+    spans.add(TextSpan(text: description.substring(offset)));
+    return Semantics(
+      key: ValueKey('creation-effects:$key'),
+      label: '$prefix$description',
+      excludeSemantics: true,
+      // WidgetSpan scales its entire child automatically. Scale the surrounding
+      // paragraph explicitly instead, leaving the text and popup to each apply
+      // the reading preference once, without transforming the tooltip overlay.
+      child: Text.rich(
+        TextSpan(children: spans),
+        textScaler: TextScaler.noScaling,
+        style: textStyle.copyWith(
+          fontSize: MediaQuery.textScalerOf(context).scale(textStyle.fontSize!),
+        ),
+      ),
+    );
+  }
 
   Widget _portraitChooser(CreationContext creation, int revision) =>
       JournalSurface(

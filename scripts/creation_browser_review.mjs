@@ -80,6 +80,59 @@ async function rerollPortrait(prefix) {
   assert.equal(await text(), beforeText, 'Reroll must leave names and settings unchanged');
   report.checks.push({ name: `${prefix}-portrait-reroll`, status: 'passed' });
 }
+async function bonusHelp(prefix, scale) {
+  const before = await text();
+  const answer = page.getByRole('button', { name: /^A(?:\s|$)/ }).first();
+  await answer.scrollIntoViewIfNeeded();
+  const box = await answer.boundingBox();
+  assert.ok(box);
+  const y = box.y + box.height - 12 - 8.4 * scale;
+  let previousX = box.x + 40;
+  let lastPoint;
+  for (const [name, message] of [
+    ['law', /courtroom defense, legal arguments/],
+    ['agility', /Speed and coordination/],
+  ]) {
+    let popup;
+    for (let x = previousX; x < Math.min(box.x + box.width - 12, box.x + 380 * scale); x += 12) {
+      await page.mouse.move(x, y);
+      await page.waitForTimeout(450);
+      const candidates = page.getByText(message);
+      for (const candidate of await candidates.all()) {
+        // Sidebar rows expose the same help in their accessibility labels.
+        // The actual popup is a multiline box, not a single sidebar stat row.
+        const bounds = await candidate.boundingBox({ timeout: 500 }).catch(() => null);
+        if (bounds && bounds.width > 200 && bounds.height > 60
+            && await candidate.isVisible()) {
+          // A popup adds/removes semantics nodes during its fade. Keep its
+          // exact text instead of a positional locator that can shift mid-frame.
+          popup = page.getByText(await candidate.innerText(), { exact: true }).last();
+          previousX = x + 12;
+          lastPoint = { x, y };
+          break;
+        }
+      }
+      if (popup) break;
+    }
+    assert.ok(popup, `No ${name} tooltip over the answer bonus`);
+    await page.waitForTimeout(250);
+    const bounds = await popup.boundingBox();
+    const viewport = page.viewportSize();
+    assert.ok(bounds && bounds.x >= 0 && bounds.y >= 0
+      && bounds.x + bounds.width <= viewport.width && bounds.y + bounds.height <= viewport.height);
+    const image = `${prefix}-bonus-${name}.png`;
+    await page.screenshot({ path: resolve(output, image), fullPage: true });
+    report.screenshots.push(image);
+    report.checks.push({ name: `${prefix}-bonus-${name}`, status: 'passed', bounds, target: lastPoint });
+    console.log(`PASS ${prefix}-bonus-${name}`);
+  }
+  await page.mouse.move(2, 2);
+  await page.waitForTimeout(350);
+  assert.equal(await text(), before, 'Inspecting bonuses must not select an answer or change founder facts');
+  await page.mouse.move(lastPoint.x, lastPoint.y);
+  await page.waitForTimeout(450);
+  return lastPoint;
+}
 async function founderFlow({ fate, prefix, name }) {
   await click(/^Start a New Game/); await wait(/Campaign dossier/);
   await capture(`${prefix}-01-settings`);
@@ -101,6 +154,21 @@ async function founderFlow({ fate, prefix, name }) {
       await click(/^Continue/);
     } else {
       assert.equal(await page.getByRole('button', { name: /^[A-E](?:\s|$)/ }).count(), 5);
+      if (step === 4) {
+        await bonusHelp('normal', 1);
+        await click(/^Reading size/);
+        await page.getByRole('menuitem', { name: '150%', exact: true }).click();
+        await page.setViewportSize({ width: 800, height: 600 });
+        await page.waitForTimeout(250);
+        const bonus = await bonusHelp('large', 1.5);
+        await page.mouse.click(bonus.x, bonus.y);
+        await wait(/5\s*\/\s*10/);
+        await click(/^Reading size/);
+        await page.getByRole('menuitem', { name: '100%', exact: true }).click();
+        await page.setViewportSize({ width: 1280, height: 720 });
+        await page.waitForTimeout(200);
+        continue;
+      }
       await click(/^A(?:\s|$)/);
     }
   }

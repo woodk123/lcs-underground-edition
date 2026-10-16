@@ -247,7 +247,11 @@ void main() {
       actions: [_action('a')],
     );
     await _mount(tester, reader);
-    expect(find.text('Effects: +2 Agility, June 30th'), findsOneWidget);
+    expect(
+      tester.widget<Semantics>(_key('creation-effects:a')).properties.label,
+      'Effects: +2 Agility, June 30th',
+    );
+    expect(find.text('+2 Agility'), findsOneWidget);
     expect(
       _key('creation-continue'),
       findsNothing,
@@ -299,6 +303,127 @@ void main() {
     },
   );
 
+  for (final view in [
+    (size: const Size(1280, 720), scale: 1.0),
+    (size: const Size(800, 600), scale: 1.5),
+  ]) {
+    testWidgets('answer bonus help is passive and clickable at ${view.size}', (
+      tester,
+    ) async {
+      final founder = game.pool.first;
+      final reader = _Reader(
+        CreationContext(
+          stage: CreationStage.background,
+          title: 'The founder’s background',
+          step: 4,
+          founder: founder,
+          choices: const [
+            CreationChoice(
+              key: 'a',
+              label: 'Acrimoniously. I once tripped over the paperwork!',
+              description: '+1 Law, +1 Agility',
+            ),
+          ],
+        ),
+        actions: [_action('a')],
+      );
+      final before = jsonEncode(game.gameState.toJson());
+      reseedRNG(seed: 18023);
+      final rolls = List.generate(12, (_) => lcsRandom(100000));
+      reseedRNG(seed: 18023);
+      await _mount(tester, reader, size: view.size, scale: view.scale);
+      expect(
+        tester.getRect(find.text('+1 Law')).height,
+        closeTo(12 * 1.4 * view.scale, 1),
+      );
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      for (final help in [
+        (label: '+1 Law', message: skillHelp(Skill.law, actor: founder)),
+        (
+          label: '+1 Agility',
+          message: attributeHelp(Attribute.agility, actor: founder),
+        ),
+      ]) {
+        await mouse.moveTo(tester.getCenter(find.text(help.label)));
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pumpAndSettle();
+        final popup = find.text(help.message);
+        expect(popup, findsOneWidget);
+        final bounds = tester.getRect(popup);
+        expect(bounds.left, greaterThanOrEqualTo(0));
+        expect(bounds.top, greaterThanOrEqualTo(0));
+        expect(bounds.right, lessThanOrEqualTo(view.size.width));
+        expect(bounds.bottom, lessThanOrEqualTo(view.size.height));
+        expect(reader.sent, isEmpty);
+      }
+      await tester.longPress(find.text('+1 Law'));
+      await tester.pumpAndSettle();
+      expect(find.text(skillHelp(Skill.law, actor: founder)), findsOneWidget);
+      expect(reader.sent, isEmpty);
+      expect(jsonEncode(game.gameState.toJson()), before);
+      expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+      await tester.tap(find.text('+1 Agility'));
+      await _settle(tester);
+      expect(reader.sent, ['a']);
+      expect(reader.received, 'a');
+      await mouse.removePointer();
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('shared bonuses and Int get help while equipment stays plain', (
+    tester,
+  ) async {
+    const description =
+        r'+4 Int, +2 Science Computers Writing and Teaching, '
+        r'+1 Business and Law, $1000, Security Uniform';
+    final reader = _Reader(
+      CreationContext(
+        stage: CreationStage.background,
+        title: 'Background',
+        founder: game.pool.first,
+        choices: const [
+          CreationChoice(
+            key: 'a',
+            label: 'A college background',
+            description: description,
+          ),
+        ],
+      ),
+      actions: [_action('a')],
+    );
+    await _mount(tester, reader);
+    final effects = _key('creation-effects:a');
+    expect(
+      tester.widget<Semantics>(effects).properties.label,
+      'Effects: $description',
+    );
+    final skills = tester.widgetList<SkillTooltip>(
+      find.descendant(of: effects, matching: find.byType(SkillTooltip)),
+    );
+    expect(
+      skills.map((tooltip) => tooltip.skill),
+      unorderedEquals([
+        Skill.science,
+        Skill.computers,
+        Skill.writing,
+        Skill.teaching,
+        Skill.business,
+        Skill.law,
+      ]),
+    );
+    final attributes = tester.widgetList<AttributeTooltip>(
+      find.descendant(of: effects, matching: find.byType(AttributeTooltip)),
+    );
+    expect(attributes.map((tooltip) => tooltip.attribute), [
+      Attribute.intelligence,
+    ]);
+    expect(find.text('+4 Int'), findsOneWidget);
+    expect(reader.sent, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('disabled source choices stay disabled and cannot supply input', (
     tester,
   ) async {
@@ -336,7 +461,13 @@ void main() {
       );
       await _mount(tester, reader);
       expect(find.text('Ronald Reagan died.'), findsOneWidget);
-      expect(find.text('+2 Strength, June 5th'), findsOneWidget);
+      expect(
+        tester
+            .widget<Semantics>(_key('creation-effects:fate'))
+            .properties
+            .label,
+        '+2 Strength, June 5th',
+      );
       expect(
         find.byWidgetPredicate(
           (widget) =>
@@ -517,7 +648,13 @@ void main() {
             final label = tester.widget<Text>(find.text(choice.label));
             expect(label.maxLines, isNull);
             expect(label.overflow, isNot(TextOverflow.ellipsis));
-            expect(find.text('Effects: ${choice.description}'), findsOneWidget);
+            expect(
+              tester
+                  .widget<Semantics>(_key('creation-effects:${choice.key}'))
+                  .properties
+                  .label,
+              'Effects: ${choice.description}',
+            );
           }
           expect(tester.takeException(), isNull);
         },
