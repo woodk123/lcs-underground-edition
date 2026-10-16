@@ -9,6 +9,7 @@ import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/engine/ledger_context.dart';
 import 'package:lcs_new_age/engine/media_context.dart';
 import 'package:lcs_new_age/engine/organisation_context.dart';
+import 'package:lcs_new_age/engine/pursuit_context.dart';
 import 'package:lcs_new_age/engine/recovery_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
@@ -26,6 +27,7 @@ import 'package:lcs_new_age/modern/journal_creation.dart';
 import 'package:lcs_new_age/modern/journal_ledger.dart';
 import 'package:lcs_new_age/modern/journal_legislation.dart';
 import 'package:lcs_new_age/modern/journal_media.dart';
+import 'package:lcs_new_age/modern/journal_pursuit.dart';
 import 'package:lcs_new_age/modern/journal_recovery.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/journal_title.dart';
@@ -1662,6 +1664,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
     bool compact, {
     bool embeddedJournal = false,
   }) {
+    if (!classic && pursuitContext(console) != null) {
+      return JournalPursuitView(console: console, onAction: _send);
+    }
     if (!classic && recoveryContext(console) != null) {
       return JournalRecoveryView(console: console, onAction: _send);
     }

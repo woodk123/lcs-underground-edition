@@ -258,7 +258,10 @@ class Creature {
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
-  bool get hospitalized => site?.type == SiteType.universityHospital;
+  bool get hospitalized =>
+      site?.type == SiteType.universityHospital ||
+      (site?.type == SiteType.clinic &&
+          !(sleeperAgent && locationId == workLocationId));
   bool get away => hospitalized || vacationDaysLeft > 0 || hidingDaysLeft > 0;
   @JsonKey(includeFromJson: false, includeToJson: false)
   bool get inTown => vacationDaysLeft == 0 && hidingDaysLeft == 0;

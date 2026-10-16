@@ -696,8 +696,10 @@ Future<void> _dailyHealing() async {
 
   //HEAL PEOPLE AND TRAIN
   for (Creature p in pool) {
+    // Both care facilities retain admitted patients. University hospitals alone
+    // use the existing law-dependent billing; clinics keep their basic support.
     bool hospital = p.site?.type == SiteType.universityHospital;
-    if (hospital) {
+    if (p.hospitalized) {
       p.daysHospitalized++;
     } else {
       p.daysHospitalized = 0;
@@ -718,7 +720,7 @@ Future<void> _dailyHealing() async {
       }
     }
     if (!p.alive) continue;
-    if (debugVerboseHospitalLogging && hospital) {
+    if (debugVerboseHospitalLogging && p.hospitalized) {
       Site? canonical = sites.firstWhereOrNull(
         (s) => s.idString == p.site?.idString,
       );
@@ -920,7 +922,7 @@ Future<void> _dailyHealing() async {
     // (clinictime 0) -- including when the final point of blood was restored
     // by aging outside this loop, which would otherwise skip the heal block
     // (and this discharge) entirely -- or once they reach the maximum stay.
-    if (hospital &&
+    if (p.hospitalized &&
         p.alive &&
         (clinictime(p) == 0 || p.daysHospitalized >= 60)) {
       await dischargeHospitalPatient(p);

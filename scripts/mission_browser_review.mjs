@@ -176,12 +176,16 @@ async function exitBuilding() {
     else if (await available(/^V (?:Flee|Sneak away)$/)) {
       await click(/^V (?:Flee|Sneak away)$/);
       await click('Move up');
-    } else if (await available(/^D.*(?:lose|escape)/)) await click(/^D.*(?:lose|escape)/);
+    } else if (await available(/^(?:D.*(?:lose|escape)|Try to lose them)$/)) {
+      await click(/^(?:D.*(?:lose|escape)|Try to lose them)$/);
+    }
     else if (await available(/^Y Yes$/)) await click(/^Y Yes$/);
     else if (await available(/^D Break off the meetings/)) await click(/^D Break off the meetings/);
-    else throw Error(`Unexpected exit reader: ${await uiText()}`);
+    // Site cleanup and the following daily healing can paint intermediate
+    // frames before the next authored reader becomes available.
+    else await page.waitForTimeout(100);
   }
-  throw Error('Operation did not return to headquarters.');
+  throw Error(`Operation did not return to headquarters: ${await uiText()}`);
 }
 async function day({ pay = false, defense = false } = {}) {
   await click(/^(?:Wait a day|Carry out your plans)/);

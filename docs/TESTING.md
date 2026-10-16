@@ -70,6 +70,19 @@ Each resolved scenario saves and exports through the original menu, reloads the 
 
 The helpers locate installed Edge/Chrome in standard Windows directories and accept `--browser-executable <path>` for another installation. They never download a browser, reuse a player profile or clear player storage. Field-input regressions cover retries, source identity/revision checks, the original movement exception and keyboard isolation while inspecting. Recovery regressions cover billing, affordability, conviction records, exact persistence, responsive journal routes and read-only details. These checks do not certify every injury, pursuit, siege, trial outcome or native Windows path.
 
+### Street arrest and Free Clinic
+
+```powershell
+$expected = (Get-FileHash (Join-Path $qaWeb 'main.dart.js') -Algorithm SHA256).Hash.ToLowerInvariant()
+node scripts/street_clinic_browser_review.mjs --expected-hash $expected
+```
+
+This helper closes the earlier street-arrest and Free Clinic coverage gaps. It starts a healthy campaign copy with no wanted charges, removes a non-founder's clothing through the actual equipment controls, assigns donation collection, and advances the original daily checks until police accost the member. The normal indecency check and gameplay RNG remain unchanged. The browser inspects the pursuit dossier, retries an invalid key and surrenders through the current source action at 800×600/150% text. State observations verify the new charge, interrupted income, police custody, confiscated weapon/ammunition, cleared order, original squad cleanup and founder remaining at headquarters. The arrest is produced during play rather than inserted into a fixture.
+
+A separate declared wounded campaign visits the actual Free Clinic, admits its patient and advances treatment through discharge. The browser verifies that care persists on subsequent days, restores blood, charges no new fee and retains equipment/portrait identity. Exports are used to observe the resulting engine state; this helper does not add a save-transfer journey. `--only street|clinic` runs one path. `--baseline` records known defects on an older compiled build for comparison; normal acceptance omits it.
+
+The corresponding Flutter regressions run the original donation, admission, daily recovery, task and squad readers. They cover pursuit input isolation, modal inspection, clinic patients versus sleeper workplace staff, the existing 60-day discharge limit, pre-existing medical debt, and unchanged university healing/billing. Car pursuits, every possible injury and every alternate court outcome remain separate coverage concerns.
+
 ## Release checks
 
 Each build report records automated command exit codes and source identity. Generated reports and old test counts are not a substitute for a current run. Review the build log and release-specific metadata for what actually ran.

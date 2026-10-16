@@ -15,6 +15,7 @@ import 'package:lcs_new_age/creature/creature_type.dart';
 import 'package:lcs_new_age/creature/difficulty.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/pursuit_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/gamestate/squad.dart';
@@ -492,6 +493,7 @@ enum ChaseOutcome {
 Future<ChaseOutcome> footChaseSequence({
   bool showStandardText = true,
   Site? autoPromoteFromSitePool,
+  String? introduction,
 }) async {
   //NOTE: THIS FUNCTION RETURNS TRUE IF ANYBODY ESCAPES
   await reloadparty(false);
@@ -515,9 +517,13 @@ Future<ChaseOutcome> footChaseSequence({
 
   if (showStandardText) {
     erase();
-    mvaddstrc(0, 0, white, "As you exit the site, you notice that you are ");
-    move(1, 0);
-    addstr("being followed by Conservative swine!");
+    if (introduction != null) {
+      mvaddstrc(0, 0, white, introduction);
+    } else {
+      mvaddstrc(0, 0, white, "As you exit the site, you notice that you are ");
+      move(1, 0);
+      addstr("being followed by Conservative swine!");
+    }
     await acknowledge(title: 'Pursuit report');
   }
 
@@ -551,6 +557,57 @@ Future<ChaseOutcome> footChaseSequence({
 
     //PRINT ENEMIES
     printChaseEncounter();
+
+    // Describe this exact awaited pursuit again after an invalid key, a squad
+    // status view, or a nested equipment/order reader. Never reuse its actions.
+    if (partyalive > 0) {
+      for (var index = 0; index < squad.length; index++) {
+        final person = squad[index];
+        final key = '${index + 1}';
+        if (!console.actions.any((action) => action.key == key)) {
+          move(index + 2, 0);
+          console.addAction(key, '$key - Check ${person.name}');
+        }
+        console.annotateAction(key, 'Check ${person.name}');
+        console.annotateActionEntity(
+          key,
+          type: 'person',
+          id: person.id.toString(),
+        );
+      }
+      move(9, 1);
+      console.addAction(
+        '0',
+        'Show squad status',
+        enabled: activeSquadMemberIndex != -1,
+      );
+    }
+    console.annotateAction('d', 'Try to lose them');
+    console.annotateAction('f', 'Fight');
+    console.annotateAction('e', 'Equipment');
+    console.annotateAction('o', 'Squad orders');
+    console.annotateAction('g', 'Give up and surrender');
+    console.screen = 'pursuit';
+    console.pursuit = PursuitContext(
+      location: chaseSequence!.location.getName(),
+      note: chaseSequence!.canpullover
+          ? 'Giving up ends the pursuit in police custody.'
+          : 'Giving up is unavailable in this pursuit.',
+      people: console.journalPeople,
+      encounterLines: [
+        for (
+          var row = 12;
+          row < min(console.height, 12 + encounter.length);
+          row++
+        )
+          console.buffer[row]
+              .map((cell) => cell.glyph)
+              .join()
+              .replaceAll(RegExp(r'\s{2,}'), ' ')
+              .trim(),
+      ],
+      actions: console.actions,
+    );
 
     int c = await getKey();
 
@@ -1504,7 +1561,9 @@ Future<ChaseOutcome> soloChaseSequence(Creature cr, int pursuitStrength,
   activeSquadMemberIndex = 0;
   ChaseOutcome ret;
   if (v == null) {
-    ret = await footChaseSequence();
+    ret = await footChaseSequence(
+      introduction: '${cr.name} is being pursued on foot.',
+    );
   } else {
     ret = await carChaseSequence();
   }
