@@ -9,6 +9,8 @@ import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/creation_context.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
+import 'package:lcs_new_age/modern/creation_bonus_help.dart';
+import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/modern_app.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/title_screen/new_game.dart';
@@ -186,6 +188,76 @@ void main() {
       expect(await input, 'New Public Name');
       expect(engine.console.textInput, isFalse);
       await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  for (var answer = 0; answer < 5; answer++) {
+    test(
+      'all ten source bonuses and the portrait survive career $answer',
+      () async {
+        await beginFounder();
+        final creation = makeCharacter();
+        final chosen = engine.console.creation!.portraitId;
+        await send('Enter');
+        final founder = game.pool.first;
+        for (var step = 1; step <= 10; step++) {
+          final option = engine.console.creation!.choices[answer];
+          expect(option.bonuses, isNotNull);
+          final snapshot = jsonEncode(game.gameState.toJson());
+          final preview = CreationBonusPreview(founder, option.bonuses!);
+          expect(jsonEncode(game.gameState.toJson()), snapshot);
+          await send(option.key);
+          expect(founder.rawAttributes, preview.after.rawAttributes);
+          expect(founder.rawSkill, preview.after.rawSkill);
+          expect(founder.portraitId, chosen);
+          expect(stablePortraitIndex(founder), chosen);
+        }
+        await send('Enter');
+        await send('Escape');
+        await creation;
+        expect(stablePortraitIndex(founder), chosen);
+      },
+    );
+  }
+
+  test(
+    'a chosen face is not recast when the birthday crosses its age cohort',
+    () async {
+      await beginFounder();
+      game.gameState.date = DateTime(2023, 6, 1);
+      final creation = makeCharacter();
+      for (var reroll = 0; reroll < 20; reroll++) {
+        final id = engine.console.creation!.portraitId!;
+        if (portraitCatalog[id].visualAge == 16) break;
+        await send('F');
+      }
+      final chosen = engine.console.creation!.portraitId!;
+      expect(portraitCatalog[chosen].visualAge, 16);
+      await send('Enter');
+      await send(
+        'e',
+      ); // May birthday: the founder is now 19, not the preview's 18.
+      for (var step = 2; step <= 10; step++) {
+        await send('a');
+      }
+      await send('Enter');
+      await send('Escape');
+      await creation;
+      final founder = game.pool.first;
+      expect(founder.age, 19);
+      expect(founder.portraitAssignedAge, 18);
+      expect(stablePortraitIndex(founder), chosen);
+      final saved = decodeSaveContents(
+        encodeSaveContents(
+          SaveFile(
+            version: '1.5.6',
+            gameId: game.gameState.uniqueGameId.toString(),
+            saveData: game.gameState.toJson(),
+            lastPlayed: null,
+          ),
+        ),
+      );
+      expect(stablePortraitIndex(saved.gameState!.lcs.pool.first), chosen);
     },
   );
 }

@@ -26,16 +26,24 @@ class _Question {
 }
 
 class _Option {
-  _Option(this.option, this.description, this.callback);
+  _Option(
+    this.option,
+    this.description, {
+    required this.bonuses,
+    this.onChoose,
+  });
   final String option;
   final String description;
-  final Function() callback;
+  final CreationBonuses bonuses;
+  final void Function()? onChoose;
+
+  void apply(Creature founder) {
+    bonuses.apply(founder);
+    onChoose?.call();
+  }
 }
 
-enum Recruits {
-  gang,
-  none,
-}
+enum Recruits { gang, none }
 
 Future<void> characterCreationQuestions(Creature founder, bool choose) async {
   bool gay = false;
@@ -49,305 +57,415 @@ Future<void> characterCreationQuestions(Creature founder, bool choose) async {
   List<_Question> questions = [
     _Question("In the moments after I was born in 2004...", [
       _Option(
-          "American torture of prisoners in Iraq was revealed on national TV.",
-          "+2 Agility, June 30th", () {
-        founder.birthDate = DateTime(2004, 6, 30);
-        founder.adjustAttribute(Attribute.agility, 2);
-      }),
-      _Option("Ronald Reagan died.", "+2 Strength, June 5th", () {
-        founder.birthDate = DateTime(2004, 6, 5);
-        founder.adjustAttribute(Attribute.strength, 2);
-      }),
+        "American torture of prisoners in Iraq was revealed on national TV.",
+        "+2 Agility, June 30th",
+        bonuses: CreationBonuses(
+          attributes: const {Attribute.agility: 2},
+          birthDate: DateTime(2004, 6, 30),
+        ),
+      ),
       _Option(
-          "Firefox was released, challenging Microsoft's dominance over web browsers.",
-          "+2 Intelligence, November 9th", () {
-        founder.birthDate = DateTime(2004, 11, 9);
-        founder.adjustAttribute(Attribute.intelligence, 2);
-      }),
+        "Ronald Reagan died.",
+        "+2 Strength, June 5th",
+        bonuses: CreationBonuses(
+          attributes: const {Attribute.strength: 2},
+          birthDate: DateTime(2004, 6, 5),
+        ),
+      ),
       _Option(
-          "Kenyan democracy activist Wangarĩ Maathai received the Nobel Peace Prize.",
-          "+2 Charisma, October 8th", () {
-        founder.birthDate = DateTime(2004, 10, 8);
-        founder.adjustAttribute(Attribute.charisma, 2);
-      }),
+        "Firefox was released, challenging Microsoft's dominance over web browsers.",
+        "+2 Intelligence, November 9th",
+        bonuses: CreationBonuses(
+          attributes: const {Attribute.intelligence: 2},
+          birthDate: DateTime(2004, 11, 9),
+        ),
+      ),
       _Option(
-          "Massachusetts became the first State to legalize same-sex marriage.",
-          "+2 Heart, May 17th", () {
-        founder.birthDate = DateTime(2004, 5, 17);
-        founder.adjustAttribute(Attribute.heart, 2);
-      }),
+        "Kenyan democracy activist Wangarĩ Maathai received the Nobel Peace Prize.",
+        "+2 Charisma, October 8th",
+        bonuses: CreationBonuses(
+          attributes: const {Attribute.charisma: 2},
+          birthDate: DateTime(2004, 10, 8),
+        ),
+      ),
+      _Option(
+        "Massachusetts became the first State to legalize same-sex marriage.",
+        "+2 Heart, May 17th",
+        bonuses: CreationBonuses(
+          attributes: const {Attribute.heart: 2},
+          birthDate: DateTime(2004, 5, 17),
+        ),
+      ),
     ]),
     _Question("As a kid, when I was bad...", [
       _Option(
-          "my parents threw away my toys.  I started to hide what I cared about.",
-          "+1 Stealth, +1 Agility", () {
-        founder.adjustSkill(Skill.stealth, 1);
-        founder.adjustAttribute(Attribute.agility, 1);
-      }),
+        "my parents threw away my toys.  I started to hide what I cared about.",
+        "+1 Stealth, +1 Agility",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.agility: 1},
+          skills: {Skill.stealth: 1},
+        ),
+      ),
       _Option(
-          "my father beat me.  I learned to take a punch earlier than most.",
-          "+1 Martial Arts, +1 Strength", () {
-        founder.adjustSkill(Skill.martialArts, 1);
-        founder.adjustAttribute(Attribute.strength, 1);
-      }),
+        "my father beat me.  I learned to take a punch earlier than most.",
+        "+1 Martial Arts, +1 Strength",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.strength: 1},
+          skills: {Skill.martialArts: 1},
+        ),
+      ),
       _Option(
-          "I was locked in my room, where I studied quietly by myself, alone.",
-          "+1 Computers, +1 Intelligence", () {
-        founder.adjustSkill(Skill.computers, 1);
-        founder.adjustAttribute(Attribute.intelligence, 1);
-      }),
+        "I was locked in my room, where I studied quietly by myself, alone.",
+        "+1 Computers, +1 Intelligence",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.intelligence: 1},
+          skills: {Skill.computers: 1},
+        ),
+      ),
       _Option(
-          "I was never punished.  I was good at lying.  Their innocent little angel.",
-          "+1 Disguise, +1 Charisma", () {
-        founder.adjustSkill(Skill.disguise, 1);
-        founder.adjustAttribute(Attribute.charisma, 1);
-      }),
+        "I was never punished.  I was good at lying.  Their innocent little angel.",
+        "+1 Disguise, +1 Charisma",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.charisma: 1},
+          skills: {Skill.disguise: 1},
+        ),
+      ),
       _Option(
-          "I was grounded from electronics.  I spent a lot of time drawing.",
-          "+1 Art, +1 Heart", () {
-        founder.adjustSkill(Skill.art, 1);
-        founder.adjustAttribute(Attribute.heart, 1);
-      }),
+        "I was grounded from electronics.  I spent a lot of time drawing.",
+        "+1 Art, +1 Heart",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.heart: 1},
+          skills: {Skill.art: 1},
+        ),
+      ),
     ]),
     _Question("In elementary school...", [
-      _Option("I was mischevious, and always up to something.",
-          "+1 Disguise, +1 Agility", () {
-        founder.adjustSkill(Skill.disguise, 1);
-        founder.adjustAttribute(Attribute.agility, 1);
-      }),
-      _Option("I was unruly and often fought with other children.",
-          "+1 Martial Arts, +1 Strength", () {
-        founder.adjustSkill(Skill.martialArts, 1);
-        founder.adjustAttribute(Attribute.strength, 1);
-      }),
-      _Option("I was the head of the class, and I worked very hard.",
-          "+1 Writing, +1 Intelligence", () {
-        founder.adjustSkill(Skill.writing, 1);
-        founder.adjustAttribute(Attribute.intelligence, 1);
-      }),
-      _Option("I was the class clown.  I even had some friends.",
-          "+1 Persuasion, +1 Charisma", () {
-        founder.adjustSkill(Skill.persuasion, 1);
-        founder.adjustAttribute(Attribute.charisma, 1);
-      }),
-      _Option("I was a daydreamer.  What is, what was, what could be.",
-          "+1 Art, +1 Heart", () {
-        founder.adjustSkill(Skill.art, 1);
-        founder.adjustAttribute(Attribute.heart, 1);
-      }),
+      _Option(
+        "I was mischevious, and always up to something.",
+        "+1 Disguise, +1 Agility",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.agility: 1},
+          skills: {Skill.disguise: 1},
+        ),
+      ),
+      _Option(
+        "I was unruly and often fought with other children.",
+        "+1 Martial Arts, +1 Strength",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.strength: 1},
+          skills: {Skill.martialArts: 1},
+        ),
+      ),
+      _Option(
+        "I was the head of the class, and I worked very hard.",
+        "+1 Writing, +1 Intelligence",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.intelligence: 1},
+          skills: {Skill.writing: 1},
+        ),
+      ),
+      _Option(
+        "I was the class clown.  I even had some friends.",
+        "+1 Persuasion, +1 Charisma",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.charisma: 1},
+          skills: {Skill.persuasion: 1},
+        ),
+      ),
+      _Option(
+        "I was a daydreamer.  What is, what was, what could be.",
+        "+1 Art, +1 Heart",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.heart: 1},
+          skills: {Skill.art: 1},
+        ),
+      ),
     ]),
     _Question("When I turned 10, my parents divorced.", [
-      _Option("Acrimoniously.  I once tripped over the paperwork!",
-          "+1 Law, +1 Agility", () {
-        founder.adjustSkill(Skill.law, 1);
-        founder.adjustAttribute(Attribute.agility, 1);
-      }),
-      _Option("Violently.", "+1 Martial Arts, +1 Strength", () {
-        founder.adjustSkill(Skill.martialArts, 1);
-        founder.adjustAttribute(Attribute.strength, 1);
-      }),
-      _Option("My studies suffered, but I continued working.",
-          "+1 Computers, +1 Intelligence", () {
-        founder.adjustSkill(Skill.computers, 1);
-        founder.adjustAttribute(Attribute.intelligence, 1);
-      }),
-      _Option("This was when I began to understand that words were weapons.",
-          "+1 Psychology, +1 Charisma", () {
-        founder.adjustSkill(Skill.psychology, 1);
-        founder.adjustAttribute(Attribute.charisma, 1);
-      }),
       _Option(
-          "I kept a journal online.  It still hurts to read the old entries.",
-          "+1 Writing, +1 Heart", () {
-        founder.adjustSkill(Skill.writing, 1);
-        founder.adjustAttribute(Attribute.heart, 1);
-      }),
+        "Acrimoniously.  I once tripped over the paperwork!",
+        "+1 Law, +1 Agility",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.agility: 1},
+          skills: {Skill.law: 1},
+        ),
+      ),
+      _Option(
+        "Violently.",
+        "+1 Martial Arts, +1 Strength",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.strength: 1},
+          skills: {Skill.martialArts: 1},
+        ),
+      ),
+      _Option(
+        "My studies suffered, but I continued working.",
+        "+1 Computers, +1 Intelligence",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.intelligence: 1},
+          skills: {Skill.computers: 1},
+        ),
+      ),
+      _Option(
+        "This was when I began to understand that words were weapons.",
+        "+1 Psychology, +1 Charisma",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.charisma: 1},
+          skills: {Skill.psychology: 1},
+        ),
+      ),
+      _Option(
+        "I kept a journal online.  It still hurts to read the old entries.",
+        "+1 Writing, +1 Heart",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.heart: 1},
+          skills: {Skill.writing: 1},
+        ),
+      ),
     ]),
     _Question("In middle school...", [
-      _Option("I broke into lockers and was into punk rock.",
-          "+2 Security, +1 Agility, Punk Jacket", () {
-        founder.adjustSkill(Skill.security, 2);
-        founder.adjustSkill(Skill.music, 1);
-        founder.adjustAttribute(Attribute.agility, 1);
-        founder.giveArmor(Clothing.fromType(
-          clothingTypes["CLOTHING_PUNK_JACKET"]!,
-          armorUpgrades["ARMOR_LEATHER"]!,
-        ));
-      }),
       _Option(
-          "I was obsessed with Japanese swords and started lifting weights.",
-          "+2 Martial Arts, +1 Strength, Katana and Wakizashi", () {
-        founder.adjustSkill(Skill.martialArts, 2);
-        founder.adjustAttribute(Attribute.strength, 1);
-        founder.giveWeaponAndAmmo("WEAPON_DAISHO", 0,
-            lootPile: founder.base?.loot);
-      }),
-      _Option("I created my own chess engine.  I had no friends.",
-          "+2 Computers, +1 Intelligence", () {
-        founder.adjustSkill(Skill.computers, 2);
-        founder.adjustAttribute(Attribute.intelligence, 1);
-      }),
+        "I broke into lockers and was into punk rock.",
+        "+2 Security, +1 Music, +1 Agility, Punk Jacket",
+        onChoose: () {
+          founder.giveArmor(
+            Clothing.fromType(
+              clothingTypes["CLOTHING_PUNK_JACKET"]!,
+              armorUpgrades["ARMOR_LEATHER"]!,
+            ),
+          );
+        },
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.agility: 1},
+          skills: {Skill.security: 2, Skill.music: 1},
+        ),
+      ),
       _Option(
-          "I joined the drama club, but they never had enough roles for me.",
-          "+2 Disguise, +1 Charisma", () {
-        founder.adjustSkill(Skill.disguise, 2);
-        founder.adjustAttribute(Attribute.charisma, 1);
-      }),
+        "I was obsessed with Japanese swords and started lifting weights.",
+        "+2 Martial Arts, +1 Strength, Katana and Wakizashi",
+        onChoose: () {
+          founder.giveWeaponAndAmmo(
+            "WEAPON_DAISHO",
+            0,
+            lootPile: founder.base?.loot,
+          );
+        },
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.strength: 1},
+          skills: {Skill.martialArts: 2},
+        ),
+      ),
       _Option(
-          "I tried starting a band.  I had to play all the instruments myself.",
-          "+2 Music, +1 Heart", () {
-        founder.adjustSkill(Skill.music, 2);
-        founder.adjustAttribute(Attribute.heart, 1);
-      }),
+        "I created my own chess engine.  I had no friends.",
+        "+2 Computers, +1 Intelligence",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.intelligence: 1},
+          skills: {Skill.computers: 2},
+        ),
+      ),
+      _Option(
+        "I joined the drama club, but they never had enough roles for me.",
+        "+2 Disguise, +1 Charisma",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.charisma: 1},
+          skills: {Skill.disguise: 2},
+        ),
+      ),
+      _Option(
+        "I tried starting a band.  I had to play all the instruments myself.",
+        "+2 Music, +1 Heart",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.heart: 1},
+          skills: {Skill.music: 2},
+        ),
+      ),
     ]),
     _Question("Things were getting really bad...", [
       _Option(
-          "when I stole my first car.  I got a few blocks before I totaled it.",
-          "+2 Security, +1 Driving", () {
-        founder.adjustSkill(Skill.security, 2);
-        founder.adjustSkill(Skill.driving, 1);
-      }),
+        "when I stole my first car.  I got a few blocks before I totaled it.",
+        "+2 Security, +1 Driving",
+        bonuses: const CreationBonuses(
+          skills: {Skill.security: 2, Skill.driving: 1},
+        ),
+      ),
       _Option(
-          "and I went to live with my dad.  I learned gun safety the hard way.",
-          "+2 Firearms, +1 First Aid", () {
-        founder.adjustSkill(Skill.firearms, 2);
-        founder.adjustSkill(Skill.firstAid, 1);
-      }),
+        "and I went to live with my dad.  I learned gun safety the hard way.",
+        "+2 Firearms, +1 First Aid",
+        bonuses: const CreationBonuses(
+          skills: {Skill.firearms: 2, Skill.firstAid: 1},
+        ),
+      ),
       _Option(
-          "and I tried being a teacher's assistant.  It just made me a target.",
-          "+2 Teaching, +1 Science", () {
-        founder.adjustSkill(Skill.teaching, 2);
-        founder.adjustSkill(Skill.science, 1);
-      }),
-      _Option("so I ran for class president.  The campaign was a disaster.",
-          "+2 Persuasion, +1 Writing", () {
-        founder.adjustSkill(Skill.persuasion, 2);
-        founder.adjustSkill(Skill.writing, 1);
-      }),
+        "and I tried being a teacher's assistant.  It just made me a target.",
+        "+2 Teaching, +1 Science",
+        bonuses: const CreationBonuses(
+          skills: {Skill.teaching: 2, Skill.science: 1},
+        ),
+      ),
       _Option(
-          "and I went completely goth.  I had no friends and made my own clothes.",
-          "+2 Tailoring, +1 Disguise, Black Formalwear", () {
-        founder.adjustSkill(Skill.tailoring, 2);
-        founder.adjustSkill(Skill.disguise, 1);
-        if (founder.gender != Gender.male) {
-          founder.giveClothingType("CLOTHING_BLACKDRESS",
-              lootPile: founder.base?.loot);
-        } else {
-          founder.giveClothingType("CLOTHING_BLACKSUIT",
-              lootPile: founder.base?.loot);
-        }
-      }),
+        "so I ran for class president.  The campaign was a disaster.",
+        "+2 Persuasion, +1 Writing",
+        bonuses: const CreationBonuses(
+          skills: {Skill.persuasion: 2, Skill.writing: 1},
+        ),
+      ),
+      _Option(
+        "and I went completely goth.  I had no friends and made my own clothes.",
+        "+2 Tailoring, +1 Disguise, Black Formalwear",
+        onChoose: () {
+          if (founder.gender != Gender.male) {
+            founder.giveClothingType(
+              "CLOTHING_BLACKDRESS",
+              lootPile: founder.base?.loot,
+            );
+          } else {
+            founder.giveClothingType(
+              "CLOTHING_BLACKSUIT",
+              lootPile: founder.base?.loot,
+            );
+          }
+        },
+        bonuses: const CreationBonuses(
+          skills: {Skill.tailoring: 2, Skill.disguise: 1},
+        ),
+      ),
     ]),
     _Question("Well, I knew it had reached a crescendo when...", [
       _Option(
-          "I stole a cop car when I was only 14.  I went to juvie for 6 months.",
-          "+1 Driving, +1 Security, +1 Street Smarts", () {
-        founder.adjustSkill(Skill.driving, 1);
-        founder.adjustSkill(Skill.security, 1);
-        founder.adjustSkill(Skill.streetSmarts, 1);
-      }),
+        "I stole a cop car when I was only 14.  I went to juvie for 6 months.",
+        "+1 Driving, +1 Security, +1 Street Smarts",
+        bonuses: const CreationBonuses(
+          skills: {Skill.driving: 1, Skill.security: 1, Skill.streetSmarts: 1},
+        ),
+      ),
       _Option(
-          "my step mom shot her ex-husband, my dad, with a shotgun.  She got off.",
-          "+1 Firearms, +1 Dodge, +1 Law", () {
-        founder.adjustSkill(Skill.firearms, 1);
-        founder.adjustSkill(Skill.dodge, 1);
-        founder.adjustSkill(Skill.law, 1);
-      }),
+        "my step mom shot her ex-husband, my dad, with a shotgun.  She got off.",
+        "+1 Firearms, +1 Dodge, +1 Law",
+        bonuses: const CreationBonuses(
+          skills: {Skill.firearms: 1, Skill.dodge: 1, Skill.law: 1},
+        ),
+      ),
       _Option(
-          "I got caught hacking my grades.  But they made it so fucking easy!",
-          "+3 Computers", () {
-        founder.adjustSkill(Skill.computers, 3);
-      }),
+        "I got caught hacking my grades.  But they made it so fucking easy!",
+        "+3 Computers",
+        bonuses: const CreationBonuses(skills: {Skill.computers: 3}),
+      ),
       _Option(
-          "I resorted to controlling people.  I built my own clique of outcasts.",
-          "+2 Persuasion, +1 Street Smarts", () {
-        founder.adjustSkill(Skill.persuasion, 2);
-        founder.adjustSkill(Skill.streetSmarts, 1);
-      }),
+        "I resorted to controlling people.  I built my own clique of outcasts.",
+        "+2 Persuasion, +1 Street Smarts",
+        bonuses: const CreationBonuses(
+          skills: {Skill.persuasion: 2, Skill.streetSmarts: 1},
+        ),
+      ),
       _Option(
-          "I got caught making out with $makeOutWith.  So God hated me for that?",
-          "+2 Seduction, +1 Religion", () {
-        founder.adjustSkill(Skill.seduction, 2);
-        founder.adjustSkill(Skill.religion, 1);
-        gay = true;
-      }),
+        "I got caught making out with $makeOutWith.  So God hated me for that?",
+        "+2 Seduction, +1 Religion",
+        onChoose: () {
+          gay = true;
+        },
+        bonuses: const CreationBonuses(
+          skills: {Skill.seduction: 2, Skill.religion: 1},
+        ),
+      ),
     ]),
     _Question("I was only 15 when I ran away, and...", [
       _Option(
-          "I started robbing houses:  rich people only.  I was fed up with their crap.",
-          "+2 Security, +1 Stealth, +1 Agility", () {
-        founder.adjustSkill(Skill.security, 2);
-        founder.adjustSkill(Skill.stealth, 1);
-        founder.adjustAttribute(Attribute.agility, 1);
-      }),
-      _Option("I hung out with thugs and beat the shit out of people.",
-          "+2 Martial Arts, +1 Street Smarts, +1 Strength", () {
-        founder.adjustSkill(Skill.martialArts, 2);
-        founder.adjustSkill(Skill.streetSmarts, 1);
-        founder.adjustAttribute(Attribute.strength, 1);
-      }),
+        "I started robbing houses:  rich people only.  I was fed up with their crap.",
+        "+2 Security, +1 Stealth, +1 Agility",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.agility: 1},
+          skills: {Skill.security: 2, Skill.stealth: 1},
+        ),
+      ),
       _Option(
-          "I learned what it took to survive.  When to move on, where to hide.",
-          "+2 Street Smarts, +1 Stealth, +1 Intelligence", () {
-        founder.adjustSkill(Skill.streetSmarts, 2);
-        founder.adjustSkill(Skill.stealth, 1);
-        founder.adjustAttribute(Attribute.intelligence, 1);
-      }),
+        "I hung out with thugs and beat the shit out of people.",
+        "+2 Martial Arts, +1 Street Smarts, +1 Strength",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.strength: 1},
+          skills: {Skill.martialArts: 2, Skill.streetSmarts: 1},
+        ),
+      ),
       _Option(
-          "I volunteered for a left-wing candidate.  "
-              "${forceGenderBinary(Gender.nonbinary).heSheCap} didn't even come close.",
-          "+2 Persuasion, +1 Law, +1 Charisma", () {
-        founder.adjustSkill(Skill.persuasion, 2);
-        founder.adjustSkill(Skill.law, 1);
-        founder.adjustAttribute(Attribute.charisma, 1);
-      }),
-      _Option("I let people pay me for sex.  I needed the money to survive.",
-          "+2 Seduction, +1 Street Smarts, +1 Heart", () {
-        founder.adjustSkill(Skill.seduction, 2);
-        founder.adjustSkill(Skill.streetSmarts, 1);
-        founder.adjustAttribute(Attribute.heart, 1);
-      }),
+        "I learned what it took to survive.  When to move on, where to hide.",
+        "+2 Street Smarts, +1 Stealth, +1 Intelligence",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.intelligence: 1},
+          skills: {Skill.streetSmarts: 2, Skill.stealth: 1},
+        ),
+      ),
+      _Option(
+        "I volunteered for a left-wing candidate.  "
+            "${forceGenderBinary(Gender.nonbinary).heSheCap} didn't even come close.",
+        "+2 Persuasion, +1 Law, +1 Charisma",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.charisma: 1},
+          skills: {Skill.persuasion: 2, Skill.law: 1},
+        ),
+      ),
+      _Option(
+        "I let people pay me for sex.  I needed the money to survive.",
+        "+2 Seduction, +1 Street Smarts, +1 Heart",
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.heart: 1},
+          skills: {Skill.seduction: 2, Skill.streetSmarts: 1},
+        ),
+      ),
     ]),
     _Question("Life went on.  On my 18th birthday...", [
-      _Option("I stole a sports car.  The owner must have been pissed!",
-          "+1 Driving, Sports Car", () {
-        founder.adjustSkill(Skill.driving, 1);
-        Vehicle v = Vehicle(vehicleTypes["SPORTSCAR"]!.idName)..heat = 1;
-        v.location = founder.base;
-        vehiclePool.add(v);
-        founder.preferredCarId = v.id;
-      }),
-      _Option("I bought myself an assault rifle.  An AK-102.  Fully automatic.",
-          "+1 Firearms, AK-102", () {
-        founder.adjustSkill(Skill.firearms, 1);
-        founder.giveWeaponAndAmmo("WEAPON_AK102", 9);
-      }),
       _Option(
-          "I celebrated.  I'd saved a thousand bucks!", "+1 Business, \$1000",
-          () {
-        founder.adjustSkill(Skill.business, 1);
-        ledger.forceSetFunds(1000);
-      }),
+        "I stole a sports car.  The owner must have been pissed!",
+        "+1 Driving, Sports Car",
+        onChoose: () {
+          Vehicle v = Vehicle(vehicleTypes["SPORTSCAR"]!.idName)..heat = 1;
+          v.location = founder.base;
+          vehiclePool.add(v);
+          founder.preferredCarId = v.id;
+        },
+        bonuses: const CreationBonuses(skills: {Skill.driving: 1}),
+      ),
       _Option(
-          "I started wearing a security uniform to explore major buildings downtown.",
-          "+1 Disguise, Security Uniform, Downtown Maps", () {
-        founder.adjustSkill(Skill.disguise, 1);
-        founder.giveClothingType("CLOTHING_SECURITYUNIFORM",
-            lootPile: founder.base?.loot);
-        Iterable<Site> downtownSites = founder.base?.city.districts[1].sites
-                .where((s) => s.type != SiteType.oubliette) ??
-            [];
-        for (Site site in downtownSites) {
-          site.mapped = true;
-        }
-      }),
+        "I bought myself an assault rifle.  An AK-102.  Fully automatic.",
+        "+1 Firearms, AK-102",
+        onChoose: () {
+          founder.giveWeaponAndAmmo("WEAPON_AK102", 9);
+        },
+        bonuses: const CreationBonuses(skills: {Skill.firearms: 1}),
+      ),
+      _Option(
+        "I celebrated.  I'd saved a thousand bucks!",
+        "+1 Business, \$1000",
+        onChoose: () {
+          ledger.forceSetFunds(1000);
+        },
+        bonuses: const CreationBonuses(skills: {Skill.business: 1}),
+      ),
+      _Option(
+        "I started wearing a security uniform to explore major buildings downtown.",
+        "+1 Disguise, Security Uniform, Downtown Maps",
+        onChoose: () {
+          founder.giveClothingType(
+            "CLOTHING_SECURITYUNIFORM",
+            lootPile: founder.base?.loot,
+          );
+          Iterable<Site> downtownSites =
+              founder.base?.city.districts[1].sites.where(
+                (s) => s.type != SiteType.oubliette,
+              ) ??
+              [];
+          for (Site site in downtownSites) {
+            site.mapped = true;
+          }
+        },
+        bonuses: const CreationBonuses(skills: {Skill.disguise: 1}),
+      ),
       _Option(
         "I went to a party and met a cool law student.  We've been dating since.",
         "+1 Seduction, Sleeper Lawyer",
-        () {
-          founder.adjustSkill(Skill.seduction, 1);
-          Creature lawyer =
-              Creature.fromId(CreatureTypeIds.lawyer, align: Alignment.liberal);
+        onChoose: () {
+          Creature lawyer = Creature.fromId(
+            CreatureTypeIds.lawyer,
+            align: Alignment.liberal,
+          );
           // Cap strength and agility at 3, and wisdom at 1...
           int spare = 0;
           if (lawyer.rawAttributes[Attribute.strength]! > 3) {
@@ -365,9 +483,13 @@ Future<void> characterCreationQuestions(Creature founder, bool choose) async {
           // ...and move the excess to intelligence, charisma, and heart
           while (spare > 0) {
             lawyer.adjustAttribute(
-                [Attribute.intelligence, Attribute.charisma, Attribute.heart]
-                    .random,
-                1);
+              [
+                Attribute.intelligence,
+                Attribute.charisma,
+                Attribute.heart,
+              ].random,
+              1,
+            );
             spare--;
           }
           // Force competence in law and persuasion
@@ -380,8 +502,9 @@ Future<void> characterCreationQuestions(Creature founder, bool choose) async {
           }
           // Finally, add juice to boost stats even further
           lawyer.juice = 100;
-          lawyer.birthDate = gameState.date
-              .subtract(Duration(days: 365 * 25 + lcsRandom(365)));
+          lawyer.birthDate = gameState.date.subtract(
+            Duration(days: 365 * 25 + lcsRandom(365)),
+          );
           if (gay) {
             lawyer.genderAssignedAtBirth = lawyer.gender = founder.gender;
           } else {
@@ -394,80 +517,101 @@ Future<void> characterCreationQuestions(Creature founder, bool choose) async {
           lawyer.sleeperAgent = true;
           lawyer.seduced = true;
           lawyer.hireId = founder.id;
-          lawyer.workLocation =
-              findSiteInSameCity(founder.base?.city, SiteType.courthouse);
+          lawyer.workLocation = findSiteInSameCity(
+            founder.base?.city,
+            SiteType.courthouse,
+          );
           lawyer.location = lawyer.workLocation;
           lawyer.nameCreature();
           pool.add(lawyer);
         },
+        bonuses: const CreationBonuses(skills: {Skill.seduction: 1}),
       ),
     ]),
     _Question("For the last year or so, I've been...", [
-      _Option("stealing from Corporations.  I know they're hiding the truth.",
-          "+3 Agility, +1 Intelligence, +2 Security Stealth Computers and Disguise",
-          () {
-        founder.adjustAttribute(Attribute.agility, 3);
-        founder.adjustAttribute(Attribute.intelligence, 1);
-        founder.adjustSkill(Skill.security, 2);
-        founder.adjustSkill(Skill.stealth, 2);
-        founder.adjustSkill(Skill.computers, 2);
-        founder.adjustSkill(Skill.disguise, 2);
-        founder.type = creatureTypes[CreatureTypeIds.thief]!;
-        if (founder.clothing.type.idName == "CLOTHING_CLOTHES") {
-          founder.giveClothingType("CLOTHING_BLACKCLOTHES",
-              lootPile: founder.base?.loot);
-        }
-      }),
       _Option(
-          "a violent gang leader.  Nothing can change me, or stand in my way.",
-          "+3 Agility and Strength, +3 Firearms and Martial Arts, 4 Gang Members",
-          () {
-        founder.adjustAttribute(Attribute.agility, 3);
-        founder.adjustAttribute(Attribute.strength, 3);
-        founder.adjustSkill(Skill.firearms, 3);
-        founder.adjustSkill(Skill.martialArts, 3);
-        founder.adjustSkill(Skill.firstAid, 1);
-        founder.type = creatureTypes[CreatureTypeIds.gangMember]!;
-        recruits = Recruits.gang;
-        if (founder.clothing.type.idName == "CLOTHING_CLOTHES") {
-          founder.giveClothingType("CLOTHING_STREETWEAR");
-        }
-      }),
+        "stealing from Corporations.  I know they're hiding the truth.",
+        "+3 Agility, +1 Intelligence, +2 Security Stealth Computers and Disguise",
+        onChoose: () {
+          founder.type = creatureTypes[CreatureTypeIds.thief]!;
+          if (founder.clothing.type.idName == "CLOTHING_CLOTHES") {
+            founder.giveClothingType(
+              "CLOTHING_BLACKCLOTHES",
+              lootPile: founder.base?.loot,
+            );
+          }
+        },
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.agility: 3, Attribute.intelligence: 1},
+          skills: {
+            Skill.security: 2,
+            Skill.stealth: 2,
+            Skill.computers: 2,
+            Skill.disguise: 2,
+          },
+        ),
+      ),
       _Option(
-          "taking college courses.  I'm starting to understand what needs to be done.",
-          "+4 Int, +2 Science Computers Writing and Teaching, +1 Business and Law",
-          () {
-        founder.adjustAttribute(Attribute.intelligence, 4);
-        founder.adjustSkill(Skill.science, 2);
-        founder.adjustSkill(Skill.computers, 2);
-        founder.adjustSkill(Skill.writing, 2);
-        founder.adjustSkill(Skill.teaching, 2);
-        founder.adjustSkill(Skill.business, 1);
-        founder.adjustSkill(Skill.law, 1);
-        founder.type = creatureTypes[CreatureTypeIds.collegeStudent]!;
-      }),
+        "a violent gang leader.  Nothing can change me, or stand in my way.",
+        "+3 Agility and Strength, +3 Firearms and Martial Arts, +1 First Aid, 4 Gang Members",
+        onChoose: () {
+          founder.type = creatureTypes[CreatureTypeIds.gangMember]!;
+          recruits = Recruits.gang;
+          if (founder.clothing.type.idName == "CLOTHING_CLOTHES") {
+            founder.giveClothingType("CLOTHING_STREETWEAR");
+          }
+        },
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.agility: 3, Attribute.strength: 3},
+          skills: {Skill.firearms: 3, Skill.martialArts: 3, Skill.firstAid: 1},
+        ),
+      ),
       _Option(
-          "writing my manifesto and refining my image.  I'm ready to change the world.",
-          "+3 Charisma, +1 Intelligence, +2 Persuasion, +1 Law and Writing, +50 juice",
-          () {
-        founder.adjustAttribute(Attribute.charisma, 3);
-        founder.adjustAttribute(Attribute.intelligence, 1);
-        founder.adjustSkill(Skill.persuasion, 2);
-        founder.adjustSkill(Skill.law, 1);
-        founder.adjustSkill(Skill.writing, 1);
-        founder.type = creatureTypes[CreatureTypeIds.politicalActivist]!;
-        founder.juice = 50;
-      }),
+        "taking college courses.  I'm starting to understand what needs to be done.",
+        "+4 Int, +2 Science Computers Writing and Teaching, +1 Business and Law",
+        onChoose: () {
+          founder.type = creatureTypes[CreatureTypeIds.collegeStudent]!;
+        },
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.intelligence: 4},
+          skills: {
+            Skill.science: 2,
+            Skill.computers: 2,
+            Skill.writing: 2,
+            Skill.teaching: 2,
+            Skill.business: 1,
+            Skill.law: 1,
+          },
+        ),
+      ),
       _Option(
-          "surviving alone, just like everyone else.  But we can't go on like this.",
-          "+4 Heart, +1 Intelligence Strength Agility and Charisma", () {
-        founder.adjustAttribute(Attribute.heart, 4);
-        founder.adjustAttribute(Attribute.intelligence, 1);
-        founder.adjustAttribute(Attribute.strength, 1);
-        founder.adjustAttribute(Attribute.agility, 1);
-        founder.adjustAttribute(Attribute.charisma, 1);
-        founder.type = creatureTypes[CreatureTypeIds.highschoolDropout]!;
-      }),
+        "writing my manifesto and refining my image.  I'm ready to change the world.",
+        "+3 Charisma, +1 Intelligence, +2 Persuasion, +1 Law and Writing, +50 juice",
+        onChoose: () {
+          founder.type = creatureTypes[CreatureTypeIds.politicalActivist]!;
+        },
+        bonuses: const CreationBonuses(
+          attributes: {Attribute.charisma: 3, Attribute.intelligence: 1},
+          skills: {Skill.persuasion: 2, Skill.law: 1, Skill.writing: 1},
+          juice: 50,
+        ),
+      ),
+      _Option(
+        "surviving alone, just like everyone else.  But we can't go on like this.",
+        "+4 Heart, +1 Intelligence Strength Agility and Charisma",
+        onChoose: () {
+          founder.type = creatureTypes[CreatureTypeIds.highschoolDropout]!;
+        },
+        bonuses: const CreationBonuses(
+          attributes: {
+            Attribute.heart: 4,
+            Attribute.intelligence: 1,
+            Attribute.strength: 1,
+            Attribute.agility: 1,
+            Attribute.charisma: 1,
+          },
+        ),
+      ),
     ]),
   ];
 
@@ -500,11 +644,14 @@ Future<void> characterCreationQuestions(Creature founder, bool choose) async {
     console.creation = CreationContext(
       stage: CreationStage.background,
       title: 'The founder’s background',
-      subtitle: choose ? 'Choose the experiences that shaped your founder' : 'The background chosen by fate',
+      subtitle: choose
+          ? 'Choose the experiences that shaped your founder'
+          : 'The background chosen by fate',
       prompt: question.question,
       step: questionNumber,
       totalSteps: questions.length,
       founder: founder,
+      pendingBonuses: choose ? null : question.answers[highlight!].bonuses,
       choices: choose
           ? [
               for (var i = 0; i < question.answers.length; i++)
@@ -512,6 +659,7 @@ Future<void> characterCreationQuestions(Creature founder, bool choose) async {
                   key: letterAPlus(i),
                   label: question.answers[i].option,
                   description: question.answers[i].description,
+                  bonuses: question.answers[i].bonuses,
                 ),
             ]
           : const [],
@@ -532,7 +680,7 @@ Future<void> characterCreationQuestions(Creature founder, bool choose) async {
         choice = highlight! + Key.a;
       }
       if (choice >= Key.a && choice <= Key.e) {
-        question.answers[choice - Key.a].callback();
+        question.answers[choice - Key.a].apply(founder);
         break;
       }
     }
@@ -541,8 +689,10 @@ Future<void> characterCreationQuestions(Creature founder, bool choose) async {
   switch (recruits) {
     case Recruits.gang:
       for (int i = 0; i < 4; i++) {
-        Creature recruit = Creature.fromId(CreatureTypeIds.gangMember,
-            align: Alignment.liberal);
+        Creature recruit = Creature.fromId(
+          CreatureTypeIds.gangMember,
+          align: Alignment.liberal,
+        );
         if (recruit.weapon.type.idName == "WEAPON_AK102" ||
             recruit.weapon.type.idName == "WEAPON_MP5" ||
             recruit.equippedWeapon == null) {
@@ -551,8 +701,9 @@ Future<void> characterCreationQuestions(Creature founder, bool choose) async {
         while (recruit.rawAttributes[Attribute.wisdom]! > 1) {
           recruit.adjustAttribute(Attribute.wisdom, -1);
           recruit.adjustAttribute(
-              [Attribute.heart, Attribute.agility, Attribute.strength].random,
-              1);
+            [Attribute.heart, Attribute.agility, Attribute.strength].random,
+            1,
+          );
         }
         recruit.nameCreature();
         recruit.location = founder.base;

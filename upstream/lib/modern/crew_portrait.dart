@@ -96,6 +96,9 @@ class CrewPortrait extends StatelessWidget {
         ? const Color(0xFFA67635)
         : _teal;
     return Semantics(
+      key: ValueKey('crew-portrait:${person.id}:$portraitId'),
+      container: true,
+      identifier: 'crew-portrait:${person.id}:$portraitId',
       image: true,
       label: '${person.name} portrait. $status. ${appearance.description}',
       child: MechanicsTooltip(
@@ -229,6 +232,9 @@ class FounderPortraitPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final entry = portraitCatalog[portraitId];
     return Semantics(
+      key: ValueKey('founder-preview:$portraitId'),
+      container: true,
+      identifier: 'founder-preview:$portraitId',
       image: true,
       label: 'Founder portrait preview',
       child: ExcludeSemantics(

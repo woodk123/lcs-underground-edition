@@ -4,22 +4,24 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 
+String attributeDescription(Attribute attribute) => switch (attribute) {
+  Attribute.strength =>
+    'Physical power. Helps force doors, affects melee damage and contributes to health.',
+  Attribute.agility =>
+    'Speed and coordination. Helps escape on foot and adds to Dodge for melee defense.',
+  Attribute.intelligence =>
+    'Reasoning and knowledge. Helps with technical tasks and recruitment discussions.',
+  Attribute.charisma =>
+    'Personal presence. Supports social skills and contributes to relationship capacity.',
+  Attribute.wisdom =>
+    'Conservative conviction. Helps resist liberal persuasion and contributes to conservative characters’ health.',
+  Attribute.heart =>
+    'Compassion and liberal conviction. Helps resist conservative persuasion, contributes to liberal characters’ health and relationship capacity.',
+};
+
 /// Read-only explanations; never roll dice while displaying a preview.
 String attributeHelp(Attribute attribute, {Creature? actor}) {
-  final description = switch (attribute) {
-    Attribute.strength =>
-      'Physical power. Helps force doors, affects melee damage and contributes to health.',
-    Attribute.agility =>
-      'Speed and coordination. Helps escape on foot and adds to Dodge for melee defense.',
-    Attribute.intelligence =>
-      'Reasoning and knowledge. Helps with technical tasks and recruitment discussions.',
-    Attribute.charisma =>
-      'Personal presence. Supports social skills and contributes to relationship capacity.',
-    Attribute.wisdom =>
-      'Conservative conviction. Helps resist liberal persuasion and contributes to conservative characters’ health.',
-    Attribute.heart =>
-      'Compassion and liberal conviction. Helps resist conservative persuasion, contributes to liberal characters’ health and relationship capacity.',
-  };
+  final description = attributeDescription(attribute);
   final skills = Skill.values
       .where((skill) => skill.attribute == attribute)
       .map((skill) => skill.displayName)

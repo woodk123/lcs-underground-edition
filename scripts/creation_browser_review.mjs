@@ -78,21 +78,54 @@ async function rerollPortrait(prefix) {
   const after = createHash('sha256').update(await preview.screenshot()).digest('hex');
   assert.notEqual(after, before, 'Reroll must visibly change the portrait');
   assert.equal(await text(), beforeText, 'Reroll must leave names and settings unchanged');
-  report.checks.push({ name: `${prefix}-portrait-reroll`, status: 'passed' });
+  const identity = await preview.getAttribute('flt-semantics-identifier');
+  assert.match(identity ?? '', /^founder-preview:\d+$/);
+  report.checks.push({ name: `${prefix}-portrait-reroll`, status: 'passed', identity });
+  return { portrait: Number(identity.split(':')[1]), person: null };
 }
-async function bonusHelp(prefix, scale) {
-  const before = await text();
-  const answer = page.getByRole('button', { name: /^A(?:\s|$)/ }).first();
-  await answer.scrollIntoViewIfNeeded();
-  const box = await answer.boundingBox();
+async function checkPortrait(identity, stage) {
+  const visible = await page.locator('[flt-semantics-identifier^="crew-portrait:"]')
+    .evaluateAll(nodes => nodes.map(node => node.getAttribute('flt-semantics-identifier')));
+  assert.ok(visible.length, `No crew portrait at ${stage}`);
+  if (identity.person === null) identity.person = Number(visible[0].split(':')[1]);
+  const founder = visible.filter(value => Number(value.split(':')[1]) === identity.person);
+  assert.ok(founder.length, `Founder portrait missing at ${stage}`);
+  assert.ok(founder.every(value => Number(value.split(':')[2]) === identity.portrait),
+    `Founder face changed at ${stage}: expected ${identity.portrait}, got ${founder}`);
+  report.checks.push({ name: `portrait-${stage}`, status: 'passed', ...identity });
+}
+async function checkNameLocation() {
+  const field = await page.getByRole('textbox').first().boundingBox();
+  const question = await page.getByText('What is your name to the people?', { exact: true }).boundingBox();
+  const begin = await page.getByRole('button', { name: /^Begin campaign/ }).boundingBox();
+  assert.ok(field && question && begin);
+  assert.ok(field.y >= question.y + question.height && field.x >= question.x - 2);
+  assert.ok(field.x + field.width < page.viewportSize().width * .8, 'Name input must stay in the left page');
+  assert.ok(begin.y >= field.y + field.height && begin.x + begin.width <= field.x + field.width + 2);
+  report.checks.push({ name: 'name-field-below-question', status: 'passed', field });
+}
+async function bonusHelp(prefix, scale, choice = 'A', stats = [
+  ['law', /Choosing this: Law/], ['agility', /Choosing this: Agility/],
+]) {
+  await page.mouse.move(2, 2);
+  await page.waitForTimeout(350);
+  const answer = page.getByRole('button', { name: new RegExp(`^${choice}(?:\\s|$)`) }).first();
+  let box;
+  for (let attempt = 0; attempt < 18; attempt++) {
+    box = await answer.count() ? await answer.boundingBox() : null;
+    // Flutter clips semantics bounds for partially visible cards. The effect
+    // line is at the bottom, so a visible question heading alone isn't enough.
+    if (box && box.height > 60 * scale && box.y >= 0 && box.y + box.height < page.viewportSize().height - 70) break;
+    await page.mouse.move(page.viewportSize().width * .3, page.viewportSize().height * .5);
+    await page.mouse.wheel(0, 200);
+    await page.waitForTimeout(150);
+  }
   assert.ok(box);
+  const before = await text();
   const y = box.y + box.height - 12 - 8.4 * scale;
   let previousX = box.x + 40;
   let lastPoint;
-  for (const [name, message] of [
-    ['law', /courtroom defense, legal arguments/],
-    ['agility', /Speed and coordination/],
-  ]) {
+  for (const [name, message] of stats) {
     let popup;
     for (let x = previousX; x < Math.min(box.x + box.width - 12, box.x + 380 * scale); x += 12) {
       await page.mouse.move(x, y);
@@ -139,7 +172,7 @@ async function founderFlow({ fate, prefix, name }) {
   await click(/^Continue to founder/); await wait(/The founder/);
   assert.match(await text(), /Given name/);
   assert.doesNotMatch(await text(), /Founder dossier/);
-  await rerollPortrait(prefix);
+  const identity = await rerollPortrait(prefix);
   if (fate) {
     await click(/^Tragic origin/); await wait(/Let Fate Decide/);
   }
@@ -148,6 +181,7 @@ async function founderFlow({ fate, prefix, name }) {
   for (let step = 1; step <= 10; step++) {
     await wait(new RegExp(`${step}\\s*/\\s*10`));
     assert.match(await text(), /Founder dossier/);
+    if (step === 1 || step === 10) await checkPortrait(identity, `${prefix}-background-${step}`);
     if (step === 1 || step === 10) await capture(`${prefix}-03-background-${step}`);
     if (fate) {
       assert.equal(await page.getByRole('button', { name: /^A(?:\s|$)/ }).count(), 0);
@@ -156,13 +190,18 @@ async function founderFlow({ fate, prefix, name }) {
       assert.equal(await page.getByRole('button', { name: /^[A-E](?:\s|$)/ }).count(), 5);
       if (step === 4) {
         await bonusHelp('normal', 1);
+        await bonusHelp('computers-normal', 1, 'C', [['computers', /Choosing this: Computers/]]);
+        await page.mouse.move(2, 2);
+        await page.waitForTimeout(350);
         await click(/^Reading size/);
         await page.getByRole('menuitem', { name: '150%', exact: true }).click();
         await page.setViewportSize({ width: 800, height: 600 });
         await page.waitForTimeout(250);
-        const bonus = await bonusHelp('large', 1.5);
+        await bonusHelp('large', 1.5);
+        const bonus = await bonusHelp('computers-large', 1.5, 'C', [['computers', /Choosing this: Computers/]]);
         await page.mouse.click(bonus.x, bonus.y);
         await wait(/5\s*\/\s*10/);
+        assert.match(await text(), /Computers: 1\b/);
         await click(/^Reading size/);
         await page.getByRole('menuitem', { name: '100%', exact: true }).click();
         await page.setViewportSize({ width: 1280, height: 720 });
@@ -173,7 +212,10 @@ async function founderFlow({ fate, prefix, name }) {
     }
   }
   await wait(/A new Conservative era/); await capture(`${prefix}-04-briefing`);
+  await checkPortrait(identity, `${prefix}-briefing`);
   await click(/^Continue/); await wait(/Sign the founding record/);
+  await checkPortrait(identity, `${prefix}-public-name`);
+  await checkNameLocation();
   const field = page.getByRole('textbox').first(); await field.waitFor();
   assert.ok(await field.inputValue());
   await field.fill(name);
@@ -183,7 +225,11 @@ async function founderFlow({ fate, prefix, name }) {
   assert.ok(bounds && bounds.y >= 0 && bounds.y + bounds.height <= page.viewportSize().height);
   await begin.click(); await wait(/Save & exit/);
   assert.match(await text(), new RegExp(name));
+  await checkPortrait(identity, `${prefix}-headquarters`);
   await capture(`${prefix}-06-playable-organisation`);
+  await click(/^Save & exit/); await wait(/Start a New Game/);
+  await click(/^Continue as/); await wait(/Save & exit/);
+  await checkPortrait(identity, `${prefix}-reloaded`);
   await click(/^Save & exit/); await wait(/Start a New Game/);
 }
 try {
@@ -207,21 +253,28 @@ try {
   await page.setViewportSize({width:800,height:600});await page.waitForTimeout(250);
   await capture('large-01-settings');
   await click(/^Continue to founder/);await wait(/The founder/);
-  await rerollPortrait('large');
+  const largeIdentity = await rerollPortrait('large');
   await click(/^Tragic origin/);await wait(/Let Fate Decide/);
   await capture('large-02-identity');await click(/^Begin background/);
   for(let step=1;step<=10;step++) {
     await wait(new RegExp(`${step}\\s*/\\s*10`));
+    if (step === 1 || step === 10) await checkPortrait(largeIdentity, `large-fate-${step}`);
     if(step===1||step===10)await capture(`large-03-fate-${step}`);
     assert.equal(await page.getByRole('button',{name:/^[A-E](?:\s|$)/}).count(),0);
     await click(/^Continue/);
   }
   await wait(/A new Conservative era/);await capture('large-04-briefing');
   await click(/^Continue/);await wait(/Sign the founding record/);
+  await checkPortrait(largeIdentity, 'large-public-name');
+  await checkNameLocation();
   await page.getByRole('textbox').first().fill('Large Founder Review');
   await capture('large-05-public-name');
   await page.getByRole('button',{name:/^Begin campaign/}).click();await wait(/Save & exit/);
   assert.match(await text(),/Large Founder Review/);await capture('large-06-playable-organisation');
+  await checkPortrait(largeIdentity, 'large-headquarters');
+  await click(/^Save & exit/);await wait(/Start a New Game/);
+  await click(/^Continue as/);await wait(/Save & exit/);
+  await checkPortrait(largeIdentity, 'large-reloaded');
   assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.consoleErrors,[]);assert.deepEqual(report.failedRequests,[]);
   report.status='passed';
 } catch(error) {

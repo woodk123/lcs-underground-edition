@@ -28,7 +28,7 @@ Preserve these IDs and append new art rather than inserting it. Base IDs use `ba
 
 Rendering lives in `modern/crew_portrait.dart`. Supported equipment, injuries and ageing use overlays without rerolling the face; the dossier remains the authoritative medical/equipment record.
 
-The founder identity page offers a portrait preview and **Reroll portrait** (`F`) beside the name controls. Options follow the starting campaign age and selected presentation. Cycling uses an isolated seed/catalog order and leaves names, stats, campaign state and gameplay RNG alone. The chosen face carries through background answers and the public-name page into saves. Decorative crew/personnel icons use a separate activist-group illustration and do not assign character identities.
+The founder identity page offers a portrait preview and **Reroll portrait** (`F`) beside the name controls. Options follow the starting campaign age and selected presentation. Cycling uses an isolated seed/catalog order and leaves names, stats, campaign state and gameplay RNG alone. The chosen face and its original assignment age carry through backgrounds, headquarters and save/reload. Do not overwrite the assignment age after a birthday: doing so can recast a face at the edge of its cohort. Clothing overlays can change with equipment while the face remains fixed. Decorative crew/personnel icons use a separate activist-group illustration and do not assign character identities.
 
 ## Regenerate
 

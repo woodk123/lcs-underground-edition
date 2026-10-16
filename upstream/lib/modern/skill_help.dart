@@ -6,51 +6,53 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/dice.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 
+/// Gameplay uses shared by current-stat help and background-choice previews.
+String skillUses(Skill skill) => switch (skill) {
+  Skill.art => 'selling artwork, graffiti and creative activism.',
+  Skill.business =>
+    'selling art or clothing, other fundraising, economic debates and newspaper articles.',
+  Skill.computers =>
+    'hacking, credit-card fraud and accessing computer systems during operations.',
+  Skill.disguise =>
+    'passing as someone who belongs at a site; appropriate clothing also matters.',
+  Skill.dodge => 'avoiding incoming attacks during combat.',
+  Skill.driving => 'handling vehicles during car chases and escapes.',
+  Skill.firstAid =>
+    'treating wounded crew and stopping bleeding during operations.',
+  Skill.heavyWeapons =>
+    'attacking with weapons that require Heavy Weapons, including machine guns and flamethrowers.',
+  Skill.law =>
+    'courtroom defense, legal arguments, recruitment discussions and newspaper articles.',
+  Skill.martialArts => 'unarmed fighting and attacks with melee weapons.',
+  Skill.music =>
+    'playing live music to raise funds and spread the movement’s message.',
+  Skill.persuasion =>
+    'recruiting people, collecting donations, political discussions and courtroom arguments.',
+  Skill.firearms => 'attacking with guns that require Firearms.',
+  Skill.psychology =>
+    'interrogation and efforts to influence or convert prisoners.',
+  Skill.religion =>
+    'discussions about faith, recruitment, influencing prisoners and newspaper articles.',
+  Skill.science =>
+    'scientific arguments, recruitment, influencing prisoners and newspaper articles.',
+  Skill.security =>
+    'opening locks, bypassing security systems and stealing cars.',
+  Skill.stealth => 'moving through sites without being noticed.',
+  Skill.streetSmarts =>
+    'finding recruits or cars, fundraising and avoiding police attention during daily activities.',
+  Skill.tailoring =>
+    'making or repairing clothing, creating flags and selling clothing to raise funds.',
+  Skill.teaching =>
+    'helping other crew learn skills the teacher already knows.',
+  Skill.throwing => 'attacks with thrown weapons, including Molotov cocktails.',
+  Skill.writing => 'producing articles for the movement’s newspaper.',
+  Skill.seduction =>
+    'romantic approaches, relationships and related fundraising.',
+};
+
 /// Read-only explanations of the retained game's actual skill uses.
 String skillHelp(Skill skill, {Creature? actor}) {
-  final uses = switch (skill) {
-    Skill.art => 'selling artwork, graffiti and creative activism.',
-    Skill.business =>
-      'selling art or clothing, other fundraising, economic debates and newspaper articles.',
-    Skill.computers =>
-      'hacking, credit-card fraud and accessing computer systems during operations.',
-    Skill.disguise =>
-      'passing as someone who belongs at a site; appropriate clothing also matters.',
-    Skill.dodge => 'avoiding incoming attacks during combat.',
-    Skill.driving => 'handling vehicles during car chases and escapes.',
-    Skill.firstAid =>
-      'treating wounded crew and stopping bleeding during operations.',
-    Skill.heavyWeapons =>
-      'attacking with weapons that require Heavy Weapons, including machine guns and flamethrowers.',
-    Skill.law =>
-      'courtroom defense, legal arguments, recruitment discussions and newspaper articles.',
-    Skill.martialArts => 'unarmed fighting and attacks with melee weapons.',
-    Skill.music =>
-      'playing live music to raise funds and spread the movement’s message.',
-    Skill.persuasion =>
-      'recruiting people, collecting donations, political discussions and courtroom arguments.',
-    Skill.firearms => 'attacking with guns that require Firearms.',
-    Skill.psychology =>
-      'interrogation and efforts to influence or convert prisoners.',
-    Skill.religion =>
-      'discussions about faith, recruitment, influencing prisoners and newspaper articles.',
-    Skill.science =>
-      'scientific arguments, recruitment, influencing prisoners and newspaper articles.',
-    Skill.security =>
-      'opening locks, bypassing security systems and stealing cars.',
-    Skill.stealth => 'moving through sites without being noticed.',
-    Skill.streetSmarts =>
-      'finding recruits or cars, fundraising and avoiding police attention during daily activities.',
-    Skill.tailoring =>
-      'making or repairing clothing, creating flags and selling clothing to raise funds.',
-    Skill.teaching =>
-      'helping other crew learn skills the teacher already knows.',
-    Skill.throwing =>
-      'attacks with thrown weapons, including Molotov cocktails.',
-    Skill.writing => 'producing articles for the movement’s newspaper.',
-    Skill.seduction =>
-      'romantic approaches, relationships and related fundraising.',
-  };
+  final uses = skillUses(skill);
   final attribute = skill.attribute.name;
   final capLabel = attribute[0].toUpperCase() + attribute.substring(1);
   final lines = <String>[

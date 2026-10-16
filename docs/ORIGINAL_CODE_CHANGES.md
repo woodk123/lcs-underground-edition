@@ -21,7 +21,9 @@ The Underground Edition retains the original Dart/Flutter engine and campaign co
 - Portrait age compatibility takes precedence over avoiding duplicates. Clearly mismatched saved assignments are repaired once; appropriate identities persist across saves and birthdays.
 - The founder identity page previews and rerolls an age-compatible portrait alongside the generated names. The selected face survives background creation and saves without consuming gameplay RNG.
 - Founder attributes and skills use two compact columns when space permits; values stay beside their labels and detailed help remains in tooltips.
-- Stat bonuses on background answers have the same detailed tooltips at the point of choice. Hovering or long-pressing inspects the stat; a normal click still chooses the answer. Combined bonuses and the fate summary also expose help.
+- Background bonus tooltips compare current and projected levels, effective attributes, training ceilings and relevant uses. Computers also explains Hacker Den requirements and solo hacking odds. The reader and preview share typed bonuses; previews never run world/equipment callbacks or consume campaign RNG/IDs. Two reward descriptions now include Music/First Aid bonuses that were already granted by the original game.
+- The public-name field and campaign buttons sit beneath the question on the left page, with wrapping controls for enlarged text.
+- Founder portrait selection keeps its original assignment age through background creation, headquarters and saves, including birthdays at an age-cohort boundary.
 - Crew and personnel illustrations depict contemporary grassroots activists.
 
 See [architecture](ARCHITECTURE.md), [testing](TESTING.md) and [portrait details](PORTRAIT_LIBRARY.md). Detailed development history and retired reviews remain available through Git history and the original release artifacts.

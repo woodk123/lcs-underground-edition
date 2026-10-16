@@ -41,7 +41,7 @@ node scripts/creation_browser_review.mjs --url http://127.0.0.1:18879/ --expecte
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop.ps1 -Port 18879
 ```
 
-The first helper uses installed Microsoft Edge. The creation helper exercises visible portrait rerolls without changing name/settings text, answer-bonus tooltips and click-through at normal and 150% text, manual and random backgrounds, public-name entry and playable headquarters at normal size and 800×600 with 150% text. Use only the isolated QA port when stopping a test server.
+The first helper uses installed Microsoft Edge. The creation helper checks portrait rerolls, continuity through creation/headquarters/save reload, projected answer-bonus help and click-through, and public-name placement below the question. It covers manual and random backgrounds at normal size and 800×600 with 150% text. Unit regressions cover all 50 source bonuses, untouched state/RNG/ID counters during previews, and the birthday/cohort edge case. Use only the isolated QA port when stopping a test server.
 
 ## Release checks
 

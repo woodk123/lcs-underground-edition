@@ -12,6 +12,7 @@ import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/creation_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/modern/attribute_help.dart';
+import 'package:lcs_new_age/modern/creation_bonus_help.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_creation.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
@@ -321,7 +322,11 @@ void main() {
             CreationChoice(
               key: 'a',
               label: 'Acrimoniously. I once tripped over the paperwork!',
-              description: '+1 Law, +1 Agility',
+              description: '+1 Law, +1 Agility, +1 Computers',
+              bonuses: CreationBonuses(
+                skills: {Skill.law: 1, Skill.computers: 1},
+                attributes: {Attribute.agility: 1},
+              ),
             ),
           ],
         ),
@@ -338,12 +343,14 @@ void main() {
       );
       final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
       await mouse.addPointer(location: Offset.zero);
+      final preview = CreationBonusPreview(
+        founder,
+        reader.context.choices.first.bonuses!,
+      );
       for (final help in [
-        (label: '+1 Law', message: skillHelp(Skill.law, actor: founder)),
-        (
-          label: '+1 Agility',
-          message: attributeHelp(Attribute.agility, actor: founder),
-        ),
+        (label: '+1 Law', message: preview.skill(Skill.law)),
+        (label: '+1 Agility', message: preview.attribute(Attribute.agility)),
+        (label: '+1 Computers', message: preview.skill(Skill.computers)),
       ]) {
         await mouse.moveTo(tester.getCenter(find.text(help.label)));
         await tester.pump(const Duration(milliseconds: 500));
@@ -359,7 +366,7 @@ void main() {
       }
       await tester.longPress(find.text('+1 Law'));
       await tester.pumpAndSettle();
-      expect(find.text(skillHelp(Skill.law, actor: founder)), findsOneWidget);
+      expect(find.text(preview.skill(Skill.law)), findsOneWidget);
       expect(reader.sent, isEmpty);
       expect(jsonEncode(game.gameState.toJson()), before);
       expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
@@ -661,7 +668,7 @@ void main() {
       );
 
       testWidgets(
-        'original full-width name input remains unobscured at ${size.width}, scale $scale',
+        'name entry sits beside its question and fits at ${size.width}, scale $scale',
         (tester) async {
           final reader = _Reader(
             CreationContext(
@@ -674,27 +681,30 @@ void main() {
           );
           final controller = TextEditingController(text: 'Wangarĩ Fernández');
           addTearDown(controller.dispose);
-          final input = Row(
+          final input = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: TextField(
-                  key: const ValueKey('source-name-entry'),
-                  controller: controller,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
+              TextField(
+                key: const ValueKey('source-name-entry'),
+                controller: controller,
+                decoration: const InputDecoration(border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton(
+                    key: const ValueKey('source-name-submit'),
+                    onPressed: () => reader.send('Enter'),
+                    child: const Text('Begin campaign'),
                   ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(
-                key: const ValueKey('source-name-submit'),
-                onPressed: () => reader.send('Enter'),
-                child: const Text('Begin campaign'),
-              ),
-              TextButton(
-                key: const ValueKey('source-name-original'),
-                onPressed: () => reader.send('Escape'),
-                child: const Text('Use original name'),
+                  TextButton(
+                    key: const ValueKey('source-name-original'),
+                    onPressed: () => reader.send('Escape'),
+                    child: const Text('Use original name'),
+                  ),
+                ],
               ),
             ],
           );
@@ -708,6 +718,15 @@ void main() {
           _inside(tester, _key('source-name-entry'), size);
           _inside(tester, _key('source-name-submit'), size);
           _inside(tester, _key('source-name-original'), size);
+          final main = tester.getRect(_key('creation-main-scroll'));
+          final field = tester.getRect(_key('source-name-entry'));
+          expect(field.left, greaterThanOrEqualTo(main.left));
+          expect(field.right, lessThanOrEqualTo(main.right));
+          expect(
+            field.top,
+            greaterThan(tester.getRect(_key('creation-prompt')).bottom),
+          );
+          expect(_key('creation-footer'), findsNothing);
           expect(controller.text, 'Wangarĩ Fernández');
           expect(
             _key('creation-continue'),

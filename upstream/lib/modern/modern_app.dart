@@ -2020,33 +2020,45 @@ class _ModernGameShellState extends State<ModernGameShell> {
         ),
       );
     }
+    final field = TextField(
+      key: creation ? const ValueKey('creation-public-name') : null,
+      focusNode: _entryFocus,
+      controller: _entry,
+      onSubmitted: (_) => unawaited(_submitText()),
+      decoration: InputDecoration(
+        isDense: true,
+        hintText: creation ? 'Your public name' : 'Enter a name or answer',
+        border: const OutlineInputBorder(),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+      ),
+    );
+    final submit = FilledButton(
+      onPressed: _sending ? null : _submitText,
+      child: Text(creation ? 'Begin campaign' : 'Confirm text'),
+    );
+    final cancel = TextButton(
+      onPressed: _sending ? null : () => _send('Escape'),
+      child: Text(creation ? 'Use original name' : 'Cancel'),
+    );
+    if (creation) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          field,
+          const SizedBox(height: 12),
+          Wrap(spacing: 8, runSpacing: 8, children: [submit, cancel]),
+        ],
+      );
+    }
     return Row(
       children: [
-        Expanded(
-          child: TextField(
-            focusNode: _entryFocus,
-            controller: _entry,
-            onSubmitted: (_) => unawaited(_submitText()),
-            decoration: const InputDecoration(
-              isDense: true,
-              hintText: 'Enter a name or answer',
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
-            ),
-          ),
-        ),
+        Expanded(child: field),
         const SizedBox(width: 8),
-        FilledButton(
-          onPressed: _sending ? null : _submitText,
-          child: Text(creation ? 'Begin campaign' : 'Confirm text'),
-        ),
-        TextButton(
-          onPressed: _sending ? null : () => _send('Escape'),
-          child: Text(creation ? 'Use original name' : 'Cancel'),
-        ),
+        submit,
+        cancel,
       ],
     );
   }

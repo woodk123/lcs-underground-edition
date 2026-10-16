@@ -5,6 +5,7 @@ import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/creation_context.dart';
 import 'package:lcs_new_age/modern/attribute_help.dart';
+import 'package:lcs_new_age/modern/creation_bonus_help.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
@@ -185,8 +186,10 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    _footer(creation, footerChoices, revision),
+                    if (creation.stage != CreationStage.name) ...[
+                      const SizedBox(height: 8),
+                      _footer(creation, footerChoices, revision),
+                    ],
                   ],
                 ),
               ),
@@ -240,6 +243,15 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
             style: JournalPalette.heading,
           ),
         ],
+        if (creation.stage == CreationStage.name) ...[
+          if (widget.readingControl != null) widget.readingControl!,
+          if (widget.onHelp != null)
+            IconButton(
+              tooltip: 'Field guide',
+              onPressed: widget.onHelp,
+              icon: const Icon(Icons.menu_book_outlined, size: 20),
+            ),
+        ],
       ],
     ),
   );
@@ -270,12 +282,18 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
               ),
               const SizedBox(height: 13),
             ],
+            if (creation.stage == CreationStage.name)
+              KeyedSubtree(
+                key: const ValueKey('creation-name-input'),
+                child: widget.inputBar,
+              ),
             for (var index = 0; index < creation.body.length; index++) ...[
               if (creation.stage == CreationStage.background && index == 1)
                 _effects(
                   creation.body[index],
                   key: 'fate',
                   actor: creation.founder,
+                  bonuses: creation.pendingBonuses,
                   style: JournalPalette.body,
                 )
               else
@@ -300,11 +318,6 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
                 const SizedBox(height: 9),
               ],
             ],
-            if (creation.stage == CreationStage.name && creation.body.isEmpty)
-              const Text(
-                'Choose the name your movement will know you by.',
-                style: JournalPalette.body,
-              ),
           ],
         ),
       ),
@@ -397,6 +410,7 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
                   key: answer.key,
                   prefix: 'Effects: ',
                   actor: creation.founder,
+                  bonuses: answer.bonuses,
                 ),
               ],
             ],
@@ -412,12 +426,16 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
     String description, {
     required String key,
     Creature? actor,
+    CreationBonuses? bonuses,
     String prefix = '',
     TextStyle? style,
   }) {
     final textStyle =
         style ?? JournalPalette.small.copyWith(color: JournalPalette.olive);
     final spans = <InlineSpan>[TextSpan(text: prefix)];
+    final preview = actor != null && bonuses != null
+        ? CreationBonusPreview(actor, bonuses)
+        : null;
     var offset = 0;
     for (final clause in _effectClausePattern.allMatches(description)) {
       for (final match in _effectPattern.allMatches(clause.group(0)!)) {
@@ -436,7 +454,14 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
           WidgetSpan(
             alignment: PlaceholderAlignment.baseline,
             baseline: TextBaseline.alphabetic,
-            child: skill != null
+            child: preview != null
+                ? MechanicsTooltip(
+                    message: skill != null
+                        ? preview.skill(skill)
+                        : preview.attribute(_effectAttributes[name]!),
+                    child: text,
+                  )
+                : skill != null
                 ? SkillTooltip(skill: skill, actor: actor, child: text)
                 : AttributeTooltip(
                     attribute: _effectAttributes[name]!,
@@ -692,44 +717,39 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
   ) => JournalSurface(
     key: const ValueKey('creation-footer'),
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    child: creation.stage == CreationStage.name
-        ? KeyedSubtree(
-            key: const ValueKey('creation-name-input'),
-            child: widget.inputBar,
-          )
-        : Row(
-            children: [
-              if (widget.onHelp != null)
-                IconButton(
-                  tooltip: 'Field guide',
-                  onPressed: widget.onHelp,
-                  icon: const Icon(Icons.menu_book_outlined, size: 20),
-                ),
-              if (widget.readingControl != null) widget.readingControl!,
-              Expanded(
-                child: Text(_footerNote(creation), style: JournalPalette.small),
-              ),
-              if (continues.isNotEmpty)
-                FilledButton.icon(
-                  key: const ValueKey('creation-continue'),
-                  onPressed: _dispatch(continues.first.key, revision, creation),
-                  icon: const Icon(Icons.arrow_forward, size: 18),
-                  label: Text(continues.first.label),
-                )
-              else if (creation.choices.isEmpty)
-                FilledButton.icon(
-                  key: const ValueKey('creation-continue'),
-                  onPressed: _dispatch(
-                    'Enter',
-                    revision,
-                    creation,
-                    acknowledge: true,
-                  ),
-                  icon: const Icon(Icons.arrow_forward, size: 18),
-                  label: const Text('Continue'),
-                ),
-            ],
+    child: Row(
+      children: [
+        if (widget.onHelp != null)
+          IconButton(
+            tooltip: 'Field guide',
+            onPressed: widget.onHelp,
+            icon: const Icon(Icons.menu_book_outlined, size: 20),
           ),
+        if (widget.readingControl != null) widget.readingControl!,
+        Expanded(
+          child: Text(_footerNote(creation), style: JournalPalette.small),
+        ),
+        if (continues.isNotEmpty)
+          FilledButton.icon(
+            key: const ValueKey('creation-continue'),
+            onPressed: _dispatch(continues.first.key, revision, creation),
+            icon: const Icon(Icons.arrow_forward, size: 18),
+            label: Text(continues.first.label),
+          )
+        else if (creation.choices.isEmpty)
+          FilledButton.icon(
+            key: const ValueKey('creation-continue'),
+            onPressed: _dispatch(
+              'Enter',
+              revision,
+              creation,
+              acknowledge: true,
+            ),
+            icon: const Icon(Icons.arrow_forward, size: 18),
+            label: const Text('Continue'),
+          ),
+      ],
+    ),
   );
 
   String _footerNote(CreationContext creation) => switch (creation.stage) {

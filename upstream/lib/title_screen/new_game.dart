@@ -466,8 +466,11 @@ Future<void> makeCharacter() async {
   }
 
   await characterCreationQuestions(founder, letMeChoose);
-  // Retain the chosen face after the birthday and background answers.
-  founder.portraitAssignedAge = founder.age;
+  // Background careers and birthdays must not replace the player's selection.
+  // Preserve the assignment age as well: revalidating at a later age can recast
+  // a face at the edge of the cohort, before the campaign has even started.
+  founder.portraitId = portraitId;
+  founder.portraitAssignedAge = portraitAge;
   ensurePortraitId(founder);
 
   if (debugMartialArtsMaster) {
