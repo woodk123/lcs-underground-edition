@@ -13,7 +13,9 @@ The Flutter project is in `upstream/`. Its layout stays close to [New Age](https
 
 The engine owns campaign state and action availability. UI controls dispatch the current source-authored action and revision through the controllers; labels, painted locations and pixel positions are not command identities. Inspectors and explanations read state without advancing the input loop or making gameplay rolls.
 
-Orders use a local draft before confirmation. Changing actor or cancelling must not apply the draft; confirming must affect the selected actor or squad only. Preserve the original timing, cost and eligibility checks in the gameplay handlers.
+Orders use a local draft before confirmation. Changing actor discards that draft while retaining the order group, category and map browsing state. Ordinary confirmations keep the same category open for repeated assignments; required follow-up choices stay with their original reader. Confirming must affect the selected actor or squad only. Preserve the original timing, cost and eligibility checks in the gameplay handlers.
+
+Travel labels show costs and unmet requirements for the particular route. Free nearby destinations need no general travel warning. Full rules remain available through Order mechanics; displayed notes never override the source planner's action availability or departure checks.
 
 Portraits use a separate deterministic identity calculation. Casting and rendering must not consume the gameplay RNG. Faces, assignment age and cosmetic variants persist in saves; appearance overlays reflect supported equipment and injuries. See [portrait details](PORTRAIT_LIBRARY.md).
 

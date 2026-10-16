@@ -1,5 +1,5 @@
-// Isolated browser regression checks for dossiers, order details and portrait
-// migration. Synthetic fixture edits never touch player saves.
+// Isolated browser regression checks for dossiers, orders, contextual travel
+// and portrait migration. Synthetic fixture edits never touch player saves.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
@@ -155,10 +155,67 @@ try {
   await page.keyboard.press('Escape');
   const after = await exportGame('after-ui-review');
   assert.deepEqual(after, before, 'Dossiers, mechanics disclosures and cancelled drafts must preserve the exported campaign exactly.');
+  report.checks.push('campaign-save-identical-and-corrected-portrait-persists');
+
+  await click(/^Reading size/);
+  await page.getByRole('menuitem', { name: '100%', exact: true }).click();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const crew = before.lcs.pool.filter(person => person.squadId === actor.squadId && person.alive !== false);
+  assert.ok(crew.length >= 2);
+  await click(/^Orders(?:$|\s)/);
+  await click(/^Personnel(?:$|\s)/);
+  await click('Teaching Classes');
+  await click(/^Show location index/);
+  await click(/^Prepare Teach Liberal Arts(?:$|\s)/);
+  await click(new RegExp(`^Select crew ${escape(crew[1].name)}(?:$|\\s)`));
+  assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 0);
+  assert.equal(await page.getByRole('button', { name: 'Teaching Classes', exact: true }).count(), 1);
+  assert.ok(await page.getByRole('button', { name: /^Show city plan/ }).count(), 'Keep the open location index when switching actors.');
+  await capture('07-member-switch-keeps-category-and-map');
+  for (const member of crew.slice(0, 2)) {
+    await click(new RegExp(`^Select crew ${escape(member.name)}(?:$|\\s)`));
+    await click(/^Prepare Teach Liberal Arts(?:$|\s)/);
+    await click('Confirm order');
+    await wait(/Prepare Teach Liberal Arts/);
+    assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 0);
+  }
+  await capture('08-confirm-keeps-assignment-category-open');
+  const assigned = await exportGame('after-repeated-assignments');
+  const expected = structuredClone(before);
+  for (const member of crew.slice(0, 2)) {
+    expected.lcs.pool.find(person => person.id === member.id).activity = { type: 'teachLiberalArts' };
+  }
+  assert.deepEqual(assigned, expected, 'Only the two explicitly confirmed members may change.');
+  report.checks.push('repeated-assignments-change-only-confirmed-members');
+
+  await click(/^Orders(?:$|\s)/);
+  await click(/^Operations(?:$|\s)/);
+  await click('Visit a location');
+  const cities = before.cities;
+  const home = cities.flatMap(city => city.districts.flatMap(district => district.sites))
+    .find(site => `Site${site.id}` === crew[0].locationId || site.id === crew[0].locationId);
+  assert.ok(home, 'Locate the synthetic crew’s current site.');
+  const homeCity = cities.find(city => city.id === home.cityId);
+  const localDistrict = homeCity.districts.find(district => district.area === homeCity.area && district.sites.some(site => site.type === 'publicPark'));
+  const park = localDistrict.sites.find(site => site.type === 'publicPark');
+  const otherCities = page.getByRole('button', { name: /^Other cities/ });
+  assert.match(await otherCities.innerText(), new RegExp(`\\(\\$${crew.length * 100}\\)`));
+  await capture('09-intercity-option-shows-price');
+  await click(new RegExp(`^${escape(localDistrict.name)}\\.`));
+  await click(new RegExp(`^${escape(park.name)}\\.`));
+  assert.ok(await page.getByRole('button', { name: 'Confirm order', exact: true }).isEnabled());
+  assert.doesNotMatch(await uiText(), /Travel cost:|Current intercity fee:|Travel to another area needs a car|Needs: an open site/);
+  await capture('10-nearby-trip-without-generic-travel-lecture');
+  await click(/^Order mechanics(?:$|\s)/);
+  await wait(/Travel to another area needs a car/);
+  await click('Close', page.getByRole('alertdialog'));
+  await page.keyboard.press('Escape');
+  const afterTravel = await exportGame('after-travel-inspection');
+  assert.deepEqual(afterTravel, assigned, 'Travel inspection and cancellation must not queue or charge anything.');
+  report.checks.push('travel-details-and-cancel-preserve-campaign');
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.consoleErrors, []);
   assert.deepEqual(report.failedRequests, []);
-  report.checks.push('campaign-save-identical-and-corrected-portrait-persists');
   report.status = 'passed';
 } catch (error) {
   report.status = 'failed'; report.error = error.stack ?? String(error); process.exitCode = 1;

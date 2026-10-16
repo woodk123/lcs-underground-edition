@@ -14,7 +14,8 @@ The Underground Edition retains the original Dart/Flutter engine and campaign co
 
 ## Interface and portrait behavior
 
-- Orders are prepared locally, with explicit confirmation and safe cancellation.
+- Orders are prepared locally, with explicit confirmation and safe cancellation. Switching crew members retains the category and map; ordinary confirmations keep the category open for repeated assignments.
+- Destination labels show relevant travel prices and requirements; general travel rules are available on request.
 - Squad visits use the original destination planner and shared order card.
 - Skill levels sit next to their names; XP is secondary.
 - Full formulas and requirements are available through Order mechanics; cards keep key timing, estimates, costs and risks visible.

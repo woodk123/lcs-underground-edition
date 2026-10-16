@@ -121,6 +121,11 @@ Future<void> planSiteVisit() async {
         "$letter - Travel to a Different City",
         enabledWhen: haveCar && ledger.funds >= ticketPrice,
       );
+      console.annotateActionEntity(
+        letter,
+        type: 'intercity-travel',
+        id: aSquad.id.toString(),
+      );
       if (!haveCar) addstrc(yellow, " (Need Car)");
       addstrc(ledger.funds < ticketPrice ? red : green, " (\$$ticketPrice)");
     }

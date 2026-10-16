@@ -31,7 +31,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch.ps1 -Port 188
 node scripts/browser_review.mjs --url http://127.0.0.1:18879/
 ```
 
-`browser_review.mjs` checks dossier skill hierarchy, portrait-age repair, mechanics disclosure at normal and enlarged text, and exact exported-save equality after inspection and cancelled drafts. Screenshots and JSON results are written under ignored `reports/`.
+`browser_review.mjs` checks dossier skill hierarchy, portrait-age repair, mechanics disclosure at normal and enlarged text, retained order categories, repeated assignments and contextual travel labels. Export comparisons verify that inspections/cancelled drafts preserve the campaign and repeated confirmations change only the intended members' assignments. Screenshots and JSON results are written under ignored `reports/`.
 
 Founder creation uses an installed Chrome and an exact compiled-build hash:
 

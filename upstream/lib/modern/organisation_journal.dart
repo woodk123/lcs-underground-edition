@@ -23,6 +23,7 @@ import 'package:lcs_new_age/modern/location_help.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
+import 'package:lcs_new_age/modern/travel_help.dart';
 
 /// The organiser is one open journal: team and job card on the left, the
 /// selected report, pool, or target map on the right. Changing a portrait or a
@@ -82,6 +83,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   int? _poolPerson;
   String? _areaId, _targetId, _categoryId;
   ConsoleAction? _pendingOrder;
+  List<ConsoleAction> _orderBrowseActions = const [];
   int? _pendingRevision;
   int? _targetSquadId;
   bool _visitRouting = false;
@@ -178,18 +180,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       return true;
     }
     if (normalized == 'Enter' && hasPreparedOrder) {
-      final action = _pendingOrder!;
-      final revision = _pendingRevision!;
-      unawaited(
-        controller.commitOrder(action, revision: revision).then((ok) {
-          if (ok && mounted) {
-            setState(() {
-              _pendingOrder = null;
-              _orders = false;
-            });
-          }
-        }),
-      );
+      unawaited(_commitPreparedOrder());
       return true;
     }
     final action = console.actions
@@ -789,9 +780,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                             _pool = false;
                             _showReports = false;
                           });
-                          if (!activityFrame) {
-                            await controller.openOrders(person!.id);
-                          }
+                          await _openGroup(_group, categoryId: _categoryId);
                         },
                   key: 'journal-orders',
                 ),
@@ -951,7 +940,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     ),
   );
 
-  Future<void> _openGroup(int group) async {
+  Future<void> _openGroup(int group, {String? categoryId}) async {
     widget.onCloseInspection?.call();
     setState(() {
       _orders = true;
@@ -971,23 +960,50 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             1 => 'acquisition',
             _ => 'activism',
           };
-    final category = console.actions
-        .where(
-          (a) =>
-              const {
-                'activity-category',
-                'sleeper-category',
-                'sleeper-category-selected',
-              }.contains(a.entityType) &&
-              a.entityId == id,
-        )
-        .firstOrNull;
+    final categories = console.actions.where(
+      (a) =>
+          const {
+            'activity-category',
+            'sleeper-category',
+            'sleeper-category-selected',
+          }.contains(a.entityType) &&
+          a.enabled,
+    );
+    final category =
+        categories.where((a) => a.entityId == categoryId).firstOrNull ??
+        categories.where((a) => a.entityId == id).firstOrNull;
     if (category != null) {
-      _categoryId = id;
+      _categoryId = category.entityId;
       await controller.browseCategory(
         category,
         revision: console.revision.value,
       );
+    }
+  }
+
+  Future<void> _commitPreparedOrder() async {
+    if (!hasPreparedOrder) return;
+    final actorId = activityOrderFrame(console)!.actorId;
+    final group = _group;
+    final categoryId = _categoryId;
+    final section = widget.section;
+    controller.inspectPerson(actorId);
+    if (!await controller.commitOrder(
+          _pendingOrder!,
+          revision: _pendingRevision!,
+        ) ||
+        !mounted) {
+      return;
+    }
+    setState(() => _pendingOrder = null);
+    // Only ordinary completion returns to HQ. Required follow-up choices
+    // stay with the original skill, crafting, prisoner or other reader.
+    if (controller.isHeadquarters &&
+        widget.section == section &&
+        controller.selectedPerson?.id == actorId &&
+        await controller.openOrders(actorId) &&
+        mounted) {
+      await _openGroup(group, categoryId: categoryId);
     }
   }
 
@@ -1063,13 +1079,20 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   );
 
   Widget _memberRow(Creature member) {
+    bool canSelect() =>
+        !controller.busy &&
+        !_visitRouting &&
+        (!(_orders || activityFrame) || controller.canNavigate);
     Future<void> select() async {
+      if (!canSelect()) return;
+      if (person?.id == member.id) return;
       setState(() => _pendingOrder = null);
       final wasOrders = _orders || activityFrame;
+      final categoryId = _categoryId;
       widget.onCloseInspection?.call();
       controller.inspectPerson(member.id);
       if (wasOrders && await controller.openOrders(member.id)) {
-        await _openGroup(_group);
+        await _openGroup(_group, categoryId: categoryId);
       }
     }
 
@@ -1090,7 +1113,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             Expanded(
               child: TextButton(
                 key: ValueKey('journal-member:${member.id}'),
-                onPressed: select,
+                onPressed: canSelect() ? select : null,
                 style: TextButton.styleFrom(
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.symmetric(vertical: 3),
@@ -1311,6 +1334,12 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           : actual,
     );
     final visit = _visitAction;
+    final travel = type == ActivityType.visit
+        ? (planning ? target : actual?.location)
+        : null;
+    final notices = travel == null
+        ? const <String>[]
+        : travelNotices(travel, squad);
     final estimatedIncome = help.calculation?.quantities['estimatedIncome'];
     return JournalSurface(
       key: const ValueKey('journal-job-card'),
@@ -1391,26 +1420,30 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(help.timing, style: JournalPalette.small),
-                  if (help.calculation case final calculation?)
+                  if (type == ActivityType.visit && notices.isNotEmpty)
+                    Text(
+                      travelSuffix(notices).trim(),
+                      key: const ValueKey('journal-travel-notices'),
+                      style: JournalPalette.small,
+                    ),
+                  if (help.calculation case final calculation?
+                      when type != ActivityType.visit)
                     Text(
                       estimatedIncome != null
                           ? 'Estimated \$${estimatedIncome.round()}/day'
-                          : type == ActivityType.visit
-                          ? calculation.result.replaceFirst(
-                              'Current intercity fee:',
-                              'Travel cost:',
-                            )
                           : calculation.result,
                       key: const ValueKey('journal-calculation-result'),
                       style: JournalPalette.small.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                  if (help.factors.isNotEmpty)
+                  if (type != ActivityType.visit && help.factors.isNotEmpty)
                     Text('Uses: ${help.factors}', style: JournalPalette.small),
-                  if (help.cost.isNotEmpty && help.cost != 'No activity fee')
+                  if (type != ActivityType.visit &&
+                      help.cost.isNotEmpty &&
+                      help.cost != 'No activity fee')
                     Text('Cost: ${help.cost}', style: JournalPalette.small),
-                  if (help.risk.isNotEmpty)
+                  if (type != ActivityType.visit && help.risk.isNotEmpty)
                     Text(
                       help.risk,
                       style: JournalPalette.small.copyWith(
@@ -1424,7 +1457,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                         color: JournalPalette.danger,
                       ),
                     ),
-                  if (planning && visit != null && !visit.enabled)
+                  if (planning &&
+                      visit != null &&
+                      !visit.enabled &&
+                      notices.isEmpty)
                     Text(
                       _locationDetails(visit).join(' · '),
                       style: JournalPalette.small.copyWith(
@@ -1451,18 +1487,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                               await _confirmVisit(visit!);
                               return;
                             }
-                            final action = _pendingOrder!;
-                            final revision = _pendingRevision!;
-                            if (await controller.commitOrder(
-                                  action,
-                                  revision: revision,
-                                ) &&
-                                mounted) {
-                              setState(() {
-                                _pendingOrder = null;
-                                _orders = false;
-                              });
-                            }
+                            await _commitPreparedOrder();
                           },
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(44, 34),
@@ -1542,10 +1567,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
 
   Widget _contextPage(bool narrow) => JournalSurface(
     padding: const EdgeInsets.all(9),
-    child:
-        widget.detail != null &&
-            console.awaitingInput &&
-            (console.textInput || console.navigation == null)
+    child: _orders && controller.busy
+        ? _orderContext(narrow)
+        : widget.detail != null &&
+              console.awaitingInput &&
+              (console.textInput || console.navigation == null)
         ? widget.detail!
         : widget.inspectedPerson != null
         ? CrewInspector(
@@ -1843,7 +1869,16 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ],
       );
     }
-    final categories = console.actions
+    // Keep presentation stable through HQ/person-list awaits while changing
+    // actor or reopening a confirmed order. These cached actions are displayed
+    // only while controls are disabled; dispatch always uses the fresh frame.
+    if (activityFrame && !controller.busy) {
+      _orderBrowseActions = List.of(console.actions);
+    }
+    final browsingActions = controller.busy
+        ? _orderBrowseActions
+        : console.actions;
+    final categories = browsingActions
         .where(
           (a) =>
               a.entityType == 'activity-category' ||
@@ -1862,7 +1897,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     final visibleCategories = categories
         .where((a) => categoryIds.contains(a.entityId))
         .toList();
-    final tasks = console.actions
+    final tasks = browsingActions
         .where(
           (a) =>
               activityTypeForAction(a) != null &&
@@ -1911,14 +1946,15 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           ),
         if (visibleCategories.length > 1) const SizedBox(height: 6),
         Expanded(
+          key: const ValueKey('journal-order-workspace'),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (!planning &&
-                  (_group == 3 || activityFrame && tasks.isNotEmpty))
+              if (!planning && (_group == 3 || tasks.isNotEmpty))
                 SizedBox(
                   width: narrow ? 96 : 130,
                   child: ListView(
+                    key: PageStorageKey('journal-tasks:$_group:$_categoryId'),
                     children: [
                       if (_group == 3)
                         Padding(
@@ -1972,10 +2008,12 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                     ],
                   ),
                 ),
-              if (!planning &&
-                  (_group == 3 || activityFrame && tasks.isNotEmpty))
+              if (!planning && (_group == 3 || tasks.isNotEmpty))
                 const SizedBox(width: 7),
-              Expanded(child: _mapContext()),
+              Expanded(
+                key: const ValueKey('journal-order-map'),
+                child: _mapContext(),
+              ),
             ],
           ),
         ),
@@ -2158,7 +2196,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           .firstOrNull;
       return JournalMapPlace(
         id: location.idString,
-        name: location.getName(),
+        name:
+            '${location.getName()}${travelSuffix(travelNotices(location, squad))}',
         // SiteType.name is a display title; EnumName is the stable enum key.
         siteType: location is Site ? EnumName(location.type).name : null,
         kind: location is Site
@@ -2242,6 +2281,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   child: Text(
                     action.key == 'Enter'
                         ? 'Back one step'
+                        : action.entityType == 'intercity-travel'
+                        ? 'Other cities${travelSuffix(intercityTravelNotices(squad))}'
                         : _clean(action.label),
                     style: JournalPalette.small,
                   ),
@@ -2503,33 +2544,12 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   overflow: TextOverflow.ellipsis,
                   style: JournalPalette.small,
                 ),
-                Text(
-                  'Squad: ${squad?.name ?? 'Select a squad'}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: JournalPalette.small,
-                ),
                 if (queued && !planning)
                   const Text(
-                    'Visit queued · Runs when you advance the day.',
+                    'Visit queued',
                     key: ValueKey('journal-queued-visit'),
                     style: JournalPalette.small,
-                  )
-                else if (planning)
-                  Text(
-                    _visitAction?.enabled == true
-                        ? 'Prepared destination · Confirm order to queue it.'
-                        : 'This destination is not currently available to the squad.',
-                    style: JournalPalette.small,
-                  )
-                else ...[
-                  Text(
-                    _compactMapText
-                        ? 'Inspection only'
-                        : 'Inspection only · Confirming a visit queues travel for the next day.',
-                    style: JournalPalette.small,
                   ),
-                ],
               ],
             ),
           ),

@@ -28,6 +28,7 @@ import 'package:lcs_new_age/location/siege.dart';
 import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/article_view.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
+import 'package:lcs_new_age/modern/journal_city_plan.dart';
 import 'package:lcs_new_age/modern/journal_ledger.dart';
 import 'package:lcs_new_age/modern/journal_media.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
@@ -378,7 +379,8 @@ void main() {
       await _settle(tester);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await _settle(tester);
-      expect(engine.console.screen, 'headquarters');
+      expect(engine.console.screen, 'activity-orders');
+      expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
       expect(person.activity.type, ActivityType.donations);
       expect(
         game.squad
@@ -426,7 +428,8 @@ void main() {
       expect(activityOrderFrame(engine.console)?.actorId, selected.id);
       await _tap(tester, 'journal-activity:donations');
       await _tap(tester, 'journal-confirm-order');
-      expect(engine.console.screen, 'headquarters');
+      expect(engine.console.screen, 'activity-orders');
+      expect(activityOrderFrame(engine.console)?.actorId, selected.id);
       expect(selected.activity.type, ActivityType.donations);
       for (final person in game.squad.where((p) => p != selected)) {
         expect(person.activity.type, ActivityType.sellArt);
@@ -464,6 +467,190 @@ void main() {
         next.name,
       );
       expect(_snapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+    testWidgets(
+      'member changes retain nested category and map state at $size',
+      (tester) async {
+        await mount(tester, size: size);
+        if (size.width == 800) {
+          await tester.tap(find.byTooltip('Reading size'));
+          await _settle(tester);
+          await tester.tap(find.text('150%'));
+          await _settle(tester);
+        }
+        await _tap(tester, 'journal-orders');
+        await _tap(tester, 'journal-order-group:1');
+        await tester.tap(
+          find.widgetWithText(OutlinedButton, 'Teaching Classes'),
+        );
+        await _settle(tester);
+        final next = game.squad[1];
+        final before = _snapshot();
+        final districtId = game.activeSquad!.site!.district.idString;
+        await _tap(tester, 'journal-map-place:$districtId');
+        final mapState = tester.state(find.byType(JournalCityPlan));
+        final viewer = tester.widget<InteractiveViewer>(
+          find.byType(InteractiveViewer),
+        );
+        viewer.transformationController!.value = Matrix4.identity()
+          ..scaleByDouble(1.4, 1.4, 1, 1);
+        await tester.tap(find.byTooltip('Show location index'));
+        await _settle(tester);
+        await _tap(tester, 'journal-activity:teachLiberalArts');
+        await tester.ensureVisible(_key('journal-member:${next.id}'));
+        await _settle(tester);
+        await tester.tap(_key('journal-member:${next.id}'));
+        for (var frame = 0; frame < 80; frame++) {
+          await tester.pump(const Duration(milliseconds: 1));
+          expect(tester.state(find.byType(JournalCityPlan)), same(mapState));
+          expect(_key('journal-location-index'), findsOneWidget);
+        }
+        await _settle(tester);
+        expect(activityOrderFrame(engine.console)?.actorId, next.id);
+        expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 't');
+        expect(
+          _key('journal-activity:teachLiberalArts').hitTestable(),
+          findsOneWidget,
+        );
+        expect(_key('journal-confirm-order'), findsNothing);
+        expect(tester.state(find.byType(JournalCityPlan)), same(mapState));
+        expect(_key('journal-location-index'), findsOneWidget);
+        expect(viewer.transformationController!.value.entry(0, 0), 1.4);
+        await tester.tap(find.byTooltip('Show city plan'));
+        await _settle(tester);
+        final third = game.squad[2];
+        await tester.ensureVisible(_key('journal-member:${third.id}'));
+        await _settle(tester);
+        viewer.transformationController!.value = Matrix4.identity()
+          ..scaleByDouble(1.7, 1.7, 1, 1);
+        await tester.tap(_key('journal-member:${third.id}'));
+        for (var frame = 0; frame < 80; frame++) {
+          await tester.pump(const Duration(milliseconds: 1));
+          expect(tester.state(find.byType(JournalCityPlan)), same(mapState));
+          expect(viewer.transformationController!.value.entry(0, 0), 1.7);
+        }
+        await _settle(tester);
+        expect(activityOrderFrame(engine.console)?.actorId, third.id);
+        expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 't');
+        expect(viewer.transformationController!.value.entry(0, 0), 1.7);
+        expect(_snapshot(), before);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('switching members retains the scrolled task list', (
+    tester,
+  ) async {
+    await mount(tester, size: const Size(800, 600));
+    await tester.tap(find.byTooltip('Reading size'));
+    await _settle(tester);
+    await tester.tap(find.text('150%'));
+    await _settle(tester);
+    await business(tester);
+    final list = find.byKey(const PageStorageKey('journal-tasks:0:legal'));
+    final scroll = find.descendant(of: list, matching: find.byType(Scrollable));
+    await tester.drag(list, const Offset(0, -160));
+    await _settle(tester);
+    final offset = tester.state<ScrollableState>(scroll).position.pixels;
+    expect(offset, greaterThan(0));
+    final next = game.squad[1];
+    await tester.ensureVisible(_key('journal-member:${next.id}'));
+    await _settle(tester);
+    await _tap(tester, 'journal-member:${next.id}');
+    expect(
+      tester.state<ScrollableState>(scroll).position.pixels,
+      closeTo(offset, .01),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('retained categories refresh availability for the new member', (
+    tester,
+  ) async {
+    final next = game.squad[1];
+    next.birthDate = DateTime(
+      game.date.year - 17,
+      game.date.month,
+      game.date.day,
+    );
+    await mount(tester);
+    await business(tester);
+    await tester.tap(
+      find.widgetWithText(OutlinedButton, 'Illegal Fundraising'),
+    );
+    await _settle(tester);
+    final before = _snapshot();
+    await _tap(tester, 'journal-activity:prostitution');
+    final priorConfirm = tester
+        .widget<FilledButton>(_key('journal-confirm-order'))
+        .onPressed!;
+    await _tap(tester, 'journal-member:${next.id}');
+    expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'c');
+    expect(
+      engine.console.actions
+          .singleWhere((a) => a.entityId == ActivityType.prostitution.name)
+          .enabled,
+      isFalse,
+    );
+    expect(_key('journal-confirm-order'), findsNothing);
+    priorConfirm();
+    await _settle(tester);
+    expect(
+      _snapshot(),
+      before,
+      reason:
+          'Even a captured confirmation cannot apply the previous actor’s draft.',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'repeated assignments keep the nested category and affect only confirmed members',
+    (tester) async {
+      await mount(tester);
+      await _tap(tester, 'journal-orders');
+      await _tap(tester, 'journal-order-group:1');
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Teaching Classes'));
+      await _settle(tester);
+      final first = game.squad.first;
+      final second = game.squad[1];
+      final before = jsonDecode(_snapshot()) as Map<String, dynamic>;
+      reseedRNG(seed: 85612);
+      final rolls = List.generate(12, (_) => lcsRandom(100000));
+      reseedRNG(seed: 85612);
+      for (final member in [first, second]) {
+        await _tap(tester, 'journal-member:${member.id}');
+        expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 't');
+        await _tap(tester, 'journal-activity:teachLiberalArts');
+        await _tap(tester, 'journal-confirm-order');
+        expect(activityOrderFrame(engine.console)?.actorId, member.id);
+        expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 't');
+        expect(_key('journal-confirm-order'), findsNothing);
+        expect(
+          _key('journal-activity:teachLiberalArts').hitTestable(),
+          findsOneWidget,
+        );
+        expect(member.activity.type, ActivityType.teachLiberalArts);
+      }
+      final after = jsonDecode(_snapshot()) as Map<String, dynamic>;
+      final oldPool = (before['lcs'] as Map<String, dynamic>)['pool'] as List;
+      final newPool = (after['lcs'] as Map<String, dynamic>)['pool'] as List;
+      for (final member in [first, second]) {
+        final index = game.pool.indexOf(member);
+        (oldPool[index] as Map<String, dynamic>)['activity'] =
+            (newPool[index] as Map<String, dynamic>)['activity'];
+      }
+      expect(
+        after,
+        before,
+        reason: 'Only the two explicitly confirmed assignments change.',
+      );
+      expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
       expect(tester.takeException(), isNull);
     },
   );
@@ -658,7 +845,8 @@ void main() {
       await _tap(tester, 'journal-activity:sleeperSpy');
       await _tap(tester, 'journal-confirm-order');
       expect(person.activity.type, ActivityType.sleeperSpy);
-      expect(engine.console.screen, 'headquarters');
+      expect(engine.console.screen, 'activity-orders');
+      expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
       expect(tester.takeException(), isNull);
     },
   );
@@ -1122,6 +1310,13 @@ void main() {
       expect(engine.console.navigation, isNull);
       expect(find.textContaining('What skill will'), findsWidgets);
       expect(find.byType(OrganisationJournal), findsOneWidget);
+      expect(
+        tester
+            .widget<TextButton>(_key('journal-member:${game.squad[1].id}'))
+            .onPressed,
+        isNull,
+        reason: 'A required skill choice stays with its original actor.',
+      );
       expect(person.activity, same(order));
       expect(_snapshot(), before);
       expect(tester.takeException(), isNull);

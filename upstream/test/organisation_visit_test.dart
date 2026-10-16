@@ -14,13 +14,17 @@ import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/location/location_type.dart';
+import 'package:lcs_new_age/location/siege.dart';
 import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/location_details.dart';
 import 'package:lcs_new_age/modern/location_help.dart';
+import 'package:lcs_new_age/modern/travel_help.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
+import 'package:lcs_new_age/vehicles/vehicle.dart';
+import 'package:lcs_new_age/vehicles/vehicle_type.dart';
 
 import 'test_support.dart';
 
@@ -143,6 +147,138 @@ void main() {
       locationAccess(site),
     );
     expect(_key('journal-prepare-map-visit').hitTestable(), findsOneWidget);
+  }
+
+  test('travel notes apply only to the route and preserve state and RNG', () {
+    final team = game.activeSquad!;
+    for (final member in team.members) {
+      member.preferredCarId = null;
+    }
+    final local = target();
+    local.district.area = team.site!.area;
+    final outskirts = team.site!.city.districts.firstWhere(
+      (d) => d.area != team.site!.area,
+    );
+    final remote = game.cities.firstWhere((city) => city != team.site!.city);
+    game.ledger.forceSetFunds(-10);
+    final before = _snapshot();
+    reseedRNG(seed: 21567);
+    final rolls = List.generate(12, (_) => lcsRandom(100000));
+    reseedRNG(seed: 21567);
+    expect(travelNotices(local, team), isEmpty);
+    expect(travelNotices(outskirts, team), ['needs car']);
+    expect(travelNotices(remote, team), [
+      '\$${team.members.length * 100}',
+      'needs car',
+      'not enough cash',
+    ]);
+    for (final site in game.sites) {
+      travelNotices(site, team);
+    }
+    expect(_snapshot(), before);
+    expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+
+    final car = Vehicle(vehicleTypes.keys.first);
+    game.vehiclePool.add(car);
+    team.members.first.preferredCarId = car.id;
+    game.ledger.forceSetFunds(team.members.length * 100);
+    expect(travelNotices(outskirts, team), isEmpty);
+    expect(travelNotices(remote, team), ['\$${team.members.length * 100}']);
+    // The daily travel fee follows the home base, even while away from it.
+    final away = remote.sites.first;
+    for (final member in team.members) {
+      member.location = away;
+    }
+    expect(travelNotices(away, team), ['\$${team.members.length * 100}']);
+    expect(travelNotices(local, team), isEmpty);
+    local.closed = 5;
+    local.siege.activeSiegeType = SiegeType.police;
+    expect(travelNotices(local, team), ['closed', 'under siege']);
+  });
+
+  testWidgets(
+    'a nearby free visit has no generic travel warnings in the job card',
+    (tester) async {
+      for (final member in game.squad) {
+        member.preferredCarId = null;
+      }
+      final site = target();
+      site.district.area = game.activeSquad!.site!.area;
+      await mount(tester);
+      final before = _snapshot();
+      await inspectFromBusiness(tester, site);
+      await _tap(tester, 'journal-prepare-map-visit');
+      final card = _key('journal-job-card');
+      final text = tester
+          .widgetList<Text>(
+            find.descendant(of: card, matching: find.byType(Text)),
+          )
+          .map((widget) => widget.data ?? '')
+          .join('\n');
+      expect(
+        text,
+        isNot(
+          matches(
+            RegExp(
+              r'car|cash|intercity|Travel cost|Needs:',
+              caseSensitive: false,
+            ),
+          ),
+        ),
+      );
+      expect(_key('journal-travel-notices'), findsNothing);
+      expect(_key('journal-calculation-result'), findsNothing);
+      expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
+      await _tap(tester, 'journal-order-details');
+      expect(
+        find.textContaining('Travel to another area needs a car'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Intercity travel ='), findsOneWidget);
+      expect(_snapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final (haveCar, enoughCash) in [
+    (false, true),
+    (true, true),
+    (true, false),
+  ]) {
+    testWidgets(
+      'Other cities shows price and source availability with car=$haveCar, cash=$enoughCash',
+      (tester) async {
+        for (final member in game.squad) {
+          member.preferredCarId = null;
+        }
+        if (haveCar) {
+          final car = Vehicle(vehicleTypes.keys.first);
+          game.vehiclePool.add(car);
+          game.squad.first.preferredCarId = car.id;
+        }
+        game.ledger.forceSetFunds(enoughCash ? game.squad.length * 100 : 0);
+        await mount(tester);
+        final before = _snapshot();
+        await _tap(tester, 'journal-orders');
+        await _tap(tester, 'journal-order-group:3');
+        await _tap(tester, 'journal-plan-visit');
+        final source = engine.console.actions.singleWhere(
+          (action) => action.entityType == 'intercity-travel',
+        );
+        expect(source.enabled, haveCar && enoughCash);
+        final button = find.widgetWithText(
+          TextButton,
+          'Other cities (\$${game.squad.length * 100})${haveCar ? '' : ' (needs car)'}${enoughCash ? '' : ' (not enough cash)'}',
+        );
+        expect(button, findsOneWidget);
+        expect(
+          tester.widget<TextButton>(button).onPressed != null,
+          haveCar && enoughCash,
+        );
+        expect(_snapshot(), before);
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 
   test(
