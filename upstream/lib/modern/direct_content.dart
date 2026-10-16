@@ -47,6 +47,7 @@ class DirectContent extends StatelessWidget {
     this.maxColumn = CONSOLE_WIDTH,
     this.rowMaxColumns = const {},
     this.showActions = true,
+    this.journalPage = false,
   });
 
   final Console console;
@@ -58,6 +59,7 @@ class DirectContent extends StatelessWidget {
   final int maxColumn;
   final Map<int, int> rowMaxColumns;
   final bool showActions;
+  final bool journalPage;
 
   @override
   Widget build(BuildContext context) {
@@ -138,6 +140,15 @@ class DirectContent extends StatelessWidget {
       rowMaxColumns,
       showActions,
     );
+    if (journalPage && console.navigation?.section == 'equipment') {
+      // Keep the explicit Up/Down controls, without repeating their keyboard
+      // instruction inside the adjacent Strip action's description.
+      for (final action in frame.actions.where(
+        (a) => a.key == 'Up' || a.key == 'Down',
+      )) {
+        frame.rows[action.y] = ' ' * frame.width;
+      }
+    }
     final content = <Widget>[];
     for (final summary in people) {
       final action = console.actions
@@ -428,9 +439,9 @@ class DirectContent extends StatelessWidget {
           child: ExpansionTile(
             key: const ValueKey('direct-keyboard-notes'),
             tilePadding: EdgeInsets.zero,
-            title: const Text(
-              'Keyboard & game notes',
-              style: TextStyle(fontSize: 13, color: _muted),
+            title: Text(
+              journalPage ? 'Notes' : 'Keyboard & game notes',
+              style: const TextStyle(fontSize: 13, color: _muted),
             ),
             children: [
               Padding(
@@ -464,7 +475,7 @@ class DirectContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (var i = 0; i < content.length; i++) ...[
-            if (i > 0) const SizedBox(height: 14),
+            if (i > 0) SizedBox(height: journalPage ? 10 : 14),
             content[i],
           ],
         ],
@@ -478,16 +489,32 @@ class DirectContent extends StatelessWidget {
     List<_Column> columns,
     List<int> records,
   ) {
+    final intentColumn =
+        journalPage &&
+        records.any((y) => frame.at(y).any((a) => a.intentLabel != null));
+    final intentWidth = MediaQuery.textScalerOf(context).scale(104);
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 680) {
+        final minWidth = journalPage
+            ? MediaQuery.textScalerOf(
+                context,
+              ).scale(columns.length >= 6 ? 800 : 640)
+            : 680;
+        if (constraints.maxWidth < minWidth) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (final y in records)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _record(context, frame, columns, y, compact: true),
+                  padding: EdgeInsets.only(bottom: journalPage ? 0 : 10),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: journalPage
+                          ? const Border(bottom: BorderSide(color: _rule))
+                          : null,
+                    ),
+                    child: _record(context, frame, columns, y, compact: true),
+                  ),
                 ),
             ],
           );
@@ -495,17 +522,19 @@ class DirectContent extends StatelessWidget {
         return Container(
           key: const ValueKey('direct-data-table'),
           decoration: BoxDecoration(
-            border: Border.all(color: _rule),
-            borderRadius: BorderRadius.circular(8),
+            border: journalPage
+                ? const Border(bottom: BorderSide(color: _rule))
+                : Border.all(color: _rule),
+            borderRadius: journalPage ? null : BorderRadius.circular(8),
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
               Container(
-                color: JournalPalette.inset,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 13,
+                color: journalPage ? Colors.transparent : JournalPalette.inset,
+                padding: EdgeInsets.symmetric(
+                  horizontal: journalPage ? 12 : 18,
+                  vertical: journalPage ? 7 : 13,
                 ),
                 child: Row(
                   children: [
@@ -513,10 +542,10 @@ class DirectContent extends StatelessWidget {
                       (y) =>
                           frame.at(y).any((action) => _person(action) != null),
                     ))
-                      const SizedBox(width: 64),
+                      SizedBox(width: journalPage ? 48 : 64),
                     for (final column in columns)
                       Expanded(
-                        flex: column.end - column.start,
+                        flex: _columnFlex(column),
                         child: Padding(
                           padding: const EdgeInsets.only(right: 12),
                           child: Text(
@@ -529,13 +558,21 @@ class DirectContent extends StatelessWidget {
                           ),
                         ),
                       ),
+                    if (intentColumn) SizedBox(width: intentWidth + 12),
                     const SizedBox(width: 22),
                   ],
                 ),
               ),
               for (var i = 0; i < records.length; i++) ...[
-                if (i > 0) const Divider(height: 1, color: _rule),
-                _record(context, frame, columns, records[i]),
+                if (i > 0 || journalPage)
+                  const Divider(height: 1, color: _rule),
+                _record(
+                  context,
+                  frame,
+                  columns,
+                  records[i],
+                  intentColumn: intentColumn,
+                ),
               ],
             ],
           ),
@@ -544,12 +581,20 @@ class DirectContent extends StatelessWidget {
     );
   }
 
+  int _columnFlex(_Column column) => journalPage
+      ? math.max(
+          column.end - column.start,
+          column.label == 'SKILL' || column.label == 'HEALTH' ? 10 : 12,
+        )
+      : column.end - column.start;
+
   Widget _record(
     BuildContext context,
     _ContentFrame frame,
     List<_Column> columns,
     int y, {
     bool compact = false,
+    bool intentColumn = false,
   }) {
     final actions = frame.at(y).where(frame.embedded).toList();
     final action = actions.isEmpty ? null : actions.first;
@@ -558,7 +603,8 @@ class DirectContent extends StatelessWidget {
         : _title(action);
     Widget value(_Column column) {
       final spans = frame.spans(y, column.start, column.end, trim: true);
-      if (column.label.contains('ACTIVITY') || column.label == 'HEALTH') {
+      if (!journalPage &&
+          (column.label.contains('ACTIVITY') || column.label == 'HEALTH')) {
         return Align(
           alignment: Alignment.centerLeft,
           child: Container(
@@ -580,9 +626,11 @@ class DirectContent extends StatelessWidget {
       }
       final text = Text.rich(
         TextSpan(children: spans),
-        style: const TextStyle(fontSize: 14, height: 1.4),
+        style: TextStyle(fontSize: journalPage ? 13 : 14, height: 1.4),
       );
-      if (game.mode == GameMode.site && column.label == 'SKILL') {
+      if ((game.mode == GameMode.site ||
+              journalPage && columns.any((c) => c.label == 'WEAPON')) &&
+          column.label == 'SKILL') {
         return Tooltip(
           message: 'Total learned skill levels / equipped weapon skill.',
           child: text,
@@ -625,7 +673,7 @@ class DirectContent extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 14),
+              SizedBox(height: journalPage ? 8 : 14),
               LayoutBuilder(
                 builder: (context, bounds) {
                   final count = bounds.maxWidth >= 250 ? 2 : 1;
@@ -633,7 +681,7 @@ class DirectContent extends StatelessWidget {
                       (bounds.maxWidth - 22 * (count - 1)) / count;
                   return Wrap(
                     spacing: 22,
-                    runSpacing: 12,
+                    runSpacing: journalPage ? 6 : 12,
                     children: [
                       for (final column in columns.skip(1))
                         SizedBox(
@@ -662,7 +710,7 @@ class DirectContent extends StatelessWidget {
         : Row(
             children: [
               Expanded(
-                flex: columns.first.end - columns.first.start,
+                flex: _columnFlex(columns.first),
                 child: Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: identity,
@@ -670,13 +718,26 @@ class DirectContent extends StatelessWidget {
               ),
               for (final column in columns.skip(1))
                 Expanded(
-                  flex: column.end - column.start,
+                  flex: _columnFlex(column),
                   child: Padding(
                     padding: const EdgeInsets.only(right: 12),
                     child: value(column),
                   ),
                 ),
-              if (action?.intentLabel != null)
+              if (intentColumn)
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: SizedBox(
+                    width: MediaQuery.textScalerOf(context).scale(104),
+                    child: Text(
+                      action?.intentLabel ?? '',
+                      style: JournalPalette.small.copyWith(
+                        color: JournalPalette.olive,
+                      ),
+                    ),
+                  ),
+                )
+              else if (action?.intentLabel != null)
                 Padding(
                   padding: const EdgeInsets.only(left: 12),
                   child: Text(
@@ -706,8 +767,11 @@ class DirectContent extends StatelessWidget {
         frame,
         action,
         body,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-        border: compact,
+        padding: EdgeInsets.symmetric(
+          horizontal: journalPage ? 12 : 18,
+          vertical: journalPage ? 8 : 18,
+        ),
+        border: compact && !journalPage,
         description: columns
             .skip(1)
             .map(
@@ -938,6 +1002,7 @@ class DirectContent extends StatelessWidget {
     bool compact = false,
     bool dense = false,
   }) {
+    if (journalPage) dense = true;
     final activityType = activityTypeForAction(action);
     final activityActor = _activityActor(action);
     final bulk = action.entityType?.contains('bulk') == true;
@@ -987,7 +1052,11 @@ class DirectContent extends StatelessWidget {
                   child: Text(
                     _title(action),
                     style: TextStyle(
-                      fontSize: dense ? 11 : 14,
+                      fontSize: journalPage
+                          ? 13
+                          : dense
+                          ? 11
+                          : 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1194,7 +1263,7 @@ class DirectContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SizedBox(
-          width: 64,
+          width: journalPage ? 48 : 64,
           child: Semantics(
             label: 'Inspect ${person.name} dossier',
             button: true,
@@ -1213,13 +1282,19 @@ class DirectContent extends StatelessWidget {
                     }
                   },
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.all(8),
-                    minimumSize: const Size(60, 60),
+                    padding: EdgeInsets.all(journalPage ? 5 : 8),
+                    minimumSize: Size(
+                      journalPage ? 44 : 60,
+                      journalPage ? 44 : 60,
+                    ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(journalPage ? 2 : 12),
                     ),
                   ),
-                  child: CrewPortrait(person: person, size: 46),
+                  child: CrewPortrait(
+                    person: person,
+                    size: journalPage ? 34 : 46,
+                  ),
                 ),
               ),
             ),
@@ -1266,11 +1341,17 @@ class DirectContent extends StatelessWidget {
           onPressed: enabled ? activate : null,
           style: TextButton.styleFrom(
             alignment: Alignment.centerLeft,
-            minimumSize: Size(44, dense ? 36 : 52),
+            minimumSize: Size(44, journalPage || dense ? 36 : 52),
             padding: padding,
             foregroundColor: primary ? Colors.white : _ink,
             disabledForegroundColor: _muted,
-            backgroundColor: !enabled
+            backgroundColor: journalPage
+                ? primary
+                      ? _teal
+                      : selected
+                      ? JournalPalette.selected
+                      : Colors.transparent
+                : !enabled
                 ? JournalPalette.inset
                 : primary
                 ? _red
@@ -1278,7 +1359,13 @@ class DirectContent extends StatelessWidget {
                 ? JournalPalette.selected
                 : _card,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(border ? 7 : 0),
+              borderRadius: BorderRadius.circular(
+                journalPage
+                    ? 2
+                    : border
+                    ? 7
+                    : 0,
+              ),
               side: border
                   ? BorderSide(
                       color: selected ? _teal : _rule,
@@ -1356,10 +1443,15 @@ class DirectContent extends StatelessWidget {
   }
 
   Widget _shortcut(String key, {bool primary = false}) => Container(
-    constraints: const BoxConstraints(minWidth: 27),
-    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+    constraints: BoxConstraints(minWidth: journalPage ? 20 : 27),
+    padding: EdgeInsets.symmetric(
+      horizontal: journalPage ? 3 : 6,
+      vertical: journalPage ? 2 : 4,
+    ),
     decoration: BoxDecoration(
-      color: primary
+      color: journalPage
+          ? Colors.transparent
+          : primary
           ? Colors.white.withValues(alpha: .15)
           : _ink.withValues(alpha: .055),
       borderRadius: BorderRadius.circular(4),

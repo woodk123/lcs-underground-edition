@@ -28,6 +28,7 @@ import 'package:lcs_new_age/location/siege.dart';
 import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/article_view.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
+import 'package:lcs_new_age/modern/direct_content.dart';
 import 'package:lcs_new_age/modern/journal_city_plan.dart';
 import 'package:lcs_new_age/modern/journal_ledger.dart';
 import 'package:lcs_new_age/modern/journal_media.dart';
@@ -255,6 +256,150 @@ void main() {
       semantics.dispose();
     }
   });
+
+  for (final size in [const Size(2200, 1200), const Size(800, 600)]) {
+    testWidgets('Clipboard and equipment use journal pages at $size', (
+      tester,
+    ) async {
+      await mount(tester, size: size);
+      if (size.width == 800) {
+        await tester.tap(find.byTooltip('Reading size'));
+        await _settle(tester);
+        await tester.tap(find.text('150%'));
+        await _settle(tester);
+      }
+      final before = _snapshot();
+      reseedRNG(seed: 26840);
+      final rolls = List.generate(12, (_) => lcsRandom(100000));
+      reseedRNG(seed: 26840);
+      await _tap(tester, 'journal-clipboard');
+      expect(_key('journal-management-page'), findsOneWidget);
+      expect(
+        find.text('Active Liberals'),
+        findsOneWidget,
+        reason: 'One page heading, without a nested fallback panel.',
+      );
+      expect(
+        tester.widget<DirectContent>(find.byType(DirectContent)).journalPage,
+        isTrue,
+      );
+      final sourcePerson = engine.console.actions.firstWhere(
+        (action) => action.entityType == 'person',
+      );
+      final personId = int.parse(sourcePerson.entityId!);
+      await _tap(
+        tester,
+        'direct-action:${sourcePerson.y}:${sourcePerson.x}:${sourcePerson.key}',
+      );
+      expect(engine.console.journalProfile?.person.id, personId);
+      expect(_key('journal-personnel-profile'), findsOneWidget);
+      expect(find.text('Profile of a Liberal'), findsNothing);
+      expect(_key('journal-profile-order-mechanics'), findsOneWidget);
+      expect(find.byType(ActivityMechanicsPanel), findsNothing);
+      for (final (label, index) in [
+        ('Skills', 1),
+        ('Campaign record', 2),
+        ('Overview', 0),
+      ]) {
+        final tab = _key('journal-profile-tab:$index');
+        expect(
+          find.descendant(of: tab, matching: find.text(label)),
+          findsOneWidget,
+        );
+        await tester.ensureVisible(tab);
+        await _settle(tester);
+        await tester.tap(tab);
+        await _settle(tester);
+        expect(engine.console.journalProfile?.page, index);
+      }
+      final close = _key('journal-profile-action:Enter');
+      await tester.ensureVisible(close);
+      await _settle(tester);
+      await _tap(tester, 'journal-profile-action:Enter');
+      expect(engine.console.journalProfile, isNull);
+      expect(find.text('Active Liberals'), findsOneWidget);
+      expect(_snapshot(), before);
+      expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+      await _tap(tester, 'journal-equipment');
+      expect(
+        tester.widget<Text>(_key('journal-management-heading')).data,
+        'Equipment',
+      );
+      expect(find.text('Crew & choices'), findsNothing);
+      expect(find.text('Equip the Squad'), findsNothing);
+      final weaponAction = engine.console.actions.firstWhere(
+        (a) => a.intentLabel == 'Unequip weapon',
+      );
+      final control = _key(
+        'direct-action:${weaponAction.y}:${weaponAction.x}:${weaponAction.key}',
+      );
+      expect(
+        find.descendant(of: control, matching: find.text('Unequip weapon')),
+        findsOneWidget,
+      );
+      for (final key in ['Up', 'Down']) {
+        final action = engine.console.actions.singleWhere((a) => a.key == key);
+        expect(
+          _key('direct-action:${action.y}:${action.x}:${action.key}'),
+          findsOneWidget,
+          reason: 'Keep both original ammo controls.',
+        );
+      }
+      expect(find.textContaining('Cursors -'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets(
+    'native Clipboard profiles retain rename and management confirmations',
+    (tester) async {
+      final person = game.squad[1];
+      person.hireId = game.squad.first.id;
+      person.location = game.squad.first.location;
+      await mount(tester, size: const Size(800, 600));
+      await tester.tap(find.byTooltip('Reading size'));
+      await _settle(tester);
+      await tester.tap(find.text('150%'));
+      await _settle(tester);
+      final before = _snapshot();
+      await _tap(tester, 'journal-clipboard');
+      final action = engine.console.actions.singleWhere(
+        (a) => a.entityType == 'person' && a.entityId == person.id.toString(),
+      );
+      final select = _key(
+        'direct-action:${action.y}:${action.x}:${action.key}',
+      );
+      await tester.ensureVisible(select);
+      await _settle(tester);
+      await tester.tap(select);
+      await _settle(tester);
+      for (final (key, prompt) in [
+        ('r', 'permanently release'),
+        ('k', 'kill this squad member?'),
+      ]) {
+        await _tap(tester, 'journal-profile-action:$key');
+        expect(engine.console.journalProfile?.confirming, isTrue);
+        expect(find.textContaining(prompt), findsOneWidget);
+        final cancel = engine.console.actions.singleWhere(
+          (a) => a.key == 'Enter',
+        );
+        await _tap(
+          tester,
+          'direct-action:${cancel.y}:${cancel.x}:${cancel.key}',
+        );
+        expect(engine.console.journalProfile?.confirming, isFalse);
+        expect(_snapshot(), before);
+      }
+      await _tap(tester, 'journal-profile-action:n');
+      expect(engine.console.textInput, isTrue);
+      await tester.enterText(find.byType(TextField), person.name);
+      await tester.tap(find.text('Confirm text'));
+      await _settle(tester);
+      expect(engine.console.textInput, isFalse);
+      expect(_snapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'daily orders leave a visit picker and offer explicit queued departure recovery',

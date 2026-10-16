@@ -1105,7 +1105,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
     } else if (_journalSection == 7 && !console.textInput) {
       detail = _journalOptions();
     } else if (!primary) {
-      detail = _workspace(false, true);
+      detail = _workspace(false, true, embeddedJournal: true);
     } else if (_journalSection == 2 &&
         console.screen == 'organisation' &&
         _action('4')?.enabled != true) {
@@ -1555,7 +1555,11 @@ class _ModernGameShellState extends State<ModernGameShell> {
     },
   );
 
-  Widget _workspace(bool classic, bool compact) {
+  Widget _workspace(
+    bool classic,
+    bool compact, {
+    bool embeddedJournal = false,
+  }) {
     final profile = console.journalProfile;
     if (!classic && profile != null) {
       return Column(
@@ -1580,9 +1584,17 @@ class _ModernGameShellState extends State<ModernGameShell> {
                     },
                   ),
           ),
+          const Divider(height: 1, color: JournalPalette.rule),
           Padding(
             padding: const EdgeInsets.all(10),
-            child: console.textInput
+            child: profile.confirming
+                ? DirectContent(
+                    console: console,
+                    onAction: _send,
+                    journalPage: true,
+                    hiddenRows: {for (var row = 0; row < 22; row++) row},
+                  )
+                : console.textInput
                 ? _inputBar()
                 : Wrap(
                     spacing: 8,
@@ -1590,19 +1602,17 @@ class _ModernGameShellState extends State<ModernGameShell> {
                     children: [
                       for (final action in console.actions)
                         if (!{'Up', 'Down'}.contains(action.key))
-                          _actionButton(
-                            action,
-                            label: switch (action.key) {
-                              'Left' => 'Previous crew member',
-                              'Right' => 'Next crew member',
-                              _ => null,
-                            },
-                          ),
+                          _profileAction(action),
                     ],
                   ),
           ),
         ],
       );
+    }
+    if (embeddedJournal &&
+        console.screen != 'article' &&
+        console.screen != 'full_map') {
+      return _journalManagementPage();
     }
     final journal = !classic;
     final planning = !classic && console.screen == 'planning';
@@ -1797,6 +1807,80 @@ class _ModernGameShellState extends State<ModernGameShell> {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _profileAction(ConsoleAction action) {
+    final (label, icon) = switch (action.key) {
+      'Enter' => ('Back to crew', Icons.arrow_back),
+      'Left' => ('Previous', Icons.chevron_left),
+      'Right' => ('Next', Icons.chevron_right),
+      'a' => ('Assign a task', Icons.assignment_outlined),
+      'n' => ('Change name', Icons.edit_outlined),
+      'g' => ('Change gender', Icons.person_outline),
+      _ => (_clean(action.label), Icons.chevron_right),
+    };
+    return TextButton.icon(
+      key: ValueKey('journal-profile-action:${action.key}'),
+      onPressed: action.enabled ? () => _send(action.key) : null,
+      icon: Icon(icon, size: 16),
+      label: Text(label, style: JournalPalette.small),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        minimumSize: const Size(40, 34),
+      ),
+    );
+  }
+
+  Widget _journalManagementPage() {
+    final rows = console.buffer
+        .map((row) => row.map((cell) => cell.glyph).join().trim())
+        .where((row) => row.isNotEmpty)
+        .toList();
+    final heading = rows.isEmpty ? 'Organisation' : _screenHeading(rows);
+    final navigation = console.navigation;
+    return Column(
+      key: const ValueKey('journal-management-page'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 4, 4, 7),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  heading == 'Equip the Squad' ? 'Equipment' : heading,
+                  key: const ValueKey('journal-management-heading'),
+                  style: JournalPalette.heading,
+                ),
+              ),
+              if (navigation != null)
+                TextButton.icon(
+                  key: const ValueKey('journal-management-back'),
+                  onPressed: () => _send(navigation.backKey),
+                  icon: const Icon(Icons.arrow_back, size: 16),
+                  label: const Text('Back'),
+                  style: TextButton.styleFrom(minimumSize: const Size(40, 34)),
+                ),
+            ],
+          ),
+        ),
+        const Divider(height: 1, color: JournalPalette.rule),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
+            child: DirectContent(
+              console: console,
+              onAction: _send,
+              onInspect: _openDossier,
+              textInput: console.textInput,
+              journalPage: true,
+              hiddenRows: const {0},
+            ),
+          ),
+        ),
+        if (console.textInput) _inputBar(),
+      ],
     );
   }
 

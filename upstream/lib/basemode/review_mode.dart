@@ -16,6 +16,7 @@ import 'package:lcs_new_age/creature/sort_creatures.dart';
 import 'package:lcs_new_age/daily/advance_day.dart';
 import 'package:lcs_new_age/daily/hostages/traumatize.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/journal_context.dart';
 import 'package:lcs_new_age/engine/organisation_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/gamestate/squad.dart';
@@ -460,6 +461,7 @@ Future<void> reviewMode(ReviewMode mode) async {
           if (page == 0) printFullCreatureStats(tempp);
           if (page == 1) printFullCreatureSkills(tempp);
           if (page == 2) printFullCreatureCrimes(tempp);
+          console.journalProfile = JournalProfileContext(tempp, page);
 
           // Add removal of squad members member
           move(22, 0);
@@ -561,6 +563,7 @@ Future<void> reviewMode(ReviewMode mode) async {
             addOptionText(24, 2, "C", "C - Confirm");
             addOptionText(24, 20, "Any Other Key", "Any Other Key - Continue");
 
+            console.journalProfile = JournalProfileContext(tempp, page, confirming: true);
             int c = await getKey();
 
             if (c == Key.c) {
@@ -632,6 +635,7 @@ Future<void> reviewMode(ReviewMode mode) async {
             addOptionText(24, 0, "C", "C - Confirm");
             addOptionText(24, 27, "Any Other Key", "Any Other Key - Continue");
 
+            console.journalProfile = JournalProfileContext(tempp, page, confirming: true);
             int c = await getKey();
 
             if (c == Key.c) {

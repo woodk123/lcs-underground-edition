@@ -518,10 +518,26 @@ class _CrewDossierState extends State<CrewDossier> {
                     (1, 'Skills'),
                     (2, 'Campaign record'),
                   ])
-                    ChoiceChip(
-                      label: Text(label),
+                    Semantics(
                       selected: widget.page == index,
-                      onSelected: (_) => widget.onPage?.call(index),
+                      child: TextButton(
+                        key: ValueKey('journal-profile-tab:$index'),
+                        onPressed: () => widget.onPage?.call(index),
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(40, 34),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 6,
+                          ),
+                          backgroundColor: widget.page == index
+                              ? JournalPalette.selected
+                              : Colors.transparent,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(2)),
+                          ),
+                        ),
+                        child: Text(label, style: JournalPalette.small),
+                      ),
                     ),
                 ],
               ),
@@ -569,7 +585,9 @@ class _CrewDossierState extends State<CrewDossier> {
   Widget _header() {
     final person = widget.person;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
+      padding: widget.embedded
+          ? const EdgeInsets.fromLTRB(12, 8, 12, 12)
+          : const EdgeInsets.fromLTRB(24, 12, 24, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -581,10 +599,20 @@ class _CrewDossierState extends State<CrewDossier> {
                 children: [
                   CrewPortrait(
                     person: person,
-                    size: compact ? 88 : 132,
+                    size: widget.embedded
+                        ? (compact ? 64 : 76)
+                        : compact
+                        ? 88
+                        : 132,
                     borderRadius: 3,
                   ),
-                  SizedBox(width: compact ? 16 : 24),
+                  SizedBox(
+                    width: widget.embedded
+                        ? 12
+                        : compact
+                        ? 16
+                        : 24,
+                  ),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -593,10 +621,14 @@ class _CrewDossierState extends State<CrewDossier> {
                           person.name.isEmpty ? 'Unnamed person' : person.name,
                           key: const ValueKey('crew-dossier-name'),
                           style: TextStyle(
-                            fontSize: compact ? 24 : 32,
+                            fontSize: widget.embedded
+                                ? (compact ? 20 : 22)
+                                : compact
+                                ? 24
+                                : 32,
                             fontWeight: FontWeight.w800,
                             height: 1.12,
-                            letterSpacing: -.7,
+                            letterSpacing: widget.embedded ? 0 : -.7,
                           ),
                         ),
                         if (person.properName.isNotEmpty &&
@@ -714,13 +746,7 @@ class _CrewDossierState extends State<CrewDossier> {
               actor: person,
             ),
             _fact('Personal assignment', person.activity.description),
-            ActivityMechanicsPanel(
-              mechanics: activityMechanics(
-                person.activity.type,
-                actor: person,
-                activity: person.activity,
-              ),
-            ),
+            _orderMechanics(),
             const SizedBox(height: 10),
             _fact('Squad', person.squad?.name ?? 'Unassigned'),
             if (person.squad != null)
@@ -1042,6 +1068,25 @@ class _CrewDossierState extends State<CrewDossier> {
     );
   }
 
+  Widget _orderMechanics() {
+    final person = widget.person;
+    final panel = ActivityMechanicsPanel(
+      mechanics: activityMechanics(
+        person.activity.type,
+        actor: person,
+        activity: person.activity,
+      ),
+    );
+    if (!widget.embedded) return panel;
+    return ExpansionTile(
+      key: const ValueKey('journal-profile-order-mechanics'),
+      tilePadding: EdgeInsets.zero,
+      dense: true,
+      title: const Text('Order mechanics', style: JournalPalette.small),
+      children: [panel],
+    );
+  }
+
   Widget _twoColumns(Widget left, Widget right) => LayoutBuilder(
     builder: (context, bounds) => bounds.maxWidth >= 650
         ? Row(
@@ -1092,22 +1137,29 @@ class _CrewDossierState extends State<CrewDossier> {
     ),
   );
 
-  Widget _tag(String label, {bool warning = false}) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    decoration: BoxDecoration(
-      color: warning
-          ? JournalPalette.danger.withValues(alpha: .08)
-          : JournalPalette.inset,
-      border: Border.all(
-        color: warning ? JournalPalette.danger.withValues(alpha: .3) : _rule,
-      ),
-      borderRadius: BorderRadius.circular(3),
-    ),
-    child: Text(
-      label,
-      style: TextStyle(color: warning ? _red : _ink, fontSize: 12),
-    ),
-  );
+  Widget _tag(String label, {bool warning = false}) => widget.embedded
+      ? Text(
+          label,
+          style: JournalPalette.small.copyWith(color: warning ? _red : _muted),
+        )
+      : Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: warning
+                ? JournalPalette.danger.withValues(alpha: .08)
+                : JournalPalette.inset,
+            border: Border.all(
+              color: warning
+                  ? JournalPalette.danger.withValues(alpha: .3)
+                  : _rule,
+            ),
+            borderRadius: BorderRadius.circular(3),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(color: warning ? _red : _ink, fontSize: 12),
+          ),
+        );
 
   Widget _footer() => Container(
     padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),

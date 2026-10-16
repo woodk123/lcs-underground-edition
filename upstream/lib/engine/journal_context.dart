@@ -1,9 +1,14 @@
 import 'package:lcs_new_age/creature/creature.dart';
 
 class JournalProfileContext {
-  const JournalProfileContext(this.person, this.page);
+  const JournalProfileContext(
+    this.person,
+    this.page, {
+    this.confirming = false,
+  });
   final Creature person;
   final int page;
+  final bool confirming;
 }
 
 /// A snapshot of information actually printed by the current engine scene.

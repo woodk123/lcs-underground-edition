@@ -18,6 +18,7 @@ The Underground Edition retains the original Dart/Flutter engine and campaign co
 - Destination labels show relevant travel prices and requirements; general travel rules are available on request.
 - Squad visits use the original destination planner and shared order card.
 - Skill levels sit next to their names; XP is secondary.
+- Clipboard profiles use the structured personnel dossier; crew and equipment lists use ruled journal rows with compact controls.
 - Full formulas and requirements are available through Order mechanics; cards keep key timing, estimates, costs and risks visible.
 - Portrait age compatibility takes precedence over avoiding duplicates. Clearly mismatched saved assignments are repaired once; appropriate identities persist across saves and birthdays.
 - The founder identity page previews and rerolls an age-compatible portrait alongside the generated names. The selected face survives background creation and saves without consuming gameplay RNG.
