@@ -17,13 +17,14 @@ Release tooling uses Python's standard library:
 ```powershell
 python -m unittest discover -s scripts -p 'test_*.py' -v
 python scripts/verify_assets.py
+node --test scripts/browser_support.test.mjs
 ```
 
 The tests exercise archive integrity/tampering, complete source snapshots, local and nightly packaging, release-size accounting and limits, unchanged-input detection and safe publication. Flutter regressions also decode every runtime WebP, check atlas dimensions and native alpha fidelity, and exercise conservative web renderer pruning. No live GitHub release is modified by these tests.
 
 ## Browser regressions
 
-The supported browser helpers use isolated contexts and test fixtures. They never operate a player's browser profile. Their Node dependencies are in `upstream/tool/offline_test/`:
+The supported browser helpers use isolated contexts and test fixtures. They require `http://127.0.0.1:18879/` and never operate a player's browser profile. Their Node dependencies are in `upstream/tool/offline_test/`:
 
 ```powershell
 npm install --prefix upstream/tool/offline_test
@@ -51,6 +52,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop.ps1 -Port 18879
 ```
 
 The first helper uses installed Microsoft Edge. The creation helper checks portrait rerolls, continuity through creation/headquarters/save reload, projected answer-bonus help and click-through, and public-name placement below the question. It covers manual and random backgrounds at normal size and 800×600 with 150% text. Unit regressions cover all 50 source bonuses, untouched state/RNG/ID counters during previews, and the birthday/cohort edge case. Use only the isolated QA port when stopping a test server.
+
+### Mission, recovery and custody
+
+When a player server is already running, build the QA game into a separate ignored directory. Pass an **absolute** `--output` path to the pinned Flutter `build web --release --no-pub --no-wasm-dry-run --base-href /` command, then run `tool/inject_service_worker.dart` against that directory exactly once. Relative custom output paths can fail Windows shader compilation. Use `scripts/common.ps1` / `Get-LcsFlutter` to verify the pinned SDK before building. Do not replace files served to the player on port 8765.
+
+```powershell
+$qaWeb = Join-Path (Get-Location) 'reports/mission-qa/web'
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch.ps1 -Port 18879 -NoBrowser -WebRoot $qaWeb
+$expected = (Get-FileHash (Join-Path $qaWeb 'main.dart.js') -Algorithm SHA256).Hash.ToLowerInvariant()
+node scripts/mission_browser_review.mjs --url http://127.0.0.1:18879/ --expected-hash $expected
+```
+
+The mission helper travels into an actual police building, moves through its entrance, waits for an encounter, inspects a field dossier, exercises escape-direction retry/cancellation, fights and retreats using current UI controls. Exports verify ammunition consumption and headquarters return. Any wounds actually sustained are taken to the university hospital and advanced through treatment and discharge. Separate prepared campaigns exercise unarmed political conversation, paid/unpaid hospital care with bleeding, and a month-end custody transition through police transfer, trial and prison release. The report declares all prepared conditions, including wounds, funds, custody status and dates; prepared arrests or persuasion are never described as earned through play.
+
+Each resolved scenario saves and exports through the original menu, reloads the browser, and imports into a fresh storage context. Whole-campaign equality covers character condition, portrait identities, equipment/ammunition, squads, orders, funds and campaign progress. Hospital/court pages are also exercised at 800×600 with 150% reading size. Screenshots, decision frames, synthetic inputs and exported saves remain under ignored `reports/`. `--only operation|conversation|paid-care|unpaid-care|custody` helps investigate one scenario; the full acceptance run omits this filter.
+
+The helpers locate installed Edge/Chrome in standard Windows directories and accept `--browser-executable <path>` for another installation. They never download a browser, reuse a player profile or clear player storage. Field-input regressions cover retries, source identity/revision checks, the original movement exception and keyboard isolation while inspecting. Recovery regressions cover billing, affordability, conviction records, exact persistence, responsive journal routes and read-only details. These checks do not certify every injury, pursuit, siege, trial outcome or native Windows path.
 
 ## Release checks
 

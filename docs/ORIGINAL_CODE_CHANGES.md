@@ -11,6 +11,7 @@ The Underground Edition retains the original Dart/Flutter engine and campaign co
 - Legacy saves retain equipped clothing quality/protection during migration.
 - Inspecting saves does not consume the active campaign RNG.
 - Completed campaign totals are recorded once.
+- Guilty and lenient trial outcomes retain the full charged counts in conviction history, including earlier cases. Acquittals and retrials add no convictions; sentencing calculations are unchanged.
 
 ## Interface and portrait behavior
 
@@ -20,6 +21,11 @@ The Underground Edition retains the original Dart/Flutter engine and campaign co
 - Skill levels sit next to their names; XP is secondary.
 - Clipboard profiles use the structured personnel dossier; crew and equipment lists use ruled journal rows with compact controls.
 - Left-hand selection follows profile tabs and equipment rows without resetting scroll or changing equipment; profile arrow navigation keeps the left-hand selection in sync.
+- Field encounters retain the source's visible names, equipment and health. Retreat exposes clickable directions and cancellation; movement availability follows the original frightened-occupant exception.
+- Field portrait dossiers keep the map and current decision in place and block game commands while inspecting. Speaker choices show Persuasion, Seduction and Disguise beside their names.
+- Conversation retries keep their own choices. Hostage threats, bluffing, surrender and rental acceptance display the eligibility already enforced by their original handlers.
+- Hospital admission, discharge bills and court defense use journal pages with contextual notes, portraits, condition and concise source-authored choices. Unpaid bills are explicit; full charges and health/legal mechanics remain available on demand. Court defense begins on a fresh page so long charge lists cannot hide its choices or Law/Persuasion values.
+- Intermediate map-generation frames show a journal progress note until the next source reader is ready, retaining the selected person and organisation layout.
 - Full formulas and requirements are available through Order mechanics; cards keep key timing, estimates, costs and risks visible.
 - Portrait age compatibility takes precedence over avoiding duplicates. Clearly mismatched saved assignments are repaired once; appropriate identities persist across saves and birthdays.
 - The founder identity page previews and rerolls an age-compatible portrait alongside the generated names. The selected face survives background creation and saves without consuming gameplay RNG.

@@ -7,6 +7,7 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/creature_type.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/recovery_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/gamestate/ledger.dart';
 import 'package:lcs_new_age/items/clothing.dart';
@@ -143,40 +144,70 @@ Future<void> trial(Creature g) async {
   }
 
   //CHOOSE DEFENSE
-  mvaddstrc(y + 2, 1, lightGray, "How will you conduct the defense?");
-
-  y += 4;
-  addOptionText(y++, 1, "A", "A - Use a court-appointed attorney.");
-  addOptionText(y++, 1, "B", "B - Defend self!");
-  addOptionText(y++, 1, "C", "C - Plead guilty.");
-  addOptionText(
-    y++,
-    1,
-    "D",
-    "D - Pay \$5000 to hire Elite Liberal Attorney ${uniqueCreatures.aceLiberalAttorney.name}",
-    enabledWhen: ledger.funds >= 5000,
-  );
-  if (sleeperlawyer != null) {
+  void describeDefense() {
+    // Long charge lists have already been acknowledged. Give the decision a
+    // fresh page so all choices and adjacent skill values remain on screen.
+    erase();
+    mvaddstrc(1, 1, white, '${g.name} is standing trial.');
+    y = 1;
+    mvaddstrc(y + 2, 1, lightGray, "How will you conduct the defense?");
+    y += 4;
+    addOptionText(y++, 1, "A", "A - Use a court-appointed attorney.");
+    addOptionText(y++, 1, "B", "B - Defend self!");
+    addOptionText(y++, 1, "C", "C - Plead guilty.");
     addOptionText(
       y++,
       1,
-      "E",
-      "E - Accept sleeper ${sleeperlawyer.name}'s offer to assist pro bono",
+      "D",
+      "D - Pay \$5000 to hire Elite Liberal Attorney ${uniqueCreatures.aceLiberalAttorney.name}",
+      enabledWhen: ledger.funds >= 5000,
     );
-  }
-  mvaddstrc(++y, 5, lightGray, "Your relevant skills if you defend yourself: ");
-  mvaddstr(++y, 5, "Law: ${g.skill(Skill.law)}");
-  mvaddstr(y, 25, "Persuasion: ${g.skill(Skill.persuasion)}");
-  if (sleeperlawyer != null) {
-    mvaddstr(++y, 5, "${sleeperlawyer.name}'s relevant skills: ");
-    mvaddstr(++y, 5, "Law: ${sleeperlawyer.skill(Skill.law)}");
-    mvaddstr(y, 25, "Persuasion: ${sleeperlawyer.skill(Skill.persuasion)}");
+    if (sleeperlawyer != null) {
+      addOptionText(
+        y++,
+        1,
+        "E",
+        "E - Accept sleeper ${sleeperlawyer.name}'s offer to assist pro bono",
+      );
+    }
+    final skillsStartRow = y + 1;
+    mvaddstrc(
+      ++y,
+      5,
+      lightGray,
+      "Your relevant skills if you defend yourself: ",
+    );
+    mvaddstr(++y, 5, "Law: ${g.skill(Skill.law)}");
+    mvaddstr(y, 25, "Persuasion: ${g.skill(Skill.persuasion)}");
+    if (sleeperlawyer != null) {
+      mvaddstr(++y, 5, "${sleeperlawyer.name}'s relevant skills: ");
+      mvaddstr(++y, 5, "Law: ${sleeperlawyer.skill(Skill.law)}");
+      mvaddstr(y, 25, "Persuasion: ${sleeperlawyer.skill(Skill.persuasion)}");
+    }
+    console.annotateAction('a', 'Court-appointed attorney');
+    console.annotateAction('b', 'Defend self');
+    console.annotateAction('c', 'Plead guilty');
+    console.annotateAction('d', 'Hire elite attorney · \$5,000');
+    if (sleeperlawyer != null) {
+      console.annotateAction('e', 'Accept ${sleeperlawyer.name} pro bono');
+    }
+    console.screen = 'recovery';
+    console.recovery = RecoveryContext(
+      scene: RecoveryScene.defense,
+      title: 'Court defense',
+      note: 'Choose ${g.name}’s defense for the charges read in court.',
+      people: [recoveryPersonSummary(g)],
+      bodyRows: [for (var row = skillsStartRow; row <= y; row++) row],
+      actions: console.actions,
+      details: [charges],
+    );
   }
 
   int defense;
   int c;
   String? attorneyname;
   while (true) {
+    describeDefense();
     c = await getKey();
     if (c == Key.a) {
       defense = 0;
@@ -482,6 +513,15 @@ Future<void> trial(Creature g) async {
 
   if (trialOutcome == TrialOutcome.guilty ||
       trialOutcome == TrialOutcome.lenience) {
+    // Preserve the actual case record before sentencing caps each charge at
+    // ten counts. Acquittals and hung trials do not create convictions.
+    for (final charge in g.wantedForCrimes.entries.where((e) => e.value > 0)) {
+      g.pastConvictions.update(
+        charge.key,
+        (count) => count + charge.value,
+        ifAbsent: () => charge.value,
+      );
+    }
     await penalize(g, trialOutcome == TrialOutcome.lenience);
   }
 

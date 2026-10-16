@@ -21,6 +21,10 @@ Travel labels show costs and unmet requirements for the particular route. Free n
 
 Portraits use a separate deterministic identity calculation. Casting and rendering must not consume the gameplay RNG. Faces, assignment age and cosmetic variants persist in saves; appearance overlays reflect supported equipment and injuries. See [portrait details](PORTRAIT_LIBRARY.md).
 
+Field movement, escape directions, speaker and conversation choices belong to their individual source readers. The source publishes the same availability used by its handler, including ordinary movement past frightened occupants. Retrying a prompt republishes its own actions; it never restores actions from an earlier reader. Field callbacks retain the action object and console revision. Read-only field dossiers keep the map in place and block both pointer and keyboard commands beneath them.
+
+Hospital admission, discharge and court defense publish `RecoveryContext` snapshots in `engine/recovery_context.dart`. The journal reuses those people, text, costs, skill values and exact action objects; healing, billing, custody and verdicts remain in their original handlers. Full charges and medical mechanics are available on demand. Discharged patients return to their base without automatically rejoining a squad, and leaving a bill unpaid retains the debt.
+
 ## Development
 
 Use a full restart after engine changes; hot reload cannot reliably restart an awaited game loop. Add meaningful regressions under `upstream/test/` when changing rules, persistence or command routing. Build and release tools live in `scripts/`; generated reports, SDKs and packages are ignored.

@@ -6,13 +6,14 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertQaUrl, chromiumLaunchOptions } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
 const { chromium } = require('playwright');
 const args = process.argv.slice(2);
 const value = (flag, fallback) => args.includes(flag) ? args[args.indexOf(flag) + 1] : fallback;
-const url = value('--url', 'http://127.0.0.1:18879/');
+const url = assertQaUrl(value('--url', 'http://127.0.0.1:18879/'));
 const output = resolve(root, value('--out', `reports/browser-review-${new Date().toISOString().replaceAll(':', '-')}`));
 await mkdir(output, { recursive: true });
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -37,7 +38,10 @@ const report = {
 const response = await fetch(new URL('main.dart.js', url));
 assert.ok(response.ok);
 report.mainJsSha256 = hash(Buffer.from(await response.arrayBuffer()));
-const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const expectedHash = value('--expected-hash', null);
+if (expectedHash) assert.equal(report.mainJsSha256, expectedHash.toLowerCase(),
+  'QA server must serve the requested compiled build.');
+const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
 const page = await context.newPage();
 page.on('pageerror', error => report.pageErrors.push(String(error)));

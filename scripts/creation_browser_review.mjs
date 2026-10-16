@@ -6,6 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertQaUrl, chromiumLaunchOptions } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -14,7 +15,7 @@ const args = process.argv.slice(2);
 const expectedHash = args[args.indexOf('--expected-hash') + 1];
 assert.ok(args.includes('--expected-hash'));
 assert.match(expectedHash, /^[a-f0-9]{64}$/);
-const url = args.includes('--url') ? args[args.indexOf('--url') + 1] : 'http://127.0.0.1:18879/';
+const url = assertQaUrl(args.includes('--url') ? args[args.indexOf('--url') + 1] : 'http://127.0.0.1:18879/');
 const stamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
 const output = resolve(root, `reports/browser/creation-${stamp}`);
 const profile = resolve(root, `.local/browser-profiles/creation-${stamp}`);
@@ -237,7 +238,7 @@ try {
   report.mainJsSha256 = createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex');
   assert.equal(report.mainJsSha256, expectedHash);
   context = await chromium.launchPersistentContext(profile, {
-    channel:'chrome', headless:true, viewport:{width:1280,height:720},
+    ...chromiumLaunchOptions({ channel: 'chrome', args }), viewport:{width:1280,height:720},
   });
   report.browserVersion = context.browser().version();
   page = await context.newPage();

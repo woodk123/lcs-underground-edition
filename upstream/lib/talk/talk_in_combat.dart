@@ -44,16 +44,33 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
     canSurrender = true;
   }
 
-  addOptionText(11, 1, "A", "A - Intimidate");
-  setColorConditional(hostages > 0);
-  addOptionText(12, 1, "B", "B - Threaten hostages");
-  setColorConditional(target.isWillingToTalk);
-  addOptionText(13, 1, "C", "C - Bluff");
-  setColorConditional(canSurrender);
-  addOptionText(14, 1, "D", "D - Surrender to authorities");
-  setColor(lightGray);
-  addOptionText(15, 1, "E", "E - Do nothing");
   while (true) {
+    // These are this reader's choices, including after an unrelated key. The
+    // original acceptance checks below still own availability and outcomes.
+    addOptionText(11, 1, "A", "A - Intimidate");
+    addOptionText(
+      12,
+      1,
+      "B",
+      "B - Threaten hostages",
+      enabledWhen: hostages > 0,
+    );
+    addOptionText(13, 1, "C", "C - Bluff", enabledWhen: target.isWillingToTalk);
+    addOptionText(
+      14,
+      1,
+      "D",
+      "D - Surrender to authorities",
+      enabledWhen: canSurrender,
+    );
+    addOptionText(15, 1, "E", "E - Do nothing");
+    for (final key in ['a', 'b', 'c', 'd', 'e']) {
+      console.annotateActionEntity(
+        key,
+        type: 'combat-conversation',
+        id: '${liberal.id}:${target.id}:$key',
+      );
+    }
     c = await getKey();
 
     if (c == 'a'.codePoint) break;
@@ -178,20 +195,20 @@ Future<bool> talkInCombat(Creature liberal, Creature target) async {
         clearSceneAreas();
         mvaddstrc(9, 1, lightGray, "How should ${liberal.name} respond?");
         bool plural = hostages > 1;
-        addOptionText(
-          11,
-          1,
-          "A",
-          "A - Execute ${plural ? "a" : "the"} hostage",
-        );
-        addOptionText(
-          12,
-          1,
-          "B",
-          "B - Offer to trade the hostage${plural ? "s" : ""} for freedom",
-        );
-
         while (true) {
+          addOptionText(
+            11,
+            1,
+            "A",
+            "A - Execute ${plural ? "a" : "the"} hostage",
+          );
+          addOptionText(
+            12,
+            1,
+            "B",
+            "B - Offer to trade the hostage${plural ? "s" : ""} for freedom",
+          );
+
           c = await getKey();
           if (c == 'a'.codePoint || c == 'b'.codePoint) break;
         }

@@ -9,6 +9,7 @@ import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/engine/ledger_context.dart';
 import 'package:lcs_new_age/engine/media_context.dart';
 import 'package:lcs_new_age/engine/organisation_context.dart';
+import 'package:lcs_new_age/engine/recovery_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/gamestate/time.dart';
@@ -25,6 +26,7 @@ import 'package:lcs_new_age/modern/journal_creation.dart';
 import 'package:lcs_new_age/modern/journal_ledger.dart';
 import 'package:lcs_new_age/modern/journal_legislation.dart';
 import 'package:lcs_new_age/modern/journal_media.dart';
+import 'package:lcs_new_age/modern/journal_recovery.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/journal_title.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
@@ -223,6 +225,11 @@ class _ModernGameShellState extends State<ModernGameShell> {
         event.logicalKey == LogicalKeyboardKey.escape) {
       setState(() => _inspectedPersonId = null);
       return KeyEventResult.handled;
+    }
+    if (_inspectedPersonId != null && game.mode == GameMode.site) {
+      // A field dossier is a read-only overlay; its scrolling and navigation
+      // keys must not become orders to the awaited operation reader.
+      return KeyEventResult.ignored;
     }
     if (_entryFocus.hasFocus) {
       if (event is KeyDownEvent &&
@@ -1395,164 +1402,259 @@ class _ModernGameShellState extends State<ModernGameShell> {
     ),
   );
 
-  Widget _fieldOperation() => LayoutBuilder(
-    builder: (context, bounds) {
-      final narrow = bounds.maxWidth < 1000;
-      final movementEnabled =
-          !fieldPrompt &&
-          (!game.siteAlarm || !game.encounter.any((person) => person.isEnemy));
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  flex: narrow ? 3 : 5,
-                  child: TacticalMapView(
-                    onMove: _send,
-                    showHeading: false,
-                    showMovementControls: false,
-                    movementEnabled: movementEnabled,
-                  ),
-                ),
-                JournalBinding(width: narrow ? 16 : 26),
-                Expanded(
-                  flex: narrow ? 2 : 3,
-                  child: JournalSurface(
-                    key: const ValueKey('journal-operation-report'),
-                    padding: const EdgeInsets.all(10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          child: Scrollbar(
-                            controller: _operationScroll,
-                            thumbVisibility: true,
-                            child: SingleChildScrollView(
-                              controller: _operationScroll,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Text(
-                                    fieldPrompt
-                                        ? console.eventTitle ?? 'Field decision'
-                                        : 'Squad & orders',
-                                    key: fieldPrompt
-                                        ? const ValueKey('journal-field-prompt')
-                                        : null,
-                                    style: JournalPalette.heading,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (!fieldPrompt)
-                                    Wrap(
-                                      key: const ValueKey(
-                                        'journal-operation-crew',
-                                      ),
-                                      spacing: 8,
-                                      runSpacing: 6,
-                                      children: [
-                                        for (final person in game.squad)
-                                          Tooltip(
-                                            message:
-                                                '${person.name} · ${person.blood}/${person.maxBlood} blood',
-                                            child: InkWell(
-                                              onTap: () => _openDossier(person),
-                                              child: CrewPortrait(
-                                                person: person,
-                                                size: 40,
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  const SizedBox(height: 10),
-                                  if (fieldPrompt &&
-                                      console.eventMessage != null)
-                                    Text(
-                                      console.eventMessage!,
-                                      key: const ValueKey(
-                                        'journal-field-announcement',
-                                      ),
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        height: 1.5,
-                                      ),
-                                    )
-                                  else
-                                    DirectContent(
-                                      console: console,
-                                      onAction: _send,
-                                      onInspect: _openDossier,
-                                      hiddenRows: {
-                                        if (fieldPrompt) ...{
-                                          for (var row = 0; row < 9; row++) row,
-                                          23,
-                                          24,
-                                        } else
-                                          for (var row = 11; row <= 22; row++)
-                                            row,
-                                      },
-                                      leadingActionRows: fieldPrompt
-                                          ? const {}
-                                          : const {23, 24},
-                                      rowMaxColumns: fieldPrompt
-                                          ? {
-                                              for (
-                                                var row = 11;
-                                                row <= 22;
-                                                row++
-                                              )
-                                                row: 55,
-                                            }
-                                          : const {},
-                                      showActions: !fieldPrompt,
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        if (fieldPrompt &&
-                            console.eventMessage == null &&
-                            console.actions.isNotEmpty)
-                          ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight: bounds.maxHeight * .45,
-                            ),
-                            child: SingleChildScrollView(
-                              child: Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  for (final action in console.actions)
-                                    _actionButton(action),
-                                ],
-                              ),
-                            ),
-                          ),
-                        if (fieldPrompt &&
-                            (console.eventMessage != null ||
-                                console.textInput ||
-                                console.actions.isEmpty))
-                          _inputBar(),
-                      ],
+  void _sendFieldAction(ConsoleAction action, int revision) {
+    if (_inspectedPersonId == null &&
+        action.enabled &&
+        console.revision.value == revision &&
+        console.actions.any((current) => identical(current, action))) {
+      _send(action.key);
+    }
+  }
+
+  Widget _withFieldInspector(Widget field) {
+    final person = _inspectedPerson;
+    if (person == null) return field;
+    void close() => setState(() => _inspectedPersonId = null);
+    return Stack(
+      children: [
+        Positioned.fill(child: ExcludeFocus(child: field)),
+        Positioned.fill(
+          child: ModalBarrier(
+            color: Colors.black26,
+            dismissible: true,
+            onDismiss: close,
+            semanticsLabel: 'Close character dossier',
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: CrewInspector(person: person, onClose: close, compact: true),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _fieldOperation() => _withFieldInspector(
+    LayoutBuilder(
+      builder: (context, bounds) {
+        final narrow = bounds.maxWidth < 1000;
+        final revision = console.revision.value;
+        final actions = List<ConsoleAction>.of(console.actions);
+        final movementEnabled = actions.any(
+          (action) => action.entityType == 'field-direction' && action.enabled,
+        );
+        void sendFieldAction(String key) {
+          final action = actions
+              .where((action) => action.key == key)
+              .firstOrNull;
+          if (action != null) _sendFieldAction(action, revision);
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: narrow ? 3 : 5,
+                    child: TacticalMapView(
+                      onMove: sendFieldAction,
+                      showHeading: false,
+                      showMovementControls: false,
+                      movementEnabled: movementEnabled,
                     ),
                   ),
-                ),
-              ],
+                  JournalBinding(width: narrow ? 16 : 26),
+                  Expanded(
+                    flex: narrow ? 2 : 3,
+                    child: JournalSurface(
+                      key: const ValueKey('journal-operation-report'),
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: Scrollbar(
+                              controller: _operationScroll,
+                              thumbVisibility: true,
+                              child: SingleChildScrollView(
+                                controller: _operationScroll,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Text(
+                                      fieldPrompt
+                                          ? console.eventTitle ??
+                                                'Field decision'
+                                          : 'Squad & orders',
+                                      key: fieldPrompt
+                                          ? const ValueKey(
+                                              'journal-field-prompt',
+                                            )
+                                          : null,
+                                      style: JournalPalette.heading,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    if (!fieldPrompt)
+                                      Wrap(
+                                        key: const ValueKey(
+                                          'journal-operation-crew',
+                                        ),
+                                        spacing: 8,
+                                        runSpacing: 6,
+                                        children: [
+                                          for (final person in game.squad)
+                                            Tooltip(
+                                              message:
+                                                  '${person.name} · ${person.blood}/${person.maxBlood} blood',
+                                              child: Semantics(
+                                                button: true,
+                                                label:
+                                                    'Inspect ${person.name} dossier',
+                                                child: InkWell(
+                                                  key: ValueKey(
+                                                    'field-inspect:${person.id}',
+                                                  ),
+                                                  onTap: () =>
+                                                      _openDossier(person),
+                                                  child: CrewPortrait(
+                                                    person: person,
+                                                    size: 40,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    const SizedBox(height: 10),
+                                    if (fieldPrompt &&
+                                        console.eventMessage != null)
+                                      Text(
+                                        console.eventMessage!,
+                                        key: const ValueKey(
+                                          'journal-field-announcement',
+                                        ),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          height: 1.5,
+                                        ),
+                                      )
+                                    else
+                                      DirectContent(
+                                        console: console,
+                                        onAction: sendFieldAction,
+                                        onInspect: _openDossier,
+                                        hiddenRows: {
+                                          if (fieldPrompt) ...{
+                                            for (var row = 0; row < 9; row++)
+                                              row,
+                                            23,
+                                            24,
+                                          },
+                                        },
+                                        leadingActionRows: fieldPrompt
+                                            ? const {}
+                                            : const {23, 24},
+                                        rowMaxColumns: {
+                                          for (var row = 11; row <= 22; row++)
+                                            row: 55,
+                                        },
+                                        showActions: !fieldPrompt,
+                                        excludedActionTypes: const {
+                                          'field-direction',
+                                        },
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (fieldPrompt &&
+                              console.eventMessage == null &&
+                              console.actions.isNotEmpty)
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: bounds.maxHeight * .45,
+                              ),
+                              child: SingleChildScrollView(
+                                child: Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    for (final action in actions)
+                                      if (action.entityType !=
+                                          'field-direction')
+                                        OutlinedButton(
+                                          onPressed: action.enabled
+                                              ? () => _sendFieldAction(
+                                                  action,
+                                                  revision,
+                                                )
+                                              : null,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              _keycap(
+                                                action.key == 'Enter'
+                                                    ? '↵'
+                                                    : action.key.toUpperCase(),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Flexible(
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(_clean(action.label)),
+                                                    if (action.entityType ==
+                                                            'field-speaker' &&
+                                                        action.intentLabel !=
+                                                            null)
+                                                      Text(
+                                                        action.intentLabel!,
+                                                        style: JournalPalette
+                                                            .small,
+                                                      ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          if (fieldPrompt &&
+                              (console.eventMessage != null ||
+                                  console.textInput ||
+                                  console.actions.isEmpty))
+                            _inputBar(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          JournalSurface(
-            key: const ValueKey('journal-operation-controls'),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            child: _movementStrip(),
-          ),
-        ],
-      );
-    },
+            const SizedBox(height: 8),
+            JournalSurface(
+              key: const ValueKey('journal-operation-controls'),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              child: _movementStrip(),
+            ),
+          ],
+        );
+      },
+    ),
   );
 
   Widget _workspace(
@@ -1560,6 +1662,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
     bool compact, {
     bool embeddedJournal = false,
   }) {
+    if (!classic && recoveryContext(console) != null) {
+      return JournalRecoveryView(console: console, onAction: _send);
+    }
     final profile = console.journalProfile;
     if (!classic && profile != null) {
       return Column(
@@ -1607,6 +1712,42 @@ class _ModernGameShellState extends State<ModernGameShell> {
                   ),
           ),
         ],
+      );
+    }
+    if (!classic &&
+        console.screen == 'generic' &&
+        !console.awaitingInput &&
+        !console.textInput &&
+        console.actions.isEmpty &&
+        console.eventMessage == null) {
+      // Source handlers may paint map generation or other intermediate buffers
+      // while the day is still processing. Only an awaited reader is a choice.
+      return JournalSurface(
+        key: const ValueKey('journal-processing'),
+        lined: true,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.hourglass_top, color: JournalPalette.brassDark),
+                SizedBox(height: 12),
+                Text(
+                  'Preparing the next report',
+                  textAlign: TextAlign.center,
+                  style: JournalPalette.heading,
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'The campaign is still processing. The next report or decision will appear here.',
+                  textAlign: TextAlign.center,
+                  style: JournalPalette.small,
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
     if (embeddedJournal &&
@@ -1941,48 +2082,56 @@ class _ModernGameShellState extends State<ModernGameShell> {
     };
   }
 
-  Widget _movementStrip() => Wrap(
-    spacing: 8,
-    runSpacing: 8,
-    crossAxisAlignment: WrapCrossAlignment.center,
-    children: [
-      const Padding(
-        padding: EdgeInsets.only(right: 10),
-        child: Text(
-          'Move your squad',
-          style: TextStyle(fontWeight: FontWeight.w600),
+  Widget _movementStrip() {
+    final revision = console.revision.value;
+    final directions = {
+      for (final action in console.actions)
+        if (action.entityType == 'field-direction') action.key: action,
+    };
+    final fleeing = directions.values.any(
+      (action) => action.entityCategory == 'escape',
+    );
+    final canMove = directions.values.any((action) => action.enabled);
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 10),
+          child: Text(
+            fleeing ? 'Choose an escape direction' : 'Move your squad',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
         ),
-      ),
-      for (final (direction, icon) in [
-        ('Left', Icons.arrow_back),
-        ('Up', Icons.arrow_upward),
-        ('Down', Icons.arrow_downward),
-        ('Right', Icons.arrow_forward),
-      ])
-        IconButton.outlined(
-          tooltip: 'Move ${direction.toLowerCase()}',
-          onPressed:
-              fieldPrompt ||
-                  (game.siteAlarm &&
-                      game.encounter.any((person) => person.isEnemy))
-              ? null
-              : () => _send(direction),
-          icon: Icon(icon, size: 20),
+        for (final (direction, icon) in [
+          ('Left', Icons.arrow_back),
+          ('Up', Icons.arrow_upward),
+          ('Down', Icons.arrow_downward),
+          ('Right', Icons.arrow_forward),
+        ])
+          IconButton.outlined(
+            tooltip: 'Move ${direction.toLowerCase()}',
+            onPressed: directions[direction]?.enabled == true
+                ? () => _sendFieldAction(directions[direction]!, revision)
+                : null,
+            icon: Icon(icon, size: 20),
+          ),
+        SizedBox(
+          width: 280,
+          height: 36 * _textScale,
+          child: Text(
+            fieldPrompt && !fleeing
+                ? 'Answer the current prompt to continue.'
+                : !canMove
+                ? 'Resolve the encounter or choose Flee.'
+                : 'Click an adjacent tile or use the arrow keys.',
+            style: const TextStyle(color: muted, fontSize: 12),
+          ),
         ),
-      SizedBox(
-        width: 280,
-        height: 36 * _textScale,
-        child: Text(
-          fieldPrompt
-              ? 'Answer the current prompt to continue.'
-              : game.siteAlarm && game.encounter.any((person) => person.isEnemy)
-              ? 'Resolve the encounter or choose Flee.'
-              : 'Click an adjacent tile or use the arrow keys.',
-          style: const TextStyle(color: muted, fontSize: 12),
-        ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 
   Widget _choicePanel() => Container(
     padding: const EdgeInsets.all(18),

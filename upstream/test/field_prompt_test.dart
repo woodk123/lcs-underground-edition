@@ -12,6 +12,7 @@ import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/sitemode/map_specials.dart';
 import 'package:lcs_new_age/sitemode/sitemap.dart';
+import 'package:lcs_new_age/sitemode/sitemode.dart';
 
 import 'test_support.dart';
 
@@ -49,6 +50,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       journalReadingScale.value = 1.5;
       engine.console.screen = 'tactical';
+      siteMovementOptions(canMove: true);
       final mainReader = engine.console.getkey();
       await tester.pumpWidget(const MainApp());
       await tester.pumpAndSettle();
@@ -100,6 +102,7 @@ void main() {
       await message;
 
       engine.console.screen = 'tactical';
+      siteMovementOptions(canMove: true);
       final nextReader = engine.console.getkey();
       await tester.pumpAndSettle();
       expect(

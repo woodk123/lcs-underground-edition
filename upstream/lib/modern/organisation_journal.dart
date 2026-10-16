@@ -6,6 +6,7 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/organisation_context.dart';
+import 'package:lcs_new_age/engine/recovery_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/gamestate/squad.dart';
 import 'package:lcs_new_age/gamestate/time.dart';
@@ -1382,6 +1383,12 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ? const <String>[]
         : travelNotices(travel, squad);
     final estimatedIncome = help.calculation?.quantities['estimatedIncome'];
+    final visitInProgress =
+        !prepared &&
+        !planning &&
+        actual?.type == ActivityType.visit &&
+        squad?.id == game.activeSquad?.id &&
+        recoveryContext(console)?.scene == RecoveryScene.hospital;
     return JournalSurface(
       key: const ValueKey('journal-job-card'),
       lined: true,
@@ -1442,7 +1449,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 : prepared || planning
                 ? 'Prepared · awaiting confirmation'
                 : actual?.type == ActivityType.visit
-                ? 'Visit queued · advance the day to travel'
+                ? visitInProgress
+                      ? 'Visit in progress'
+                      : 'Visit queued · advance the day to travel'
                 : 'Assigned order',
             key: const ValueKey('journal-order-state'),
             maxLines: 1,
@@ -1460,8 +1469,15 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(help.timing, style: JournalPalette.small),
-                  if (type == ActivityType.visit && notices.isNotEmpty)
+                  Text(
+                    visitInProgress
+                        ? 'Choose care or return to headquarters.'
+                        : help.timing,
+                    style: JournalPalette.small,
+                  ),
+                  if (!visitInProgress &&
+                      type == ActivityType.visit &&
+                      notices.isNotEmpty)
                     Text(
                       travelSuffix(notices).trim(),
                       key: const ValueKey('journal-travel-notices'),

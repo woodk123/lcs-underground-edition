@@ -47,6 +47,7 @@ class DirectContent extends StatelessWidget {
     this.maxColumn = CONSOLE_WIDTH,
     this.rowMaxColumns = const {},
     this.showActions = true,
+    this.excludedActionTypes = const {},
     this.journalPage = false,
     this.selectedPersonId,
   });
@@ -60,6 +61,7 @@ class DirectContent extends StatelessWidget {
   final int maxColumn;
   final Map<int, int> rowMaxColumns;
   final bool showActions;
+  final Set<String> excludedActionTypes;
   final bool journalPage;
   final int? selectedPersonId;
 
@@ -141,6 +143,7 @@ class DirectContent extends StatelessWidget {
       maxColumn,
       rowMaxColumns,
       showActions,
+      excludedActionTypes,
     );
     if (journalPage && console.navigation?.section == 'equipment') {
       // Keep the explicit Up/Down controls, without repeating their keyboard
@@ -233,7 +236,11 @@ class DirectContent extends StatelessWidget {
     }
     if (leadingActionRows.isNotEmpty) {
       final commands = console.actions
-          .where((action) => leadingActionRows.contains(action.y))
+          .where(
+            (action) =>
+                leadingActionRows.contains(action.y) &&
+                !excludedActionTypes.contains(action.entityType),
+          )
           .toList();
       content.add(
         Padding(
@@ -1492,6 +1499,7 @@ class _ContentFrame {
     int maxColumn, [
     Map<int, int> rowMaxColumns = const {},
     bool showActions = true,
+    Set<String> excludedActionTypes = const {},
   ]) : width = maxColumn.clamp(1, console.width),
        revision = console.revision.value {
     rows = [
@@ -1510,6 +1518,7 @@ class _ContentFrame {
             .where(
               (action) =>
                   showActions &&
+                  !excludedActionTypes.contains(action.entityType) &&
                   !hiddenRows.contains(action.y) &&
                   action.x < (rowMaxColumns[action.y] ?? width) &&
                   action.y >= 0 &&

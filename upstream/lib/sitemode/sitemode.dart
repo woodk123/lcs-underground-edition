@@ -185,6 +185,114 @@ Future<void> siteMode(Site loc) async {
   encounter.clear();
 }
 
+/// Commands accepted by the current site reader. The journal uses these exact
+/// actions for its map and arrow controls instead of deciding movement rules.
+void siteMovementOptions({bool? canMove, bool fleeing = false}) {
+  canMove ??=
+      !encounter.any((e) => e.isEnemy) ||
+      !siteAlarm ||
+      siteEncounterMovementOverride();
+  final oldY = console.y, oldX = console.x;
+  for (final (index, direction) in ['Left', 'Up', 'Down', 'Right'].indexed) {
+    move(23, index * 16);
+    console.addAction(
+      direction,
+      'Move ${direction.toLowerCase()}',
+      enabled: canMove,
+      caseSensitive: true,
+    );
+    console.annotateActionEntity(
+      direction,
+      type: 'field-direction',
+      id: '${activeSquad?.id}:${activeSite?.idString}:$locx,$locy,$locz:$direction',
+      category: fleeing ? 'escape' : 'move',
+    );
+  }
+  move(oldY, oldX);
+}
+
+/// The original movement override for alarmed encounters without an opponent
+/// who can prevent the squad from moving. Both accepted input and its authored
+/// controls use this same source predicate.
+bool siteEncounterMovementOverride() => !encounter.any(
+  (e) =>
+      e.isEnemy &&
+      (e.weapon.type.protectsAgainstKidnapping ||
+          e.type.canPerformArrests ||
+          e.type.edgelord ||
+          e.type.ccsMember ||
+          e.type.majorEnemy ||
+          e.type.intimidationResistant),
+);
+
+/// The original flee reader, including its direction aliases and abort keys.
+/// Reauthor only its own actions on retries; another field reader must never
+/// inherit this reader's arrows or cancel command.
+Future<int?> chooseSiteEscapeDirection() async {
+  clearMessageArea();
+  mvaddstrc(9, 1, white, 'Which way?  (W,A,D, and X to move, ENTER to abort)');
+  while (true) {
+    console.actions.clear();
+    siteMovementOptions(canMove: true, fleeing: true);
+    move(24, 0);
+    console.addAction('Enter', 'Cancel escape');
+    console.annotateActionEntity(
+      'Enter',
+      type: 'field-cancel',
+      id: '${activeSquad?.id}:escape',
+    );
+    final direction = await getKey();
+    if (const [
+      Key.w,
+      Key.a,
+      Key.d,
+      Key.x,
+      Key.leftArrow,
+      Key.rightArrow,
+      Key.upArrow,
+      Key.downArrow,
+    ].contains(direction)) {
+      return direction;
+    }
+    if (direction == Key.enter ||
+        direction == Key.escape ||
+        direction == Key.space) {
+      return null;
+    }
+  }
+}
+
+/// The speaker reader's original roster and disclosed ratings, kept together
+/// for the readable choice cards as well as the original table.
+void siteSpeakerOptions() {
+  int y = 11;
+  for (Creature p in activeSquad!.livingMembers) {
+    int i = squad.indexOf(p);
+    if (p.alive) {
+      addOptionText(y, 1, '${i + 1}', '${i + 1} - ${p.name}');
+      console.annotateActionEntity(
+        '${i + 1}',
+        type: 'field-speaker',
+        id: p.id.toString(),
+      );
+      console.annotateAction(
+        '${i + 1}',
+        'Persuasion ${p.skill(Skill.persuasion)} · Seduction ${p.skill(Skill.seduction)} · Disguise ${p.skill(Skill.disguise)}',
+      );
+      printSkillValue(p, Skill.persuasion, y, 34, showCap: false);
+      addstr(
+        ' (${p.maxSubordinates - p.subordinatesLeft}/${p.maxSubordinates})',
+      );
+      printSkillValue(p, Skill.seduction, y, 51, showCap: false);
+      addstr(
+        ' (${p.maxRelationships - p.relationshipsLeft}/${p.maxRelationships})',
+      );
+      printSkillValue(p, Skill.disguise, y, 66, showCap: false);
+      y++;
+    }
+  }
+}
+
 Future<void> _siteModeAux() async {
   int u, x;
   if (activeSquad == null) return;
@@ -495,6 +603,9 @@ Future<void> _siteModeAux() async {
       clearMessageArea();
     }
 
+    if (partyalive) {
+      siteMovementOptions();
+    }
     console.screen = partyalive ? 'tactical' : 'generic';
     int c;
     if (currentTile.special == TileSpecial.clubBouncer) {
@@ -532,55 +643,17 @@ Future<void> _siteModeAux() async {
     if (partyalive) {
       int olocx = locx, olocy = locy, olocz = locz;
 
-      bool override = false;
-
-      if (enemy && siteAlarm) {
-        if (encounter
-            .where(
-              (e) =>
-                  e.isEnemy &&
-                  (e.weapon.type.protectsAgainstKidnapping ||
-                      e.type.canPerformArrests ||
-                      e.type.edgelord ||
-                      e.type.ccsMember ||
-                      e.type.majorEnemy ||
-                      e.type.intimidationResistant),
-            )
-            .isEmpty) {
-          override = true;
-        }
-      }
+      bool override = enemy && siteAlarm && siteEncounterMovementOverride();
 
       if (c == "?".codePoint) {
         await helpOnSitemode();
       }
 
       if (c == Key.v && enemy && siteAlarm) {
-        clearMessageArea();
-        mvaddstrc(
-          9,
-          1,
-          white,
-          "Which way?  (W,A,D, and X to move, ENTER to abort)",
-        );
-
-        while (true) {
-          int c2 = await getKey();
-
-          if (c2 == Key.w ||
-              c2 == Key.a ||
-              c2 == Key.d ||
-              c2 == Key.x ||
-              c2 == Key.leftArrow ||
-              c2 == Key.rightArrow ||
-              c2 == Key.upArrow ||
-              c2 == Key.downArrow) {
-            c = c2;
-            override = true;
-            break;
-          }
-
-          if (c2 == Key.enter || c2 == Key.escape || c2 == Key.space) break;
+        final direction = await chooseSiteEscapeDirection();
+        if (direction != null) {
+          c = direction;
+          override = true;
         }
       }
 
@@ -672,25 +745,9 @@ Future<void> _siteModeAux() async {
             mvaddstr(9, 67, "Disguise");
 
             setColor(lightGray);
-            int y = 11;
-            for (Creature p in activeSquad!.livingMembers) {
-              int i = squad.indexOf(p);
-              if (p.alive) {
-                addOptionText(y, 1, "${i + 1}", "${i + 1} - ${p.name}");
-                printSkillValue(p, Skill.persuasion, y, 34, showCap: false);
-                addstr(
-                  " (${p.maxSubordinates - p.subordinatesLeft}/${p.maxSubordinates})",
-                );
-                printSkillValue(p, Skill.seduction, y, 51, showCap: false);
-                addstr(
-                  " (${p.maxRelationships - p.relationshipsLeft}/${p.maxRelationships})",
-                );
-                printSkillValue(p, Skill.disguise, y, 66, showCap: false);
-                y++;
-              }
-            }
-
             while (true) {
+              siteSpeakerOptions();
+
               int c = await getKey();
 
               if (c >= '1'.codePoint && c <= '6'.codePoint) {
@@ -726,7 +783,17 @@ Future<void> _siteModeAux() async {
                     letter,
                     "$letter - ${t.name} ${creatureAgeAndGender(t)}",
                     baseColorKey: ColorKey.fromColor(t.align.color),
-                    enabledWhen: t.alive && t.isWillingToTalk,
+                    enabledWhen:
+                        t.alive &&
+                        t.type.id != CreatureTypeIds.servant &&
+                        t.type.id != CreatureTypeIds.sweatshopWorker &&
+                        (t.isWillingToTalk || siteAlarm && !t.type.animal) &&
+                        !(!t.isEnemy && siteAlarm && enemy),
+                  );
+                  console.annotateActionEntity(
+                    letter,
+                    type: 'encounter-person',
+                    id: t.id.toString(),
                   );
 
                   y++;

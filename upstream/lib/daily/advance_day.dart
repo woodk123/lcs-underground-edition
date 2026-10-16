@@ -16,6 +16,7 @@ import 'package:lcs_new_age/daily/recruitment.dart';
 import 'package:lcs_new_age/daily/shopsnstuff.dart';
 import 'package:lcs_new_age/daily/siege.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/recovery_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/gamestate/ledger.dart';
 import 'package:lcs_new_age/gamestate/squad.dart';
@@ -922,52 +923,7 @@ Future<void> _dailyHealing() async {
     if (hospital &&
         p.alive &&
         (clinictime(p) == 0 || p.daysHospitalized >= 60)) {
-      p.daysHospitalized = 0;
-      p.activity = Activity.none();
-      if (p.medicalBills > 0) {
-        erase();
-        setColor(lightGray);
-        mvaddstr(6, 1, "${p.name} is being discharged from ${p.site!.name}.");
-        mvaddstrx(
-          8,
-          1,
-          "&w${p.name}'s hospital bill comes to &R\$${p.medicalBills}&w.",
-        );
-        mvaddstrx(9, 1, "The LCS has &G\$${ledger.funds}&w available.");
-        addOptionText(
-          11,
-          1,
-          "A",
-          "A - Pay the bill.",
-          enabledWhen: ledger.funds >= p.medicalBills,
-        );
-        addOptionText(12, 1, "B", "B - Just leave.");
-
-        while (true) {
-          int c = await getKey();
-          if (c == Key.a && ledger.funds >= p.medicalBills) {
-            ledger.subtractFunds(p.medicalBills, Expense.hospitalBills);
-            p.medicalBills = 0;
-            break;
-          } else if (c == Key.b) {
-            break;
-          }
-        }
-      } else {
-        await showMessage(
-          "${p.name} has been discharged from ${p.site!.name}.",
-        );
-      }
-
-      Site? hs = findSiteInSameCity(p.site!.city, SiteType.homelessEncampment);
-
-      if (hs != null &&
-          (p.base?.siege.underSiege != false ||
-              p.base?.controller != SiteController.lcs)) {
-        p.base = hs;
-      }
-
-      p.location = p.base;
+      await dischargeHospitalPatient(p);
     }
   }
   //Give experience to medics
@@ -981,6 +937,76 @@ Future<void> _dailyHealing() async {
       }
     }
   }
+}
+
+/// The original discharge decision, shared by daily recovery and its focused
+/// regressions. Eligibility and all healing remain in the daily handler.
+Future<void> dischargeHospitalPatient(Creature patient) async {
+  patient.daysHospitalized = 0;
+  patient.activity = Activity.none();
+  if (patient.medicalBills > 0) {
+    while (true) {
+      erase();
+      setColor(lightGray);
+      mvaddstr(
+        6,
+        1,
+        "${patient.name} is being discharged from ${patient.site!.name}.",
+      );
+      mvaddstrx(
+        8,
+        1,
+        "&w${patient.name}'s hospital bill comes to &R\$${patient.medicalBills}&w.",
+      );
+      mvaddstrx(9, 1, "The LCS has &G\$${ledger.funds}&w available.");
+      addOptionText(
+        11,
+        1,
+        "A",
+        "A - Pay the bill.",
+        enabledWhen: ledger.funds >= patient.medicalBills,
+      );
+      addOptionText(12, 1, "B", "B - Leave with the bill still owed.");
+      console.annotateAction('a', 'Pay \$${patient.medicalBills}');
+      console.annotateAction(
+        'b',
+        'Leave with \$${patient.medicalBills} still owed',
+      );
+      console.screen = 'recovery';
+      console.recovery = RecoveryContext(
+        scene: RecoveryScene.discharge,
+        title: 'Hospital discharge',
+        note: '${patient.name} can return to base. Unpaid charges remain owed.',
+        people: [recoveryPersonSummary(patient)],
+        bodyRows: const [8, 9],
+        actions: console.actions,
+      );
+      int c = await getKey();
+      if (c == Key.a && ledger.funds >= patient.medicalBills) {
+        ledger.subtractFunds(patient.medicalBills, Expense.hospitalBills);
+        patient.medicalBills = 0;
+        break;
+      } else if (c == Key.b) {
+        break;
+      }
+    }
+  } else {
+    await showMessage(
+      "${patient.name} has been discharged from ${patient.site!.name}.",
+      title: 'Hospital discharge',
+    );
+  }
+
+  Site? hs = findSiteInSameCity(
+    patient.site!.city,
+    SiteType.homelessEncampment,
+  );
+  if (hs != null &&
+      (patient.base?.siege.underSiege != false ||
+          patient.base?.controller != SiteController.lcs)) {
+    patient.base = hs;
+  }
+  patient.location = patient.base;
 }
 
 /* daily - manages too hot timer and when a site map should be re-seeded and renamed */
