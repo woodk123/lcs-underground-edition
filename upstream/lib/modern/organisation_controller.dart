@@ -17,6 +17,7 @@ import 'package:lcs_new_age/gamestate/squad.dart';
 class OrganisationController extends ChangeNotifier {
   OrganisationController({required this.console}) {
     console.revision.addListener(_frameChanged);
+    _frameChanged();
   }
 
   final Console console;
@@ -87,6 +88,87 @@ class OrganisationController extends ChangeNotifier {
     _notify();
   }
 
+  /// The current original profile reader owns both this roster and its arrow
+  /// commands. Other input readers may retain the old painted profile, so its
+  /// presence alone does not grant permission to navigate.
+  bool canSelectProfilePerson(int personId) =>
+      !_busy && _canSelectProfilePerson(personId);
+
+  bool _canSelectProfilePerson(int personId) {
+    final profile = console.journalProfile;
+    return !_disposed &&
+        game.mode == GameMode.base &&
+        console.awaitingInput &&
+        console.lastKey == null &&
+        !console.textInput &&
+        console.eventMessage == null &&
+        profile != null &&
+        !profile.confirming &&
+        profile.canSelectPerson &&
+        profile.personIds.contains(profile.person.id) &&
+        profile.personIds.contains(personId) &&
+        game.pool.any((person) => person.id == personId) &&
+        _profileArrow('Left', 'previous') != null &&
+        _profileArrow('Right', 'next') != null;
+  }
+
+  ConsoleAction? _profileArrow(String key, String direction) => console.actions
+      .where(
+        (action) =>
+            action.key == key &&
+            action.enabled &&
+            action.entityType == 'profile-person-navigation' &&
+            action.entityId == console.journalProfile?.person.id.toString() &&
+            action.entityCategory == direction,
+      )
+      .firstOrNull;
+
+  /// Moves within the current source roster without leaving its profile tab.
+  /// Every hop is an exact current source action; a changed page, roster or
+  /// prompt stops the route rather than consuming another reader's input.
+  Future<bool> selectProfilePerson(int personId) => _run(() async {
+    if (!_canSelectProfilePerson(personId)) {
+      return _fail('Choose a person available in the current profile.');
+    }
+    final initial = console.journalProfile!;
+    final ids = initial.personIds;
+    final currentIndex = ids.indexOf(initial.person.id);
+    final targetIndex = ids.indexOf(personId);
+    final forward = (targetIndex - currentIndex + ids.length) % ids.length;
+    final backward = (currentIndex - targetIndex + ids.length) % ids.length;
+    final useForward = forward <= backward;
+    final steps = useForward ? forward : backward;
+    for (var step = 0; step < steps; step++) {
+      if (!_canSelectProfilePerson(personId) ||
+          console.journalProfile!.page != initial.page ||
+          !listEquals(console.journalProfile!.personIds, ids)) {
+        return _fail('The current profile has changed; select a person again.');
+      }
+      final profile = console.journalProfile!;
+      final from = ids.indexOf(profile.person.id);
+      final expected = ids[(from + (useForward ? 1 : -1)) % ids.length];
+      final revision = console.revision.value;
+      final action = _profileArrow(
+        useForward ? 'Right' : 'Left',
+        useForward ? 'next' : 'previous',
+      );
+      if (action == null ||
+          console.revision.value != revision ||
+          !await _dispatch(action)) {
+        return false;
+      }
+      final next = console.journalProfile;
+      if (next?.person.id != expected ||
+          next?.page != initial.page ||
+          next?.confirming != false ||
+          !listEquals(next?.personIds, ids)) {
+        return _fail('The current profile has changed; select a person again.');
+      }
+    }
+    _selectedPersonId = personId;
+    return true;
+  });
+
   /// Selecting the already active squad never unexpectedly opens assembly.
   Future<bool> selectSquad(int squadId) => _run(() async {
     if (!_squadExists(squadId)) return _fail('That squad no longer exists.');
@@ -96,6 +178,7 @@ class OrganisationController extends ChangeNotifier {
       if (action == null || !await _dispatch(action)) return false;
     }
     _selectedSquadId = squadId;
+    if (selectedPerson?.squadId != squadId) _selectedPersonId = null;
     return _toHeadquarters();
   });
 
@@ -476,7 +559,20 @@ class OrganisationController extends ChangeNotifier {
     // tab selection must never point at a different team from the one that
     // will receive the engine's equipment and operation commands.
     if (isHeadquarters || organisationOverviewFrame(console) != null) {
+      final changedSquad = _selectedSquadId != game.activeSquad?.id;
       _selectedSquadId = game.activeSquad?.id;
+      if (changedSquad && selectedPerson?.squadId != _selectedSquadId) {
+        _selectedPersonId = null;
+      }
+    }
+    final profile = console.journalProfile;
+    if (profile != null &&
+        !profile.confirming &&
+        !console.textInput &&
+        console.eventMessage == null &&
+        game.mode == GameMode.base &&
+        console.awaitingInput) {
+      _selectedPersonId = profile.person.id;
     }
     if (_selectedSquadId != null && !_squadExists(_selectedSquadId!)) {
       _selectedSquadId = null;

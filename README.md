@@ -20,7 +20,7 @@ The game always reminded me a little of Gangsters: Organized Crime, so I started
 
 ## What's changed
 
-- A paper-and-leather journal for managing your organisation, crew and orders.
+- A paper-and-leather journal for managing your organisation, crew and orders, keeping your place when you switch people.
 - Painted portraits, crew dossiers, city maps and job cards explaining assignments.
 - Choose your founder’s portrait; characters keep their faces across saves, with supported injuries and equipment reflected visually.
 - Bug fixes along the way, including crafting consuming cloth when you couldn't afford the job, and fixes to save importing and recovery.
@@ -29,18 +29,18 @@ The interface and artwork are being developed with AI assistance; the paintings 
 
 ## Playing
 
-The **[early preview release](https://github.com/woodk123/lcs-underground-edition/releases/tag/underground-preview-2026.10.15)** is ready to try. Download a player ZIP and extract the whole folder:
+The **[preview release](https://github.com/woodk123/lcs-underground-edition/releases/tag/underground-preview-2026.10.16)** includes the latest journal, portrait and crew-selection improvements. Download a player ZIP and extract the whole folder:
 
-- **[Windows player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.15/LCS-Underground-Edition-2026.10.15-Windows-x64-Player.zip)** — Windows 10/11 (64-bit). Double-click **lcs_new_age.exe**; no Python or Flutter needed.
-- **[Browser player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.15/LCS-Underground-Edition-2026.10.15-Web-Player.zip)** — double-click **Play.cmd**. Requires Python 3; opens **http://127.0.0.1:8765/**.
+- **[Windows player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.16/LCS-Underground-Edition-2026.10.16-Windows-x64-Player.zip)** — Windows 10/11 (64-bit). Double-click **lcs_new_age.exe**; no Python or Flutter needed.
+- **[Browser player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.16/LCS-Underground-Edition-2026.10.16-Web-Player.zip)** — double-click **Play.cmd**. Requires Python 3; opens **http://127.0.0.1:8765/**.
 
-The **[matching source ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.15/LCS-Underground-Edition-2026.10.15-Source.zip)** is a separate download for building or modifying the game. See [build instructions](docs/BUILDING.md). If you redistribute a player ZIP, keep its matching source available alongside it under GPL v2.
+The **[matching source ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.16/LCS-Underground-Edition-2026.10.16-Source.zip)** is a separate download for building or modifying the game. See [build instructions](docs/BUILDING.md). If you redistribute a player ZIP, keep its matching source available alongside it under GPL v2.
 
 **Keep the same browser profile and address to keep using your browser saves.** `localhost`, another port or another browser has separate save storage. Export important saves from the game before clearing browser data.
 
 Windows and browser saves are separate. Use the game's export/import controls to transfer a campaign between them.
 
-**[Nightly builds](https://github.com/woodk123/lcs-underground-edition/releases?q=nightly-)** provide the latest automatically checked Windows and browser builds when code or build inputs change. These are development prereleases; export important saves before trying them. The early preview above remains a separate release. See [nightly build details](docs/BUILDING.md#nightly-builds-on-github) and [workflow status](https://github.com/woodk123/lcs-underground-edition/actions/workflows/nightly.yml).
+**[Nightly builds](https://github.com/woodk123/lcs-underground-edition/releases?q=nightly-)** provide the latest automatically checked Windows and browser builds when code or build inputs change. These are development prereleases; export important saves before trying them. The preview above remains a separate release. See [nightly build details](docs/BUILDING.md#nightly-builds-on-github) and [workflow status](https://github.com/woodk123/lcs-underground-edition/actions/workflows/nightly.yml).
 
 ## More information
 

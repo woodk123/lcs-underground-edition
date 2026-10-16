@@ -159,6 +159,18 @@ Future<void> _focusGame(WidgetTester tester) async {
   expect(focus.hasPrimaryFocus, isTrue);
 }
 
+Future<void> _showCrewMember(WidgetTester tester, int id) async {
+  final target = _key('journal-member:$id');
+  final scroll = find.descendant(
+    of: _key('journal-crew-list'),
+    matching: find.byType(Scrollable),
+  );
+  tester.state<ScrollableState>(scroll).position.jumpTo(0);
+  await _settle(tester);
+  await tester.scrollUntilVisible(target, 30, scrollable: scroll);
+  await _settle(tester);
+}
+
 void _insideViewport(
   WidgetTester tester,
   Finder finder,
@@ -397,6 +409,233 @@ void main() {
       await _settle(tester);
       expect(engine.console.textInput, isFalse);
       expect(_snapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final size in [const Size(2200, 1200), const Size(800, 600)]) {
+    testWidgets(
+      'left crew selection retains profile page and scroll at $size',
+      (tester) async {
+        await mount(tester, size: size);
+        if (size.width == 800) {
+          await tester.tap(find.byTooltip('Reading size'));
+          await _settle(tester);
+          await tester.tap(find.text('150%'));
+          await _settle(tester);
+        }
+        await _tap(tester, 'journal-clipboard');
+        final first = game.squad.first;
+        final second = game.squad[1];
+        final open = engine.console.actions.singleWhere(
+          (a) => a.entityType == 'person' && a.entityId == first.id.toString(),
+        );
+        final entry = _key('direct-action:${open.y}:${open.x}:${open.key}');
+        await tester.ensureVisible(entry);
+        await _settle(tester);
+        await tester.tap(entry);
+        await _settle(tester);
+        final before = _snapshot();
+        final dossier = tester.state(find.byType(CrewDossier));
+        final scroller = find.descendant(
+          of: _key('journal-personnel-profile'),
+          matching: find.byType(Scrollable),
+        );
+        reseedRNG(seed: 94162);
+        final rolls = List.generate(10, (_) => lcsRandom(100000));
+        reseedRNG(seed: 94162);
+        for (final page in [0, 1, 2]) {
+          final tab = _key('journal-profile-tab:$page');
+          await tester.ensureVisible(tab);
+          await _settle(tester);
+          await tester.tap(tab);
+          await _settle(tester);
+          final position = tester.state<ScrollableState>(scroller).position;
+          final offset = position.maxScrollExtent.clamp(0, 90).toDouble();
+          position.jumpTo(offset);
+          await _settle(tester);
+          final next = engine.console.journalProfile!.person.id == first.id
+              ? second
+              : first;
+          await _showCrewMember(tester, next.id);
+          await _tap(tester, 'journal-member:${next.id}');
+          expect(engine.console.journalProfile!.person.id, next.id);
+          expect(engine.console.journalProfile!.page, page);
+          expect(
+            tester.widget<Text>(_key('journal-selected-person')).data,
+            next.name,
+          );
+          expect(tester.state(find.byType(CrewDossier)), same(dossier));
+          expect(
+            tester.state<ScrollableState>(scroller).position.pixels,
+            closeTo(offset, .01),
+          );
+          final ids = engine.console.journalProfile!.personIds;
+          final afterFooter = ids[(ids.indexOf(next.id) + 1) % ids.length];
+          await _tap(tester, 'journal-profile-action:Right');
+          expect(engine.console.journalProfile!.person.id, afterFooter);
+          expect(
+            tester.widget<Text>(_key('journal-selected-person')).data,
+            game.pool.firstWhere((p) => p.id == afterFooter).name,
+          );
+          expect(engine.console.journalProfile!.page, page);
+        }
+        expect(_snapshot(), before);
+        expect(List.generate(10, (_) => lcsRandom(100000)), rolls);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'equipment follows left selection without dispatch or scroll reset at $size',
+      (tester) async {
+        await mount(tester, size: size);
+        if (size.width == 800) {
+          await tester.tap(find.byTooltip('Reading size'));
+          await _settle(tester);
+          await tester.tap(find.text('150%'));
+          await _settle(tester);
+        }
+        await business(tester);
+        await _tap(tester, 'journal-activity:donations');
+        await _tap(tester, 'journal-equipment');
+        expect(_key('journal-confirm-order'), findsNothing);
+        final second = game.squad[1];
+        final before = _snapshot();
+        final revision = engine.console.revision.value;
+        final scroll = find.descendant(
+          of: find.byKey(
+            const PageStorageKey('journal-management-scroll:equipment'),
+          ),
+          matching: find.byType(Scrollable),
+        );
+        final position = tester.state<ScrollableState>(scroll).position;
+        final offset = position.maxScrollExtent.clamp(0, 90).toDouble();
+        position.jumpTo(offset);
+        await _settle(tester);
+        reseedRNG(seed: 29471);
+        final rolls = List.generate(10, (_) => lcsRandom(100000));
+        reseedRNG(seed: 29471);
+        await tester.ensureVisible(_key('journal-member:${second.id}'));
+        await _settle(tester);
+        await _tap(tester, 'journal-member:${second.id}');
+        expect(
+          tester
+              .widget<Semantics>(_key('journal-person-row:${second.id}'))
+              .properties
+              .selected,
+          isTrue,
+        );
+        expect(
+          tester
+              .widget<Semantics>(
+                _key('journal-person-row:${game.squad.first.id}'),
+              )
+              .properties
+              .selected,
+          isFalse,
+        );
+        expect(
+          tester.widget<Text>(_key('journal-selected-person')).data,
+          second.name,
+        );
+        expect(
+          tester.state<ScrollableState>(scroll).position.pixels,
+          closeTo(offset, .01),
+        );
+        expect(
+          engine.console.revision.value,
+          revision,
+          reason: 'Selection must never send the numbered unequip command.',
+        );
+        expect(_snapshot(), before);
+        expect(List.generate(10, (_) => lcsRandom(100000)), rolls);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('left selection keeps an open crew inspector and its scroll', (
+    tester,
+  ) async {
+    await mount(tester);
+    final first = game.squad.first;
+    final second = game.squad[1];
+    await _tap(tester, 'hq-dossier:${first.id}');
+    final scroll = find.descendant(
+      of: _key('crew-inspector'),
+      matching: find.byType(Scrollable),
+    );
+    final position = tester.state<ScrollableState>(scroll).position;
+    final offset = position.maxScrollExtent.clamp(0, 80).toDouble();
+    position.jumpTo(offset);
+    await _settle(tester);
+    final before = _snapshot();
+    final revision = engine.console.revision.value;
+    await _showCrewMember(tester, second.id);
+    await _tap(tester, 'journal-member:${second.id}');
+    expect(
+      tester.widget<CrewInspector>(find.byType(CrewInspector)).person.id,
+      second.id,
+    );
+    expect(
+      tester.widget<Text>(_key('journal-selected-person')).data,
+      second.name,
+    );
+    expect(
+      tester.state<ScrollableState>(scroll).position.pixels,
+      closeTo(offset, .01),
+    );
+    expect(engine.console.revision.value, revision);
+    expect(_snapshot(), before);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'equipment restores the active squad selection after an outside profile',
+    (tester) async {
+      final original = game.activeSquad!;
+      final outside = _extraPerson('Other Squad Profile');
+      final other = Squad()..name = 'Other squad';
+      game.squads.add(other);
+      outside.squad = other;
+      await mount(tester, size: const Size(2200, 1200));
+      await _tap(tester, 'journal-clipboard');
+      final action = engine.console.actions.singleWhere(
+        (a) => a.entityType == 'person' && a.entityId == outside.id.toString(),
+      );
+      await _tap(tester, 'direct-action:${action.y}:${action.x}:${action.key}');
+      expect(
+        tester.widget<Text>(_key('journal-selected-person')).data,
+        outside.name,
+      );
+      final weapons = original.members.map((p) => p.equippedWeapon).toList();
+      await _tap(tester, 'journal-equipment');
+      expect(game.activeSquad, same(original));
+      expect(
+        tester.widget<Text>(_key('journal-selected-person')).data,
+        original.members.first.name,
+      );
+      expect(
+        tester
+            .widget<Semantics>(
+              _key('journal-person-row:${original.members.first.id}'),
+            )
+            .properties
+            .selected,
+        isTrue,
+      );
+      for (var i = 0; i < weapons.length; i++) {
+        expect(original.members[i].equippedWeapon, same(weapons[i]));
+      }
+      await _tap(tester, 'journal-member:${original.members.first.id}');
+      expect(
+        tester
+            .widget<OrganisationJournal>(find.byType(OrganisationJournal))
+            .controller
+            .selectedPersonId,
+        original.members.first.id,
+      );
       expect(tester.takeException(), isNull);
     },
   );

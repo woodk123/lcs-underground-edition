@@ -9,6 +9,7 @@ import 'package:lcs_new_age/basemode/base_mode.dart';
 import 'package:lcs_new_age/basemode/media_overview.dart';
 import 'package:lcs_new_age/basemode/plan_site_visit.dart';
 import 'package:lcs_new_age/basemode/review_mode.dart';
+import 'package:lcs_new_age/common_display/print_creature_info.dart';
 import 'package:lcs_new_age/creature/body.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/engine/console.dart';
@@ -100,6 +101,8 @@ void main() {
   late String saveContents;
   OrganisationController? controller;
   _BaseHarness? harness;
+  Future<void>? profileReader;
+  bool profileFinished = false;
   setUpAll(() async {
     await ensureGameDataLoaded();
     saveContents = await File('test/saves/felix_1_0.json').readAsString();
@@ -115,11 +118,193 @@ void main() {
     controller = null;
     await harness?.stop();
     harness = null;
+    for (
+      var step = 0;
+      profileReader != null && step < 8 && !profileFinished;
+      step++
+    ) {
+      if (engine.console.awaitingInput) {
+        engine.console.sendInput(engine.console.textInput ? 'Enter' : 'Escape');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 2));
+    }
+    await profileReader?.timeout(const Duration(seconds: 2));
+    profileReader = null;
+    profileFinished = false;
   });
 
   OrganisationController start() {
     harness = _BaseHarness();
     return controller = OrganisationController(console: engine.console);
+  }
+
+  OrganisationController startProfile(Future<void> reader) {
+    profileReader = reader.whenComplete(() => profileFinished = true);
+    return controller = OrganisationController(console: engine.console);
+  }
+
+  Future<void> sendProfileKey(
+    OrganisationController journal,
+    String key,
+  ) async {
+    final action = engine.console.actions.singleWhere((a) => a.key == key);
+    expect(
+      await journal.sendAction(action, revision: engine.console.revision.value),
+      isTrue,
+    );
+  }
+
+  test(
+    'profile selection follows source arrows and retains every tab',
+    () async {
+      final people = game.activeSquad!.members;
+      expect(people.length, greaterThan(2));
+      final before = _snapshot();
+      reseedRNG(seed: 40991);
+      final rolls = List.generate(8, (_) => lcsRandom(100000));
+      reseedRNG(seed: 40991);
+      final journal = startProfile(fullCreatureInfoScreen(people.first));
+      final ids = people.map((p) => p.id).toList();
+      expect(engine.console.journalProfile!.personIds, ids);
+      expect(
+        () => engine.console.journalProfile!.personIds.add(123),
+        throwsUnsupportedError,
+      );
+      for (var page = 0; page < 3; page++) {
+        if (page != 0) await sendProfileKey(journal, 'Down');
+        for (final target in [people[2], people.last, people.first]) {
+          expect(journal.canSelectProfilePerson(target.id), isTrue);
+          expect(await journal.selectProfilePerson(target.id), isTrue);
+          expect(engine.console.journalProfile!.person, same(target));
+          expect(engine.console.journalProfile!.page, page);
+          expect(journal.selectedPersonId, target.id);
+          expect(engine.console.journalProfile!.personIds, ids);
+        }
+      }
+      expect(_snapshot(), before);
+      expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
+    },
+  );
+
+  test(
+    'footer profile arrows synchronise selected person without new squad',
+    () async {
+      final people = game.activeSquad!.members;
+      final squadId = game.activeSquad!.id;
+      final journal = startProfile(fullCreatureInfoScreen(people.first));
+      expect(journal.selectedPersonId, people.first.id);
+      await sendProfileKey(journal, 'Down');
+      await sendProfileKey(journal, 'Right');
+      expect(journal.selectedPersonId, people[1].id);
+      expect(engine.console.journalProfile!.page, 1);
+      expect(journal.selectedSquadId, squadId);
+      await sendProfileKey(journal, 'Left');
+      expect(journal.selectedPersonId, people.first.id);
+      expect(engine.console.journalProfile!.page, 1);
+    },
+  );
+
+  test(
+    'profile selection rejects people outside the original roster',
+    () async {
+      final outside = _extraPerson();
+      final journal = startProfile(fullCreatureInfoScreen(game.squad.first));
+      final before = _snapshot();
+      final revision = engine.console.revision.value;
+      for (final id in [outside.id, 999999]) {
+        expect(journal.canSelectProfilePerson(id), isFalse);
+        expect(await journal.selectProfilePerson(id), isFalse);
+      }
+      expect(engine.console.revision.value, revision);
+      expect(_snapshot(), before);
+    },
+  );
+
+  test(
+    'Clipboard selection uses its full source roster across squads',
+    () async {
+      final outside = _extraSquad().members.single;
+      final originalSquadId = game.activeSquad!.id;
+      final journal = startProfile(reviewMode(ReviewMode.liberals));
+      final open = engine.console.actions.firstWhere(
+        (a) => a.entityType == 'person',
+      );
+      expect(
+        await journal.sendAction(open, revision: engine.console.revision.value),
+        isTrue,
+      );
+      await sendProfileKey(journal, 'Down');
+      final before = _snapshot();
+      expect(await journal.selectProfilePerson(outside.id), isTrue);
+      expect(engine.console.journalProfile!.person, same(outside));
+      expect(engine.console.journalProfile!.page, 1);
+      expect(journal.selectedPersonId, outside.id);
+      expect(journal.selectedSquadId, originalSquadId);
+      expect(game.activeSquad!.id, originalSquadId);
+      expect(_snapshot(), before);
+    },
+  );
+
+  test('sleeper profiles navigate only their source sleeper roster', () async {
+    final first = _extraPerson()..sleeperAgent = true;
+    final second = _extraPerson()..sleeperAgent = true;
+    final journal = startProfile(reviewMode(ReviewMode.sleepers));
+    final open = engine.console.actions.firstWhere(
+      (a) => a.entityType == 'person' && a.entityId == first.id.toString(),
+    );
+    expect(
+      await journal.sendAction(open, revision: engine.console.revision.value),
+      isTrue,
+    );
+    final before = _snapshot();
+    expect(await journal.selectProfilePerson(second.id), isTrue);
+    expect(journal.selectedPerson, same(second));
+    expect(journal.canSelectProfilePerson(game.squad.first.id), isFalse);
+    expect(_snapshot(), before);
+  });
+
+  test('rename input cannot be consumed by profile selection', () async {
+    final people = game.activeSquad!.members;
+    final journal = startProfile(fullCreatureInfoScreen(people.first));
+    await sendProfileKey(journal, 'n');
+    expect(engine.console.textInput, isTrue);
+    final before = _snapshot();
+    final revision = engine.console.revision.value;
+    expect(journal.canSelectProfilePerson(people.last.id), isFalse);
+    expect(await journal.selectProfilePerson(people.last.id), isFalse);
+    expect(engine.console.revision.value, revision);
+    expect(engine.console.textInput, isTrue);
+    expect(_snapshot(), before);
+  });
+
+  for (final key in ['r', 'k']) {
+    test('profile selection cannot dismiss $key confirmation', () async {
+      final person = game.pool.firstWhere(
+        (p) =>
+            p.isActiveLiberal &&
+            p.hireId != null &&
+            p.boss?.location == p.location,
+      );
+      final journal = startProfile(reviewMode(ReviewMode.liberals));
+      final open = engine.console.actions.firstWhere(
+        (a) => a.entityType == 'person' && a.entityId == person.id.toString(),
+      );
+      expect(
+        await journal.sendAction(open, revision: engine.console.revision.value),
+        isTrue,
+      );
+      await sendProfileKey(journal, key);
+      expect(engine.console.journalProfile!.confirming, isTrue);
+      expect(engine.console.journalProfile!.canSelectPerson, isFalse);
+      final target = game.squad.firstWhere((p) => p.id != person.id);
+      final before = _snapshot();
+      final revision = engine.console.revision.value;
+      expect(journal.canSelectProfilePerson(target.id), isFalse);
+      expect(await journal.selectProfilePerson(target.id), isFalse);
+      expect(engine.console.revision.value, revision);
+      expect(engine.console.journalProfile!.confirming, isTrue);
+      expect(_snapshot(), before);
+    });
   }
 
   test(

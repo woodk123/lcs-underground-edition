@@ -33,6 +33,15 @@ node scripts/browser_review.mjs --url http://127.0.0.1:18879/
 
 `browser_review.mjs` checks dossier skill hierarchy, portrait-age repair, mechanics disclosure, retained order categories, repeated assignments, contextual travel labels, Clipboard dossiers and equipment pages at normal and enlarged text. Export comparisons verify that inspections/cancelled drafts preserve the campaign and repeated confirmations change only the intended members' assignments. Screenshots and JSON results are written under ignored `reports/`.
 
+The first-week journey uses a separate synthetic campaign with old wanted crimes cleared and one explicitly ready prospect. It exercises the join decision, squad formation, weapon transfer, assignments, a real free shop visit, seven day advances, earned money/Science training and exact export/reimport continuity in a fresh browser context. It does not claim to earn the prospect's persuasion or manually certify native Windows gameplay.
+
+```powershell
+$expected = (Get-FileHash upstream/build/web/main.dart.js -Algorithm SHA256).Hash.ToLowerInvariant()
+node scripts/first_week_browser_review.mjs --url http://127.0.0.1:18879/ --expected-hash $expected
+```
+
+Use the compiled `main.dart.js` hash from the extracted release player when checking that player. Both helpers keep browser profiles isolated from player saves.
+
 Founder creation uses an installed Chrome and an exact compiled-build hash:
 
 ```powershell

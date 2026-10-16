@@ -107,12 +107,14 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       ? game.pool.where((p) => p.sleeperAgent && p.alive).toList()
       : squad?.members ?? const [];
   Creature? get person {
+    final profile = console.journalProfile;
+    if (profile != null) return profile.person;
     final actorId = int.tryParse(confirmation?.entityCategory ?? '');
     if (actorId != null) {
       return game.pool.where((p) => p.id == actorId).firstOrNull;
     }
     final inspected = controller.selectedPerson;
-    if (allocating && !members.any((p) => p.id == inspected?.id)) {
+    if (!members.any((p) => p.id == inspected?.id)) {
       return members.firstOrNull;
     }
     return inspected ?? members.firstOrNull;
@@ -758,12 +760,21 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 _railButton(
                   Icons.receipt_long,
                   'Reports',
-                  !_orders,
-                  () => setState(() {
-                    _orders = false;
-                    _pool = false;
-                    _showReports = true;
-                  }),
+                  _showReports && !_orders && widget.detail == null,
+                  controller.canNavigate
+                      ? () async {
+                          if (await controller.returnToHeadquarters() &&
+                              mounted) {
+                            widget.onCloseInspection?.call();
+                            setState(() {
+                              _orders = false;
+                              _pool = false;
+                              _pendingOrder = null;
+                              _showReports = true;
+                            });
+                          }
+                        }
+                      : null,
                   key: 'journal-reports',
                   semanticLabel: 'Crew reports',
                 ),
@@ -826,11 +837,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         _railButton(
           Icons.assignment_ind,
           'Clipboard',
-          false,
+          console.navigation?.section == 'people' ||
+              console.journalProfile != null,
           controller.canNavigate
               ? () async {
-                  widget.onCloseInspection?.call();
-                  if (await controller.openSection('r')) {
+                  if (await _openManagementSection('r')) {
                     final action = console.actions
                         .where((a) => a.key == '1')
                         .firstOrNull;
@@ -848,22 +859,33 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         _railButton(
           Icons.directions_car,
           'Vehicles',
-          false,
+          console.navigation?.section == 'vehicles',
           controller.canNavigate && !undercover
-              ? () => controller.openSection('v')
+              ? () => _openManagementSection('v')
               : null,
           key: 'journal-vehicles',
         ),
         _railButton(
           Icons.inventory_2,
           'Weapons',
-          false,
-          controller.canNavigate ? () => controller.openSection('e') : null,
+          console.navigation?.section == 'equipment',
+          controller.canNavigate ? () => _openManagementSection('e') : null,
           key: 'journal-equipment',
         ),
       ],
     ),
   );
+
+  Future<bool> _openManagementSection(String key) async {
+    widget.onCloseInspection?.call();
+    setState(() {
+      _orders = false;
+      _pool = false;
+      _showReports = false;
+      _pendingOrder = null;
+    });
+    return controller.openSection(key);
+  }
 
   Widget _railButton(
     IconData icon,
@@ -1061,6 +1083,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             child: members.isEmpty
                 ? const Center(child: Text('Choose crew from the pool.'))
                 : ListView(
+                    key: const ValueKey('journal-crew-list'),
                     children: [
                       for (final member in members) _memberRow(member),
                     ],
@@ -1082,14 +1105,32 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     bool canSelect() =>
         !controller.busy &&
         !_visitRouting &&
+        (console.journalProfile == null ||
+            controller.canSelectProfilePerson(member.id)) &&
         (!(_orders || activityFrame) || controller.canNavigate);
     Future<void> select() async {
       if (!canSelect()) return;
-      if (person?.id == member.id) return;
+      if (person?.id == member.id &&
+          (console.journalProfile != null ||
+              activityFrame ||
+              controller.selectedPersonId == member.id)) {
+        return;
+      }
       setState(() => _pendingOrder = null);
       final wasOrders = _orders || activityFrame;
       final categoryId = _categoryId;
+      if (widget.inspectedPerson != null &&
+          console.journalProfile == null &&
+          !wasOrders) {
+        controller.inspectPerson(member.id);
+        widget.onInspect(member);
+        return;
+      }
       widget.onCloseInspection?.call();
+      if (console.journalProfile != null) {
+        await controller.selectProfilePerson(member.id);
+        return;
+      }
       controller.inspectPerson(member.id);
       if (wasOrders && await controller.openOrders(member.id)) {
         await _openGroup(_group, categoryId: categoryId);
@@ -1567,7 +1608,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
 
   Widget _contextPage(bool narrow) => JournalSurface(
     padding: const EdgeInsets.all(9),
-    child: _orders && controller.busy
+    child: _orders && controller.busy && console.journalProfile == null
         ? _orderContext(narrow)
         : widget.detail != null &&
               console.awaitingInput &&

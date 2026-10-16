@@ -1,10 +1,21 @@
 [CmdletBinding()]
-param([switch]$Windows, [switch]$Nightly)
+param(
+    [switch]$Windows,
+    [switch]$Nightly,
+    [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]*$')][string]$Tag
+)
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common.ps1')
 $root = Get-LcsRoot
 $project = Join-Path $root 'upstream'
+if ($Nightly -and $Tag) { throw '-Tag and -Nightly cannot be combined.' }
+if (Test-Path -LiteralPath (Join-Path $root '.git')) {
+    $changes = git -C $root status --porcelain --untracked-files=normal
+    if ($LASTEXITCODE -ne 0) { throw 'Could not verify the source checkout.' }
+    if ($changes) { throw 'Release builds require a clean Git checkout. Commit or move source changes before building; ignored build outputs are allowed.' }
+}
+$sourceCommit = Get-LcsSourceCommit -Root $root
 $flutter = Get-LcsFlutter
 $dart = Join-Path $root '.tools\flutter\bin\dart.bat'
 $python = Get-LcsPython
@@ -13,7 +24,6 @@ $reportDir = Join-Path $root ".local\reports\build-$stamp"
 New-Item -ItemType Directory -Path $reportDir -Force | Out-Null
 $steps = [System.Collections.Generic.List[object]]::new()
 $reportPath = Join-Path $reportDir 'build-info.json'
-$sourceCommit = Get-LcsSourceCommit -Root $root
 
 function Write-BuildReport([string]$Status) {
     $report = [ordered]@{
@@ -71,6 +81,7 @@ try {
     $packageArguments = @((Join-Path $root 'scripts\package_release.py'), '--root', $root, '--report', $reportDir)
     if ($Nightly) { $packageArguments += '--nightly' }
     elseif ($Windows) { $packageArguments += '--windows' }
+    if ($Tag) { $packageArguments += @('--tag', $Tag) }
     $packageStep = if ($Windows -or $Nightly) { '09-package' } else { '08-package' }
     Invoke-BuildStep $packageStep $python $packageArguments
     Write-BuildReport 'automated_checks_and_packaging_passed_manual_qa_pending'

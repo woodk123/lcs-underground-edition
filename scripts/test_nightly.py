@@ -108,7 +108,12 @@ class NightlyTests(unittest.TestCase):
                          *(f'scripts/{name}' for name in packaging.WEB_SCRIPTS)):
                 put(root, name)
             subprocess.run(['git', 'init', '-q', str(root)], check=True)
+            put(root, '.gitignore', '.tools/\n.local/\nrelease/\nupstream/build/\nvc/\n')
             subprocess.run(['git', '-C', str(root), 'add', '.'], check=True, capture_output=True)
+            subprocess.run(['git', '-C', str(root), '-c', 'user.name=Test', '-c', 'user.email=test@example.invalid',
+                            'commit', '-qm', 'fixture'], check=True, capture_output=True)
+            revision = subprocess.run(['git', '-C', str(root), 'rev-parse', 'HEAD'],
+                                      check=True, capture_output=True, text=True).stdout.strip()
             web = root / 'upstream/build/web'
             native = root / 'upstream/build/windows/x64/runner/Release'
             for name in ('index.html', 'main.dart.js', 'flutter_bootstrap.js', 'sw.js'):
@@ -122,7 +127,7 @@ class NightlyTests(unittest.TestCase):
             report = root / '.local/reports/build'
             steps = ['01-dependencies', '02-serialization', '03-tests', '04-focused-analysis',
                      '05-full-analysis', '06-web-release', '07-offline-manifest', '08-windows-release']
-            info = {'status': 'automated_checks_passed_manual_qa_pending', 'source_commit': 'a' * 40,
+            info = {'status': 'automated_checks_passed_manual_qa_pending', 'source_commit': revision,
                     'toolchain': {}, 'steps': [{'name': name, 'exit_code': 0} for name in steps]}
             put(report, 'build-info.json', json.dumps(info))
             output = root / 'release/nightly'
@@ -138,6 +143,8 @@ class NightlyTests(unittest.TestCase):
             player = output / 'LCS-Underground-Edition-nightly-123-1-Windows-x64-Player'
             self.assertEqual((player / 'plugin.dll').read_bytes(), (native / 'plugin.dll').read_bytes())
             self.assertIn('nightly-123-1-Source.zip', (player / 'SOURCE_REFERENCE.md').read_text(encoding='utf-8'))
+            self.assertIn('https://github.com/owner/repo/releases/download/nightly-123-1/',
+                          (player / 'SOURCE_REFERENCE.md').read_text(encoding='utf-8'))
             info['steps'][-1]['exit_code'] = 1
             put(report, 'build-info.json', json.dumps(info))
             with self.assertRaisesRegex(ValueError, 'Both builds'):

@@ -15,6 +15,8 @@ The engine owns campaign state and action availability. UI controls dispatch the
 
 Orders use a local draft before confirmation. Changing actor discards that draft while retaining the order group, category and map browsing state. Ordinary confirmations keep the same category open for repeated assignments; required follow-up choices stay with their original reader. Confirming must affect the selected actor or squad only. Preserve the original timing, cost and eligibility checks in the gameplay handlers.
 
+Profile selection follows the source reader's declared roster and current arrow actions, retaining its page and scroll. Renames, confirmations and event readers block person navigation. Footer and keyboard navigation update the journal selection. Equipment selection is presentation-only: highlighting a person must never dispatch the numbered action that removes their weapon. The active squad remains the original engine's squad.
+
 Travel labels show costs and unmet requirements for the particular route. Free nearby destinations need no general travel warning. Full rules remain available through Order mechanics; displayed notes never override the source planner's action availability or departure checks.
 
 Portraits use a separate deterministic identity calculation. Casting and rendering must not consume the gameplay RNG. Faces, assignment age and cosmetic variants persist in saves; appearance overlays reflect supported equipment and injuries. See [portrait details](PORTRAIT_LIBRARY.md).

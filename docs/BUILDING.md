@@ -36,6 +36,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop.ps1
 
 For Windows players, add `-Windows` to the build command; see [Windows setup](WINDOWS_BUILD.md). The same packager produces separate players and corresponding source for local builds and CI.
 
+To prepare a named preview with both players and matching source:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build_release.ps1 -Windows -Tag underground-preview-2026.10.16
+```
+
+Commit source changes first: release builds require a clean Git checkout, including untracked source files, and packaging checks that HEAD still matches the build report. Ignored build outputs and reports are allowed. Rebuilding an extracted Source ZIP still uses its recorded source identity.
+
+An explicit `-Tag` prepares absolute Source ZIP links for that tag in `woodk123/lcs-underground-edition`; it does not publish or upload anything. The Python packager's `--tag` behaves the same and accepts `--repository owner/repo` for another fork. Untagged local builds retain relative source links. Keep the players and their matching Source ZIP together on the named release, and use a fresh tag/output directory for each preview. `-Tag` cannot be combined with `-Nightly`.
+
 ## Development mode
 
 After the build has resolved dependencies and generated serializers:

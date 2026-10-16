@@ -31,7 +31,22 @@ def vc_runtime() -> Path:
     return candidates[-1]
 
 
-def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: str, fingerprint: str | None, repository: str) -> dict:
+def verify_source_checkout(root: Path, expected_commit: str) -> None:
+    """Only label a Git source tree as HEAD when it still matches that commit."""
+    if not (root / '.git').exists():
+        return  # Prepared corresponding-source archives deliberately omit Git.
+    changes = subprocess.run(['git', '-C', str(root), 'status', '--porcelain', '--untracked-files=normal'],
+                             check=True, capture_output=True, text=True).stdout
+    if changes.strip():
+        raise ValueError('Release packaging requires a clean Git checkout; commit or move source changes first.')
+    current = subprocess.run(['git', '-C', str(root), 'rev-parse', 'HEAD'],
+                             check=True, capture_output=True, text=True).stdout.strip()
+    if current != expected_commit:
+        raise ValueError('The source commit changed since the build started. Rebuild before packaging.')
+
+
+def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: str, fingerprint: str | None,
+            repository: str, *, published: bool = False) -> dict:
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*', tag):
         raise ValueError('Invalid release tag.')
     if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repository):
@@ -45,6 +60,7 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
             or [step['name'] for step in info['steps']] != required
             or any(step['exit_code'] != 0 for step in info['steps'])):
         raise ValueError('Both builds and all checks must pass before packaging a Windows release.' if runtime is not None else 'The web build and all checks must pass before packaging.')
+    verify_source_checkout(root, info['source_commit'])
     if output.exists():
         raise ValueError(f'Choose a fresh release output directory: {output}')
     web = root / 'upstream/build/web'
@@ -58,7 +74,9 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
                               'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z'))
         require_files(runtime, runtime_files)
     output.mkdir(parents=True)
-    prefix = f'LCS-Underground-Edition-{tag}'
+    preview = re.fullmatch(r'underground-preview-(\d{4}\.\d{2}\.\d{2})', tag) if published else None
+    asset_version = preview.group(1) if preview else tag
+    prefix = f'LCS-Underground-Edition-{asset_version}'
     source = output / f'{prefix}-Source'
     source.mkdir()
     # Tracked repository files preserve tooling, documentation and artwork provenance.
@@ -95,7 +113,7 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
     source_result = archive_package(source)
     source_archive = Path(source_result['archive']).name
     source_url = (f'https://github.com/{repository}/releases/download/{tag}/{source_archive}'
-                  if fingerprint is not None else f'../{source_archive}')
+                  if published or fingerprint is not None else f'../{source_archive}')
     results = [source_result]
     targets = [('web', web, 'Web-Player')]
     if runtime is not None:
@@ -136,6 +154,7 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
     # Neither packaging pass may mutate the corresponding game source.
     if before != filtered_source_hashes(root / 'upstream'):
         raise ValueError('Game source changed while packaging.')
+    verify_source_checkout(root, info['source_commit'])
     report_sizes(output, results, report)
     assets = []
     for result in results:
@@ -153,10 +172,12 @@ def main() -> None:
     parser.add_argument('--report', type=Path, required=True)
     parser.add_argument('--windows', action='store_true')
     parser.add_argument('--nightly', action='store_true')
-    parser.add_argument('--tag')
+    parser.add_argument('--tag', help='Prepare a named GitHub release with absolute matching source-download links; does not publish it.')
     parser.add_argument('--repository', default='woodk123/lcs-underground-edition')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
+    if args.nightly and args.tag:
+        parser.error('--tag and --nightly cannot be combined')
     root, report = args.root.resolve(), args.report.resolve()
     info = json.loads((report / 'build-info.json').read_text(encoding='utf-8-sig'))
     tag = os.environ['NIGHTLY_TAG'] if args.nightly else args.tag or f"local-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}-{info['source_commit'][:8]}"
@@ -164,7 +185,7 @@ def main() -> None:
     repository = os.environ['GITHUB_REPOSITORY'] if args.nightly else args.repository
     output = args.output.resolve() if args.output else root / 'release' / ('nightly' if args.nightly else tag)
     result = package(root, report, vc_runtime() if args.windows or args.nightly else None,
-                     output, tag, fingerprint, repository)
+                     output, tag, fingerprint, repository, published=args.tag is not None)
     print(json.dumps(result, indent=2))
 
 

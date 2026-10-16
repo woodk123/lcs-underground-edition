@@ -461,7 +461,9 @@ Future<void> reviewMode(ReviewMode mode) async {
           if (page == 0) printFullCreatureStats(tempp);
           if (page == 1) printFullCreatureSkills(tempp);
           if (page == 2) printFullCreatureCrimes(tempp);
-          console.journalProfile = JournalProfileContext(tempp, page);
+          console.journalProfile = JournalProfileContext(tempp, page,
+              personIds: temppool.map((person) => person.id),
+              canSelectPerson: temppool.length > 1);
 
           // Add removal of squad members member
           move(22, 0);
@@ -484,8 +486,12 @@ Future<void> reviewMode(ReviewMode mode) async {
           }
           if (temppool.length > 1) {
             addOptionText(23, 50, "LEFT", "LEFT");
+            console.annotateActionEntity('Left', type: 'profile-person-navigation',
+                id: tempp.id.toString(), category: 'previous');
             addstr(" / ");
             addOptionText(23, 57, "RIGHT", "RIGHT - View Others");
+            console.annotateActionEntity('Right', type: 'profile-person-navigation',
+                id: tempp.id.toString(), category: 'next');
           }
           addOptionText(
               24, 0, "Any other key", "Any other key - continue the Struggle");
@@ -563,7 +569,8 @@ Future<void> reviewMode(ReviewMode mode) async {
             addOptionText(24, 2, "C", "C - Confirm");
             addOptionText(24, 20, "Any Other Key", "Any Other Key - Continue");
 
-            console.journalProfile = JournalProfileContext(tempp, page, confirming: true);
+            console.journalProfile = JournalProfileContext(tempp, page, confirming: true,
+                personIds: temppool.map((person) => person.id));
             int c = await getKey();
 
             if (c == Key.c) {
@@ -635,7 +642,8 @@ Future<void> reviewMode(ReviewMode mode) async {
             addOptionText(24, 0, "C", "C - Confirm");
             addOptionText(24, 27, "Any Other Key", "Any Other Key - Continue");
 
-            console.journalProfile = JournalProfileContext(tempp, page, confirming: true);
+            console.journalProfile = JournalProfileContext(tempp, page, confirming: true,
+                personIds: temppool.map((person) => person.id));
             int c = await getKey();
 
             if (c == Key.c) {

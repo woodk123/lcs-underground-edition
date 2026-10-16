@@ -226,12 +226,22 @@ try {
   await click(/^Skills$/);
   await wait(/Skills & training/);
   await capture('13-clipboard-aligned-skill-values');
+  await click(new RegExp(`^Select crew ${escape(crew[1].name)}(?:$|\\s)`));
+  await wait(/Skills & training/);
+  assert.equal(await page.getByRole('img', { name: new RegExp(`^${escape(crew[1].name)} portrait\\.`) }).count(), 2,
+    'The left identity and open dossier must both follow the selected person.');
+  await capture('17-profile-member-switch-keeps-skills-tab');
   await click(/^Back to crew/);
   await wait(/Active Liberals/);
   await click(/^Weapons(?:$|\s)/);
   await wait(/Increase ammo allocation/);
   assert.equal((await uiText()).split('\n').filter(line => line.trim() === 'Equipment').length, 1);
   assert.doesNotMatch(await uiText(), /Crew & choices|Equip the Squad|Cursors -/);
+  await click(new RegExp(`^Select crew ${escape(crew[1].name)}(?:$|\\s)`));
+  const selectedEquipment = page.getByRole('button', { name: new RegExp(`^2 ${escape(crew[1].name)}(?:$|\\s)`) });
+  assert.ok(await selectedEquipment.evaluate(node => !!node.closest('[aria-current="true"], [aria-selected="true"]')),
+    'Equipment marks the selected person without invoking Unequip weapon.');
+  await capture('18-equipment-follows-local-selection');
   await page.setViewportSize({ width: 2200, height: 1200 });
   await capture('14-equipment-as-journal-ledger');
   await click(/^Reading size/);

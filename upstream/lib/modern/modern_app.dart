@@ -1839,6 +1839,16 @@ class _ModernGameShellState extends State<ModernGameShell> {
         .toList();
     final heading = rows.isEmpty ? 'Organisation' : _screenHeading(rows);
     final navigation = console.navigation;
+    final selected = _organisation.selectedPerson;
+    final squadOnly = const {
+      'equipment',
+      'vehicles',
+    }.contains(navigation?.section);
+    final selectedId =
+        selected != null &&
+            (!squadOnly || game.squad.any((person) => person.id == selected.id))
+        ? selected.id
+        : game.squad.firstOrNull?.id;
     return Column(
       key: const ValueKey('journal-management-page'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1868,6 +1878,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
         const Divider(height: 1, color: JournalPalette.rule),
         Expanded(
           child: SingleChildScrollView(
+            key: PageStorageKey(
+              'journal-management-scroll:${navigation?.section ?? 'entry'}',
+            ),
             padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
             child: DirectContent(
               console: console,
@@ -1875,6 +1888,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
               onInspect: _openDossier,
               textInput: console.textInput,
               journalPage: true,
+              selectedPersonId: selectedId,
               hiddenRows: const {0},
             ),
           ),

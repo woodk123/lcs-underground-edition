@@ -48,6 +48,7 @@ class DirectContent extends StatelessWidget {
     this.rowMaxColumns = const {},
     this.showActions = true,
     this.journalPage = false,
+    this.selectedPersonId,
   });
 
   final Console console;
@@ -60,6 +61,7 @@ class DirectContent extends StatelessWidget {
   final Map<int, int> rowMaxColumns;
   final bool showActions;
   final bool journalPage;
+  final int? selectedPersonId;
 
   @override
   Widget build(BuildContext context) {
@@ -598,6 +600,9 @@ class DirectContent extends StatelessWidget {
   }) {
     final actions = frame.at(y).where(frame.embedded).toList();
     final action = actions.isEmpty ? null : actions.first;
+    final selected =
+        action?.entityType == 'person' &&
+        action?.entityId == selectedPersonId?.toString();
     final title = action == null
         ? frame.slice(y, columns.first.start, columns.first.end).trim()
         : _title(action);
@@ -759,26 +764,38 @@ class DirectContent extends StatelessWidget {
     if (action == null) {
       return Padding(padding: const EdgeInsets.all(18), child: body);
     }
-    return _withDossier(
-      context,
-      action,
-      _interactive(
-        context,
-        frame,
-        action,
-        body,
-        padding: EdgeInsets.symmetric(
-          horizontal: journalPage ? 12 : 18,
-          vertical: journalPage ? 8 : 18,
+    return Semantics(
+      key: ValueKey(
+        action.entityType == 'person'
+            ? 'journal-person-row:${action.entityId}'
+            : 'journal-row:${action.y}:${action.x}:${action.key}',
+      ),
+      selected: selected,
+      child: ColoredBox(
+        color: selected ? JournalPalette.selected : Colors.transparent,
+        child: _withDossier(
+          context,
+          action,
+          _interactive(
+            context,
+            frame,
+            action,
+            body,
+            padding: EdgeInsets.symmetric(
+              horizontal: journalPage ? 12 : 18,
+              vertical: journalPage ? 8 : 18,
+            ),
+            border: compact && !journalPage,
+            selected: selected,
+            description: columns
+                .skip(1)
+                .map(
+                  (column) =>
+                      '${_sentenceCase(column.label)}: ${frame.slice(y, column.start, column.end).trim()}',
+                )
+                .join('. '),
+          ),
         ),
-        border: compact && !journalPage,
-        description: columns
-            .skip(1)
-            .map(
-              (column) =>
-                  '${_sentenceCase(column.label)}: ${frame.slice(y, column.start, column.end).trim()}',
-            )
-            .join('. '),
       ),
     );
   }

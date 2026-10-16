@@ -1,14 +1,25 @@
 import 'package:lcs_new_age/creature/creature.dart';
 
 class JournalProfileContext {
-  const JournalProfileContext(
+  JournalProfileContext(
     this.person,
     this.page, {
     this.confirming = false,
-  });
+    Iterable<int> personIds = const [],
+    bool canSelectPerson = false,
+  }) : personIds = List.unmodifiable(personIds),
+       canSelectPerson = canSelectPerson && !confirming;
   final Creature person;
   final int page;
   final bool confirming;
+
+  /// The exact ordered roster used by this source profile reader, rather than
+  /// a modern UI guess based on squad, employment or location.
+  final List<int> personIds;
+
+  /// Only ordinary profile readers expose person navigation. Rename entries,
+  /// confirmations and reports must keep their own awaited input.
+  final bool canSelectPerson;
 }
 
 /// A snapshot of information actually printed by the current engine scene.

@@ -271,14 +271,20 @@ Future<void> fullCreatureInfoScreen(Creature cr) async {
     if (page == 0) printFullCreatureStats(cr);
     if (page == 1) printFullCreatureSkills(cr);
     if (page == 2) printFullCreatureCrimes(cr);
-    console.journalProfile = JournalProfileContext(cr, page);
+    console.journalProfile = JournalProfileContext(cr, page,
+        personIds: squad.map((person) => person.id),
+        canSelectPerson: squad.length > 1);
 
     addOptionText(23, 0, "N", "N - Change Name");
     addOptionText(23, 26, "G", "G - Change Gender");
     if ((activeSquad?.members.length ?? 0) > 1) {
       addOptionText(23, 50, "LEFT", "LEFT");
+      console.annotateActionEntity('Left', type: 'profile-person-navigation',
+          id: cr.id.toString(), category: 'previous');
       addstr(" / ");
       addOptionText(23, 57, "RIGHT", "RIGHT - Other Liberals");
+      console.annotateActionEntity('Right', type: 'profile-person-navigation',
+          id: cr.id.toString(), category: 'next');
     }
     addOptionText(24, 0, 'Enter', 'Enter - Continue the Struggle');
     addOptionText(24, 52, "UP", "UP");
