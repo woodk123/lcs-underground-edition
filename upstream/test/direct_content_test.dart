@@ -86,6 +86,41 @@ void main() {
     game.activeSquadMember = null;
   });
 
+  testWidgets('Unicode option labels retain their following value', (
+    tester,
+  ) async {
+    engine.mvaddstr(0, 0, 'Name settings');
+    engine.addOptionText(4, 0, 'a', 'A - Jose\u0301👩🏽‍💻');
+    engine.addstr('  Selected value');
+    final flow = engine.getKey();
+    await mountContent(tester, const Size(1280, 800), flow.then((_) {}));
+    expect(
+      find.textContaining('Jose\u0301👩🏽‍💻', findRichText: true),
+      findsWidgets,
+    );
+    expect(
+      find.textContaining('Selected value', findRichText: true),
+      findsWidgets,
+    );
+    expect(tester.takeException(), isNull);
+    engine.console.sendInput('a');
+    await flow;
+  });
+
+  testWidgets('Unicode report columns preserve each complete fragment', (
+    tester,
+  ) async {
+    engine.mvaddstr(0, 0, 'Status report');
+    engine.mvaddstr(3, 1, 'Jose\u0301👩🏽‍💻  Ready to work');
+    final flow = engine.getKey();
+    await mountContent(tester, const Size(800, 600), flow.then((_) {}));
+    expect(find.text('Jose\u0301👩🏽‍💻', findRichText: true), findsOneWidget);
+    expect(find.text('Ready to work', findRichText: true), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    engine.console.sendInput('Enter');
+    await flow;
+  });
+
   testWidgets('chase command separators do not become card descriptions', (
     tester,
   ) async {

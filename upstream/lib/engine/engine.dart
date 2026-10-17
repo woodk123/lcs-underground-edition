@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' show StringCharacters;
 import 'package:lcs_new_age/common_display/common_display.dart';
 import 'package:lcs_new_age/engine/changelog.dart';
 import 'package:lcs_new_age/engine/console.dart';
@@ -78,18 +79,7 @@ void addparagraph(
   }
 }
 
-int strLenX(String s) {
-  int len = 0;
-  for (int i = 0; i < s.length; i++) {
-    if ((s[i] == "&" || s[i] == "^") &&
-        (i + 1 < s.length && colorMap.containsKey(s[i + 1]))) {
-      i++;
-    } else {
-      len++;
-    }
-  }
-  return len;
-}
+int strLenX(String s) => stripConsoleColors(s).characters.length;
 
 void addInlineOptionText(
   String key,
@@ -255,7 +245,8 @@ void eraseArea({
   int endX = CONSOLE_WIDTH,
 }) => console.eraseArea(startY: startY, startX: startX, endY: endY, endX: endX);
 void eraseLine(int y) => console.eraseLine(y);
-int centerString(String s, {int x = 39}) => (x - s.length / 2).round();
+int centerString(String s, {int x = 39}) =>
+    (x - s.characters.length / 2).round();
 void moveCenterString(int y, String s) => move(y, centerString(s));
 Future<void> pressAnyKey() => getKey();
 void setColorConditional(
@@ -370,10 +361,10 @@ Future<String> mvgetstr(int y, int x, {String? starting}) async {
     mvaddstr(y, x, "$s▂");
     while (true) {
       inputConsole.textInputValue = s;
-      // Reports available space to the interface without changing the original
-      // reader's acceptance rules or truncating existing names from saves.
-      inputConsole.textInputLimit = s.length > visibleLimit
-          ? s.length
+      // Flutter text fields count graphemes, including accented letters and
+      // emoji. Preserve existing names even when they exceed the visible row.
+      inputConsole.textInputLimit = s.characters.length > visibleLimit
+          ? s.characters.length
           : visibleLimit > 0
           ? visibleLimit
           : 1;
@@ -384,10 +375,13 @@ Future<String> mvgetstr(int y, int x, {String? starting}) async {
         return s;
       } else if (c.codePoint == Key.backspace) {
         if (s.isNotEmpty) {
-          s = s.substring(0, s.length - 1);
-          mvaddstr(y, x + s.length, "▂ ");
+          final previousLength = s.characters.length;
+          s = s.characters.skipLast(1).toString();
+          mvaddstr(y, x, "$s▂${' ' * (previousLength - s.characters.length)}");
         }
-      } else if (c.length == 1) {
+      } else if (c.isNotEmpty &&
+          c.characters.length == 1 &&
+          !c.runes.any((rune) => rune < 32 || (rune >= 127 && rune <= 159))) {
         s += c;
         mvaddstr(y, x, "$s▂");
       }

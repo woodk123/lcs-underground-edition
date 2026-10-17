@@ -30,6 +30,48 @@ The tests exercise archive integrity/tampering, complete source snapshots, local
 
 ## Browser regressions
 
+### Screen inventory and menu playthroughs
+
+`screen_browser_review.mjs` supplements the longer gameplay journeys with title,
+options, save management, every journal tab, roster/equipment/vehicle rails,
+all five agenda pages, disband cancellation, archive pagination and full articles,
+dossiers, sorting/reordering, order groups, guides and Classic view. It imports
+a disposable copy of the bundled Felix campaign, clears wanted charges and
+orders, and explicitly supplies a parked Jeep and twenty-five archive articles.
+These prepared conditions are recorded in the report; they are not earned outcomes.
+
+```powershell
+$expected = (Get-FileHash (Join-Path $qaWeb 'main.dart.js') -Algorithm SHA256).Hash.ToLowerInvariant()
+node scripts/screen_browser_review.mjs --expected-hash $expected --out reports/screens-desktop
+node scripts/screen_browser_review.mjs --expected-hash $expected --large --out reports/screens-large
+```
+
+`--large` uses 800×600 and 150% journal reading size. Each observed screen records
+its controls, text and screenshot; failed routes remain in the report and fail
+the command. The helper requires the same isolated port as the other browser checks.
+
+`remaining_screens_playtest_test.dart` and
+`orders_social_screens_playtest_test.dart` additionally render real source handlers
+through `MainApp` at desktop and 800×600/150%. They exercise safehouse upgrades,
+flags, promotions, all seven roster categories, sleeper orders, shops, selective
+pawning and quantities, vehicle purchase/sale and buyer selection, crafting,
+practice/classes, dating and hostage release. These are rendered widget
+playthroughs, distinct from browser journeys. Current game data does not enable
+mask sales; the empty legacy selector is checked for safe cancellation only.
+The same suites cover all sorting variants, base-destination paging, special
+publications, room rental/cancellation and live flag animations. Ending agenda
+pages and completed high scores use isolated in-memory save storage.
+
+`field_special_screens_playtest_test.dart` visits the original field-special
+handlers, including lockups, prison controls, machinery, safes, laboratories,
+studios, bank/vault, signs, security, the Oval Office and CCS rooms, plus prison
+rehabilitation/labor/routine reports. Its geometry is an explicitly prepared
+flat map with original squad skills. It chooses refusal/report paths; this is
+screen coverage, not a claim to complete every heist, conversation or outcome.
+Set `LCS_CAPTURE_SCREENS=1` for these three playtest files to save intermediate
+rendered frames under ignored `reports/*-captures/` directories. Widget captures
+and real-browser screenshots remain distinct evidence.
+
 The supported browser helpers use isolated contexts and test fixtures. They require a compiled web build served at `http://127.0.0.1:18879/` and never operate a player's browser profile. Install Node.js/npm and the Edge/Chrome browser required by each helper. Their locked Node dependencies are in `upstream/tool/offline_test/`:
 
 ```powershell

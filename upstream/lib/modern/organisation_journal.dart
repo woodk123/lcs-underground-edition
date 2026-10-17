@@ -2297,9 +2297,12 @@ class OrganisationJournalState extends State<OrganisationJournal> {
 
   List<String> _locationDetails(ConsoleAction action) {
     if (action.y < 0 || action.y >= console.height) return const [];
-    final text = console.buffer[action.y].map((c) => c.glyph).join();
     return [
-      text.substring((action.x + action.width).clamp(0, text.length)).trim(),
+      console.buffer[action.y]
+          .skip((action.x + action.width).clamp(0, console.width))
+          .map((c) => c.glyph)
+          .join()
+          .trim(),
     ];
   }
 

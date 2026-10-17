@@ -29,6 +29,10 @@ import 'package:lcs_new_age/utils/lcsrandom.dart';
 
 Map<String, Shop> shopTypes = {};
 
+bool _canChoose(ShopOption option) =>
+    option.isAvailable() &&
+    (option is! ShopItem || ledger.funds >= option.price(false));
+
 abstract class ShopOption {
   bool display() => true;
   String halfscreenDescription() => description ?? "";
@@ -43,8 +47,8 @@ abstract class ShopOption {
 
 class ShopItem extends ShopOption {
   ShopItem(this.itemClass, this.itemId, int price, this.parentShop)
-      : _price = price,
-        sleeperprice = (price * 0.8).round();
+    : _price = price,
+      sleeperprice = (price * 0.8).round();
   final String itemClass;
   final String itemId;
   final int _price;
@@ -59,7 +63,8 @@ class ShopItem extends ShopOption {
     }
     if (parentShop.increasePricesWithIllegality && itemClass == "WEAPON") {
       WeaponType weaponType = weaponTypes[itemId]!;
-      scale = laws[Law.gunControl]!.index -
+      scale =
+          laws[Law.gunControl]!.index -
           (weaponType.bannedAtGunControl?.index ?? 3) +
           2;
       if (scale < 1) scale = 1;
@@ -90,9 +95,11 @@ class ShopItem extends ShopOption {
       if (itemClass == "AMMO") {
         bool legal = weaponTypes.values
             .where((w) => w.acceptableAmmo.contains(ammoTypes[itemId]!))
-            .any((w) =>
-                (w.bannedAtGunControl?.index ?? 99) >
-                laws[Law.gunControl]!.index);
+            .any(
+              (w) =>
+                  (w.bannedAtGunControl?.index ?? 99) >
+                  laws[Law.gunControl]!.index,
+            );
         if (!legal) {
           return false;
         }
@@ -182,8 +189,9 @@ class Shop extends ShopOption {
     buyer ??= customers.members[0];
     int page = 0, partysize = squadsize(customers);
 
-    List<ShopOption> availableOptions =
-        options.where((o) => o.display()).toList();
+    List<ShopOption> availableOptions = options
+        .where((o) => o.display())
+        .toList();
 
     while (true) {
       erase();
@@ -197,9 +205,11 @@ class Shop extends ShopOption {
 
       //Write wares and prices
       int y = 10, x = 1, takenLetters = 0;
-      for (int p = page * 19;
-          p < availableOptions.length && p < page * 19 + 20;
-          p++) {
+      for (
+        int p = page * 19;
+        p < availableOptions.length && p < page * 19 + 20;
+        p++
+      ) {
         if (availableOptions[p].isAvailable()) {
           setColor(lightGray);
         } else {
@@ -241,7 +251,11 @@ class Shop extends ShopOption {
         if (availableOptions[p] is ShopItem) {
           desc += " (\$${(availableOptions[p] as ShopItem).price(false)})";
         }
-        addInlineOptionText(letter, "$letter - $desc");
+        addInlineOptionText(
+          letter,
+          "$letter - $desc",
+          enabledWhen: _canChoose(availableOptions[p]),
+        );
 
         if (x == 1) {
           x = 2;
@@ -253,8 +267,11 @@ class Shop extends ShopOption {
       if (sellMasks) {
         setColor(lightGray);
         move(y, 1 + (x - 1) * 39);
-        addInlineOptionText("M", "M - Buy a Mask (\$15)",
-            enabledWhen: ledger.funds >= 15);
+        addInlineOptionText(
+          "M",
+          "M - Buy a Mask (\$15)",
+          enabledWhen: ledger.funds >= 15,
+        );
       }
       if (x == 2) y++;
 
@@ -262,17 +279,33 @@ class Shop extends ShopOption {
 
       if (allowSelling) {
         setColor(lightGray);
-        addOptionText(y++, 1, "S", "S - Sell something",
-            enabledWhen: customers.members[0].base?.loot.isNotEmpty == true);
+        addOptionText(
+          y++,
+          1,
+          "S",
+          "S - Sell something",
+          enabledWhen: customers.members[0].base?.loot.isNotEmpty == true,
+        );
       }
 
-      addOptionText(++y, 1, "0", "0 - Show the squad's Liberal status",
-          enabledWhen: activeSquadMemberIndex != -1);
+      addOptionText(
+        ++y,
+        1,
+        "0",
+        "0 - Show the squad's Liberal status",
+        enabledWhen: activeSquadMemberIndex != -1,
+      );
       setColorConditional(
-          partysize > 0 && (activeSquadMemberIndex == -1 || partysize > 1));
+        partysize > 0 && (activeSquadMemberIndex == -1 || partysize > 1),
+      );
       mvaddstr(y++, 40, "# - Check the status of a squad Liberal");
-      addOptionText(y, 1, "B", "B - Choose a buyer",
-          enabledWhen: partysize >= 2);
+      addOptionText(
+        y,
+        1,
+        "B",
+        "B - Choose a buyer",
+        enabledWhen: partysize >= 2,
+      );
 
       addOptionText(y, 40, "Enter", "Enter - $exitText");
 
@@ -312,8 +345,9 @@ class Shop extends ShopOption {
 
   Future<void> browseFullscreen(Squad customers, Creature? buyer) async {
     buyer ??= customers.members[0];
-    List<ShopOption> availableOptions =
-        options.where((o) => o.display()).toList();
+    List<ShopOption> availableOptions = options
+        .where((o) => o.display())
+        .toList();
     ShopOption? chosenOption;
     erase();
     await pagedInterface(
@@ -324,8 +358,13 @@ class Shop extends ShopOption {
       lineBuilder: (y, key, index) {
         setColorConditional(availableOptions[index].isAvailable());
         String letter = letterAPlus(y - 2);
-        addOptionText(y, 0, letter,
-            "$letter - ${availableOptions[index].fullscreenDescription()}");
+        addOptionText(
+          y,
+          0,
+          letter,
+          "$letter - ${availableOptions[index].fullscreenDescription()}",
+          enabledWhen: _canChoose(availableOptions[index]),
+        );
         if (availableOptions[index] is ShopItem) {
           move(y, 39);
           addstr("\$${(availableOptions[index] as ShopItem).price(false)}");
@@ -347,8 +386,9 @@ class Shop extends ShopOption {
 
   Future<void> browseWeapons(Squad customers, Creature? buyer) async {
     buyer ??= customers.members[0];
-    List<ShopOption> availableOptions =
-        options.where((o) => o.display()).toList();
+    List<ShopOption> availableOptions = options
+        .where((o) => o.display())
+        .toList();
     bool fullscreen = false;
     /*
     if (availableOptions.length > 5) {
@@ -375,8 +415,13 @@ class Shop extends ShopOption {
           addstr(weapon.description ?? "");
         } else {
           setColor(lightGray);
-          addOptionText(y, 0, key, "$key - ${weapon.name}",
-              enabledWhen: availableOptions[i].isAvailable());
+          addOptionText(
+            y,
+            0,
+            key,
+            "$key - ${weapon.name}",
+            enabledWhen: _canChoose(availableOptions[i]),
+          );
           move(y, 20);
           AmmoType? ammo = weapon.acceptableAmmo.firstOrNull;
           if (ammo != null && weapon.ammoCapacity > 0) {
@@ -400,7 +445,8 @@ class Shop extends ShopOption {
       },
       onChoice: (index) async {
         debugPrint(
-            "index: $index, availableOptions.length: ${availableOptions.length}");
+          "index: $index, availableOptions.length: ${availableOptions.length}",
+        );
         if (index < availableOptions.length &&
             availableOptions[index].isAvailable()) {
           await availableOptions[index].choose(customers, buyer!, false);
@@ -419,8 +465,9 @@ class Shop extends ShopOption {
 
   Future<void> browseAmmo(Squad customers, Creature? buyer) async {
     buyer ??= customers.members[0];
-    List<ShopOption> availableOptions =
-        options.where((o) => o.display()).toList();
+    List<ShopOption> availableOptions = options
+        .where((o) => o.display())
+        .toList();
     await pagedInterface(
       headerPrompt: "What will ${buyer.name} buy?",
       headerKey: {4: "NAME", 24: "DAMAGE", 39: "BOX SIZE", 59: "BOX PRICE"},
@@ -431,8 +478,13 @@ class Shop extends ShopOption {
       lineBuilder: (y, key, index) {
         AmmoType ammo =
             ammoTypes[(availableOptions[index] as ShopItem).itemId]!;
-        addOptionText(y, 0, key, "$key - ${ammo.name}",
-            enabledWhen: availableOptions[index].isAvailable());
+        addOptionText(
+          y,
+          0,
+          key,
+          "$key - ${ammo.name}",
+          enabledWhen: _canChoose(availableOptions[index]),
+        );
         move(y, 24);
         addstr(ammo.damage.toString());
         if (ammo.multihit > 1) {
@@ -457,8 +509,9 @@ class Shop extends ShopOption {
 
   Future<void> browseClothes(Squad customers, Creature? buyer) async {
     buyer ??= customers.members[0];
-    List<ShopOption> availableOptions =
-        options.where((o) => o.display()).toList();
+    List<ShopOption> availableOptions = options
+        .where((o) => o.display())
+        .toList();
     await pagedInterface(
       headerPrompt: "What will ${buyer.name} buy?",
       headerKey: {4: "NAME", 24: "SPECIAL TRAITS (IF ANY)", 59: "PRICE"},
@@ -469,8 +522,13 @@ class Shop extends ShopOption {
       lineBuilder: (y, key, index) {
         ClothingType clothing =
             clothingTypes[(availableOptions[index] as ShopItem).itemId]!;
-        addOptionText(y, 0, key, "$key - ${clothing.name}",
-            enabledWhen: availableOptions[index].isAvailable());
+        addOptionText(
+          y,
+          0,
+          key,
+          "$key - ${clothing.name}",
+          enabledWhen: _canChoose(availableOptions[index]),
+        );
         move(y, 24);
         addstr(clothing.traitsList(true).join(", "));
         move(y, 59);
@@ -510,7 +568,8 @@ class Shop extends ShopOption {
       setColorConditional(activeSquadMember != null);
       addOptionText(15, 1, "0", "0 - Show the squad's Liberal status");
       setColorConditional(
-          partysize > 0 && (activeSquadMemberIndex == -1 || partysize > 1));
+        partysize > 0 && (activeSquadMemberIndex == -1 || partysize > 1),
+      );
       mvaddstr(15, 40, "# - Check the status of a squad Liberal");
 
       addOptionText(16, 40, "Enter", "Enter - Done pawning");
@@ -567,9 +626,11 @@ class Shop extends ShopOption {
         }
 
         if (fenceamount > 0) {
-          mvaddstrc(8, 1, white, "You add \$$fenceamount to Liberal Funds.");
-
-          await acknowledge(title: 'Shopping report');
+          await showMessage(
+            'You add \$$fenceamount to Liberal Funds.',
+            color: white,
+            title: 'Shopping report',
+          );
 
           ledger.addFunds(fenceamount, Income.pawn);
         }
@@ -608,8 +669,17 @@ class Shop extends ShopOption {
         } else {
           baseColor = darkGray;
         }
-        mvaddstrc(y, x, baseColor, "${letterAPlus(l - page * 18)} - ");
-        base.loot[l].printEquipTitle(baseColor: baseColor);
+        final key = letterAPlus(l - page * 18);
+        addOptionText(
+          y,
+          x,
+          key,
+          '$key - ${base.loot[l].equipTitle()}',
+          enabledWhen: base.loot[l].isForSale,
+          baseColorKey: selected[l] > 0
+              ? ColorKey.lightGreen
+              : ColorKey.lightGray,
+        );
         setColor(baseColor);
         if (base.loot[l].stackSize > 1) {
           if (selected[l] > 0) {
@@ -630,11 +700,11 @@ class Shop extends ShopOption {
       //PAGE UP
       setColor(lightGray);
       if (page > 0) {
-        mvaddstr(17, 1, previousPageStr);
+        addOptionText(17, 1, previousPageStr.split(' ').first, previousPageStr);
       }
       //PAGE DOWN
       if ((page + 1) * 18 < base.loot.length) {
-        mvaddstr(17, 53, nextPageStr);
+        addOptionText(17, 53, nextPageStr.split(' ').first, nextPageStr);
       }
 
       mvaddstrc(23, 1, lightGray, "Press a letter to select an item to sell.");
@@ -652,8 +722,10 @@ class Shop extends ShopOption {
           } else {
             if (base.loot[slot].isForSale) {
               if (base.loot[slot].stackSize > 1) {
-                selected[slot] =
-                    await promptAmount(0, base.loot[slot].stackSize);
+                selected[slot] = await promptAmount(
+                  0,
+                  base.loot[slot].stackSize,
+                );
               } else {
                 selected[slot] = 1;
               }
@@ -689,8 +761,12 @@ class Shop extends ShopOption {
   Future<void> maskselect(Creature buyer) async {
     ClothingType? mask;
 
-    List<ClothingType> masktype =
-        clothingTypes.values.where((a) => a.mask && !a.surpriseMask).toList();
+    List<ClothingType> masktype = clothingTypes.values
+        .where((a) => a.mask && !a.surpriseMask)
+        .toList();
+    final surpriseMasks = clothingTypes.values
+        .where((a) => a.mask && a.surpriseMask)
+        .toList();
 
     int page = 0;
 
@@ -700,20 +776,37 @@ class Shop extends ShopOption {
       mvaddstrc(0, 0, white, "Which mask will ${buyer.name} buy?");
       addHeader({4: "PRODUCT NAME", 39: "DESCRIPTION"});
 
-      for (int p = page * 19, y = 2;
-          p < masktype.length && p < page * 19 + 19;
-          p++, y++) {
+      for (
+        int p = page * 19, y = 2;
+        p < masktype.length && p < page * 19 + 19;
+        p++, y++
+      ) {
         setColor(lightGray);
-        mvaddstr(y, 0, "${letterAPlus(y - 2)} - ${masktype[p].name}");
+        final key = letterAPlus(y - 2);
+        addOptionText(
+          y,
+          0,
+          key,
+          '$key - ${masktype[p].name}',
+          enabledWhen: ledger.funds >= 15,
+        );
         mvaddstrc(y, 39, lightGray, masktype[p].description.trim());
       }
 
-      mvaddstrc(22, 0, lightGray, "Press a Letter to select a Mask");
-      move(23, 0);
-      addstr(pageStr);
-      addOptionText(24, 0, "Z", "Z - Surprise ");
-      addstr(buyer.name);
-      addstr(" With a Random Mask");
+      addOptionText(22, 0, 'Escape', 'Escape - Cancel purchase');
+      if (page > 0) {
+        addOptionText(23, 0, previousPageStr.split(' ').first, previousPageStr);
+      }
+      if ((page + 1) * 19 < masktype.length) {
+        addOptionText(23, 40, nextPageStr.split(' ').first, nextPageStr);
+      }
+      addOptionText(
+        24,
+        0,
+        'Z',
+        'Z - Surprise ${buyer.name} With a Random Mask',
+        enabledWhen: ledger.funds >= 15 && surpriseMasks.isNotEmpty,
+      );
 
       int c = await getKey();
 
@@ -734,9 +827,8 @@ class Shop extends ShopOption {
           break;
         }
       }
-      if (c == Key.z) {
-        mask =
-            clothingTypes.values.where((a) => a.mask && a.surpriseMask).random;
+      if (c == Key.z && surpriseMasks.isNotEmpty) {
+        mask = surpriseMasks.random;
         break;
       }
 

@@ -322,6 +322,28 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Unicode names survive confirmation and prefill replacement', (
+    tester,
+  ) async {
+    decisionFrame(choices: false);
+    await mountApp(tester, const Size(1280, 800));
+    String? received;
+    unawaited(
+      engine
+          .mvgetstr(4, 0, starting: 'Old👩🏽‍💻e\u0301')
+          .then((value) => received = value),
+    );
+    await tester.pump();
+    await tester.enterText(find.byType(TextField).first, 'Jose\u0301👩🏽‍💻');
+    await tester.tap(find.text('Confirm text'));
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 40));
+    }
+    expect(received, 'Jose\u0301👩🏽‍💻');
+    expect(engine.console.textInput, isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('editing a prefilled name replaces the original value', (
     tester,
   ) async {

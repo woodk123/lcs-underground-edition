@@ -21,3 +21,14 @@ Do not mix DLLs or data folders from different builds. `BUILD_INFO.json`, `FILES
 Native saves are stored per Windows user under `%APPDATA%\LCS New Age\lcs_new_age\lcs_new_age.db`. Browser saves belong to their browser profile and origin. Use the game's export/import controls to transfer campaigns.
 
 For automated tests, use isolated data. An `APPDATA` override alone does not isolate all Windows preferences: `shared_preferences_windows` can use the Windows known-folder API separately. Do not run native QA against a player's existing profile.
+
+The standard executable supports an explicit local profile:
+
+```powershell
+.\lcs_new_age.exe --data-directory="D:\LCS-QA\campaign-one"
+```
+
+Use an absolute directory. Both `lcs_new_age.db` and `preferences.json` stay inside
+it, including scores, settings and the last-used campaign. The default profile
+is neither read nor migrated when this option is present. Launching without the
+option retains the normal Windows save and preference locations.

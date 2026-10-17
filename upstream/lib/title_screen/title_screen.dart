@@ -209,18 +209,18 @@ Future<void> interfaceOptionsMenu() async {
 
     addOptionText(console.y + 1, 4, "D", "D - Decrease");
     addstrc(lightGray, " / ");
-    addOptionText(console.y, console.x, "I", "I - Increase Font Size");
+    addOptionText(console.y, console.x, "I", "I - Increase Classic Font Size");
     addstrx("&w (&G${gameOptions.fontSize}&w)");
     setColor(midGray);
     addparagraph(
       console.y + 1,
       8,
       x2: 72,
-      "This option changes the size of the font in the game. Sizes that are "
-      "too large for the screen will be scaled down and may cause small "
-      "black lines to appear. Default is 16.",
+      "Changes text in the Classic console view. For the journal interface, "
+      "use Reading size in the top toolbar. Classic sizes too large for the "
+      "screen are scaled down. Default is 16.",
     );
-    addOptionText(console.y + 1, 4, "B", "B - Back to Title Screen");
+    addOptionText(console.y + 1, 4, "B", "B - Back to Options");
 
     int c = await getKey();
 

@@ -62,17 +62,27 @@ Future<void> reviewAssetsAndFormSquads() async {
       }
     }
 
-    for (int p = page * 19;
-        p < squads.length + 7 + 1 && p < page * 19 + 19;
-        p++, y++) {
+    for (
+      int p = page * 19;
+      p < squads.length + 7 + 1 && p < page * 19 + 19;
+      p++, y++
+    ) {
       if (p < squads.length) {
         bool active = activeSquad == squads[p];
         setColor(active ? white : lightGray);
         String letter = letterAPlus(y - 2);
-        addOptionText(y, 0, letter, "$letter - ${squads[p].name}",
-            baseColorKey: active ? "W" : "w");
-        console.annotateActionEntity(letter,
-            type: 'squad', id: squads[p].id.toString());
+        addOptionText(
+          y,
+          0,
+          letter,
+          "$letter - ${squads[p].name}",
+          baseColorKey: active ? "W" : "w",
+        );
+        console.annotateActionEntity(
+          letter,
+          type: 'squad',
+          id: squads[p].id.toString(),
+        );
 
         if (squads[p].members.isNotEmpty &&
             squads[p].members[0].location != null) {
@@ -110,27 +120,57 @@ Future<void> reviewAssetsAndFormSquads() async {
           mvaddstr(y, 51, str);
         }
       } else if (p == squads.length) {
-        addOptionText(y, 0, "1", "1 - Active Liberals ($active)",
-            enabledWhen: active > 0);
+        addOptionText(
+          y,
+          0,
+          "1",
+          "1 - Active Liberals ($active)",
+          enabledWhen: active > 0,
+        );
       } else if (p == squads.length + 1) {
-        addOptionText(y, 0, "2", "2 - Hostages ($hostages)",
-            enabledWhen: hostages > 0);
+        addOptionText(
+          y,
+          0,
+          "2",
+          "2 - Hostages ($hostages)",
+          enabledWhen: hostages > 0,
+        );
       } else if (p == squads.length + 2) {
-        addOptionText(y, 0, "3", "3 - Hospital ($hospital)",
-            enabledWhen: hospital > 0);
+        addOptionText(
+          y,
+          0,
+          "3",
+          "3 - Hospital ($hospital)",
+          enabledWhen: hospital > 0,
+        );
       } else if (p == squads.length + 3) {
-        addOptionText(y, 0, "4", "4 - Justice System ($justice)",
-            enabledWhen: justice > 0);
+        addOptionText(
+          y,
+          0,
+          "4",
+          "4 - Justice System ($justice)",
+          enabledWhen: justice > 0,
+        );
       } else if (p == squads.length + 4) {
-        addOptionText(y, 0, "5", "5 - Sleepers ($sleepers)",
-            enabledWhen: sleepers > 0);
+        addOptionText(
+          y,
+          0,
+          "5",
+          "5 - Sleepers ($sleepers)",
+          enabledWhen: sleepers > 0,
+        );
       } else if (p == squads.length + 5) {
         addOptionText(y, 0, "6", "6 - The Dead ($dead)", enabledWhen: dead > 0);
       } else if (p == squads.length + 6) {
         addOptionText(y, 0, "7", "7 - Away ($away)", enabledWhen: away > 0);
       } else if (p == squads.length + 7) {
-        addOptionText(y, 0, "8", "8 - Review and Move Equipment ($equipment)",
-            enabledWhen: equipment > 0);
+        addOptionText(
+          y,
+          0,
+          "8",
+          "8 - Review and Move Equipment ($equipment)",
+          enabledWhen: equipment > 0,
+        );
       } else {
         break;
       }
@@ -285,7 +325,7 @@ Future<void> reviewMode(ReviewMode mode) async {
         ReviewMode.sleepers => "PROFESSION",
         ReviewMode.dead => "DAYS SINCE PASSING",
         ReviewMode.away => "DAYS UNTIL RETURN",
-      }
+      },
     });
 
     int y = 2;
@@ -294,7 +334,11 @@ Future<void> reviewMode(ReviewMode mode) async {
       setColor(lightGray);
       String letter = letterAPlus(y - 2);
       addOptionText(y, 0, letter, "$letter - ${tempp.name}");
-      console.annotateActionEntity(letter, type: 'person', id: tempp.id.toString());
+      console.annotateActionEntity(
+        letter,
+        type: 'person',
+        id: tempp.id.toString(),
+      );
 
       bool bright = false;
       int skill = 0;
@@ -421,8 +465,13 @@ Future<void> reviewMode(ReviewMode mode) async {
     if (swap != null) {
       addOptionText(22, 38, "Z", "Z - Place ${swap.name}");
     } else {
-      addOptionText(22, 38, "Z", "Z - Reorder Liberals",
-          enabledWhen: temppool.length > 1);
+      addOptionText(
+        22,
+        38,
+        "Z",
+        "Z - Reorder Liberals",
+        enabledWhen: temppool.length > 1,
+      );
     }
     addPageButtons(y: 23, x: 0);
     addOptionText(23, 38, "T", "T - Sort Liberals");
@@ -461,9 +510,12 @@ Future<void> reviewMode(ReviewMode mode) async {
           if (page == 0) printFullCreatureStats(tempp);
           if (page == 1) printFullCreatureSkills(tempp);
           if (page == 2) printFullCreatureCrimes(tempp);
-          console.journalProfile = JournalProfileContext(tempp, page,
-              personIds: temppool.map((person) => person.id),
-              canSelectPerson: temppool.length > 1);
+          console.journalProfile = JournalProfileContext(
+            tempp,
+            page,
+            personIds: temppool.map((person) => person.id),
+            canSelectPerson: temppool.length > 1,
+          );
 
           // Add removal of squad members member
           move(22, 0);
@@ -486,15 +538,27 @@ Future<void> reviewMode(ReviewMode mode) async {
           }
           if (temppool.length > 1) {
             addOptionText(23, 50, "LEFT", "LEFT");
-            console.annotateActionEntity('Left', type: 'profile-person-navigation',
-                id: tempp.id.toString(), category: 'previous');
+            console.annotateActionEntity(
+              'Left',
+              type: 'profile-person-navigation',
+              id: tempp.id.toString(),
+              category: 'previous',
+            );
             addstr(" / ");
             addOptionText(23, 57, "RIGHT", "RIGHT - View Others");
-            console.annotateActionEntity('Right', type: 'profile-person-navigation',
-                id: tempp.id.toString(), category: 'next');
+            console.annotateActionEntity(
+              'Right',
+              type: 'profile-person-navigation',
+              id: tempp.id.toString(),
+              category: 'next',
+            );
           }
           addOptionText(
-              24, 0, "Any other key", "Any other key - continue the Struggle");
+            24,
+            0,
+            "Any other key",
+            "Any other key - continue the Struggle",
+          );
           addOptionText(24, 52, "UP", "UP");
           addstr(" / ");
           addOptionText(24, 57, "DOWN", "DOWN - More Info");
@@ -530,17 +594,23 @@ Future<void> reviewMode(ReviewMode mode) async {
 
           if (c == Key.n) {
             setColor(lightGray);
-            mvaddstr(23, 0,
-                "What is the new code name?                                                      "); // 80 characters
-            mvaddstr(24, 0,
-                "                                                                                "); // 80 spaces
+            mvaddstr(
+              23,
+              0,
+              "What is the new code name?                                                      ",
+            ); // 80 characters
+            mvaddstr(
+              24,
+              0,
+              "                                                                                ",
+            ); // 80 spaces
 
             tempp.name = await enterName(24, 0, tempp.name);
           } else if (c == Key.g && tempp.align == Alignment.liberal) {
             List<Gender> genders = [
               Gender.male,
               Gender.female,
-              Gender.nonbinary
+              Gender.nonbinary,
             ];
             if (tempp.cannotDetransition) {
               genders.remove(tempp.genderAssignedAtBirth);
@@ -561,7 +631,8 @@ Future<void> reviewMode(ReviewMode mode) async {
             move(22, 0);
             setColor(lightGray);
             addstr(
-                "Do you want to permanently release this squad member from the LCS?");
+              "Do you want to permanently release this squad member from the LCS?",
+            );
 
             move(23, 0);
             addstr("If the member has low heart they may go to the police.");
@@ -569,8 +640,12 @@ Future<void> reviewMode(ReviewMode mode) async {
             addOptionText(24, 2, "C", "C - Confirm");
             addOptionText(24, 20, "Any Other Key", "Any Other Key - Continue");
 
-            console.journalProfile = JournalProfileContext(tempp, page, confirming: true,
-                personIds: temppool.map((person) => person.id));
+            console.journalProfile = JournalProfileContext(
+              tempp,
+              page,
+              confirming: true,
+              personIds: temppool.map((person) => person.id),
+            );
             int c = await getKey();
 
             if (c == Key.c) {
@@ -593,7 +668,8 @@ Future<void> reviewMode(ReviewMode mode) async {
                 addstr("'s whereabouts.");
                 move(24, 0);
                 addstr(
-                    "The Conservative traitor has ratted you out to the police, and sworn");
+                  "The Conservative traitor has ratted you out to the police, and sworn",
+                );
                 move(25, 0);
                 addstr("to testify against ");
                 addstr(boss!.name);
@@ -638,12 +714,19 @@ Future<void> reviewMode(ReviewMode mode) async {
             addstr(boss.name);
             addstr(" kill this squad member?");
             mvaddstrx(
-                23, 0, "&RKilling your squad members is Deeply Conservative.");
+              23,
+              0,
+              "&RKilling your squad members is Deeply Conservative.",
+            );
             addOptionText(24, 0, "C", "C - Confirm");
             addOptionText(24, 27, "Any Other Key", "Any Other Key - Continue");
 
-            console.journalProfile = JournalProfileContext(tempp, page, confirming: true,
-                personIds: temppool.map((person) => person.id));
+            console.journalProfile = JournalProfileContext(
+              tempp,
+              page,
+              confirming: true,
+              personIds: temppool.map((person) => person.id),
+            );
             int c = await getKey();
 
             if (c == Key.c) {
@@ -766,7 +849,8 @@ Future<void> assembleSquad(Squad? cursquad) async {
       .toList();
 
   Map<Creature, Squad?> oldSquads = Map.fromEntries(
-      temppool.map((p) => MapEntry(p, p.squad != cursquad ? p.squad : null)));
+    temppool.map((p) => MapEntry(p, p.squad != cursquad ? p.squad : null)),
+  );
 
   int page = 0, partysize;
 
@@ -797,14 +881,15 @@ Future<void> assembleSquad(Squad? cursquad) async {
       27: "SKILL",
       34: "HEALTH",
       46: "PROFESSION",
-      63: "LOCATION"
+      63: "LOCATION",
     });
 
     int y = 2;
     for (p = page * 19; p < temppool.length && p < page * 19 + 19; p++) {
       Creature tempp = temppool[p];
       String letter = letterAPlus(y - 2);
-      bool isAtCurrentSquadLocation = cursquad.members.isEmpty ||
+      bool isAtCurrentSquadLocation =
+          cursquad.members.isEmpty ||
           cursquad.members[0].location == tempp.location;
       bool isCurrentSquadMember = tempp.squadId == cursquad.id;
 
@@ -830,11 +915,19 @@ Future<void> assembleSquad(Squad? cursquad) async {
         }
       }
 
-      addOptionText(y, 2, letter,
-          "$letter - ${tempp.name.substring(0, min(tempp.name.length, 20))}",
-          enabledWhen: isAtCurrentSquadLocation,
-          baseColorKey: isCurrentSquadMember ? "C" : "m");
-      console.annotateActionEntity(letter, type: 'person', id: tempp.id.toString());
+      addOptionText(
+        y,
+        2,
+        letter,
+        "$letter - ${tempp.name.substring(0, min(tempp.name.length, 20))}",
+        enabledWhen: isAtCurrentSquadLocation,
+        baseColorKey: isCurrentSquadMember ? "C" : "m",
+      );
+      console.annotateActionEntity(
+        letter,
+        type: 'person',
+        id: tempp.id.toString(),
+      );
 
       bool bright = false;
       int skill = 0;
@@ -852,17 +945,21 @@ Future<void> assembleSquad(Squad? cursquad) async {
 
       mvaddstrc(y, 46, tempp.align.color, tempp.type.name);
       mvaddstrc(
-          y,
-          63,
-          isAtCurrentSquadLocation ? lightGray : darkGray,
-          tempp.location?.getName(short: true, includeCity: true) ??
-              "In Hiding");
+        y,
+        63,
+        isAtCurrentSquadLocation ? lightGray : darkGray,
+        tempp.location?.getName(short: true, includeCity: true) ?? "In Hiding",
+      );
 
       y++;
     }
 
-    mvaddstrc(22, 0, lightGray,
-        "Press a Letter to add or remove a Liberal from the squads.");
+    mvaddstrc(
+      22,
+      0,
+      lightGray,
+      "Press a Letter to add or remove a Liberal from the squads.",
+    );
     addPageButtons(y: 23, x: 0);
     addOptionText(23, 40, "v", "V - View a Liberal");
     if (partysize > 0) {
@@ -870,13 +967,20 @@ Future<void> assembleSquad(Squad? cursquad) async {
     } else {
       addOptionText(24, 0, "Enter", "Enter - I need no squad!");
     }
-    addOptionText(24, 40, "9", "9 - Dissolve the squad.",
-        enabledWhen: partysize > 0);
+    addOptionText(
+      24,
+      40,
+      "9",
+      "9 - Dissolve the squad.",
+      enabledWhen: partysize > 0,
+    );
 
-    console.annotateActionEntity('Enter',
-        type: 'squad-ready',
-        id: cursquad.id.toString(),
-        category: newsquad ? 'new' : 'existing');
+    console.annotateActionEntity(
+      'Enter',
+      type: 'squad-ready',
+      id: cursquad.id.toString(),
+      category: newsquad ? 'new' : 'existing',
+    );
     console.screen = 'squad-assembly';
     describeSquadAllocation(
       console,
@@ -886,9 +990,11 @@ Future<void> assembleSquad(Squad? cursquad) async {
         isNew: newsquad,
         page: page,
         personIds: temppool.map((person) => person.id).toList(),
-        readyAction: console.actions.singleWhere((action) =>
-            action.entityType == 'squad-ready' &&
-            action.entityId == cursquad!.id.toString()),
+        readyAction: console.actions.singleWhere(
+          (action) =>
+              action.entityType == 'squad-ready' &&
+              action.entityId == cursquad!.id.toString(),
+        ),
         memberIds: cursquad.members.map((person) => person.id).toList(),
         unavailableReasons: {
           for (final person in temppool)
@@ -896,7 +1002,8 @@ Future<void> assembleSquad(Squad? cursquad) async {
                 cursquad.members.first.location != person.location)
               person.id: 'Squad members must be at the same location.'
             else if (!person.canWalk && !person.hasWheelchair)
-              person.id: 'This person needs a wheelchair before joining a squad.'
+              person.id:
+                  'This person needs a wheelchair before joining a squad.'
             else if (partysize >= 6 && person.squadId != cursquad.id)
               person.id: 'The squad is full (six members).',
         },
@@ -924,7 +1031,9 @@ Future<void> assembleSquad(Squad? cursquad) async {
             eraseArea(startY: 22);
             setColor(red);
             mvaddstrCenter(
-                23, "Liberals must be in the same location to form a squads.");
+              23,
+              "Liberals must be in the same location to form a squads.",
+            );
 
             await acknowledge(title: 'Crew management report');
 
@@ -1010,15 +1119,18 @@ Future<void> assembleSquad(Squad? cursquad) async {
 /* base - review - assign new bases to the squadless */
 Future<void> assignNewBasesToTheSquadless() async {
   int pageLib = 0, pageLoc = 0, selectedbase = 0;
-  List<Creature> temppool =
-      pool.where((p) => p.isActiveLiberal && p.squad == null).toList();
+  List<Creature> temppool = pool
+      .where((p) => p.isActiveLiberal && p.squad == null)
+      .toList();
 
   if (temppool.isEmpty) return;
 
   List<Site> temploc = sites
-      .where((l) =>
-          l.controller == SiteController.lcs &&
-          l.siege.activeSiegeType == SiegeType.none)
+      .where(
+        (l) =>
+            l.controller == SiteController.lcs &&
+            l.siege.activeSiegeType == SiegeType.none,
+      )
       .toList();
   if (temploc.isEmpty) return;
 
@@ -1033,9 +1145,11 @@ Future<void> assignNewBasesToTheSquadless() async {
     addHeader({4: "CODE NAME", 25: "CURRENT BASE", 51: "NEW BASE"});
 
     int y = 2;
-    for (int p = pageLib * 19;
-        p < temppool.length && p < pageLib * 19 + 19;
-        p++, y++) {
+    for (
+      int p = pageLib * 19;
+      p < temppool.length && p < pageLib * 19 + 19;
+      p++, y++
+    ) {
       Creature tempp = temppool[p];
       // Red name if location under siege
       if (tempp.base == tempp.location &&
@@ -1047,38 +1161,68 @@ Future<void> assignNewBasesToTheSquadless() async {
       } else {
         setColor(lightGray);
       }
-      mvaddchar(y, 0, letterAPlus(y - 2));
-      addstr(" - ${tempp.name}");
+      final letter = letterAPlus(y - 2);
+      addOptionText(
+        y,
+        0,
+        letter,
+        '$letter - ${tempp.name}',
+        enabledWhen:
+            !(tempp.base == tempp.location &&
+                tempp.base?.siege.underSiege == true) &&
+            !(multipleCityMode &&
+                tempp.base?.city != temploc[selectedbase].city),
+        baseColorKey:
+            tempp.base == tempp.location && tempp.base?.siege.underSiege == true
+            ? ColorKey.red
+            : ColorKey.lightGray,
+      );
 
       mvaddstr(
-          y, 25, tempp.base?.getName(short: true, includeCity: true) ?? "Away");
+        y,
+        25,
+        tempp.base?.getName(short: true, includeCity: true) ?? "Away",
+      );
       if (tempp.base?.siege.underSiege == true) {
         addstr(" <Under Siege>");
       }
     }
 
     y = 2;
-    for (int p = pageLoc * 9;
-        p < temploc.length && p < pageLoc * 9 + 9;
-        p++, y++) {
+    for (
+      int p = pageLoc * 9;
+      p < temploc.length && p < pageLoc * 9 + 9;
+      p++, y++
+    ) {
       String number = (y - 1).toString();
       String name = temploc[p].getName(short: true, includeCity: true);
-      addOptionText(y, 51, number, "$number - $name",
-          baseColorKey:
-              p == selectedbase ? ColorKey.white : ColorKey.lightGray);
+      addOptionText(
+        y,
+        51,
+        number,
+        "$number - $name",
+        baseColorKey: p == selectedbase ? ColorKey.white : ColorKey.lightGray,
+      );
     }
 
     setColor(lightGray);
-    mvaddstr(21, 0,
-        "Press a letter to assign a base.  Press a number to select a base.");
     mvaddstr(
-        22, 0, "Liberals must be moved in squads to transfer between cities.");
+      21,
+      0,
+      "Press a letter to assign a base.  Press a number to select a base.",
+    );
+    mvaddstr(
+      22,
+      0,
+      "Liberals must be moved in squads to transfer between cities.",
+    );
     if (temppool.length > 19) {
       addPageButtons(y: 24, x: 0);
     }
     if (temploc.length > 9) {
       addOptionText(12, 51, "0", "0 - More Bases");
     }
+    addOptionText(23, 0, 'Enter', 'Enter - Done assigning bases');
 
     int c = await getKey();
 
@@ -1093,7 +1237,7 @@ Future<void> assignNewBasesToTheSquadless() async {
       pageLib++;
     }
     //PAGE DOWN (locations)
-    if (c == Key.num0 && (pageLoc + 1) * 9 < temploc.length) {
+    if (c == Key.num0 && temploc.length > 9) {
       pageLoc = (pageLoc + 1) % (temploc.length / 9).ceil();
     }
     if (c >= Key.a && c <= Key.s) {
@@ -1160,8 +1304,9 @@ void printname(Creature cr) {
 /* base - review - promote liberals */
 Future<void> promoteliberals() async {
   const int pageLength = 19;
-  List<Creature> temppool =
-      pool.where((p) => p.alive && p.align == Alignment.liberal).toList();
+  List<Creature> temppool = pool
+      .where((p) => p.alive && p.align == Alignment.liberal)
+      .toList();
   List<int> level = [];
 
   if (temppool.isEmpty) return;
@@ -1181,14 +1326,19 @@ Future<void> promoteliberals() async {
 
     move(0, 0);
     addstr("Promote the Elite Liberals");
-    addHeader(
-        {4: "CODE NAME", 27: "CURRENT CONTACT", 54: "CONTACT AFTER PROMOTION"});
+    addHeader({
+      4: "CODE NAME",
+      27: "CURRENT CONTACT",
+      54: "CONTACT AFTER PROMOTION",
+    });
 
     int y = 2;
 
-    for (int p = page * pageLength;
-        p < temppool.length && p < page * pageLength + pageLength;
-        p++) {
+    for (
+      int p = page * pageLength;
+      p < temppool.length && p < page * pageLength + pageLength;
+      p++
+    ) {
       Creature tempp = temppool[p];
       setColor(lightGray);
       String letter = letterAPlus(y - 2);
@@ -1245,10 +1395,12 @@ Future<void> promoteliberals() async {
     setColor(lightGray);
     move(22, 0);
     addstr(
-        "Press a letter to promote a Liberal. You cannot promote Liberals in hiding.");
+      "Press a letter to promote a Liberal. You cannot promote Liberals in hiding.",
+    );
     move(23, 0);
     addstr(
-        "Enlightened Liberals follow anyone. Seduced Liberals follow only their lover.");
+      "Enlightened Liberals follow anyone. Seduced Liberals follow only their lover.",
+    );
     if (temppool.length > pageLength) {
       move(24, 0);
       addstr(pageStr);

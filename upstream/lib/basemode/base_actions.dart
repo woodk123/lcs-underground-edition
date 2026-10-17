@@ -59,7 +59,7 @@ Future<void> setVehicles() async {
     );
     addOptionText(24, 1, "Enter", "Enter - Done");
 
-    declareMenuNavigation('equipment');
+    declareMenuNavigation('vehicles');
     String rawKey = await getKeyCaseSensitive();
     int input = rawKey.codePoint;
     int listIndex = input - Key.a;

@@ -168,7 +168,7 @@ void main() {
       await liberalAgenda();
     }, [menu('agenda', 'Escape')]);
     await runMenu(() => equip(<Item>[]), [menu('equipment', 'Escape')]);
-    await runMenu(setVehicles, [menu('equipment', 'Escape')]);
+    await runMenu(setVehicles, [menu('vehicles', 'Escape')]);
 
     expect(game.date, startDate);
     expect(game.ledger.funds, funds);
@@ -222,9 +222,9 @@ void main() {
       ..add(Vehicle(vehicleTypes.keys.first));
     final preferred = game.squad.map((p) => p.preferredCarId).toList();
     await runMenu(setVehicles, [
-      menu('equipment', 'a'),
+      menu('vehicles', 'a'),
       unsafe('Enter'),
-      menu('equipment', 'Escape'),
+      menu('vehicles', 'Escape'),
     ]);
     expect(game.squad.map((p) => p.preferredCarId), preferred);
   });

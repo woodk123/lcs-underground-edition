@@ -1414,19 +1414,20 @@ class DirectContent extends StatelessWidget {
   }) {
     final lines = <Widget>[];
     for (var y = start; y <= end; y++) {
-      var row = frame.rows[y];
+      final row = frame.rows[y].characters.toList();
       if (maskActions) {
         for (final action in frame.at(y).where(frame.embedded)) {
           final actionEnd = math.min(frame.width, action.x + action.width);
-          row = row.replaceRange(
+          row.replaceRange(
             action.x,
             actionEnd,
-            ' ' * (actionEnd - action.x),
+            List.filled(actionEnd - action.x, ' '),
           );
         }
       }
       final clean = row
-          .substring(left, right ?? frame.width)
+          .sublist(left, right ?? frame.width)
+          .join()
           .replaceAll(RegExp(r'[\u2500-\u259f|]'), ' ')
           .replaceAllMapped(
             RegExp(r'[—═─━]{3,}'),
@@ -1448,8 +1449,9 @@ class DirectContent extends StatelessWidget {
                   TextSpan(
                     children: frame.spans(
                       y,
-                      fragment.start + left,
-                      fragment.end + left,
+                      clean.substring(0, fragment.start).characters.length +
+                          left,
+                      clean.substring(0, fragment.end).characters.length + left,
                       trim: true,
                     ),
                   ),
@@ -1505,10 +1507,10 @@ class _ContentFrame {
     rows = [
       for (var y = 0; y < console.height; y++)
         console.buffer[y]
-            .take((rowMaxColumns[y] ?? width).clamp(0, width))
-            .map((cell) => cell.glyph)
-            .join()
-            .padRight(width),
+                .take((rowMaxColumns[y] ?? width).clamp(0, width))
+                .map((cell) => cell.glyph)
+                .join() +
+            ' ' * (width - (rowMaxColumns[y] ?? width).clamp(0, width)),
     ];
     final indices = {
       for (var i = 0; i < console.actions.length; i++) console.actions[i]: i,
@@ -1542,17 +1544,22 @@ class _ContentFrame {
 
   List<ConsoleAction> at(int y) =>
       actions.where((action) => action.y == y).toList();
-  String slice(int y, int start, int end) => rows[y].substring(
-    start.clamp(0, width),
-    end.clamp(start.clamp(0, width), width),
-  );
+  String slice(int y, int start, int end) {
+    final left = start.clamp(0, width);
+    final right = end.clamp(left, width);
+    return rows[y].characters.skip(left).take(right - left).toString();
+  }
+
   bool isRule(int y) => RegExp(r'^[\s—═─━=░▒▓█▀▄▌▐]+$').hasMatch(rows[y]);
 
   bool embedded(ConsoleAction action) {
-    final length = math.min(12, math.min(action.width, action.label.length));
+    final length = math.min(
+      12,
+      math.min(action.width, action.label.characters.length),
+    );
     return length > 0 &&
         slice(action.y, action.x, action.x + length) ==
-            action.label.substring(0, length);
+            action.label.characters.take(length).toString();
   }
 
   bool selected(ConsoleAction action) {
@@ -1578,8 +1585,10 @@ class _ContentFrame {
       for (var i = 0; i < labels.length; i++)
         _Column(
           labels[i].group(0)!.trim(),
-          i == 0 ? 0 : labels[i].start,
-          i + 1 < labels.length ? labels[i + 1].start : width,
+          i == 0 ? 0 : row.substring(0, labels[i].start).characters.length,
+          i + 1 < labels.length
+              ? row.substring(0, labels[i + 1].start).characters.length
+              : width,
         ),
     ];
   }
@@ -1588,10 +1597,11 @@ class _ContentFrame {
     var left = start.clamp(0, width);
     var right = end.clamp(left, width);
     if (trim) {
-      while (left < right && rows[y][left].trim().isEmpty) {
+      final characters = rows[y].characters.toList();
+      while (left < right && characters[left].trim().isEmpty) {
         left++;
       }
-      while (right > left && rows[y][right - 1].trim().isEmpty) {
+      while (right > left && characters[right - 1].trim().isEmpty) {
         right--;
       }
     }

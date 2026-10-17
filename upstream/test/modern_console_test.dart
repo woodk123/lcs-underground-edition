@@ -26,6 +26,28 @@ void main() {
       engine.console = previousConsole;
     });
 
+    test('plain and colored console text keep Unicode graphemes intact', () {
+      engine.console.mvaddstr(0, 0, 'e\u0301👩🏽‍💻!');
+      engine.console.mvaddstrx(1, 0, '&Ge\u0301👩🏽‍💻&x!');
+      for (final row in [0, 1]) {
+        expect(engine.console.buffer[row].take(3).map((c) => c.glyph), [
+          'e\u0301',
+          '👩🏽‍💻',
+          '!',
+        ]);
+      }
+    });
+
+    test('Unicode option widths and reports use console cell columns', () {
+      engine.mvaddstr(2, 0, 'A current result.');
+      engine.addOptionText(4, 0, 'a', 'A - Jose\u0301👩🏽‍💻');
+      final action = engine.console.actions.single;
+      expect(action.width, 9);
+      expect(engine.strLenX('&GJose\u0301👩🏽‍💻&x'), 5);
+      expect(engine.centerString('Jose\u0301👩🏽‍💻', x: 10), 8);
+      expect(engine.console.currentReportText(), 'A current result.');
+    });
+
     test('entity inspection metadata preserves the original command', () {
       engine.addOptionText(10, 0, 'b', 'B - Warehouse', enabledWhen: false);
       final original = engine.console.actions.single;
@@ -70,7 +92,9 @@ void main() {
       console.annotateActionEntity('C', type: 'vehicle', id: 'Car7');
       console.annotateAction('C', 'Choose a driver');
       final driver = console.actions.singleWhere((action) => action.key == 'C');
-      final passenger = console.actions.singleWhere((action) => action.key == 'c');
+      final passenger = console.actions.singleWhere(
+        (action) => action.key == 'c',
+      );
       expect(driver.entityId, 'Car7');
       expect(driver.intentLabel, 'Choose a driver');
       expect(passenger.entityId, isNull);
@@ -194,6 +218,26 @@ void main() {
         expect(engine.console.textInput, isFalse);
         expect(engine.console.textInputValue, isEmpty);
         expect(engine.console.textInputLimit, 0);
+      },
+    );
+
+    test(
+      'text reader preserves and deletes complete Unicode characters',
+      () async {
+        final pending = engine.mvgetstr(4, 10, starting: 'Jos');
+        for (final key in ['e\u0301', '👩🏽‍💻', 'Backspace']) {
+          expect(engine.console.sendInput(key), isTrue);
+          await Future<void>.delayed(Duration.zero);
+        }
+        expect(engine.console.textInputValue, 'Jose\u0301');
+        expect(engine.console.sendInput('Backspace'), isTrue);
+        await Future<void>.delayed(Duration.zero);
+        expect(engine.console.textInputValue, 'Jos');
+        for (final key in ['e\u0301', '👩🏽‍💻', 'Enter']) {
+          expect(engine.console.sendInput(key), isTrue);
+          await Future<void>.delayed(Duration.zero);
+        }
+        expect(await pending, 'Jose\u0301👩🏽‍💻');
       },
     );
 

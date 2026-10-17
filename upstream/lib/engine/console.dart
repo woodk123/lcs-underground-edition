@@ -5,6 +5,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' show StringCharacters;
 import 'package:lcs_new_age/engine/console_char.dart';
 import 'package:lcs_new_age/engine/console_graphic.dart';
 import 'package:lcs_new_age/engine/creation_context.dart';
@@ -193,7 +194,7 @@ class Console {
               a.x >= 0 &&
               a.x + a.width <= width &&
               buffer[a.y].skip(a.x).take(a.width).map((c) => c.glyph).join() ==
-                  a.label.substring(0, min(a.width, a.label.length)),
+                  a.label.characters.take(a.width).toString(),
         )
         .toList();
     final end = height;
@@ -285,7 +286,7 @@ class Console {
         enabled: enabled,
         y: y,
         x: x,
-        width: min(stripConsoleColors(text).length, width - x),
+        width: min(stripConsoleColors(text).characters.length, width - x),
         intentLabel: intentLabel,
       ),
     );
@@ -509,8 +510,8 @@ class Console {
   }
 
   void addstr(String s, {String? mouseClickKey}) {
-    for (var i = 0; i < s.length; i++) {
-      addchar(s[i], mouseClickKey: mouseClickKey);
+    for (final character in s.characters) {
+      addchar(character, mouseClickKey: mouseClickKey);
     }
   }
 
@@ -521,23 +522,25 @@ class Console {
 
   void addstrx(String s, {bool restoreOldColor = true, String? mouseClickKey}) {
     const Color dummy = Color(0x00000000);
+    final characters = s.characters.toList();
     bool validColorKey(int i) {
-      return i < s.length - 1 && colorMap.containsKey(s[i + 1]);
+      return i < characters.length - 1 &&
+          colorMap.containsKey(characters[i + 1]);
     }
 
     Color oldBackground = currentBackground;
     Color oldForeground = currentForeground;
-    for (var i = 0; i < s.length; i++) {
-      if (s[i] == '&' && validColorKey(i)) {
-        Color newColor = colorMap[s[++i]]!;
+    for (var i = 0; i < characters.length; i++) {
+      if (characters[i] == '&' && validColorKey(i)) {
+        Color newColor = colorMap[characters[++i]]!;
         if (newColor == dummy) newColor = oldForeground;
         setColor(newColor, currentBackground);
-      } else if (s[i] == '^' && validColorKey(i)) {
-        Color newColor = colorMap[s[++i]]!;
+      } else if (characters[i] == '^' && validColorKey(i)) {
+        Color newColor = colorMap[characters[++i]]!;
         if (newColor == dummy) newColor = oldBackground;
         setColor(currentForeground, newColor);
       } else {
-        addchar(s[i], mouseClickKey: mouseClickKey);
+        addchar(characters[i], mouseClickKey: mouseClickKey);
       }
     }
     if (restoreOldColor) {
@@ -572,7 +575,9 @@ class Console {
         (nextKeyEvent?.isCompleted ?? false)) {
       return false;
     }
-    final normalized = normalizeConsoleKey(key);
+    final normalized = textInput && key.characters.length == 1
+        ? (key == ' ' ? 'Space' : key)
+        : normalizeConsoleKey(key);
     if (normalized.isEmpty) return false;
     final (logical, physical, character) = switch (normalized) {
       'Enter' => (LogicalKeyboardKey.enter, PhysicalKeyboardKey.enter, '\r'),

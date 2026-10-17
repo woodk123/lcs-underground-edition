@@ -310,7 +310,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
       _sending = true;
     });
     final oldValue = console.textInputValue;
-    for (var i = 0; i < oldValue.length; i++) {
+    for (var i = 0; i < oldValue.characters.length; i++) {
       if (!await _textKey('Backspace')) break;
     }
     for (final char in value.characters) {
@@ -1726,6 +1726,16 @@ class _ModernGameShellState extends State<ModernGameShell> {
     if (!classic &&
         console.screen == 'generic' &&
         !console.awaitingInput &&
+        console.graphics.isNotEmpty) {
+      return JournalSurface(
+        key: const ValueKey('journal-live-graphic'),
+        lined: true,
+        child: Center(child: SingleChildScrollView(child: _sourceGraphics())),
+      );
+    }
+    if (!classic &&
+        console.screen == 'generic' &&
+        !console.awaitingInput &&
         !console.textInput &&
         console.actions.isEmpty &&
         console.eventMessage == null) {
@@ -2032,19 +2042,75 @@ class _ModernGameShellState extends State<ModernGameShell> {
               'journal-management-scroll:${navigation?.section ?? 'entry'}',
             ),
             padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
-            child: DirectContent(
-              console: console,
-              onAction: _send,
-              onInspect: _openDossier,
-              textInput: console.textInput,
-              journalPage: true,
-              selectedPersonId: selectedId,
-              hiddenRows: const {0},
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (console.graphics.isNotEmpty) _sourceGraphics(),
+                DirectContent(
+                  console: console,
+                  onAction: _send,
+                  onInspect: _openDossier,
+                  textInput: console.textInput,
+                  journalPage: true,
+                  selectedPersonId: selectedId,
+                  hiddenRows: const {0},
+                ),
+              ],
             ),
           ),
         ),
         if (console.textInput) _inputBar(),
       ],
+    );
+  }
+
+  Widget _sourceGraphics() {
+    final graphics = console.graphics
+        .where((g) => g.right > g.left && g.bottom > g.top)
+        .toList();
+    if (graphics.isEmpty) return const SizedBox.shrink();
+    final bounds = graphics
+        .map((g) => Rect.fromLTRB(g.left, g.top, g.right, g.bottom))
+        .reduce((a, b) => a.expandToInclude(b));
+    return Align(
+      alignment: Alignment.center,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: AspectRatio(
+            aspectRatio: bounds.width / bounds.height,
+            child: LayoutBuilder(
+              builder: (context, size) => Stack(
+                children: [
+                  // Keep the source's layering: an animation replaces the
+                  // flag already painted at the same console coordinates.
+                  for (final graphic in graphics)
+                    Positioned(
+                      left:
+                          (graphic.left - bounds.left) /
+                          bounds.width *
+                          size.maxWidth,
+                      top:
+                          (graphic.top - bounds.top) /
+                          bounds.height *
+                          size.maxHeight,
+                      width:
+                          (graphic.right - graphic.left) /
+                          bounds.width *
+                          size.maxWidth,
+                      height:
+                          (graphic.bottom - graphic.top) /
+                          bounds.height *
+                          size.maxHeight,
+                      child: graphic.graphic,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -2255,7 +2321,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
       );
   String _selection(ConsoleAction action) {
     if (action.y < 0 || action.y >= console.height) return '';
-    final row = console.buffer[action.y].map((c) => c.glyph).join();
+    final row = console.buffer[action.y];
     final start = (action.x + action.width).clamp(0, console.width);
     var end = console.width;
     for (final other in console.actions) {
@@ -2263,7 +2329,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
         end = other.x;
       }
     }
-    return start < end ? row.substring(start, end).trim() : '';
+    return start < end
+        ? row.skip(start).take(end - start).map((c) => c.glyph).join().trim()
+        : '';
   }
 
   Widget _inputBar({bool creation = false}) {

@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:lcs_new_age/engine/changelog.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/modern_app.dart';
+import 'package:lcs_new_age/saveload/native_profile.dart';
 import 'package:lcs_new_age/title_screen/launch_game.dart';
 
-void main() {
+Future<void> main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
+  await configureNativeProfile(arguments);
   // Keep semantic controls available for keyboard and assistive technology.
   WidgetsBinding.instance.ensureSemantics();
   runApp(const MainApp());

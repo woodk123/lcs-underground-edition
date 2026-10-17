@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:lcs_new_age/saveload/native_profile.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/saveload/storage/game_storage.dart';
 import 'package:path/path.dart';
@@ -29,6 +30,8 @@ class SembastStorage implements GameStorage {
   }
 
   Future<Directory> _getAppDataDirectory() async {
+    final explicitDirectory = nativeDataDirectory;
+    if (explicitDirectory != null) return Directory(explicitDirectory);
     final appData = Platform.environment['APPDATA'];
     if (Platform.isWindows && appData != null) {
       final appDir = Directory(join(appData, 'LCS New Age', 'lcs_new_age'));
