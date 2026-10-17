@@ -1577,7 +1577,7 @@ void main() {
       expect(_key('journal-ledger-close').hitTestable(), findsOneWidget);
       expect(
         find.descendant(
-          of: _key('journal-advance-day'),
+          of: _key('journal-ledger-close'),
           matching: find.text('Continue'),
         ),
         findsOneWidget,
@@ -1598,7 +1598,9 @@ void main() {
       expect(_snapshot(), before);
       expect(harness.monthReset, isFalse);
       expect(game.ledger.income[Income.donations], 345);
-      await _tap(tester, 'journal-advance-day');
+      expect(find.text('Continue'), findsOneWidget);
+      expect(_key('journal-advance-day'), findsNothing);
+      await _tap(tester, 'journal-ledger-close');
       expect(harness.monthReset, isTrue);
       expect(game.ledger.income[Income.donations], 0);
       expect(engine.console.screen, 'headquarters');
