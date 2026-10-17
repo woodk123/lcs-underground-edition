@@ -242,6 +242,10 @@ def verify_packaging_evidence(root: Path, report: Path, linux: Path | None) -> N
             shutil.copytree(source, layout / source.name)
         for target in BUILD_TARGETS:
             info = json.loads((layout / f'build-{target}/report.json').read_text())
+            # Check the license copy the packager ships, as well as the
+            # retained artifact license checked below by verify_evidence.
+            if target == 'windows' and info.get('flutter_license_hash') != digest(root / '.tools/flutter/LICENSE'):
+                raise ValueError('Flutter license differs from the prepared player.')
             for relative in info['generated_hashes']:
                 safe_relative(relative)
                 destination = layout / f'build-{target}/generated' / relative

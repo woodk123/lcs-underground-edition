@@ -188,6 +188,23 @@ class EvidenceTests(unittest.TestCase):
             package_release.package(self.root, report, None, self.root / 'release',
                                     'test', None, 'owner/repo', linux=self.root / '.local/linux')
 
+    def test_prepared_flutter_license_is_rechecked_before_packaging(self):
+        report = ci.prepare_release(self.root, self.artifacts)
+        (self.root / '.tools/flutter/LICENSE').write_text('changed after preparation')
+        output = self.root / 'release'
+        with self.assertRaisesRegex(ValueError, 'Flutter license'):
+            package_release.package(self.root, report, None, output,
+                                    'test', None, 'owner/repo', linux=self.root / '.local/linux')
+        self.assertFalse(output.exists())
+
+    def test_missing_prepared_flutter_license_is_rejected(self):
+        report = ci.prepare_release(self.root, self.artifacts)
+        license_path = self.root / '.tools/flutter/LICENSE'
+        license_path.unlink()
+        with self.assertRaises(FileNotFoundError) as error:
+            ci.verify_packaging_evidence(self.root, report, self.root / '.local/linux')
+        self.assertEqual(Path(error.exception.filename), license_path)
+
     def test_ci_nightly_packages_all_players_without_discovering_a_host_windows_toolchain(self):
         report = ci.prepare_release(self.root, self.artifacts)
         for name in ('LICENSE', 'AUTHORS.md', 'README.md', '.gitignore', 'Play.cmd',
