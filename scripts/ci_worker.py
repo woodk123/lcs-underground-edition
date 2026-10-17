@@ -212,6 +212,7 @@ def verify_packaging_evidence(root: Path, report: Path, linux: Path | None) -> N
 
 
 def main() -> None:
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('mode', choices=['checks', 'build', 'verify', 'prepare'])
     parser.add_argument('--platform', choices=PLATFORMS)
