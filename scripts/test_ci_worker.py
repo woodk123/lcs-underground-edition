@@ -20,6 +20,10 @@ class EvidenceTests(unittest.TestCase):
         self.root = Path(temporary.name)
         self.artifacts = self.root / 'artifacts'
         self.expected = {'source_commit': 'a' * 40, 'toolchain': {'flutter_revision': 'b' * 40}}
+        generated = self.root / 'upstream/lib/model.g.dart'
+        generated.parent.mkdir(parents=True, exist_ok=True)
+        generated.write_text('generated serializer')
+        self.generated_hashes = {'lib/model.g.dart': digest(generated)}
         for name in ['a', 'b', 'c', 'd', 'e']:
             path = self.root / f'upstream/test/{name}_test.dart'
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -34,11 +38,15 @@ class EvidenceTests(unittest.TestCase):
                     info = {'schema': 1, **self.expected, 'kind': kind, 'platform': target,
                             'shard': shard if kind == 'checks' else None, 'shards': ci.SHARDS,
                             'run_id': '123', 'status': 'passed',
+                            'generated_hashes': self.generated_hashes,
                             'steps': [{'name': step, 'exit_code': 0}
                                       for step in ci.required_steps(kind, target, shard)]}
                     if kind == 'checks':
                         info['test_files'] = ci.test_files(self.root, shard)
                     else:
+                        generated_copy = self.artifacts / name / 'generated/lib/model.g.dart'
+                        generated_copy.parent.mkdir(parents=True, exist_ok=True)
+                        generated_copy.write_bytes(generated.read_bytes())
                         files = {'bundle': ['lcs_new_age', 'lib/libflutter_linux_gtk.so', 'lib/libapp.so',
                                             'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z']} if target == 'linux' else {
                             'web': ['index.html', 'main.dart.js', 'flutter_bootstrap.js', 'sw.js'],
@@ -104,6 +112,16 @@ class EvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Flutter license'):
             ci.verify_evidence(self.root, self.artifacts)
 
+    def test_generated_source_must_match_builds_and_checks(self):
+        self.mutate('checks-windows-1', lambda i: i.update(generated_hashes={}))
+        with self.assertRaisesRegex(ValueError, 'different generated source'):
+            ci.verify_evidence(self.root, self.artifacts)
+
+    def test_missing_generated_artifact_is_rejected(self):
+        (self.artifacts / 'build-windows/generated/lib/model.g.dart').unlink()
+        with self.assertRaisesRegex(ValueError, 'Generated source differs'):
+            ci.verify_evidence(self.root, self.artifacts)
+
     def test_packager_cannot_trust_adapted_green_report_without_original_checks(self):
         report = ci.prepare_release(self.root, self.artifacts)
         original = report / 'ci/checks-linux-1/report.json'
@@ -115,7 +133,9 @@ class EvidenceTests(unittest.TestCase):
                                     'test', None, 'owner/repo', linux=self.root / '.local/linux')
 
     def test_prepare_and_packaging_recheck_all_original_evidence(self):
+        (self.root / 'upstream/lib/model.g.dart').unlink()
         report = ci.prepare_release(self.root, self.artifacts)
+        self.assertEqual((self.root / 'upstream/lib/model.g.dart').read_text(), 'generated serializer')
         ci.verify_packaging_evidence(self.root, report, self.root / '.local/linux')
         (self.root / 'upstream/build/web/main.dart.js').write_text('changed after preparation')
         with self.assertRaisesRegex(ValueError, 'hashes differ'):

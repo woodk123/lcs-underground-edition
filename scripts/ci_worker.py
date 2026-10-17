@@ -12,7 +12,7 @@ import sys
 import time
 
 from package_release import verify_source_checkout
-from release_common import digest, file_hashes, require_files, runtime_hashes, write_json
+from release_common import digest, file_hashes, require_files, runtime_hashes, safe_relative, write_json
 
 SHARDS = 2
 PLATFORMS = ('linux', 'windows')
@@ -100,7 +100,16 @@ def run_worker(root: Path, kind: str, target: str, shard: int) -> None:
             if code:
                 raise ValueError(f'{step} failed with exit {code}.')
         verify_source_checkout(root, info['source_commit'])
+        generated = {p.relative_to(root / 'upstream').as_posix(): digest(p)
+                     for p in sorted((root / 'upstream/lib').rglob('*.g.dart'))}
+        if not generated:
+            raise ValueError('Generated serialization source is missing.')
+        info['generated_hashes'] = generated
         if kind == 'build':
+            for relative in generated:
+                destination = output / 'generated' / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(root / 'upstream' / relative, destination)
             locations = {'bundle': 'linux/x64/release/bundle'} if target == 'linux' else {
                 'web': 'web', 'native': 'windows/x64/runner/Release'}
             for folder, built in locations.items():
@@ -143,6 +152,8 @@ def verify_evidence(root: Path, artifacts: Path) -> dict[str, dict]:
                 if kind == 'checks' and info.get('test_files') != test_files(root, shard):
                     raise ValueError(f'Test shard inventory differs: {name}')
                 if kind == 'build':
+                    if info.get('generated_hashes') != file_hashes(artifacts / name / 'generated'):
+                        raise ValueError('Generated source differs from the build artifact.')
                     folders = ['bundle'] if target == 'linux' else ['web', 'native']
                     if target == 'linux':
                         runtime_hashes(artifacts / name / 'bundle', 'linux-x64')
@@ -160,6 +171,12 @@ def verify_evidence(root: Path, artifacts: Path) -> dict[str, dict]:
                 reports[name] = info
     if len(run_ids) != 1:
         raise ValueError('All artifacts must come from the same Actions run.')
+    generated = reports['build-windows'].get('generated_hashes')
+    if (not generated or any(not name.startswith('lib/') or not name.endswith('.g.dart')
+                             or safe_relative(name) != name for name in generated)):
+        raise ValueError('Generated source inventory is invalid.')
+    if any(info.get('generated_hashes') != generated for info in reports.values()):
+        raise ValueError('Checks and builds used different generated source.')
     return reports
 
 
@@ -172,7 +189,11 @@ def prepare_release(root: Path, artifacts: Path) -> Path:
     report.mkdir(parents=True, exist_ok=False)
     for name in reports:
         shutil.copytree(artifacts / name, report / 'ci' / name,
-                        ignore=shutil.ignore_patterns('bundle', 'web', 'native'))
+                        ignore=shutil.ignore_patterns('bundle', 'web', 'native', 'generated'))
+    for relative in reports['build-windows']['generated_hashes']:
+        destination = root / 'upstream' / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(artifacts / 'build-windows/generated' / relative, destination)
     for folder, destination in [('web', 'web'), ('native', 'windows/x64/runner/Release')]:
         shutil.copytree(artifacts / 'build-windows' / folder, root / 'upstream/build' / destination)
     license_path = root / '.tools/flutter/LICENSE'
@@ -204,6 +225,13 @@ def verify_packaging_evidence(root: Path, report: Path, linux: Path | None) -> N
         layout = Path(temporary)
         for source in (report / 'ci').iterdir():
             shutil.copytree(source, layout / source.name)
+        for target in PLATFORMS:
+            info = json.loads((layout / f'build-{target}/report.json').read_text())
+            for relative in info['generated_hashes']:
+                safe_relative(relative)
+                destination = layout / f'build-{target}/generated' / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(root / 'upstream' / relative, destination)
         for source, target in [(root / 'upstream/build/web', layout / 'build-windows/web'),
                                (root / 'upstream/build/windows/x64/runner/Release', layout / 'build-windows/native'),
                                (linux / 'bundle', layout / 'build-linux/bundle')]:
