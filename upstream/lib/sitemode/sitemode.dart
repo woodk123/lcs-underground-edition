@@ -563,11 +563,14 @@ Future<void> _siteModeAux() async {
       }
       squad.clear();
 
+      erase();
+      mvaddstr(0, 0, 'Operation ended');
+      mvaddstr(2, 1, 'No squad members remain able to continue.');
       addOptionText(9, 1, "C", "C - Reflect on your Conservative ineptitude");
     }
 
     //PRINT SITE MAP
-    printSiteMapSmall(locx, locy, locz);
+    if (partyalive) printSiteMapSmall(locx, locy, locz);
 
     //CHECK IF YOU HAVE A SQUIRMING AMATEUR HOSTAGE
     //hostcheck SHOULD ONLY BE 1 WHEN A NEWENC IS CREATED

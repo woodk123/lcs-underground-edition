@@ -198,7 +198,10 @@ class Console {
                   a.label.characters.take(a.width).toString(),
         )
         .toList();
-    final end = height;
+    // Inline field reports occupy the two message rows. Combat redraws the
+    // encounter and loot below them before pausing; those are status furniture,
+    // even when they were written since the previous reader.
+    final end = screen == 'field_prompt' ? 11 : height;
     for (var row = journalBodyStart; row < end; row++) {
       final text = StringBuffer();
       final columns = screen == 'field_prompt' && row >= 11 && row <= 22

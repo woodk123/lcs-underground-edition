@@ -47,6 +47,7 @@ class DirectContent extends StatelessWidget {
     this.maxColumn = CONSOLE_WIDTH,
     this.rowMaxColumns = const {},
     this.showActions = true,
+    this.hideActionLabels = false,
     this.excludedActionTypes = const {},
     this.journalPage = false,
     this.selectedPersonId,
@@ -61,6 +62,7 @@ class DirectContent extends StatelessWidget {
   final int maxColumn;
   final Map<int, int> rowMaxColumns;
   final bool showActions;
+  final bool hideActionLabels;
   final Set<String> excludedActionTypes;
   final bool journalPage;
   final int? selectedPersonId;
@@ -144,6 +146,7 @@ class DirectContent extends StatelessWidget {
       rowMaxColumns,
       showActions,
       excludedActionTypes,
+      hideActionLabels,
     );
     if (journalPage && console.navigation?.section == 'equipment') {
       // Keep the explicit Up/Down controls, without repeating their keyboard
@@ -625,6 +628,22 @@ class DirectContent extends StatelessWidget {
               .trim()
         : actionTitle;
     Widget value(_Column column) {
+      final person = action?.entityType == 'person'
+          ? game.pool
+                .where((p) => p.id.toString() == action!.entityId)
+                .firstOrNull
+          : null;
+      final canonicalValue = column.label == 'LOCATION' && person != null
+          ? person.location?.getName(short: true, includeCity: true) ?? 'Away'
+          : column.label == 'MONTHS LEFT' && person?.sentence == 0
+          ? 'Not sentenced'
+          : null;
+      if (canonicalValue != null) {
+        return Text(
+          canonicalValue,
+          style: TextStyle(fontSize: journalPage ? 13 : 14, height: 1.4),
+        );
+      }
       final spans = frame.spans(y, column.start, column.end, trim: true);
       if (!journalPage &&
           (column.label.contains('ACTIVITY') || column.label == 'HEALTH')) {
@@ -1513,6 +1532,7 @@ class _ContentFrame {
     Map<int, int> rowMaxColumns = const {},
     bool showActions = true,
     Set<String> excludedActionTypes = const {},
+    bool hideActionLabels = false,
   ]) : width = maxColumn.clamp(1, console.width),
        revision = console.revision.value {
     rows = [
@@ -1523,6 +1543,22 @@ class _ContentFrame {
                 .join() +
             ' ' * (width - (rowMaxColumns[y] ?? width).clamp(0, width)),
     ];
+    if (hideActionLabels) {
+      for (final action in console.actions) {
+        if (action.y < 0 || action.y >= rows.length) continue;
+        final characters = rows[action.y].characters.toList();
+        final start = action.x.clamp(0, characters.length);
+        final end = (action.x + action.width).clamp(start, characters.length);
+        if (characters.sublist(start, end).join() !=
+            stripConsoleColors(
+              action.label,
+            ).characters.take(end - start).toString()) {
+          continue;
+        }
+        characters.fillRange(start, end, ' ');
+        rows[action.y] = characters.join();
+      }
+    }
     final indices = {
       for (var i = 0; i < console.actions.length; i++) console.actions[i]: i,
     };

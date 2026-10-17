@@ -57,7 +57,7 @@ String equipmentHelp(ItemType type, {ArmorUpgrade? armor}) {
       'Damage and hit chances also depend on the user, target and ammunition.',
     );
   } else if (type is ClothingType) {
-    lines.add(type.description);
+    if (type.description.isNotEmpty) lines.add(type.description);
     final protection = armor ?? type.intrinsicArmor;
     if (protection != null) {
       lines.add(

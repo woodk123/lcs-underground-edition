@@ -6,6 +6,7 @@ import 'package:lcs_new_age/items/armor_upgrade.dart';
 import 'package:lcs_new_age/items/clothing_type.dart';
 import 'package:lcs_new_age/items/item_type.dart';
 import 'package:lcs_new_age/items/weapon_type.dart';
+import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/equipment_help.dart';
 import 'package:lcs_new_age/sitemode/shop.dart';
 
@@ -13,6 +14,14 @@ import 'test_support.dart';
 
 void main() {
   setUpAll(ensureGameDataLoaded);
+
+  test('ordinary clothing help omits the old developer placeholder', () {
+    final type = clothingTypes['CLOTHING_BLACKCLOTHES']!;
+    expect(equipmentHelp(type), isNot(contains('Buggy Armor')));
+    expect(clothingHelp(type), isNot(contains('Buggy Armor')));
+    expect(equipmentHelp(type), contains('Conceals weapons'));
+    expect(clothingHelp(type), contains('Coverage:'));
+  });
 
   test('every shop item has help generated from its loaded definition', () {
     void check(Shop shop) {

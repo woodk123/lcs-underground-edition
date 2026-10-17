@@ -41,6 +41,42 @@ void main() {
   });
 
   for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+    testWidgets(
+      'field conversation choices appear once and remain usable at $size',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = size;
+        addTearDown(tester.view.resetDevicePixelRatio);
+        addTearDown(tester.view.resetPhysicalSize);
+        engine.console.screen = 'field_prompt';
+        engine.console.journalBodyStart = 9;
+        engine.mvaddstr(9, 1, 'Eugene talks to the officer:');
+        engine.addOptionText(12, 1, 'a', 'A - Surrender to authorities');
+        engine.addOptionText(13, 1, 'b', 'B - Do nothing');
+        final reader = engine.console.getkey();
+        await tester.pumpWidget(const MainApp());
+        await tester.pumpAndSettle();
+        expect(
+          find.text('Eugene talks to the officer:', findRichText: true),
+          findsOneWidget,
+        );
+        expect(
+          find.text('A - Surrender to authorities', findRichText: true),
+          findsNothing,
+        );
+        expect(find.text('B - Do nothing', findRichText: true), findsNothing);
+        expect(
+          find.text('Surrender to authorities').hitTestable(),
+          findsOneWidget,
+        );
+        await tester.tap(find.text('Surrender to authorities'));
+        await tester.pump();
+        expect(await reader, 'a');
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+
     testWidgets('field questions retain map and answer in place at $size', (
       tester,
     ) async {

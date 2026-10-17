@@ -129,7 +129,7 @@ String _weaponCondition(Weapon weapon) => weapon.type.usesAmmo
 String clothingHelp(ClothingType type, {Creature? actor, Clothing? actual}) {
   final armor = actual?.armor ?? type.intrinsicArmor;
   return [
-    type.description,
+    if (type.description.isNotEmpty) type.description,
     'Coverage: ${[if (type.coversHead) 'head', if (type.coversBody) 'body', if (type.coversArms) 'arms', if (type.coversLegs) 'legs'].join(', ')}. Face concealed: ${type.concealsFace ? 'yes' : 'no'}.',
     'Configured alarming outfit: ${type.alarming}; police uniform: ${type.police}; culture markers: ${type.culture.join(', ')}. ${actual == null ? '' : 'Current item considered alarming: ${actual.alarming}.'}',
     'Professionalism ${type.professionalism}; concealment allowance ${type.concealWeaponSize}; stealth value ${type.stealthValue}. Professionalism contributes to donation income; it is not a universal disguise bonus.',

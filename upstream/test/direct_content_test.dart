@@ -6,10 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/basemode/activate_regulars.dart';
 import 'package:lcs_new_age/basemode/base_actions.dart';
+import 'package:lcs_new_age/basemode/review_mode.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
+import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/modern/direct_content.dart';
 import 'package:lcs_new_age/modern/modern_app.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
@@ -87,6 +89,29 @@ void main() {
   });
 
   for (final size in [const Size(1280, 800), const Size(800, 600)]) {
+    testWidgets(
+      'custody roster preserves location and pending sentence at $size',
+      (tester) async {
+        final person = game.pool.first;
+        person.squad = null;
+        person.location = game.sites.firstWhere(
+          (s) => s.type == SiteType.policeStation,
+        );
+        person.sentence = 0;
+        final flow = reviewMode(ReviewMode.justice);
+        await mountContent(tester, size, flow);
+        expect(
+          find.text(
+            person.location!.getName(short: true, includeCity: true),
+            findRichText: true,
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Not sentenced'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
     testWidgets('save rows retain dates after a separate shortcut at $size', (
       tester,
     ) async {

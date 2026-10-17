@@ -1578,6 +1578,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
                                             row: 55,
                                         },
                                         showActions: !fieldPrompt,
+                                        hideActionLabels: fieldPrompt,
                                         excludedActionTypes: const {
                                           'field-direction',
                                         },

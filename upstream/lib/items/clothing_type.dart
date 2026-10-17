@@ -27,7 +27,7 @@ class ClothingType extends ItemType {
   String get shortName => _shortName ?? name;
   set shortName(String value) => _shortName = value;
   String? shortNameFuture;
-  String description = "Buggy Armor";
+  String description = "";
   String? descriptionFuture;
   int interrogationBasePower = 0;
   int interrogationAssaultBonus = 0;
@@ -54,19 +54,30 @@ class ClothingType extends ItemType {
     } else {
       armors.add(armorUpgrades.values.first);
     }
-    armors.addAll(allowedArmorIds
-        .map((id) => armorUpgrades[id]!)
-        .where((a) => !armors.contains(a)));
+    armors.addAll(
+      allowedArmorIds
+          .map((id) => armorUpgrades[id]!)
+          .where((a) => !armors.contains(a)),
+    );
     if (upgradable && intrinsicArmorId == null) {
       if (allowVisibleArmor) {
-        armors.addAll(armorUpgrades.values
-            .where((a) => a.visible && !a.restricted && !armors.contains(a)));
+        armors.addAll(
+          armorUpgrades.values.where(
+            (a) => a.visible && !a.restricted && !armors.contains(a),
+          ),
+        );
       }
-      armors.addAll(armorUpgrades.values
-          .where((a) => !a.visible && !a.restricted && !armors.contains(a)));
+      armors.addAll(
+        armorUpgrades.values.where(
+          (a) => !a.visible && !a.restricted && !armors.contains(a),
+        ),
+      );
       if (!allowVisibleArmor) {
-        armors.addAll(armorUpgrades.values
-            .where((a) => a.visible && !a.restricted && !armors.contains(a)));
+        armors.addAll(
+          armorUpgrades.values.where(
+            (a) => a.visible && !a.restricted && !armors.contains(a),
+          ),
+        );
       }
     }
     return armors;
@@ -76,15 +87,17 @@ class ClothingType extends ItemType {
   List<String> culture = [];
   String? genderString;
   Gender get gender => switch (genderString) {
-        "MALE" => Gender.male,
-        "FEMALE" => Gender.female,
-        "NONBINARY" => Gender.nonbinary,
-        "MALE_BIAS" => Gender.male,
-        "FEMALE_BIAS" => Gender.female,
-        _ => Gender.nonbinary,
-      };
-  List<String> traitsList(bool includeArmor,
-      {ArmorUpgrade? specifiedArmorUpgrade}) {
+    "MALE" => Gender.male,
+    "FEMALE" => Gender.female,
+    "NONBINARY" => Gender.nonbinary,
+    "MALE_BIAS" => Gender.male,
+    "FEMALE_BIAS" => Gender.female,
+    _ => Gender.nonbinary,
+  };
+  List<String> traitsList(
+    bool includeArmor, {
+    ArmorUpgrade? specifiedArmorUpgrade,
+  }) {
     List<String> traits = [];
     specifiedArmorUpgrade ??= intrinsicArmor;
     if (concealsFace) {

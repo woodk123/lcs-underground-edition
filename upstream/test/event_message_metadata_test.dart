@@ -3,10 +3,14 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/common_display/common_display.dart';
+import 'package:lcs_new_age/creature/creature.dart';
+import 'package:lcs_new_age/creature/creature_type.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
+import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/saveload/save_load.dart';
+import 'package:lcs_new_age/sitemode/site_display.dart';
 import 'package:lcs_new_age/utils/colors.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 
@@ -54,6 +58,31 @@ void main() {
     game.gameState = decodeSaveContents(fixture).gameState!;
   });
   tearDown(() => clearScreenOnNextMessage = false);
+
+  test(
+    'inline combat reports omit freshly redrawn encounter and loot rows',
+    () async {
+      game.mode = GameMode.site;
+      game.encounter.add(Creature.fromId(CreatureTypeIds.swat));
+      clearMessageArea();
+      engine.mvaddstr(9, 1, 'Felix hits the attacker.');
+      engine.mvaddstr(10, 1, 'The armor absorbs part of the shot.');
+      printEncounter();
+      engine.mvaddstr(22, 1, 'Loot on the ground!');
+      final before = bufferContents(engine.console);
+      final flow = engine.acknowledge(title: 'Operation report');
+      expect(
+        engine.console.eventMessage,
+        'Felix hits the attacker.\nThe armor absorbs part of the shot.',
+      );
+      expect(bufferContents(engine.console), before);
+      expect(engine.console.awaitingInput, isTrue);
+      engine.console.sendInput('Enter');
+      await flow;
+      expect(engine.console.eventMessage, isNull);
+      game.mode = GameMode.base;
+    },
+  );
 
   for (final clearScreen in [false, true]) {
     test(
