@@ -1,0 +1,100 @@
+name: Checked player artifacts
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: ${{ matrix.platform }} checks shard ${{ matrix.shard }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [linux, windows]
+        shard: [0, 1]
+        include:
+          - platform: linux
+            runner: ubuntu-22.04
+          - platform: windows
+            runner: windows-2022
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: ./.github/actions/setup-flutter
+      - name: Test and analyze
+        run: python scripts/ci_worker.py checks --platform ${{ matrix.platform }} --shard ${{ matrix.shard }}
+      - name: Retain shard evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checks-${{ matrix.platform }}-${{ matrix.shard }}
+          path: .local/ci/checks-${{ matrix.platform }}-${{ matrix.shard }}/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error
+
+  builds:
+    name: ${{ matrix.platform }} release build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            runner: ubuntu-22.04
+          - platform: windows
+            runner: windows-2022
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install Linux native dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev
+      - uses: ./.github/actions/setup-flutter
+        with:
+          save-cache: 'true'
+      - name: Build release players
+        run: python scripts/ci_worker.py build --platform ${{ matrix.platform }}
+      - name: Retain build and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.platform }}
+          path: .local/ci/build-${{ matrix.platform }}/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error
+
+  verify:
+    name: Verify complete CI evidence
+    needs: [checks, builds]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          path: .local/artifacts
+      - name: Verify all shards, source identities and runtime hashes
+        env:
+          CI_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: python scripts/ci_worker.py verify

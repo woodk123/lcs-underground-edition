@@ -118,7 +118,11 @@ Run `./lcs_new_age` from the bundle folder on a graphical Linux desktop. Keep th
 
 ## Checks on pushes and pull requests
 
-[Project checks](../.github/workflows/checks.yml) runs on every push and pull request, and can also be started manually. It tests the release tools, verifies assets, generates serializers, runs Flutter tests and performs focused/full-project analysis with the pinned SDK. A separate Ubuntu 22.04 job runs the same checks and compiles the Linux x64 release. Focused analysis is strict; full-project errors fail while legacy warnings and infos remain visible.
+[Project checks](../.github/workflows/checks.yml) runs on every push and pull request, and can also be started manually. It calls the shared [checked-player pipeline](../.github/workflows/ci.yml). Two test shards on each of Windows 2022 and Ubuntu 22.04 run alongside independent Linux and Windows/web release builds. Every test file runs once per operating system; shard 0 also runs release-tool tests, asset verification and focused/full-project analysis. Focused analysis is strict; full-project errors fail while legacy warnings and infos remain visible.
+
+The shared setup caches the pinned Flutter SDK and Dart package downloads separately for each operating system. SDK keys include the toolchain file; package keys also include `pubspec.lock`. Cached SDKs still have their version and revision verified. Only trusted build workers save shared caches. No compiled player or passed-test status is taken from a cache.
+
+Each worker retains its logs and a machine-readable report with source commit, toolchain, Actions run identity, step results and timings. Reports also record exact shard coverage or runtime file hashes. A final verification job requires all four shards and both builds to pass and match before the workflow succeeds. Build artifacts and reports remain available for seven days.
 
 Checks use read-only repository access and do not publish downloads. A newer push cancels an older checks run for the same branch or pull request. Requiring these checks before merging is a separate branch-protection setting.
 
@@ -126,7 +130,11 @@ Checks use read-only repository access and do not publish downloads. A newer pus
 
 [The workflow](../.github/workflows/nightly.yml) runs at **03:23 UTC daily** and can be started manually with **Run workflow** from [GitHub Actions](https://github.com/woodk123/lcs-underground-edition/actions/workflows/nightly.yml). It runs only on the default branch. It skips a build when game/build inputs match the last successfully published Nightly; documentation-only commits do not trigger a rebuild.
 
-CI first checks for changed inputs, then builds and checks Linux on Ubuntu 22.04. Once that passes, Windows CI downloads the checked bundle and runs `scripts/build_release.ps1 -Nightly -LinuxBundle "$PWD/.local/linux"`. Flutter tests, analysis, Linux, web and Windows builds, source packaging and archive integrity must pass before publication. A failed Linux job prevents publication and leaves the previous nightly available.
+After checking for changed inputs, the nightly looks for a successful **push** run of Project checks from the same repository, default branch and exact commit. If that push is still running, it waits up to twenty minutes rather than starting duplicate work. A successful run is reusable only while all six required artifacts remain available. PR runs, different commits, missing/expired artifacts and failed runs do not provide reusable checks. Without usable evidence, the nightly runs the shared pipeline itself, with Linux and Windows/web builds in parallel.
+
+The publication job downloads artifacts from the selected Actions run, verifies all shard inventories, check results, commit/toolchain/run identities and runtime file hashes, then packages the players and matching source. Original CI evidence is included in the Source ZIP. The packager rechecks that evidence against the actual payloads before archiving. It also retains the existing source-cleanliness, runtime-completeness, size-budget, archive-integrity and checksum gates. No Flutter SDK installation or compilation is needed in the publication job. A failed check or build prevents publication and leaves the previous nightly available.
+
+The local `scripts/build_release.ps1` and standalone Linux builder retain their complete self-contained checks; CI reuse does not create a local skip-tests switch. Cache misses remain supported and produce the same checks and players. Warm-run speed depends on runner availability and test-shard balance; use worker reports rather than assuming fixed savings.
 
 Each [Nightly](https://github.com/woodk123/lcs-underground-edition/releases?q=nightly-) has separate Windows Player, Linux Player, Web Player and Source ZIPs, each with a SHA-256 sidecar. All players reference the same corresponding Source ZIP, which includes Linux build evidence. The publisher uploads and verifies a complete new draft before publishing it and retiring older managed nightlies. The early preview and manually created releases are kept separate. CI logs remain Actions artifacts for seven days.
 

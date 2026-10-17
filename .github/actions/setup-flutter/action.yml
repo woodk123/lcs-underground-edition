@@ -1,0 +1,42 @@
+name: Cached pinned Flutter
+description: Restore SDK and package downloads, then verify the exact pinned SDK.
+inputs:
+  save-cache:
+    description: Only one trusted build worker per OS writes shared caches.
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - name: Restore pinned SDK
+      id: sdk
+      uses: actions/cache/restore@v4
+      with:
+        path: .tools/flutter
+        key: flutter-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/toolchain.json') }}
+    - name: Restore Dart package downloads
+      id: pub
+      uses: actions/cache/restore@v4
+      with:
+        path: .local/pub-cache
+        key: pub-v1-${{ runner.os }}-${{ hashFiles('scripts/toolchain.json') }}-${{ hashFiles('upstream/pubspec.lock') }}
+        restore-keys: pub-v1-${{ runner.os }}-${{ hashFiles('scripts/toolchain.json') }}-
+    - name: Verify SDK and warm dependencies
+      shell: bash
+      env:
+        PUB_CACHE: ${{ github.workspace }}/.local/pub-cache
+      run: python scripts/ci_setup.py
+    - name: Set package cache for subsequent steps
+      shell: bash
+      run: echo "PUB_CACHE=${GITHUB_WORKSPACE}/.local/pub-cache" >> "$GITHUB_ENV"
+    - name: Save pinned SDK
+      if: inputs.save-cache == 'true' && github.event_name != 'pull_request' && steps.sdk.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: .tools/flutter
+        key: ${{ steps.sdk.outputs.cache-primary-key }}
+    - name: Save Dart package downloads
+      if: inputs.save-cache == 'true' && github.event_name != 'pull_request' && steps.pub.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: .local/pub-cache
+        key: ${{ steps.pub.outputs.cache-primary-key }}

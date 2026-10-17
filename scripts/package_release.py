@@ -52,6 +52,9 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
     if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repository):
         raise ValueError('Invalid GitHub repository.')
     info = json.loads((report / 'build-info.json').read_text(encoding='utf-8-sig'))
+    if info.get('ci_evidence'):
+        from ci_worker import verify_packaging_evidence
+        verify_packaging_evidence(root, report, linux)
     required = ['01-dependencies', '02-serialization', '03-tests', '04-focused-analysis',
                 '05-full-analysis', '06-web-release', '07-offline-manifest']
     if runtime is not None:

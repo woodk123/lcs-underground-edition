@@ -23,12 +23,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y curl unzip xz-utils zip clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev
-      - name: Install pinned Flutter SDK
-        run: |
-          version=$(python -c 'import json; print(json.load(open("scripts/toolchain.json"))["flutter_version"])')
-          repository=$(python -c 'import json; print(json.load(open("scripts/toolchain.json"))["flutter_repository"])')
-          git clone --depth 1 --branch "$version" "$repository" .tools/flutter
-          .tools/flutter/bin/flutter config --no-analytics --enable-linux-desktop
+      - uses: ./.github/actions/setup-flutter
+        with:
+          save-cache: 'true'
       - name: Test release tools and verify assets
         run: |
           python -m unittest discover -s scripts -p 'test_*.py' -v

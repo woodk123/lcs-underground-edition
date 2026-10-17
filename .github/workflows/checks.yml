@@ -13,52 +13,5 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linux:
-    uses: ./.github/workflows/linux.yml
-  checks:
-    name: Tests and analysis
-    runs-on: windows-2022
-    timeout-minutes: 30
-    defaults:
-      run:
-        shell: pwsh
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - name: Test packaging and release tools
-        run: python -m unittest discover -s scripts -p 'test_*.py' -v
-      - name: Verify artwork provenance and portrait manifests
-        run: python scripts/verify_assets.py
-      - name: Install and verify pinned Flutter SDK
-        run: |
-          $pin = Get-Content scripts/toolchain.json -Raw | ConvertFrom-Json
-          New-Item -ItemType Directory -Force .tools | Out-Null
-          git clone -c core.longpaths=true --depth 1 --branch $pin.flutter_version $pin.flutter_repository .tools/flutter
-          if ($LASTEXITCODE -ne 0) { throw 'Flutter checkout failed.' }
-          .tools/flutter/bin/flutter.bat config --no-analytics
-          if ($LASTEXITCODE -ne 0) { throw 'Flutter setup failed.' }
-          . ./scripts/common.ps1
-          Get-LcsFlutter | Out-Null
-      - name: Resolve game dependencies
-        working-directory: upstream
-        run: ../.tools/flutter/bin/flutter.bat --suppress-analytics pub get
-      - name: Generate serialization
-        working-directory: upstream
-        run: ../.tools/flutter/bin/dart.bat run build_runner build
-      - name: Run game tests
-        working-directory: upstream
-        run: ../.tools/flutter/bin/flutter.bat --suppress-analytics test --no-pub
-      - name: Analyze modern interface and engine integration
-        working-directory: upstream
-        run: >-
-          ../.tools/flutter/bin/flutter.bat --suppress-analytics analyze --no-pub
-          lib/modern lib/main.dart lib/engine/console.dart lib/engine/console_widget.dart
-          lib/engine/console_char.dart lib/engine/console_graphic.dart
-      - name: Analyze complete project
-        working-directory: upstream
-        # Match the nightly policy: legacy warnings/infos remain visible; errors fail.
-        run: ../.tools/flutter/bin/flutter.bat --suppress-analytics analyze --no-pub --no-fatal-infos --no-fatal-warnings
+  pipeline:
+    uses: ./.github/workflows/ci.yml

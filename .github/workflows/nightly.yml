@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: nightly-release
@@ -21,6 +22,7 @@ jobs:
       changed: ${{ steps.changes.outputs.changed }}
       fingerprint: ${{ steps.changes.outputs.fingerprint }}
       tag: ${{ steps.changes.outputs.tag }}
+      reuse_run: ${{ steps.reuse.outputs.run_id }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -33,19 +35,29 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python scripts/nightly_release.py check
+      - name: Reuse successful checks and builds for this exact commit
+        id: reuse
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/ci_reuse.py
 
-  linux:
+  build:
     needs: changes
-    if: needs.changes.outputs.changed == 'true'
-    uses: ./.github/workflows/linux.yml
+    if: needs.changes.outputs.changed == 'true' && needs.changes.outputs.reuse_run == ''
+    uses: ./.github/workflows/ci.yml
 
   nightly:
-    needs: [changes, linux]
-    if: needs.changes.outputs.changed == 'true'
+    needs: [changes, build]
+    if: >-
+      always() && !cancelled() && needs.changes.result == 'success' &&
+      needs.changes.outputs.changed == 'true' &&
+      (needs.changes.outputs.reuse_run != '' || needs.build.result == 'success')
     runs-on: windows-2022
     timeout-minutes: 90
     permissions:
       contents: write
+      actions: read
     defaults:
       run:
         shell: pwsh
@@ -56,30 +68,28 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - name: Download checked Linux bundle
+      - name: Download checked players and all shard evidence
         uses: actions/download-artifact@v4
         with:
-          name: linux-x64-bundle
-          path: .local/linux
-      - name: Install pinned Flutter SDK
-        run: |
-          $pin = Get-Content scripts/toolchain.json -Raw | ConvertFrom-Json
-          New-Item -ItemType Directory -Force .tools | Out-Null
-          git clone -c core.longpaths=true --depth 1 --branch $pin.flutter_version $pin.flutter_repository .tools/flutter
-          if ($LASTEXITCODE -ne 0) { throw 'Flutter checkout failed.' }
-          .tools/flutter/bin/flutter.bat config --no-analytics --enable-windows-desktop
-          if ($LASTEXITCODE -ne 0) { throw 'Flutter setup failed.' }
+          path: .local/artifacts
+          run-id: ${{ needs.changes.outputs.reuse_run || github.run_id }}
+          github-token: ${{ github.token }}
       - name: Verify nightly tooling
         run: |
           python -m unittest discover -s scripts -p 'test_*.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Release tooling tests failed.' }
           python scripts/verify_assets.py
           if ($LASTEXITCODE -ne 0) { throw 'Asset verification failed.' }
-      - name: Test, analyze, build and package all players
+      - name: Validate original evidence and package all players
         env:
+          CI_ARTIFACT_RUN_ID: ${{ needs.changes.outputs.reuse_run || github.run_id }}
           NIGHTLY_FINGERPRINT: ${{ needs.changes.outputs.fingerprint }}
           NIGHTLY_TAG: ${{ needs.changes.outputs.tag }}
-        run: ./scripts/build_release.ps1 -Nightly -LinuxBundle "$PWD/.local/linux"
+        run: |
+          python scripts/ci_worker.py prepare
+          if ($LASTEXITCODE -ne 0) { throw 'CI evidence validation failed.' }
+          python scripts/package_release.py --root "$PWD" --report "$PWD/.local/reports/ci-release" --nightly --linux "$PWD/.local/linux"
+          if ($LASTEXITCODE -ne 0) { throw 'Nightly packaging failed.' }
       - name: Publish complete Nightly prerelease
         env:
           GH_TOKEN: ${{ github.token }}
