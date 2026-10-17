@@ -108,9 +108,6 @@ Future<void> _doActivityRecruit(Creature cr) async {
       if (isBackKey(c)) break;
       c -= 'a'.codePoint;
       if (c >= 0 && c < encounter.length) {
-        siteAlarm = false;
-        siteAlienated = SiteAlienation.none;
-
         Creature target = encounter[c];
         await _introduceRecruit(cr, target);
         encounter.remove(target);
@@ -123,6 +120,8 @@ Future<void> _doActivityRecruit(Creature cr) async {
 }
 
 Future<void> _introduceRecruit(Creature recruiter, Creature target) async {
+  siteAlarm = false;
+  siteAlienated = SiteAlienation.none;
   erase();
   mvaddstrc(0, 0, white, 'Adventures in Liberal Recruitment');
   printCreatureInfo(target, showCarPrefs: ShowCarPrefs.onFoot);
@@ -145,34 +144,25 @@ class RecruitData {
   int difficulty;
 }
 
-List<RecruitData>? _recruitData;
 List<RecruitData> get recruitableCreatures {
-  List<RecruitData>? recruitData = _recruitData;
-  if (recruitData == null) {
-    recruitData = creatureTypes.values
-        .map<RecruitData?>((e) {
-          int? difficulty = e.recruitActivityDifficulty;
-          if (difficulty == null) return null;
-          return RecruitData(e, e.name, difficulty);
-        })
-        .nonNulls
-        .toList();
-    _recruitData = recruitData;
-  }
-  for (int i = 0; i < recruitData.length; i++) {
-    // Dynamic difficulty for certain creatures
-    if (recruitData[i].type.id == CreatureTypeIds.mutant) {
-      if (mutantsCommon) {
-        recruitData[i].difficulty = 2;
-      } else if (mutantsPossible) {
-        recruitData[i].difficulty = 6;
-      } else {
-        recruitData.removeAt(i--);
-      }
+  // Availability changes with the laws. Build a snapshot so filtering out a
+  // profession cannot remove it from future campaigns or mutate an open menu.
+  final recruitData = <RecruitData>[];
+  for (final type in creatureTypes.values) {
+    int? difficulty = type.recruitActivityDifficulty;
+    if (difficulty == null) continue;
+    if (type.id == CreatureTypeIds.mutant) {
+      if (!mutantsPossible) continue;
+      difficulty = mutantsCommon ? 2 : 6;
     }
+    recruitData.add(RecruitData(type, type.name, difficulty));
   }
-  recruitData.sort(
-    (a, b) => (a.difficulty - b.difficulty) * 2 + a.name.compareTo(b.name),
-  );
+  recruitData.sort((a, b) {
+    final difficultyOrder = a.difficulty.compareTo(b.difficulty);
+    if (difficultyOrder != 0) return difficultyOrder;
+    final nameOrder = a.name.compareTo(b.name);
+    if (nameOrder != 0) return nameOrder;
+    return a.type.id.compareTo(b.type.id);
+  });
   return recruitData;
 }

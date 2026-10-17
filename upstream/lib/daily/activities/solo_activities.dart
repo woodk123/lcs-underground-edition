@@ -29,18 +29,20 @@ import 'package:lcs_new_age/utils/lcsrandom.dart';
 Future<void> _selectRecruitTarget(Creature cr) async {
   erase();
   cr.activity = Activity(ActivityType.recruiting);
+  // Keep each displayed letter tied to the same profession for this reader.
+  final targets = recruitableCreatures;
   await pagedInterface(
     headerPrompt:
         "What type of person will ${cr.name} try to meet and recruit?",
     headerKey: {4: "TYPE", 49: "DIFFICULTY TO ARRANGE MEETING"},
     footerPrompt: "Press a Letter to select a Profession",
-    count: recruitableCreatures.length,
+    count: targets.length,
     lineBuilder: (y, key, index) {
-      addOptionText(y, 0, key, "$key - ${recruitableCreatures[index].name}");
-      addDifficultyText(y, 49, recruitableCreatures[index].difficulty);
+      addOptionText(y, 0, key, "$key - ${targets[index].name}");
+      addDifficultyText(y, 49, targets[index].difficulty);
     },
     onChoice: (index) async {
-      cr.activity.idString = recruitableCreatures[index].type.id;
+      cr.activity.idString = targets[index].type.id;
       return true;
     },
   );
