@@ -11,6 +11,7 @@ import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/equipment_help.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
+import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 
@@ -163,6 +164,8 @@ class CrewInspector extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        JuiceProgress(person: person),
+                        const SizedBox(height: 12),
                         _inlineFact(
                           'Personal assignment',
                           person.activity.description,
@@ -170,6 +173,10 @@ class CrewInspector extends StatelessWidget {
                         Text(
                           assignment.summary,
                           style: const TextStyle(color: _muted, fontSize: 11),
+                        ),
+                        JuiceActivityHint(
+                          person: person,
+                          activity: person.activity.type,
                         ),
                         if (assignment.factors.isNotEmpty)
                           _inlineFact('Uses', assignment.factors),
@@ -647,6 +654,8 @@ class _CrewDossierState extends State<CrewDossier> {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
+                        const SizedBox(height: 4),
+                        JuiceProgress(person: person),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 6,
@@ -950,7 +959,10 @@ class _CrewDossierState extends State<CrewDossier> {
             _fact('Occupation', person.type.name),
             _fact('Political alignment', _capitalize(person.align.name)),
             _fact('Days since joining', '${person.daysSinceJoined}'),
-            _fact('Reputation', '${person.juice} juice · ${person.title}'),
+            _fact(
+              'Juice · experience & standing',
+              '${person.juice} · ${person.title}',
+            ),
             if (person.boss != null) _fact('Recruited by', person.boss!.name),
             if (!person.alive)
               _fact('Days since death', '${person.daysSinceDeath}'),

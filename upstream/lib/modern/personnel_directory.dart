@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
+import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/politics/alignment.dart' as politics;
 
 enum PersonnelFilter {
@@ -15,7 +16,7 @@ enum PersonnelFilter {
   dead,
 }
 
-enum PersonnelSort { name, status, location }
+enum PersonnelSort { name, status, location, juice }
 
 /// Local reading preferences. None of these controls dispatch engine input.
 class PersonnelDirectoryController extends ChangeNotifier {
@@ -68,7 +69,8 @@ String personnelFilterLabel(PersonnelFilter filter) => switch (filter) {
 bool _matchesFilter(Creature person, PersonnelFilter filter) =>
     switch (filter) {
       PersonnelFilter.all => true,
-  PersonnelFilter.active => person.isActiveLiberal && person.hidingDaysLeft == 0,
+      PersonnelFilter.active =>
+        person.isActiveLiberal && person.hidingDaysLeft == 0,
       PersonnelFilter.hospital => person.alive && person.hospitalized,
       PersonnelFilter.custody => person.alive && person.imprisoned,
       PersonnelFilter.sleepers => person.alive && person.sleeperAgent,
@@ -142,6 +144,8 @@ class PersonnelDirectory extends StatelessWidget {
                         [
                           person.name,
                           person.properName,
+                          person.title,
+                          'Juice ${person.juice}',
                           personnelStatus(person),
                           personnelLocation(person),
                           person.type.name,
@@ -160,6 +164,7 @@ class PersonnelDirectory extends StatelessWidget {
                 PersonnelSort.location => personnelLocation(
                   a,
                 ).compareTo(personnelLocation(b)),
+                PersonnelSort.juice => b.juice.compareTo(a.juice),
               };
               return by != 0
                   ? by
@@ -297,6 +302,7 @@ class PersonnelDirectory extends StatelessWidget {
                                   PersonnelSort.name => 'Name',
                                   PersonnelSort.status => 'Status',
                                   PersonnelSort.location => 'Location',
+                                  PersonnelSort.juice => 'Juice',
                                 }}',
                                 style: JournalPalette.small,
                               ),
@@ -381,7 +387,7 @@ class PersonnelDirectory extends StatelessWidget {
         ? JournalPalette.danger
         : JournalPalette.olive;
     final location = personnelLocation(person);
-    final details = [
+    final condition = [
       if (person.alive) 'Blood ${person.blood}/${person.maxBlood}',
       if (person.alive && person.hospitalized)
         'Medical bill \$${_money(person.medicalBills)}',
@@ -407,7 +413,8 @@ class PersonnelDirectory extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
         ),
         child: Semantics(
-          label: 'Open dossier for ${person.name}. $status. $location. $details.',
+          label:
+              'Open dossier for ${person.name}. $status. $location. Juice ${person.juice}, ${person.title}. $condition.',
           excludeSemantics: true,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -425,6 +432,15 @@ class PersonnelDirectory extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 3),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: JuiceBadge(
+                        person: person,
+                        compact: true,
+                        showHelp: false,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
                     Text(
                       status,
                       style: JournalPalette.small.copyWith(
@@ -434,10 +450,7 @@ class PersonnelDirectory extends StatelessWidget {
                     ),
                     Text(location, style: JournalPalette.small),
                     const SizedBox(height: 4),
-                    Text(
-                      details,
-                      style: JournalPalette.small,
-                    ),
+                    Text(condition, style: JournalPalette.small),
                   ],
                 ),
               ),

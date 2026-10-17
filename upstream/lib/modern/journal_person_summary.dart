@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lcs_new_age/engine/journal_context.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
+import 'package:lcs_new_age/modern/juice_indicator.dart';
 
 class JournalPersonCard extends StatelessWidget {
   const JournalPersonCard({
@@ -55,6 +56,7 @@ class JournalPersonCard extends StatelessWidget {
                     ),
                     if (summary.health.isNotEmpty)
                       Text('Health: ${summary.health}'),
+                    JuiceBadge(person: summary.person, compact: true),
                   ],
                 ),
               ),

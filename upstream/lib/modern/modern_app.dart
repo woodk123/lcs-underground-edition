@@ -31,6 +31,7 @@ import 'package:lcs_new_age/modern/journal_pursuit.dart';
 import 'package:lcs_new_age/modern/journal_recovery.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/journal_title.dart';
+import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/modern/organisation_journal.dart';
 import 'package:lcs_new_age/modern/tactical_map.dart';
@@ -1500,17 +1501,31 @@ class _ModernGameShellState extends State<ModernGameShell> {
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
                                   children: [
-                                    Text(
-                                      fieldPrompt
-                                          ? console.eventTitle ??
-                                                'Field decision'
-                                          : 'Squad & orders',
-                                      key: fieldPrompt
-                                          ? const ValueKey(
-                                              'journal-field-prompt',
-                                            )
-                                          : null,
-                                      style: JournalPalette.heading,
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            fieldPrompt
+                                                ? console.eventTitle ??
+                                                      'Field decision'
+                                                : 'Squad & orders',
+                                            key: fieldPrompt
+                                                ? const ValueKey(
+                                                    'journal-field-prompt',
+                                                  )
+                                                : null,
+                                            style: JournalPalette.heading,
+                                          ),
+                                        ),
+                                        if (game.activeSquadMember ??
+                                                game.squad.firstOrNull
+                                            case final fieldActor?)
+                                          JuiceBadge(
+                                            person: fieldActor,
+                                            compact: true,
+                                            showHelp: false,
+                                          ),
+                                      ],
                                     ),
                                     const SizedBox(height: 8),
                                     if (!fieldPrompt)
@@ -1524,7 +1539,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
                                           for (final person in game.squad)
                                             Tooltip(
                                               message:
-                                                  '${person.name} · ${person.blood}/${person.maxBlood} blood',
+                                                  '${person.name} · Juice ${person.juice} · ${person.blood}/${person.maxBlood} blood',
                                               child: Semantics(
                                                 button: true,
                                                 label:

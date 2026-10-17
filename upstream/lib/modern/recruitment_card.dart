@@ -3,6 +3,7 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
+import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 
 /// A read-only summary of this person's actual skill levels, with stable ties.
@@ -92,6 +93,7 @@ class RecruitmentCard extends StatelessWidget {
                     Text(
                       '${person.type.name}${person.human ? ' · Age ${person.age}' : ''}',
                     ),
+                    JuiceBadge(person: person, compact: true),
                   ],
                 ),
               ),

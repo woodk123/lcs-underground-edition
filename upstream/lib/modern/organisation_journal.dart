@@ -20,6 +20,7 @@ import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_city_plan.dart';
 import 'package:lcs_new_age/modern/journal_order_icon.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
+import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/location_details.dart';
 import 'package:lcs_new_age/modern/location_help.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
@@ -699,9 +700,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                       ),
                       Tooltip(
                         message:
-                            '${actor.title} · ${actor.blood}/${actor.maxBlood} blood${wounded ? ' · Injured' : ''}',
+                            'Juice ${actor.juice} · ${actor.title} · ${actor.blood}/${actor.maxBlood} blood${wounded ? ' · Injured' : ''}',
                         child: Text(
-                          '${actor.title} · ${actor.blood}/${actor.maxBlood} blood',
+                          'Juice ${actor.juice} · ${actor.blood}/${actor.maxBlood} blood',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: JournalPalette.small.copyWith(
@@ -1190,6 +1191,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 ),
               ),
             ),
+            JuiceBadge(person: member, compact: true, showHelp: false),
             if (member.activity.type != ActivityType.none)
               Tooltip(
                 message: member.activity.description,
@@ -1496,6 +1498,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                         : help.timing,
                     style: JournalPalette.small,
                   ),
+                  if (actor != null)
+                    JuiceActivityHint(person: actor, activity: type),
                   if (!visitInProgress &&
                       type == ActivityType.visit &&
                       notices.isNotEmpty)

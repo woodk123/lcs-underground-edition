@@ -4,6 +4,7 @@ import 'package:lcs_new_age/creature/attributes.dart';
 import 'package:lcs_new_age/creature/body.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/gender.dart';
+import 'package:lcs_new_age/creature/level.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/engine.dart';
 import 'package:lcs_new_age/engine/journal_context.dart';
@@ -422,24 +423,9 @@ void printFullCreatureStats(Creature cr,
   // Add juice
   move(9, 16);
   addstr("Juice: ${cr.juice}");
-  if (cr.juice < 1000) {
+  if (nextJuiceThreshold(cr.juice) case final next?) {
     move(10, 16);
-    addstr("Next:  ");
-    if (cr.juice < 0) {
-      addstr("0");
-    } else if (cr.juice < 10) {
-      addstr("10");
-    } else if (cr.juice < 50) {
-      addstr("50");
-    } else if (cr.juice < 100) {
-      addstr("100");
-    } else if (cr.juice < 200) {
-      addstr("200");
-    } else if (cr.juice < 500) {
-      addstr("500");
-    } else {
-      addstr("1000");
-    }
+    addstr('Next:  $next');
   }
   // Add attributes
   move(5, 0);

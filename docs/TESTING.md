@@ -30,6 +30,12 @@ The tests exercise archive integrity/tampering, complete source snapshots, local
 
 ## Browser regressions
 
+### Juice visibility
+
+`juice_status_test.dart` checks negative and positive rank boundaries, alignment exemptions, recruitment limits, stage progress, verified activity caps and pure inspection. `juice_indicator_test.dart` checks current benefits, next milestones, help on pointer/keyboard/touch, enlarged/mobile layouts, accessible Juice sorting and unchanged live-reader/campaign/RNG state. Existing dossier, crew, recovery and recruitment suites also cover the shared indicators.
+
+`scripts/juice_browser_review.mjs --expected-hash $expected` uses a fresh Edge context and the dedicated QA origin `http://127.0.0.1:18883/`. Prepared characters cover Juice 160 and a mix of higher/lower ranks. The journey checks identities, the report inspector and dossier, click/tap help, directory sorting, 800×600/150% reading and complete before/after campaign export equality. Build into a separate ignored directory and serve it with `scripts/launch.ps1 -Port 18883 -NoBrowser -WebRoot $qaWeb`.
+
 ### Personnel directory
 
 `personnel_directory_test.dart` checks every filter, deduplication, full status/location labels, cross-category search, empty results, large rosters, keyboard/semantics, and small/enlarged layouts. `organisation_journal_test.dart` follows hospital patients and off-page characters through the original profile readers, retains search/filter state, checks focused search does not issue game shortcuts, and preserves native roster tools, squad rules, campaign state and RNG.

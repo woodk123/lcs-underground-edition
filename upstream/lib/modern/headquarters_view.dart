@@ -8,6 +8,7 @@ import 'package:lcs_new_age/location/siege.dart' as siege;
 import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
+import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 
 const _ink = JournalPalette.ink;
@@ -428,6 +429,7 @@ class _HeadquartersViewState extends State<HeadquartersView> {
               ],
             ),
           ),
+          JuiceBadge(person: person, compact: true, showHelp: false),
           const SizedBox(width: 8),
           Tooltip(
             message:

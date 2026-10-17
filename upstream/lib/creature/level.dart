@@ -18,6 +18,20 @@ int levelFromXP(int juice) {
   return 7;
 }
 
+/// First Juice value in the next rank; negative ranks have recovery milestones.
+int? nextJuiceThreshold(int juice) => switch (levelFromXP(juice)) {
+  <= -2 => -49,
+  -1 => -9,
+  0 => 0,
+  1 => 10,
+  2 => 50,
+  3 => 100,
+  4 => 200,
+  5 => 500,
+  6 => 1000,
+  _ => null,
+};
+
 int levelAttribute(Creature creature, Attribute attribute) {
   int value = creature.permanentAttribute(attribute);
   if ((attribute == Attribute.heart &&

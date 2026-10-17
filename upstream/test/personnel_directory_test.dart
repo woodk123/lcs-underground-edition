@@ -121,6 +121,7 @@ void main() {
       key('personnel-person:$id'),
       160,
       scrollable: list,
+      maxScrolls: 100,
     );
     await tester.pumpAndSettle();
   }

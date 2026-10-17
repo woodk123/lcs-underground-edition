@@ -569,8 +569,11 @@ String featureMechanics(FeatureMechanic feature) => switch (feature) {
         'Issue a destination order to queue the squad’s visit; advance the day '
         'to travel. A squad visit takes precedence over individual daily tasks.',
   FeatureMechanic.juice =>
-    'Juice is personal activist credibility. Activities '
-        'can raise it up to their own limits; it is separate from money and skills.',
+    'Juice measures personal experience and standing. Rank milestones strengthen '
+        'eligible attributes, which can raise training caps and maximum blood; '
+        'higher ranks can also expand direct recruitment capacity. Juice helps '
+        'with courage checks. Activities award it up to their own limits; '
+        'skill XP and money are separate.',
   FeatureMechanic.infiltration =>
     'Infiltration is job access and trust, '
         'displayed as a percentage. It affects undercover exposure and results; '
