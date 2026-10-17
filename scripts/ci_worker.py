@@ -12,9 +12,9 @@ import sys
 import time
 
 from package_release import verify_source_checkout
+from ci_shards import SHARDS, test_files
 from release_common import digest, file_hashes, require_files, runtime_hashes, safe_relative, write_json
 
-SHARDS = 2
 PLATFORMS = ('linux', 'windows')
 FOCUSED = ['lib/modern', 'lib/main.dart', 'lib/engine/console.dart',
            'lib/engine/console_widget.dart', 'lib/engine/console_char.dart', 'lib/engine/console_graphic.dart']
@@ -24,13 +24,6 @@ def identity(root: Path) -> dict:
     return {'source_commit': subprocess.check_output(
         ['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip(),
         'toolchain': json.loads((root / 'scripts/toolchain.json').read_text())}
-
-
-def test_files(root: Path, shard: int) -> list[str]:
-    if shard not in range(SHARDS):
-        raise ValueError('Invalid test shard.')
-    return sorted(p.relative_to(root / 'upstream').as_posix()
-                  for p in (root / 'upstream/test').rglob('*_test.dart'))[shard::SHARDS]
 
 
 def required_steps(kind: str, target: str, shard: int = 0) -> list[str]:
@@ -46,7 +39,8 @@ def run_worker(root: Path, kind: str, target: str, shard: int) -> None:
         raise ValueError('Worker platform does not match this host.')
     info = {'schema': 1, **identity(root), 'kind': kind, 'platform': target,
             'shard': shard if kind == 'checks' else None, 'shards': SHARDS,
-            'run_id': os.environ.get('GITHUB_RUN_ID'), 'status': 'running', 'steps': []}
+            'run_id': os.environ.get('GITHUB_RUN_ID'), 'status': 'running', 'steps': [],
+            'codegen_cache_hit': os.environ.get('CI_CODEGEN_CACHE_HIT') == 'true'}
     verify_source_checkout(root, info['source_commit'])
     suffix = '.bat' if target == 'windows' else ''
     flutter = str(root / f'.tools/flutter/bin/flutter{suffix}')
@@ -63,10 +57,12 @@ def run_worker(root: Path, kind: str, target: str, shard: int) -> None:
         ('serialization', [dart, 'run', 'build_runner', 'build'], root / 'upstream'),
     ]
     if kind == 'checks':
-        info['test_files'] = test_files(root, shard)
+        info['test_files'] = test_files(root, shard, target)
         if not info['test_files']:
             raise ValueError('Test shard is empty.')
-        commands.append(('tests', [flutter, 'test', '--no-pub', *info['test_files']], root / 'upstream'))
+        commands.append(('tests', [flutter, 'test', '--no-pub',
+                                  f'--file-reporter=json:../.local/ci/{name}/tests.jsonl',
+                                  *info['test_files']], root / 'upstream'))
         if shard == 0:
             commands.extend([
                 ('tooling', [sys.executable, '-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_*.py', '-v'], root),
@@ -149,7 +145,7 @@ def verify_evidence(root: Path, artifacts: Path) -> dict[str, dict]:
                 expected_run = os.environ.get('CI_ARTIFACT_RUN_ID')
                 if expected_run and str(info['run_id']) != expected_run:
                     raise ValueError('CI artifact run does not match the selected run.')
-                if kind == 'checks' and info.get('test_files') != test_files(root, shard):
+                if kind == 'checks' and info.get('test_files') != test_files(root, shard, target):
                     raise ValueError(f'Test shard inventory differs: {name}')
                 if kind == 'build':
                     if info.get('generated_hashes') != file_hashes(artifacts / name / 'generated'):

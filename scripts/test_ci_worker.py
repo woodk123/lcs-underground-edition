@@ -182,6 +182,7 @@ class ReuseTests(unittest.TestCase):
                 patch.object(ci_reuse.time, 'sleep') as sleep:
             self.assertEqual(ci_reuse.select_run('owner/repo', 'a' * 40, 'main'), '123')
         sleep.assert_called_once()
+        self.assertLessEqual(sleep.call_args.args[0], 10)
 
 
 if __name__ == '__main__':

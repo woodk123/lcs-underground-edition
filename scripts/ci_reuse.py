@@ -9,6 +9,8 @@ import time
 
 from ci_worker import PLATFORMS, SHARDS
 
+POLL_SECONDS = 10
+
 
 def eligible(run: dict, repository: str, commit: str, branch: str) -> bool:
     return (run.get('head_sha') == commit and run.get('head_branch') == branch and
@@ -41,7 +43,7 @@ def select_run(repository: str, commit: str, branch: str, wait_seconds: int = 12
         if not any(r['status'] != 'completed' for r in candidates) or time.monotonic() >= deadline:
             return ''  # No usable evidence: run the complete pipeline, never skip checks.
         print('Waiting for same-commit Project checks; no duplicate build needed.', flush=True)
-        time.sleep(min(30, max(0, deadline - time.monotonic())))
+        time.sleep(min(POLL_SECONDS, max(0, deadline - time.monotonic())))
 
 
 def main():

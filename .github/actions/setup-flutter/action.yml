@@ -4,6 +4,13 @@ inputs:
   save-cache:
     description: Only one trusted build worker per OS writes shared caches.
     default: 'false'
+outputs:
+  codegen-cache-hit:
+    description: Whether the generator tooling cache was restored exactly.
+    value: ${{ steps.codegen.outputs.cache-hit }}
+  codegen-cache-key:
+    description: Exact OS, SDK and generator dependency cache key.
+    value: ${{ steps.codegen.outputs.cache-primary-key }}
 runs:
   using: composite
   steps:
@@ -20,6 +27,15 @@ runs:
         path: .local/pub-cache
         key: pub-v1-${{ runner.os }}-${{ hashFiles('scripts/toolchain.json') }}-${{ hashFiles('upstream/pubspec.lock') }}
         restore-keys: pub-v1-${{ runner.os }}-${{ hashFiles('scripts/toolchain.json') }}-
+    - name: Restore compiled generator tooling
+      id: codegen
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          upstream/.dart_tool/build/entrypoint
+          upstream/.dart_tool/pub/bin/build_runner
+          upstream/.dart_tool/build_resolvers
+        key: codegen-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/toolchain.json', 'upstream/pubspec.lock', 'upstream/pubspec.yaml', 'upstream/**/build.yaml', 'upstream/build.*.yaml') }}
     - name: Verify SDK and warm dependencies
       shell: bash
       env:
@@ -27,7 +43,11 @@ runs:
       run: python scripts/ci_setup.py
     - name: Set package cache for subsequent steps
       shell: bash
-      run: echo "PUB_CACHE=${GITHUB_WORKSPACE}/.local/pub-cache" >> "$GITHUB_ENV"
+      env:
+        CODEGEN_CACHE_HIT: ${{ steps.codegen.outputs.cache-hit }}
+      run: |
+        echo "PUB_CACHE=${GITHUB_WORKSPACE}/.local/pub-cache" >> "$GITHUB_ENV"
+        echo "CI_CODEGEN_CACHE_HIT=${CODEGEN_CACHE_HIT}" >> "$GITHUB_ENV"
     - name: Save pinned SDK
       if: inputs.save-cache == 'true' && github.event_name != 'pull_request' && steps.sdk.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
