@@ -166,6 +166,7 @@ class Console {
   final List<ConsoleGraphic> graphics = [];
   final List<ConsoleAction> actions = [];
   String screen = 'generic';
+  String? locationHeading;
   ConsoleNavigation? navigation;
   ConsoleArticle? article;
   CreationContext? creation;
@@ -413,6 +414,7 @@ class Console {
     graphics.clear();
     actions.clear();
     screen = 'generic';
+    locationHeading = null;
     textInput = false;
     textInputValue = '';
     textInputLimit = 0;

@@ -286,8 +286,9 @@ void main() {
             expect(tester.takeException(), isNull);
           } finally {
             for (var i = 0; i < 10 && !done; i++) {
-              if (engine.console.awaitingInput)
+              if (engine.console.awaitingInput) {
                 engine.console.sendInput('Enter');
+              }
               await tester.pump();
             }
             if (done) await flow;

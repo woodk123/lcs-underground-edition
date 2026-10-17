@@ -140,6 +140,34 @@ void main() {
     const Size(800, 600),
     const Size(390, 844),
   ]) {
+    testWidgets('journal legislation keeps one source continuation at $size', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = size;
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      engine.console.screen = 'headquarters';
+      await tester.pumpWidget(const MainApp());
+      await tester.pumpAndSettle();
+      engine.erase();
+      engine.console.legislation = LegislationContext(2023);
+      engine.mvaddstr(0, 0, 'Legislative Agenda 2023');
+      engine.addOptionText(24, 0, 'Enter', 'Enter - Continue');
+      final reader = engine.getKey();
+      await tester.pumpAndSettle();
+      if (size.width == 800) journalReadingScale.value = 1.5;
+      await tester.pumpAndSettle();
+      expect(find.text('Watch the votes').hitTestable(), findsOneWidget);
+      expect(find.text('Continue'), findsNothing);
+      expect(find.byKey(const ValueKey('journal-advance-day')), findsNothing);
+      await tester.tap(find.text('Watch the votes'));
+      await tester.pump();
+      expect(await reader, engine.Key.enter);
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets(
       'illustrated outcome explains enacted and rejected changes at $size',
       (tester) async {

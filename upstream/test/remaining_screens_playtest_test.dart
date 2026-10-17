@@ -372,13 +372,16 @@ void main() {
     ]) {
       testWidgets('$shop entrance and exit at $variant', (tester) async {
         final site = game.activeSquad!.site!;
-        await play(
-          tester,
-          size,
-          scale,
-          () => shopVisit(site, shop),
-          () => keyboardExit(tester),
+        site.name =
+            'A very long department store name for location heading checks';
+        game.activeSquad!.activity = Activity(
+          ActivityType.visit,
+          idString: site.idString,
         );
+        await play(tester, size, scale, () => shopVisit(site, shop), () async {
+          expect(find.text(site.getName(includeCity: true)), findsOneWidget);
+          await keyboardExit(tester);
+        });
       });
     }
 

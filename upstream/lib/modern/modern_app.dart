@@ -1793,6 +1793,8 @@ class _ModernGameShellState extends State<ModernGameShell> {
         ? 'Field operation'
         : console.screen == 'article'
         ? 'Media report'
+        : console.locationHeading != null
+        ? console.locationHeading!
         : console.journalPeople.isNotEmpty && console.recruitment == null
         ? 'Crew & choices'
         : _screenHeading(rows);
@@ -2121,6 +2123,8 @@ class _ModernGameShellState extends State<ModernGameShell> {
   }
 
   String _screenHeading(List<String> rows) {
+    final location = console.locationHeading;
+    if (location != null && location.isNotEmpty) return location;
     for (final row in rows) {
       final title = row
           .replaceFirst(RegExp(r'\s*Money:\s*\$[-\d,]+.*$'), '')

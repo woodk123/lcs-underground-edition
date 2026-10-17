@@ -243,7 +243,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, bounds) {
-      if (bounds.maxWidth >= 650) return _journal(context);
+      if (bounds.maxWidth >= 650 || widget.fullSpreadDetail) {
+        return _journal(context);
+      }
       // Keep the two-page journal readable on narrow browser windows. A
       // visible horizontal scrollbar also exposes the map and day controls.
       return Scrollbar(
@@ -2713,6 +2715,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   Widget _footer(bool narrow) {
     final revision = console.revision.value;
     final ledger = ledgerReportFrame(console);
+    final detailOwnsContinue =
+        console.eventMessage == null &&
+        (console.legislation != null || ledger != null && !ledger.management);
     final continueAction = ledger != null && !ledger.management
         ? ledger.closeAction
         : console.actions
@@ -2827,54 +2832,55 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 color: JournalPalette.brassLight,
               ),
             ),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: narrow ? 200 : 340),
-            child: Tooltip(
-              message: label,
-              child: FilledButton.icon(
-                key: const ValueKey('journal-advance-day'),
-                onPressed: continuing
-                    ? canContinue
-                          ? () {
-                              // A retained callback must not advance a later
-                              // report or answer a newly opened decision.
-                              if (console.revision.value != revision ||
-                                  !console.awaitingInput ||
-                                  console.textInput ||
-                                  controller.busy) {
-                                return;
+          if (!detailOwnsContinue)
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: narrow ? 200 : 340),
+              child: Tooltip(
+                message: label,
+                child: FilledButton.icon(
+                  key: const ValueKey('journal-advance-day'),
+                  onPressed: continuing
+                      ? canContinue
+                            ? () {
+                                // A retained callback must not advance a later
+                                // report or answer a newly opened decision.
+                                if (console.revision.value != revision ||
+                                    !console.awaitingInput ||
+                                    console.textInput ||
+                                    controller.busy) {
+                                  return;
+                                }
+                                widget.onAction(continueAction?.key ?? 'Enter');
+                                _restoreInputFocus();
                               }
-                              widget.onAction(continueAction?.key ?? 'Enter');
-                              _restoreInputFocus();
-                            }
-                          : null
-                    : !controller.canNavigate
-                    ? null
-                    : !known
-                    ? controller.returnToHeadquarters
-                    : wait?.enabled == true
-                    ? () async {
-                        await controller.openSection(wait!.key);
-                        _restoreInputFocus();
-                      }
-                    : null,
-                style: FilledButton.styleFrom(
-                  backgroundColor: JournalPalette.binding,
-                  minimumSize: const Size(44, 34),
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                ),
-                icon: Icon(
-                  continuing ? Icons.arrow_forward : Icons.play_arrow,
-                  size: 18,
-                ),
-                label: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                            : null
+                      : !controller.canNavigate
+                      ? null
+                      : !known
+                      ? controller.returnToHeadquarters
+                      : wait?.enabled == true
+                      ? () async {
+                          await controller.openSection(wait!.key);
+                          _restoreInputFocus();
+                        }
+                      : null,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: JournalPalette.binding,
+                    minimumSize: const Size(44, 34),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                  ),
+                  icon: Icon(
+                    continuing ? Icons.arrow_forward : Icons.play_arrow,
+                    size: 18,
+                  ),
+                  label: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

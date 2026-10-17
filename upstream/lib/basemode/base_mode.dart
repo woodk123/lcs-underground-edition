@@ -312,6 +312,7 @@ void printLocation(Site loc) {
 
 void locHeader([Site? loc]) {
   loc = loc ?? activeSquad?.site ?? activeSafehouse;
+  console.locationHeading = loc?.getName(includeCity: true);
   move(0, 0);
   setColor(lightGray);
   if (loc != null) {
