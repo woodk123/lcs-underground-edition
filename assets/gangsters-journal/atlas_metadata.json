@@ -649,7 +649,7 @@
     },
     "OFL.txt": {
       "runtime_path": "upstream/fonts/journal/OFL.txt",
-      "sha256": "3624eddd4c8f8a908130a417ae7cd089c9da69899c4e0ca1a5217d0a6fae16fd",
+      "sha256": "55959eef5b0c3b2e3c1c7631b8ff0f9447d75de20f29cfa7db5bcfb026763343",
       "source_repository": "https://github.com/google/fonts/tree/main/ofl/librebaskerville",
       "license": "SIL Open Font License 1.1",
       "source_url": "https://raw.githubusercontent.com/google/fonts/main/ofl/librebaskerville/OFL.txt"

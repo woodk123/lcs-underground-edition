@@ -12,7 +12,7 @@ from pathlib import Path
 from release_common import digest
 
 MARKER = '<!-- lcs-nightly-inputs:'
-INPUTS = ('upstream', 'scripts', '.github', 'Play.cmd')
+INPUTS = ('upstream', 'scripts', '.github', '.gitattributes', 'Play.cmd')
 
 
 def git(*args: str) -> str:

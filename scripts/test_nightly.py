@@ -206,6 +206,10 @@ class NightlyTests(unittest.TestCase):
                 put(root, 'upstream/lib/main.dart', 'changed code')
                 commit()
                 self.assertNotEqual(first, release.fingerprint())
+                game_fingerprint = release.fingerprint()
+                put(root, '.gitattributes', '/upstream/fonts/journal/OFL.txt text eol=lf\n')
+                commit()
+                self.assertNotEqual(game_fingerprint, release.fingerprint())
 
 
 if __name__ == '__main__':
