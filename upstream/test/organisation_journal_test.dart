@@ -306,7 +306,10 @@ void main() {
       expect(engine.console.journalProfile?.person.id, personId);
       expect(_key('journal-personnel-profile'), findsOneWidget);
       expect(find.text('Profile of a Liberal'), findsNothing);
-      expect(_key('journal-profile-order-mechanics'), findsOneWidget);
+      expect(
+        find.byKey(const PageStorageKey('journal-profile-order-mechanics')),
+        findsOneWidget,
+      );
       expect(find.byType(ActivityMechanicsPanel), findsNothing);
       for (final (label, index) in [
         ('Skills', 1),

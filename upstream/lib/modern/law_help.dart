@@ -349,6 +349,9 @@ class _LawGuide extends StatelessWidget {
                       _heading('Compare law levels'),
                       for (final level in DeepAlignment.values)
                         ExpansionTile(
+                          key: PageStorageKey(
+                            'law-level:${record.id}:${level.name}',
+                          ),
                           tilePadding: EdgeInsets.zero,
                           title: Text(
                             '${level.label}${level == record.alignment ? ' · Current' : ''}',

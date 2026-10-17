@@ -1079,7 +1079,7 @@ class _CrewDossierState extends State<CrewDossier> {
     );
     if (!widget.embedded) return panel;
     return ExpansionTile(
-      key: const ValueKey('journal-profile-order-mechanics'),
+      key: const PageStorageKey('journal-profile-order-mechanics'),
       tilePadding: EdgeInsets.zero,
       dense: true,
       title: const Text('Order mechanics', style: JournalPalette.small),

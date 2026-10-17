@@ -618,6 +618,9 @@ class _DecisionGuideState extends State<_DecisionGuide> {
                         ),
                         for (final armor in clothing.allowedArmor)
                           ExpansionTile(
+                            key: PageStorageKey(
+                              'clothing-armor:${armor.idName}',
+                            ),
                             title: Text(
                               '${armor.name} · body ${armor.bodyArmor}',
                             ),

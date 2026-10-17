@@ -152,7 +152,9 @@ void main() {
       expect(done.hitTestable(), findsOneWidget);
       expect(tester.getRect(done).bottom, lessThan(280));
       expect(find.textContaining('Str:'), findsNothing);
-      await tester.tap(find.byKey(const ValueKey('assignment-person-details')));
+      await tester.tap(
+        find.byKey(const PageStorageKey('assignment-person-details')),
+      );
       await tester.pumpAndSettle();
       expect(find.textContaining('Str:'), findsWidgets);
       expect(jsonEncode(game.gameState.toJson()), before);

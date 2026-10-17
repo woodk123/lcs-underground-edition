@@ -303,6 +303,7 @@ class _LocationDetailsState extends State<_LocationDetails> {
         type?.skillPoints.entries.where((e) => e.value.$2 > 0).toList() ?? [];
     skills.sort((a, b) => b.value.$2.compareTo(a.value.$2));
     return ExpansionTile(
+      key: PageStorageKey('location-person:${widget.site.idString}:$id'),
       tilePadding: EdgeInsets.zero,
       title: Row(
         children: [
@@ -331,7 +332,7 @@ class _LocationDetailsState extends State<_LocationDetails> {
     );
   }
 
-  List<Widget> _stock(Shop shop) => [
+  List<Widget> _stock(Shop shop, {String path = 'root'}) => [
     if (shop.allowSelling)
       const Text('You can also sell items here.', style: JournalPalette.small),
     for (final item in shop.items.where((item) => item.isAvailable()))
@@ -344,11 +345,14 @@ class _LocationDetailsState extends State<_LocationDetails> {
           trailing: Text('\$${item.price(false)}'),
         ),
       ),
-    for (final department in shop.departments)
+    for (final (index, department) in shop.departments.indexed)
       ExpansionTile(
+        key: PageStorageKey(
+          'location-shop:${widget.site.idString}:$path/$index',
+        ),
         tilePadding: EdgeInsets.zero,
         title: Text(department.description ?? 'Department'),
-        children: _stock(department),
+        children: _stock(department, path: '$path/$index'),
       ),
   ];
 }

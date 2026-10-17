@@ -111,7 +111,9 @@ void main() {
     final received = <String>[];
     final actions = List<ConsoleAction>.of(engine.console.actions);
     await mount(tester, onAction: received.add);
-    await tester.ensureVisible(find.byKey(const ValueKey('hq-more-commands')));
+    await tester.ensureVisible(
+      find.byKey(const PageStorageKey('hq-more-commands')),
+    );
     await tester.tap(find.text('More headquarters commands'));
     await tester.pumpAndSettle();
     for (final action in actions) {

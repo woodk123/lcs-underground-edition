@@ -263,7 +263,7 @@ class _HeadquartersViewState extends State<HeadquartersView> {
               ],
               const SizedBox(height: 10),
               ExpansionTile(
-                key: const ValueKey('hq-more-commands'),
+                key: const PageStorageKey('hq-more-commands'),
                 tilePadding: EdgeInsets.zero,
                 childrenPadding: const EdgeInsets.only(bottom: 12),
                 title: const Text(

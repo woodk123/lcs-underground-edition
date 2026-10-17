@@ -1692,7 +1692,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           Material(
             type: MaterialType.transparency,
             child: ExpansionTile(
-              key: const ValueKey('journal-siege-details'),
+              key: const PageStorageKey('journal-siege-details'),
               tilePadding: EdgeInsets.zero,
               title: const Text('Siege details', style: JournalPalette.body),
               children: [

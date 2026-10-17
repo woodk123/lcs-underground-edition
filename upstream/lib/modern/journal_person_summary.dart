@@ -74,6 +74,9 @@ class JournalPersonCard extends StatelessWidget {
           ),
           if (summary.details.isNotEmpty)
             ExpansionTile(
+              key: PageStorageKey(
+                'journal-person-details:${summary.person.id}',
+              ),
               tilePadding: EdgeInsets.zero,
               dense: true,
               title: const Text(

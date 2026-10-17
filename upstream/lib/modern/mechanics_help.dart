@@ -733,7 +733,7 @@ class ActivityMechanicsPanel extends StatelessWidget {
           Material(
             type: MaterialType.transparency,
             child: ExpansionTile(
-              key: ValueKey(
+              key: PageStorageKey(
                 'activity-mechanics-details:${mechanics.policyId ?? mechanics.type.name}',
               ),
               tilePadding: EdgeInsets.zero,

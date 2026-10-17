@@ -118,6 +118,9 @@ class JournalRecoveryView extends StatelessWidget {
                       ),
                     if (frame.details.isNotEmpty)
                       ExpansionTile(
+                        key: const PageStorageKey(
+                          'journal-recovery-case-details',
+                        ),
                         title: const Text('Case details'),
                         children: [
                           for (final line in frame.details)

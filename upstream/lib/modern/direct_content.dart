@@ -300,7 +300,7 @@ class DirectContent extends StatelessWidget {
             Material(
               type: MaterialType.transparency,
               child: ExpansionTile(
-                key: const ValueKey('assignment-person-details'),
+                key: const PageStorageKey('assignment-person-details'),
                 tilePadding: EdgeInsets.zero,
                 dense: true,
                 visualDensity: VisualDensity.compact,
@@ -446,7 +446,7 @@ class DirectContent extends StatelessWidget {
         Material(
           color: Colors.transparent,
           child: ExpansionTile(
-            key: const ValueKey('direct-keyboard-notes'),
+            key: const PageStorageKey('direct-keyboard-notes'),
             tilePadding: EdgeInsets.zero,
             title: Text(
               journalPage ? 'Notes' : 'Keyboard & game notes',

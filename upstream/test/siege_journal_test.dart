@@ -350,8 +350,12 @@ void main() {
         tester.widget<FilledButton>(_key('journal-advance-day')).onPressed,
         isNull,
       );
-      await tester.ensureVisible(_key('journal-siege-details'));
-      await tester.tap(_key('journal-siege-details'));
+      await tester.ensureVisible(
+        find.byKey(const PageStorageKey('journal-siege-details')),
+      );
+      await tester.tap(
+        find.byKey(const PageStorageKey('journal-siege-details')),
+      );
       await tester.pumpAndSettle();
       expect(find.textContaining('30 rations'), findsOneWidget);
       expect(tester.takeException(), isNull);
