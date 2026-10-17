@@ -171,6 +171,7 @@ class Console {
   ConsoleArticle? article;
   CreationContext? creation;
   RecruitmentContext? recruitment;
+  RecruitmentTargetContext? recruitmentTarget;
   RecoveryContext? recovery;
   PursuitContext? pursuit;
   LegislationContext? legislation;
@@ -415,6 +416,7 @@ class Console {
     article = null;
     creation = null;
     recruitment = null;
+    recruitmentTarget = null;
     recovery = null;
     pursuit = null;
     legislation = null;

@@ -2048,7 +2048,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
         Expanded(
           child: SingleChildScrollView(
             key: PageStorageKey(
-              'journal-management-scroll:${navigation?.section ?? 'entry'}',
+              console.recruitmentTarget == null
+                  ? 'journal-management-scroll:${navigation?.section ?? 'entry'}'
+                  : 'recruitment-targets:${console.recruitmentTarget!.recruiter.id}:${console.recruitmentTarget!.page}',
             ),
             padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
             child: Column(

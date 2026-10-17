@@ -10,6 +10,7 @@ import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
+import 'package:lcs_new_age/modern/recruitment_target_picker.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
 
 import 'test_support.dart';
@@ -53,7 +54,26 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       final targets = recruitableCreatures;
-      expect(find.text(targets.first.name), findsWidgets);
+      expect(find.textContaining(targets.first.name), findsWidgets);
+      expect(find.textContaining('Meeting difficulty'), findsWidgets);
+      expect(find.textContaining('Page 1 of'), findsOneWidget);
+      expect(find.text('Skip recruitment today'), findsOneWidget);
+      expect(find.text('Runs when you advance the day.'), findsNothing);
+      expect(engine.console.recruitmentTarget, isNotNull);
+      final info = find.byWidgetPredicate(
+        (widget) =>
+            widget is IconButton &&
+            widget.tooltip == recruitmentProfessionHelp(targets.first.type),
+      );
+      await tester.ensureVisible(info);
+      await tester.tap(info);
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.textContaining('Base attribute ranges:'), findsWidgets);
+      expect(find.textContaining('Profession skills:'), findsWidgets);
+      expect(game.pool.first.activity.idString, isNull);
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
       expect(
         find.byKey(const ValueKey('journal-management-page')),
         findsOneWidget,
@@ -64,16 +84,18 @@ void main() {
       expect(find.textContaining('try to meet and recruit?'), findsWidgets);
       engine.console.sendInput(']');
       await tester.pumpAndSettle();
-      expect(find.text(targets[20].name), findsWidgets);
+      expect(find.textContaining(targets[20].name), findsWidgets);
+      expect(find.textContaining('Page 2 of'), findsOneWidget);
       expect(tester.takeException(), isNull);
       engine.console.sendInput('[');
       await tester.pumpAndSettle();
-      expect(find.text(targets.first.name), findsWidgets);
+      expect(find.textContaining(targets.first.name), findsWidgets);
       engine.console.sendInput('Escape');
       await tester.pump();
       expect(finished, isTrue);
       await flow;
       expect(game.pool.first.activity.idString, isNull);
+      expect(engine.console.recruitmentTarget, isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     });
   }

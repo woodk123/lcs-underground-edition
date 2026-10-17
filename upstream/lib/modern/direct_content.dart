@@ -20,6 +20,7 @@ import 'package:lcs_new_age/modern/journal_person_summary.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/recruitment_card.dart';
+import 'package:lcs_new_age/modern/recruitment_target_picker.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 import 'package:lcs_new_age/utils/colors.dart' as legacy;
 
@@ -69,6 +70,9 @@ class DirectContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (console.recruitmentTarget case final target? when showActions) {
+      return RecruitmentTargetPicker(target: target, onAction: onAction);
+    }
     final recruitment = console.recruitment;
     final prospectActions = <int, ConsoleAction>{};
     if (recruitment != null && showActions) {

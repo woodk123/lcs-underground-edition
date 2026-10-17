@@ -18,6 +18,7 @@ import 'package:lcs_new_age/daily/activities/teaching.dart';
 import 'package:lcs_new_age/daily/activities/trouble.dart';
 import 'package:lcs_new_age/daily/shopsnstuff.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/recruitment_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/items/loot_type.dart';
 import 'package:lcs_new_age/location/location_type.dart';
@@ -31,21 +32,35 @@ Future<void> _selectRecruitTarget(Creature cr) async {
   cr.activity = Activity(ActivityType.recruiting);
   // Keep each displayed letter tied to the same profession for this reader.
   final targets = recruitableCreatures;
-  await pagedInterface(
-    headerPrompt:
-        "What type of person will ${cr.name} try to meet and recruit?",
-    headerKey: {4: "TYPE", 49: "DIFFICULTY TO ARRANGE MEETING"},
-    footerPrompt: "Press a Letter to select a Profession",
-    count: targets.length,
-    lineBuilder: (y, key, index) {
-      addOptionText(y, 0, key, "$key - ${targets[index].name}");
-      addDifficultyText(y, 49, targets[index].difficulty);
-    },
-    onChoice: (index) async {
-      cr.activity.idString = targets[index].type.id;
-      return true;
-    },
-  );
+  try {
+    await pagedInterface(
+      headerPrompt:
+          "What type of person will ${cr.name} try to meet and recruit?",
+      headerKey: {4: "TYPE", 49: "DIFFICULTY TO ARRANGE MEETING"},
+      footerPrompt: "Press a Letter to select a Profession",
+      count: targets.length,
+      onAwait: (page, pageCount) {
+        console.recruitmentTarget?.preview.dispose();
+        console.recruitmentTarget = RecruitmentTargetContext(
+          cr,
+          [for (final t in targets) (t.type, t.difficulty)],
+          page,
+          pageCount,
+        );
+      },
+      lineBuilder: (y, key, index) {
+        addOptionText(y, 0, key, "$key - ${targets[index].name}");
+        addDifficultyText(y, 49, targets[index].difficulty);
+      },
+      onChoice: (index) async {
+        cr.activity.idString = targets[index].type.id;
+        return true;
+      },
+    );
+  } finally {
+    console.recruitmentTarget?.preview.dispose();
+    console.recruitmentTarget = null;
+  }
 }
 
 Future<void> soloActivities(bool disbanding) async {
@@ -203,8 +218,10 @@ Future<void> soloActivities(bool disbanding) async {
         if (disbanding) continue;
         for (Creature p in people) {
           if (p.site?.city == null) continue;
-          Site? hospital =
-              findSiteInSameCity(p.site!.city, SiteType.universityHospital);
+          Site? hospital = findSiteInSameCity(
+            p.site!.city,
+            SiteType.universityHospital,
+          );
           if (hospital == null) continue;
           await hospitalize(hospital, p);
         }

@@ -85,7 +85,14 @@ async function start(width) {
 try {
   for (const width of [2560, 800]) {
     await start(width); await capture(`professions-${width}`);
-    assert.match(await text(), /Difficulty to arrange meeting/i);
+    assert.match(await text(), /Meeting difficulty/i);
+    assert.match(await text(), /Page 1 of/);
+    assert.match(await text(), /Skip recruitment today/);
+    const info = page.getByRole('button', { name: /Base attribute ranges:/ }).first();
+    await info.click(); await wait(/These are generation ranges/);
+    await page.waitForTimeout(700); // Let the dialog's fade transition finish before visual QA.
+    await capture(`profession-stats-${width}`);
+    await click(/^Close$/); check(`profession stat help at ${width}`);
     const first = await button(/^A /).textContent();
     assert.ok(first, 'Profession A must exist.'); check(`profession choices visible at ${width}`);
     await page.keyboard.press('PageDown'); await page.waitForTimeout(250); await capture(`page-two-${width}`);

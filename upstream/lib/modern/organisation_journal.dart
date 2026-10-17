@@ -24,6 +24,7 @@ import 'package:lcs_new_age/modern/location_details.dart';
 import 'package:lcs_new_age/modern/location_help.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
+import 'package:lcs_new_age/modern/recruitment_target_picker.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 import 'package:lcs_new_age/modern/travel_help.dart';
 
@@ -1358,6 +1359,15 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   }
 
   Widget _jobCard() {
+    if (widget.console.recruitmentTarget case final target?) {
+      return JournalSurface(
+        lined: true,
+        padding: const EdgeInsets.all(10),
+        child: SingleChildScrollView(
+          child: RecruitmentTargetPreview(target: target),
+        ),
+      );
+    }
     final actor = person;
     final prepared = hasPreparedOrder;
     final actual = squad?.activity.type == ActivityType.visit
