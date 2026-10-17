@@ -5,6 +5,7 @@ import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/console.dart';
+import 'package:lcs_new_age/engine/ledger_context.dart';
 import 'package:lcs_new_age/engine/organisation_context.dart';
 import 'package:lcs_new_age/engine/recovery_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
@@ -2707,13 +2708,43 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   }
 
   Widget _footer(bool narrow) {
+    final revision = console.revision.value;
+    final ledger = ledgerReportFrame(console);
+    final continueAction = ledger != null && !ledger.management
+        ? ledger.closeAction
+        : console.actions
+              .where(
+                (action) => RegExp(
+                  r'^(continue\b|press .+ to continue\b)',
+                  caseSensitive: false,
+                ).hasMatch(_clean(action.label)),
+              )
+              .firstOrNull;
+    final acknowledgement =
+        console.eventMessage != null ||
+        console.screen == 'article' && console.article != null ||
+        console.screen == 'full_map' ||
+        console.actions.isEmpty &&
+            console.awaitingInput &&
+            !controller.canNavigate;
+    final continuing =
+        !console.textInput && (acknowledgement || continueAction != null);
+    final canContinue =
+        continuing &&
+        console.awaitingInput &&
+        !controller.busy &&
+        (continueAction?.enabled ?? true);
     final directHQ = console.screen == 'headquarters';
     ConsoleAction? current(String key) =>
         console.actions.where((a) => a.key == key).firstOrNull;
     final wait =
         controller.headquartersAction('w') ?? (directHQ ? current('w') : null);
     final known = controller.headquarters != null || directHQ;
-    final label = known
+    final label = continuing
+        ? console.screen == 'full_map'
+              ? 'Back to operation'
+              : 'Continue'
+        : known
         ? wait == null
               ? 'Day advance unavailable'
               : _clean(wait.label)
@@ -2799,7 +2830,22 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               message: label,
               child: FilledButton.icon(
                 key: const ValueKey('journal-advance-day'),
-                onPressed: !controller.canNavigate
+                onPressed: continuing
+                    ? canContinue
+                          ? () {
+                              // A retained callback must not advance a later
+                              // report or answer a newly opened decision.
+                              if (console.revision.value != revision ||
+                                  !console.awaitingInput ||
+                                  console.textInput ||
+                                  controller.busy) {
+                                return;
+                              }
+                              widget.onAction(continueAction?.key ?? 'Enter');
+                              _restoreInputFocus();
+                            }
+                          : null
+                    : !controller.canNavigate
                     ? null
                     : !known
                     ? controller.returnToHeadquarters
@@ -2814,7 +2860,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   minimumSize: const Size(44, 34),
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                 ),
-                icon: const Icon(Icons.play_arrow, size: 18),
+                icon: Icon(
+                  continuing ? Icons.arrow_forward : Icons.play_arrow,
+                  size: 18,
+                ),
                 label: Text(
                   label,
                   maxLines: 1,

@@ -1499,7 +1499,7 @@ void main() {
         article.body,
       );
       expect(article.unread, isFalse);
-      await _tap(tester, 'specialized-return');
+      await _tap(tester, 'journal-advance-day');
       expect(find.byType(JournalMediaOverview), findsOneWidget);
       expect(
         mediaOverviewFrame(engine.console)?.entries.single.unread,
@@ -1572,7 +1572,13 @@ void main() {
         greaterThan(1000),
       );
       expect(_key('journal-ledger-close').hitTestable(), findsOneWidget);
-      expect(find.text('Continue'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: _key('journal-advance-day'),
+          matching: find.text('Continue'),
+        ),
+        findsOneWidget,
+      );
       final before = _snapshot();
       final revision = engine.console.revision.value;
       final optionTap = find.descendant(
@@ -1589,7 +1595,7 @@ void main() {
       expect(_snapshot(), before);
       expect(harness.monthReset, isFalse);
       expect(game.ledger.income[Income.donations], 345);
-      await _tap(tester, 'journal-ledger-close');
+      await _tap(tester, 'journal-advance-day');
       expect(harness.monthReset, isTrue);
       expect(game.ledger.income[Income.donations], 0);
       expect(engine.console.screen, 'headquarters');

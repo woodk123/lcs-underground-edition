@@ -57,6 +57,8 @@ void main() {
         await mount(tester, size);
         final journal = find.byType(OrganisationJournal);
         final journalState = tester.state<OrganisationJournalState>(journal);
+        final footerAction = find.byKey(const ValueKey('journal-advance-day'));
+        final footerPosition = tester.getRect(footerAction).bottomRight;
         final controller = tester
             .widget<OrganisationJournal>(journal)
             .controller;
@@ -136,7 +138,15 @@ void main() {
           findsNothing,
         );
         expect(find.text('Continue').hitTestable(), findsOneWidget);
-        await tester.tap(find.text('Continue'));
+        expect(tester.getRect(footerAction).bottomRight, footerPosition);
+        expect(
+          find.descendant(of: footerAction, matching: find.text('Continue')),
+          findsOneWidget,
+        );
+        final staleContinue = tester
+            .widget<FilledButton>(footerAction)
+            .onPressed!;
+        await tester.tap(footerAction);
         await tester.pump();
         await report;
         expect(jsonEncode(game.gameState.toJson()), before);
@@ -161,8 +171,32 @@ void main() {
         await tester.pump();
         expect(await plainReader, engine.Key.enter);
 
+        // Explicit Continue choices keep their actual source key and disabled
+        // state. A decision with no Continue must still be answered in-page.
+        engine.erase();
+        engine.addOptionText(24, 0, 'c', 'C - Continue', enabledWhen: false);
+        final continueReader = engine.getKey();
+        await tester.pumpAndSettle();
+        expect(tester.widget<FilledButton>(footerAction).onPressed, isNull);
+        engine.addOptionText(24, 0, 'c', 'C - Continue');
+        engine.console.flush();
+        await tester.pumpAndSettle();
+        await tester.tap(footerAction);
+        await tester.pump();
+        expect(await continueReader, engine.Key.c);
+
+        engine.erase();
+        engine.addOptionText(7, 0, 'a', 'A - Choose a response');
+        final decisionReader = engine.getKey();
+        await tester.pumpAndSettle();
+        expect(tester.widget<FilledButton>(footerAction).onPressed, isNull);
+        engine.console.sendInput('a');
+        await decisionReader;
+
         final returned = headquartersReader();
         await tester.pumpAndSettle();
+        staleContinue();
+        expect(engine.console.awaitingInput, isTrue);
         expect(
           tester.state<OrganisationJournalState>(journal),
           same(journalState),

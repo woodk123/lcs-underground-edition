@@ -1105,7 +1105,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
         activityOrderFrame(console) != null;
     Widget? detail;
     if (console.eventMessage != null) {
-      detail = _eventMessageView();
+      detail = _eventMessageView(embeddedJournal: true);
     } else if (isLegislativeVoteScreen(console)) {
       detail = JournalLegislationView(console: console, onAction: _send);
     } else if (ledgerReportFrame(console) != null) {
@@ -1369,7 +1369,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
     ),
   );
 
-  Widget _eventMessageView() => JournalSurface(
+  Widget _eventMessageView({bool embeddedJournal = false}) => JournalSurface(
     key: const ValueKey('journal-event-message'),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1394,15 +1394,16 @@ class _ModernGameShellState extends State<ModernGameShell> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerRight,
-          child: FilledButton.icon(
-            onPressed: console.awaitingInput ? () => _send('Enter') : null,
-            icon: const Icon(Icons.arrow_forward, size: 18),
-            label: const Text('Continue'),
+        if (!embeddedJournal) const SizedBox(height: 12),
+        if (!embeddedJournal)
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.icon(
+              onPressed: console.awaitingInput ? () => _send('Enter') : null,
+              icon: const Icon(Icons.arrow_forward, size: 18),
+              label: const Text('Continue'),
+            ),
           ),
-        ),
       ],
     ),
   );
@@ -1804,7 +1805,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
                     ],
                   ),
                 ),
-                if (article || fullMap)
+                if ((article || fullMap) && !embeddedJournal)
                   TextButton.icon(
                     key: const ValueKey('specialized-return'),
                     onPressed: () => _send('Enter'),
