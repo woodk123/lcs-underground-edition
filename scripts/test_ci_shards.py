@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from ci_shards import suite_seconds, test_files
+from ci_shards import SHARDS, suite_seconds, test_files
 
 
 class ShardTests(unittest.TestCase):
@@ -20,33 +20,32 @@ class ShardTests(unittest.TestCase):
         (self.root / 'scripts').mkdir(exist_ok=True)
         value = {'schema': 1, 'platforms': {target: {
             'files': weights or {f'test/{name}_test.dart': 10 for name in ('a', 'b', 'c', 'd', 'e', 'f')},
-            'extra_seconds': extra if extra is not None else [20, 0],
+            'extra_seconds': extra if extra is not None else [20, *([0] * (SHARDS - 1))],
         } for target in ('windows', 'linux')}}
         (self.root / 'scripts/ci_test_weights.json').write_text(json.dumps(value))
 
     def test_extra_analysis_budget_moves_test_work_to_other_shard(self):
         self.profile()
-        first, second = [test_files(self.root, shard) for shard in range(2)]
-        self.assertEqual(len(first), 2)
-        self.assertEqual(len(second), 4)
-        self.assertFalse(set(first) & set(second))
-        self.assertEqual(len(first) + len(second), 6)
+        groups = [test_files(self.root, shard) for shard in range(SHARDS)]
+        self.assertLess(len(groups[0]), max(map(len, groups[1:])))
+        self.assertEqual(len(set().union(*map(set, groups))), sum(map(len, groups)))
+        self.assertEqual(sum(map(len, groups)), 6)
+        first = groups[0]
         self.assertEqual(first, test_files(self.root, 0))
 
     def test_new_and_deleted_tests_do_not_change_complete_coverage(self):
         self.profile()
         (self.root / 'upstream/test/new_test.dart').write_text('new')
         (self.root / 'upstream/test/a_test.dart').unlink()
-        groups = [test_files(self.root, shard) for shard in range(2)]
+        groups = [test_files(self.root, shard) for shard in range(SHARDS)]
         expected = {p.relative_to(self.root / 'upstream').as_posix()
                     for p in (self.root / 'upstream/test').glob('*_test.dart')}
-        self.assertEqual(set(groups[0]) | set(groups[1]), expected)
-        self.assertFalse(set(groups[0]) & set(groups[1]))
+        self.assertEqual(set().union(*map(set, groups)), expected)
+        self.assertEqual(len(set().union(*map(set, groups))), sum(map(len, groups)))
 
     def test_large_overhead_keeps_shards_nonempty(self):
-        self.profile(extra=[1000, 0])
-        self.assertTrue(test_files(self.root, 0))
-        self.assertTrue(test_files(self.root, 1))
+        self.profile(extra=[1000, *([0] * (SHARDS - 1))])
+        self.assertTrue(all(test_files(self.root, shard) for shard in range(SHARDS)))
 
     def test_invalid_costs_are_rejected(self):
         self.profile(weights={'test/a_test.dart': -1})

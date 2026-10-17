@@ -7,7 +7,7 @@ from pathlib import Path
 import subprocess
 import time
 
-from ci_worker import PLATFORMS, SHARDS
+from ci_worker import BUILD_TARGETS, PLATFORMS, SHARDS
 
 POLL_SECONDS = 10
 
@@ -19,7 +19,7 @@ def eligible(run: dict, repository: str, commit: str, branch: str) -> bool:
 
 
 def complete_artifacts(items: list[dict]) -> bool:
-    required = {f'build-{target}' for target in PLATFORMS} | {
+    required = {f'build-{target}' for target in BUILD_TARGETS} | {
         f'checks-{target}-{shard}' for target in PLATFORMS for shard in range(SHARDS)}
     available = {item['name'] for item in items if not item.get('expired')}
     return required <= available

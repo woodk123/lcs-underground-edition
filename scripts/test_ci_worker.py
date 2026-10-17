@@ -31,11 +31,13 @@ class EvidenceTests(unittest.TestCase):
         identity = patch.object(ci, 'identity', return_value=self.expected)
         identity.start()
         self.addCleanup(identity.stop)
-        for target in ci.PLATFORMS:
-            for kind, shards in [('checks', range(ci.SHARDS)), ('build', [0])]:
+        for target in ci.BUILD_TARGETS:
+            workers = [('checks', range(ci.SHARDS)), ('build', [0])] if target in ci.PLATFORMS else [('build', [0])]
+            for kind, shards in workers:
                 for shard in shards:
                     name = f'checks-{target}-{shard}' if kind == 'checks' else f'build-{target}'
                     info = {'schema': 1, **self.expected, 'kind': kind, 'platform': target,
+                            'host_platform': 'linux' if target == 'web' else target,
                             'shard': shard if kind == 'checks' else None, 'shards': ci.SHARDS,
                             'run_id': '123', 'status': 'passed',
                             'generated_hashes': self.generated_hashes,
@@ -47,11 +49,13 @@ class EvidenceTests(unittest.TestCase):
                         generated_copy = self.artifacts / name / 'generated/lib/model.g.dart'
                         generated_copy.parent.mkdir(parents=True, exist_ok=True)
                         generated_copy.write_bytes(generated.read_bytes())
-                        files = {'bundle': ['lcs_new_age', 'lib/libflutter_linux_gtk.so', 'lib/libapp.so',
-                                            'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z']} if target == 'linux' else {
-                            'web': ['index.html', 'main.dart.js', 'flutter_bootstrap.js', 'sw.js'],
-                            'native': ['lcs_new_age.exe', 'flutter_windows.dll', 'data/app.so',
-                                       'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z']}
+                        files = {
+                            'linux': {'bundle': ['lcs_new_age', 'lib/libflutter_linux_gtk.so', 'lib/libapp.so',
+                                                 'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z']},
+                            'web': {'web': ['index.html', 'main.dart.js', 'flutter_bootstrap.js', 'sw.js']},
+                            'windows': {'native': ['lcs_new_age.exe', 'flutter_windows.dll', 'data/app.so',
+                                                   'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z']},
+                        }[target]
                         for folder, entries in files.items():
                             for entry in entries:
                                 path = self.artifacts / name / folder / entry
@@ -72,9 +76,9 @@ class EvidenceTests(unittest.TestCase):
 
     def test_complete_disjoint_test_coverage_and_valid_evidence(self):
         shards = [ci.test_files(self.root, shard) for shard in range(ci.SHARDS)]
-        self.assertFalse(set(shards[0]) & set(shards[1]))
+        self.assertEqual(len(set().union(*map(set, shards))), sum(map(len, shards)))
         self.assertEqual(sum(map(len, shards)), 5)
-        self.assertEqual(len(ci.verify_evidence(self.root, self.artifacts)), 6)
+        self.assertEqual(len(ci.verify_evidence(self.root, self.artifacts)), 11)
 
     def test_failed_missing_or_wrong_checks_are_rejected(self):
         path = self.artifacts / 'checks-windows-0/report.json'
@@ -98,8 +102,30 @@ class EvidenceTests(unittest.TestCase):
             ci.verify_evidence(self.root, self.artifacts)
 
     def test_payload_tampering_is_rejected(self):
-        (self.artifacts / 'build-windows/web/main.dart.js').write_text('tampered')
+        (self.artifacts / 'build-web/web/main.dart.js').write_text('tampered')
         with self.assertRaisesRegex(ValueError, 'hashes differ'):
+            ci.verify_evidence(self.root, self.artifacts)
+
+    def test_missing_web_build_or_wrong_host_is_rejected(self):
+        self.mutate('build-web', lambda i: i.update(host_platform='windows'))
+        with self.assertRaisesRegex(ValueError, 'Invalid or mismatched CI evidence'):
+            ci.verify_evidence(self.root, self.artifacts)
+        (self.artifacts / 'build-web/report.json').unlink()
+        with self.assertRaises(FileNotFoundError):
+            ci.verify_evidence(self.root, self.artifacts)
+
+    def test_fourth_shard_is_required_on_each_operating_system(self):
+        for target in ci.PLATFORMS:
+            path = self.artifacts / f'checks-{target}-3/report.json'
+            original = path.read_bytes()
+            path.unlink()
+            with self.subTest(platform=target), self.assertRaises(FileNotFoundError):
+                ci.verify_evidence(self.root, self.artifacts)
+            path.write_bytes(original)
+
+    def test_web_manifest_must_be_injected(self):
+        (self.artifacts / 'build-web/web/sw.js').write_text('const RESOURCES = null; // build: manifest')
+        with self.assertRaisesRegex(ValueError, 'offline manifest'):
             ci.verify_evidence(self.root, self.artifacts)
 
     def test_wrong_selected_run_is_rejected(self):
@@ -147,7 +173,7 @@ class ReuseTests(unittest.TestCase):
         self.run = {'id': 123, 'head_sha': 'a' * 40, 'head_branch': 'main',
                     'head_repository': {'full_name': 'owner/repo'}, 'event': 'push',
                     'path': '.github/workflows/checks.yml', 'status': 'completed', 'conclusion': 'success'}
-        self.artifacts = [{'name': f'build-{target}', 'expired': False} for target in ci.PLATFORMS] + [
+        self.artifacts = [{'name': f'build-{target}', 'expired': False} for target in ci.BUILD_TARGETS] + [
             {'name': f'checks-{target}-{shard}', 'expired': False}
             for target in ci.PLATFORMS for shard in range(ci.SHARDS)]
 

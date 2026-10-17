@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         platform: [linux, windows]
-        shard: [0, 1]
+        shard: [0, 1, 2, 3]
         include:
           - platform: linux
             runner: ubuntu-22.04
@@ -30,8 +30,23 @@ jobs:
           python-version: '3.12'
       - uses: ./.github/actions/setup-flutter
         id: flutter
+      - name: Restore incremental test compiler cache
+        id: test-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: upstream/build/test_cache
+          key: test-kernel-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.shard }}-${{ hashFiles('scripts/toolchain.json', 'upstream/pubspec.lock', 'upstream/pubspec.yaml', 'scripts/ci_worker.py', 'scripts/ci_shards.py', 'scripts/ci_test_weights.json') }}-${{ hashFiles('upstream/lib/**/*.dart', 'upstream/test/**/*.dart') }}
+          restore-keys: test-kernel-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.shard }}-${{ hashFiles('scripts/toolchain.json', 'upstream/pubspec.lock', 'upstream/pubspec.yaml', 'scripts/ci_worker.py', 'scripts/ci_shards.py', 'scripts/ci_test_weights.json') }}-
       - name: Test and analyze
+        env:
+          CI_TEST_CACHE_HIT: ${{ steps.test-cache.outputs.cache-hit }}
         run: python scripts/ci_worker.py checks --platform ${{ matrix.platform }} --shard ${{ matrix.shard }}
+      - name: Save incremental test compiler cache
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.test-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: upstream/build/test_cache
+          key: ${{ steps.test-cache.outputs.cache-primary-key }}
       - name: Retain shard evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -43,15 +58,17 @@ jobs:
           if-no-files-found: error
 
   builds:
-    name: ${{ matrix.platform }} release build
+    name: ${{ matrix.target }} release build
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: linux
+          - target: linux
             runner: ubuntu-22.04
-          - platform: windows
+          - target: windows
             runner: windows-2022
+          - target: web
+            runner: ubuntu-22.04
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     steps:
@@ -62,18 +79,18 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install Linux native dependencies
-        if: matrix.platform == 'linux'
+        if: matrix.target == 'linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev
       - uses: ./.github/actions/setup-flutter
         id: flutter
         with:
-          save-cache: 'true'
+          save-cache: ${{ matrix.target != 'web' }}
       - name: Build release players
-        run: python scripts/ci_worker.py build --platform ${{ matrix.platform }}
+        run: python scripts/ci_worker.py build --platform ${{ matrix.target }}
       - name: Save compiled generator tooling
-        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.flutter.outputs.codegen-cache-hit != 'true'
+        if: matrix.target != 'web' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.flutter.outputs.codegen-cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: |
@@ -85,8 +102,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.platform }}
-          path: .local/ci/build-${{ matrix.platform }}/
+          name: build-${{ matrix.target }}
+          path: .local/ci/build-${{ matrix.target }}/
           include-hidden-files: true
           retention-days: 7
           if-no-files-found: error

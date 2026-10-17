@@ -7,7 +7,7 @@ import math
 from pathlib import Path
 import statistics
 
-SHARDS = 2
+SHARDS = 4
 
 
 def test_files(root: Path, shard: int, target: str = 'windows') -> list[str]:

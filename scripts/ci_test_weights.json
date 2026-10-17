@@ -7,6 +7,8 @@
     "linux": {
       "extra_seconds": [
         31.23,
+        0,
+        0,
         0
       ],
       "files": {
@@ -99,6 +101,8 @@
     "windows": {
       "extra_seconds": [
         38.81,
+        0,
+        0,
         0
       ],
       "files": {

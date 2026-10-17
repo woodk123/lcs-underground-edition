@@ -16,6 +16,12 @@ from ci_shards import SHARDS, test_files
 from release_common import digest, file_hashes, require_files, runtime_hashes, safe_relative, write_json
 
 PLATFORMS = ('linux', 'windows')
+BUILD_TARGETS = ('linux', 'windows', 'web')
+BUILD_OUTPUTS = {
+    'linux': {'bundle': 'linux/x64/release/bundle'},
+    'windows': {'native': 'windows/x64/runner/Release'},
+    'web': {'web': 'web'},
+}
 FOCUSED = ['lib/modern', 'lib/main.dart', 'lib/engine/console.dart',
            'lib/engine/console_widget.dart', 'lib/engine/console_char.dart', 'lib/engine/console_graphic.dart']
 
@@ -30,19 +36,22 @@ def required_steps(kind: str, target: str, shard: int = 0) -> list[str]:
     common = ['dependencies', 'serialization']
     if kind == 'checks':
         return common + ['tests'] + (['tooling', 'assets', 'focused-analysis', 'full-analysis'] if shard == 0 else [])
-    return common + (['linux-release'] if target == 'linux' else
-                     ['web-release', 'offline-manifest', 'windows-release'])
+    return common + {'linux': ['linux-release'], 'windows': ['windows-release'],
+                     'web': ['web-release', 'offline-manifest']}[target]
 
 
 def run_worker(root: Path, kind: str, target: str, shard: int) -> None:
-    if platform.system().lower() != target:
+    host = platform.system().lower()
+    if host != ('linux' if target == 'web' else target) or (kind == 'checks' and target not in PLATFORMS):
         raise ValueError('Worker platform does not match this host.')
     info = {'schema': 1, **identity(root), 'kind': kind, 'platform': target,
             'shard': shard if kind == 'checks' else None, 'shards': SHARDS,
             'run_id': os.environ.get('GITHUB_RUN_ID'), 'status': 'running', 'steps': [],
-            'codegen_cache_hit': os.environ.get('CI_CODEGEN_CACHE_HIT') == 'true'}
+            'codegen_cache_hit': os.environ.get('CI_CODEGEN_CACHE_HIT') == 'true',
+            'test_compiler_cache_hit': os.environ.get('CI_TEST_CACHE_HIT') == 'true',
+            'host_platform': host}
     verify_source_checkout(root, info['source_commit'])
-    suffix = '.bat' if target == 'windows' else ''
+    suffix = '.bat' if host == 'windows' else ''
     flutter = str(root / f'.tools/flutter/bin/flutter{suffix}')
     dart = str(root / f'.tools/flutter/bin/dart{suffix}')
     sdk = json.loads(subprocess.check_output([flutter, '--version', '--machine'], text=True))
@@ -74,11 +83,12 @@ def run_worker(root: Path, kind: str, target: str, shard: int) -> None:
         define = f"--dart-define=LCS_BUILD={info['source_commit'][:8]}"
         if target == 'linux':
             commands.append(('linux-release', [flutter, 'build', 'linux', '--release', '--no-pub', define], root / 'upstream'))
+        elif target == 'windows':
+            commands.append(('windows-release', [flutter, 'build', 'windows', '--release', '--no-pub', define], root / 'upstream'))
         else:
             commands.extend([
                 ('web-release', [flutter, 'build', 'web', '--release', '--no-pub', '--no-wasm-dry-run', '--base-href', '/', define], root / 'upstream'),
                 ('offline-manifest', [dart, 'run', 'tool/inject_service_worker.dart', 'build/web'], root / 'upstream'),
-                ('windows-release', [flutter, 'build', 'windows', '--release', '--no-pub', define], root / 'upstream'),
             ])
     try:
         for step, command, cwd in commands:
@@ -106,8 +116,7 @@ def run_worker(root: Path, kind: str, target: str, shard: int) -> None:
                 destination = output / 'generated' / relative
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(root / 'upstream' / relative, destination)
-            locations = {'bundle': 'linux/x64/release/bundle'} if target == 'linux' else {
-                'web': 'web', 'native': 'windows/x64/runner/Release'}
+            locations = BUILD_OUTPUTS[target]
             for folder, built in locations.items():
                 shutil.copytree(root / 'upstream/build' / built, output / folder)
             info['payload_hashes'] = {folder: file_hashes(output / folder) for folder in locations}
@@ -126,14 +135,16 @@ def verify_evidence(root: Path, artifacts: Path) -> dict[str, dict]:
     expected = identity(root)
     reports = {}
     run_ids = set()
-    for target in PLATFORMS:
-        for kind, shards in (('checks', range(SHARDS)), ('build', [0])):
+    for target in BUILD_TARGETS:
+        workers = (('checks', range(SHARDS)), ('build', [0])) if target in PLATFORMS else (('build', [0]),)
+        for kind, shards in workers:
             for shard in shards:
                 name = f'checks-{target}-{shard}' if kind == 'checks' else f'build-{target}'
                 info = json.loads((artifacts / name / 'report.json').read_text(encoding='utf-8'))
                 if (info.get('schema') != 1 or info.get('status') != 'passed' or
                         any(info.get(k) != v for k, v in expected.items()) or
                         info.get('kind') != kind or info.get('platform') != target or
+                        info.get('host_platform') != ('linux' if target == 'web' else target) or
                         info.get('shards') != SHARDS or
                         info.get('shard') != (shard if kind == 'checks' else None) or
                         [s['name'] for s in info['steps']] != required_steps(kind, target, shard) or
@@ -150,15 +161,16 @@ def verify_evidence(root: Path, artifacts: Path) -> dict[str, dict]:
                 if kind == 'build':
                     if info.get('generated_hashes') != file_hashes(artifacts / name / 'generated'):
                         raise ValueError('Generated source differs from the build artifact.')
-                    folders = ['bundle'] if target == 'linux' else ['web', 'native']
+                    folders = BUILD_OUTPUTS[target]
                     if target == 'linux':
                         runtime_hashes(artifacts / name / 'bundle', 'linux-x64')
-                    else:
+                    elif target == 'windows':
                         if info.get('flutter_license_hash') != digest(artifacts / name / 'Flutter-LICENSE.txt'):
                             raise ValueError('Flutter license differs from the build artifact.')
-                        require_files(artifacts / name / 'web', ('index.html', 'main.dart.js', 'flutter_bootstrap.js', 'sw.js'))
                         require_files(artifacts / name / 'native', ('lcs_new_age.exe', 'flutter_windows.dll',
                                       'data/app.so', 'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z'))
+                    else:
+                        require_files(artifacts / name / 'web', ('index.html', 'main.dart.js', 'flutter_bootstrap.js', 'sw.js'))
                         if 'const RESOURCES = null; // build: manifest' in (artifacts / name / 'web/sw.js').read_text(encoding='utf-8'):
                             raise ValueError('CI web offline manifest was not injected.')
                     actual = {folder: file_hashes(artifacts / name / folder) for folder in folders}
@@ -190,8 +202,8 @@ def prepare_release(root: Path, artifacts: Path) -> Path:
         destination = root / 'upstream' / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(artifacts / 'build-windows/generated' / relative, destination)
-    for folder, destination in [('web', 'web'), ('native', 'windows/x64/runner/Release')]:
-        shutil.copytree(artifacts / 'build-windows' / folder, root / 'upstream/build' / destination)
+    for target, folder, destination in [('web', 'web', 'web'), ('windows', 'native', 'windows/x64/runner/Release')]:
+        shutil.copytree(artifacts / f'build-{target}' / folder, root / 'upstream/build' / destination)
     license_path = root / '.tools/flutter/LICENSE'
     license_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(artifacts / 'build-windows/Flutter-LICENSE.txt', license_path)
@@ -221,14 +233,14 @@ def verify_packaging_evidence(root: Path, report: Path, linux: Path | None) -> N
         layout = Path(temporary)
         for source in (report / 'ci').iterdir():
             shutil.copytree(source, layout / source.name)
-        for target in PLATFORMS:
+        for target in BUILD_TARGETS:
             info = json.loads((layout / f'build-{target}/report.json').read_text())
             for relative in info['generated_hashes']:
                 safe_relative(relative)
                 destination = layout / f'build-{target}/generated' / relative
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(root / 'upstream' / relative, destination)
-        for source, target in [(root / 'upstream/build/web', layout / 'build-windows/web'),
+        for source, target in [(root / 'upstream/build/web', layout / 'build-web/web'),
                                (root / 'upstream/build/windows/x64/runner/Release', layout / 'build-windows/native'),
                                (linux / 'bundle', layout / 'build-linux/bundle')]:
             shutil.copytree(source, target)
@@ -239,7 +251,7 @@ def main() -> None:
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('mode', choices=['checks', 'build', 'verify', 'prepare'])
-    parser.add_argument('--platform', choices=PLATFORMS)
+    parser.add_argument('--platform', choices=BUILD_TARGETS)
     parser.add_argument('--shard', type=int, default=0)
     parser.add_argument('--artifacts', type=Path, default=Path('.local/artifacts'))
     args = parser.parse_args()
