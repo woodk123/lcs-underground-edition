@@ -307,6 +307,7 @@ void main() {
       ) async {
         final person = game.pool.first;
         switch (category) {
+          case ReviewMode.all:
           case ReviewMode.liberals:
             break;
           case ReviewMode.hostages:
@@ -328,8 +329,23 @@ void main() {
             person.vacationDaysLeft = 3;
         }
         await play(tester, size, scale, () => reviewMode(category), () async {
+          final tools = find.byKey(const ValueKey('personnel-tools'));
+          final journalDirectory =
+              category == ReviewMode.all && tools.evaluate().isNotEmpty;
+          if (journalDirectory) {
+            await tester.ensureVisible(tools);
+            await tester.pumpAndSettle();
+            await tester.tap(tools);
+            await tester.pumpAndSettle();
+          }
           await action(tester, 'a');
           await keyboardExit(tester);
+          if (journalDirectory) {
+            // This isolated source reader has no outer HQ loop. Exit it
+            // directly, without asking the journal controller to await HQ.
+            await tester.tap(find.byTooltip('Switch readable / classic view'));
+            await tester.pumpAndSettle();
+          }
           await keyboardExit(tester);
         });
       });

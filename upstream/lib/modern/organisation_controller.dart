@@ -294,6 +294,69 @@ class OrganisationController extends ChangeNotifier {
 
   Future<bool> returnToHeadquarters() => _run(_toHeadquarters);
 
+  /// The complete personnel reader, preserving the original profile actions.
+  Future<bool> openPersonnelDirectory() => _run(_openPersonnelDirectory);
+
+  Future<bool> _openPersonnelDirectory() async {
+    if (console.screen == 'personnel-directory' &&
+        console.navigation?.section == 'people' &&
+        console.journalProfile == null &&
+        !console.textInput &&
+        console.awaitingInput) {
+      return true;
+    }
+    if (!await _openOverview()) return false;
+    final all = _action('0');
+    if (all == null || !all.enabled || !await _dispatch(all)) return false;
+    return console.screen == 'personnel-directory' ||
+        _fail('The personnel directory is unavailable right now.');
+  }
+
+  /// Resolve an ID through actual source pages, never a filtered row index.
+  Future<bool> openPersonnelProfile(int personId) => _run(() async {
+    if (!game.pool.any((person) => person.id == personId) ||
+        !await _openPersonnelDirectory()) {
+      return false;
+    }
+    // Search may select someone before the current source page. Start at page 0.
+    final seenBack = <String>{};
+    for (var step = 0; step < 256; step++) {
+      if (console.screen != 'personnel-directory') return false;
+      final signature = console.actions
+          .where((a) => a.entityType == 'person')
+          .map((a) => a.entityId)
+          .join(',');
+      if (!seenBack.add(signature)) break;
+      final previous = _pageAction(forward: false);
+      if (previous == null || !previous.enabled || !await _dispatch(previous)) {
+        break;
+      }
+    }
+    final seen = <String>{};
+    for (var step = 0; step < 256; step++) {
+      if (!console.awaitingInput ||
+          console.screen != 'personnel-directory' ||
+          console.textInput ||
+          console.journalProfile != null) {
+        return false;
+      }
+      final action = _entityAction('person', personId.toString());
+      if (action != null && action.enabled) {
+        if (!await _dispatch(action)) return false;
+        _selectedPersonId = personId;
+        return console.journalProfile?.person.id == personId;
+      }
+      final signature = console.actions
+          .where((a) => a.entityType == 'person')
+          .map((a) => a.entityId)
+          .join(',');
+      if (signature.isEmpty || !seen.add(signature)) break;
+      final next = _pageAction(forward: true);
+      if (next == null || !next.enabled || !await _dispatch(next)) break;
+    }
+    return _fail('This person is no longer in the personnel directory.');
+  });
+
   /// Opening an order category is presentation-only. Its actual original
   /// letter command is deliberately reserved for explicit legacy input.
   Future<bool> browseCategory(ConsoleAction action, {required int revision}) =>

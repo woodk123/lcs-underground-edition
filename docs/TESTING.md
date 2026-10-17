@@ -30,6 +30,25 @@ The tests exercise archive integrity/tampering, complete source snapshots, local
 
 ## Browser regressions
 
+### Personnel directory
+
+`personnel_directory_test.dart` checks every filter, deduplication, full status/location labels, cross-category search, empty results, large rosters, keyboard/semantics, and small/enlarged layouts. `organisation_journal_test.dart` follows hospital patients and off-page characters through the original profile readers, retains search/filter state, checks focused search does not issue game shortcuts, and preserves native roster tools, squad rules, campaign state and RNG.
+
+`scripts/personnel_browser_review.mjs --expected-hash $expected` checks the rebuilt game on its dedicated isolated origin `http://127.0.0.1:18882/`. It imports an explicitly prepared mixed-status fixture in a fresh browser context, exercises Clipboard/search/filters/profiles at normal and 150% reading size, and compares complete before/after campaign exports. Launch that QA directory with `scripts/launch.ps1 -Port 18882 -NoBrowser -WebRoot $qaWeb`; keep player saves and servers separate.
+
+### Injury status
+
+The dossier's medical plate is a read-only view of existing body state. `injury_status_test.dart` checks every special injury, actual modifier and treatment distinction, all wound flags, nonhuman anatomy, and unchanged campaign/RNG. `crew_injury_panel_test.dart` checks hover previews, pinned selection, keyboard activation, named touch controls, simultaneous organ callouts, deceased records, and dossier layouts at 1280×800, 800×600/150%, and 390×844/200%.
+
+```powershell
+Push-Location upstream
+..\.tools\flutter\bin\flutter.bat test --no-pub test/injury_status_test.dart test/crew_injury_panel_test.dart test/crew_dossier_test.dart
+Pop-Location
+node scripts/injury_browser_review.mjs --expected-hash $expected --out reports/injury-status-qa/browser
+```
+
+The injury helper pins its own isolated origin, `http://127.0.0.1:18881/`, so it can run alongside the existing recruitment/screen QA server on 18879. Launch the rebuilt QA web directory with `scripts/launch.ps1 -Port 18881 -NoBrowser -WebRoot $qaWeb`, and compute `$expected` from that directory's `main.dart.js`. It uses a disposable campaign copy with explicitly prepared wounds, checks the rendered map and details at normal and enlarged reading size, and compares complete exports before and after inspection. Its synthetic injuries are display fixtures, not injuries earned in gameplay. Keep player saves and player servers separate.
+
 ### Screen inventory and menu playthroughs
 
 `screen_browser_review.mjs` supplements the longer gameplay journeys with title,

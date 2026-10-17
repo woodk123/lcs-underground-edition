@@ -24,6 +24,7 @@ import 'package:lcs_new_age/modern/location_details.dart';
 import 'package:lcs_new_age/modern/location_help.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
+import 'package:lcs_new_age/modern/personnel_directory.dart';
 import 'package:lcs_new_age/modern/recruitment_target_picker.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 import 'package:lcs_new_age/modern/travel_help.dart';
@@ -72,15 +73,19 @@ class OrganisationJournal extends StatefulWidget {
 
 class OrganisationJournalState extends State<OrganisationJournal> {
   final ScrollController _narrowJournalScroll = ScrollController();
+  final PersonnelDirectoryController _personnel =
+      PersonnelDirectoryController();
 
   @override
   void dispose() {
     _narrowJournalScroll.dispose();
+    _personnel.dispose();
     super.dispose();
   }
 
   bool _orders = false, _skills = false, _pool = false;
   bool _showReports = false;
+  bool _personnelTools = false;
   Skill _poolSort = Skill.firearms;
   int _group = 0;
   int? _poolPerson;
@@ -155,6 +160,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   /// The original immediate keyboard handlers remain available in Classic view.
   bool handleGameShortcut(String key) {
     if (controller.busy || _visitRouting) return false;
+    if (console.screen == 'personnel-directory' &&
+        normalizeConsoleKey(key) == 'Escape') {
+      unawaited(controller.returnToHeadquarters());
+      return true;
+    }
     if (planning) {
       final normalized = normalizeConsoleKey(key);
       if (const {'Escape', 'x', 'Space'}.contains(normalized)) {
@@ -846,17 +856,15 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               console.journalProfile != null,
           controller.canNavigate
               ? () async {
-                  if (await _openManagementSection('r')) {
-                    final action = console.actions
-                        .where((a) => a.key == '1')
-                        .firstOrNull;
-                    if (action?.enabled == true) {
-                      await controller.sendAction(
-                        action!,
-                        revision: console.revision.value,
-                      );
-                    }
-                  }
+                  widget.onCloseInspection?.call();
+                  setState(() {
+                    _orders = false;
+                    _pool = false;
+                    _showReports = false;
+                    _personnelTools = false;
+                    _pendingOrder = null;
+                  });
+                  await controller.openPersonnelDirectory();
                 }
               : null,
           key: 'journal-clipboard',
@@ -1637,7 +1645,47 @@ class OrganisationJournalState extends State<OrganisationJournal> {
 
   Widget _contextPage(bool narrow) => JournalSurface(
     padding: const EdgeInsets.all(9),
-    child: _orders && controller.busy && console.journalProfile == null
+    child:
+        console.screen == 'personnel-directory' &&
+            console.journalProfile == null &&
+            !console.textInput &&
+            widget.inspectedPerson == null
+        ? _personnelTools
+              ? Column(
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Roster tools',
+                            style: JournalPalette.heading,
+                          ),
+                        ),
+                        TextButton.icon(
+                          key: const ValueKey('personnel-back-directory'),
+                          onPressed: controller.busy
+                              ? null
+                              : () => setState(() => _personnelTools = false),
+                          icon: const Icon(Icons.arrow_back, size: 16),
+                          label: const Text('Back to directory'),
+                        ),
+                      ],
+                    ),
+                    Expanded(child: widget.detail ?? const SizedBox.shrink()),
+                  ],
+                )
+              : PersonnelDirectory(
+                  people: game.pool,
+                  controller: _personnel,
+                  enabled: !controller.busy && console.awaitingInput,
+                  onClose: () => unawaited(controller.returnToHeadquarters()),
+                  onTools: () => setState(() => _personnelTools = true),
+                  onOpen: (person) {
+                    FocusScope.of(context).unfocus();
+                    unawaited(controller.openPersonnelProfile(person.id));
+                  },
+                )
+        : _orders && controller.busy && console.journalProfile == null
         ? _orderContext(narrow)
         : widget.detail != null &&
               console.awaitingInput &&

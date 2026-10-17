@@ -56,7 +56,6 @@ Future<void> reviewAssetsAndFormSquads() async {
       }
     }
     for (Site l in sites) {
-      consolidateLoot(l.loot);
       if (!l.siege.underSiege) {
         equipment += l.loot.length; // Review and Move Equipment}
       }
@@ -177,6 +176,7 @@ Future<void> reviewAssetsAndFormSquads() async {
     }
 
     setColor(lightGray);
+    addOptionText(21, 0, '0', '0 - All personnel (${pool.length})');
     addOptionText(22, 0, "V", "V - Inspect Liberal finances.");
     addPageButtons(y: 23, x: 0);
     move(console.y, console.x + 3);
@@ -205,6 +205,8 @@ Future<void> reviewAssetsAndFormSquads() async {
 
     if (isBackKey(c)) return;
 
+    if (c == '0'.codePoint) await reviewMode(ReviewMode.all);
+
     if (c >= Key.a && c <= Key.s) {
       int sq = page * 19 + c - Key.a;
       if (sq < squads.length && sq >= 0) {
@@ -219,6 +221,10 @@ Future<void> reviewAssetsAndFormSquads() async {
       await reviewMode(ReviewMode.values[c - '1'.codePoint]);
     }
     if (c == '8'.codePoint) {
+      // Consolidation belongs to equipment management, never personnel reading.
+      for (final site in sites) {
+        consolidateLoot(site.loot);
+      }
       await equipmentBaseAssign();
     }
     if (c == Key.z) {
@@ -240,7 +246,8 @@ enum ReviewMode {
   justice,
   sleepers,
   dead,
-  away;
+  away,
+  all;
 
   SortingScreens get sortMode {
     return switch (this) {
@@ -251,6 +258,7 @@ enum ReviewMode {
       sleepers => SortingScreens.sleepers,
       dead => SortingScreens.dead,
       away => SortingScreens.away,
+      all => SortingScreens.liberals,
     };
   }
 }
@@ -263,6 +271,8 @@ Future<void> reviewMode(ReviewMode mode) async {
   void buildTempPool() {
     for (Creature p in pool) {
       switch (mode) {
+        case ReviewMode.all:
+          temppool.add(p);
         case ReviewMode.liberals:
           if (p.isActiveLiberal) temppool.add(p);
         case ReviewMode.hostages:
@@ -287,7 +297,7 @@ Future<void> reviewMode(ReviewMode mode) async {
 
   buildTempPool();
 
-  if (temppool.isEmpty) return;
+  if (temppool.isEmpty && mode != ReviewMode.all) return;
 
   int page = 0;
 
@@ -297,6 +307,8 @@ Future<void> reviewMode(ReviewMode mode) async {
     setColor(lightGray);
     move(0, 0);
     switch (mode) {
+      case ReviewMode.all:
+        addstr('Personnel directory');
       case ReviewMode.liberals:
         addstr("Active Liberals");
       case ReviewMode.hostages:
@@ -318,7 +330,7 @@ Future<void> reviewMode(ReviewMode mode) async {
       33: "HEALTH",
       42: "LOCATION",
       57: switch (mode) {
-        ReviewMode.liberals => "SQUAD / ACTIVITY",
+        ReviewMode.liberals || ReviewMode.all => "SQUAD / ACTIVITY",
         ReviewMode.hostages => "DAYS IN CAPTIVITY",
         ReviewMode.justice => "MONTHS LEFT",
         ReviewMode.clinic => "MEDICAL BILLS",
@@ -367,6 +379,7 @@ Future<void> reviewMode(ReviewMode mode) async {
 
       move(y, 57);
       switch (mode) {
+        case ReviewMode.all:
         case ReviewMode.liberals:
           bool usepers = true;
           if (tempp.squadId != null) {
@@ -476,6 +489,9 @@ Future<void> reviewMode(ReviewMode mode) async {
     addPageButtons(y: 23, x: 0);
     addOptionText(23, 38, "T", "T - Sort Liberals");
 
+    console.screen = mode == ReviewMode.all
+        ? 'personnel-directory'
+        : 'personnel-roster';
     declareMenuNavigation('people');
     int c = await getKey();
 

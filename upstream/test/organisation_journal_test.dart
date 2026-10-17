@@ -25,6 +25,7 @@ import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/gamestate/ledger.dart';
 import 'package:lcs_new_age/gamestate/squad.dart';
 import 'package:lcs_new_age/location/siege.dart';
+import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/article_view.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
@@ -35,6 +36,7 @@ import 'package:lcs_new_age/modern/journal_media.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/organisation_journal.dart';
+import 'package:lcs_new_age/modern/personnel_directory.dart';
 import 'package:lcs_new_age/monthly/lcs_monthly.dart';
 import 'package:lcs_new_age/newspaper/news_story.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
@@ -147,6 +149,24 @@ Future<void> _tap(WidgetTester tester, String key) async {
   );
   await tester.tap(target);
   await _settle(tester);
+}
+
+Future<void> _openPersonnel(WidgetTester tester, int personId) async {
+  final list = find
+      .descendant(
+        of: _key('personnel-directory'),
+        matching: find.byType(Scrollable),
+      )
+      .first;
+  tester.state<ScrollableState>(list).position.jumpTo(0);
+  await _settle(tester);
+  await tester.scrollUntilVisible(
+    _key('personnel-person:$personId'),
+    100,
+    scrollable: list,
+  );
+  await _settle(tester);
+  await _tap(tester, 'personnel-person:$personId');
 }
 
 Future<void> _focusGame(WidgetTester tester) async {
@@ -285,24 +305,18 @@ void main() {
       final rolls = List.generate(12, (_) => lcsRandom(100000));
       reseedRNG(seed: 26840);
       await _tap(tester, 'journal-clipboard');
-      expect(_key('journal-management-page'), findsOneWidget);
+      expect(_key('personnel-directory'), findsOneWidget);
       expect(
-        find.text('Active Liberals'),
+        find.text('Personnel directory'),
         findsOneWidget,
         reason: 'One page heading, without a nested fallback panel.',
       );
-      expect(
-        tester.widget<DirectContent>(find.byType(DirectContent)).journalPage,
-        isTrue,
-      );
+      expect(find.byType(PersonnelDirectory), findsOneWidget);
       final sourcePerson = engine.console.actions.firstWhere(
         (action) => action.entityType == 'person',
       );
       final personId = int.parse(sourcePerson.entityId!);
-      await _tap(
-        tester,
-        'direct-action:${sourcePerson.y}:${sourcePerson.x}:${sourcePerson.key}',
-      );
+      await _openPersonnel(tester, personId);
       expect(engine.console.journalProfile?.person.id, personId);
       expect(_key('journal-personnel-profile'), findsOneWidget);
       expect(find.text('Profile of a Liberal'), findsNothing);
@@ -332,7 +346,7 @@ void main() {
       await _settle(tester);
       await _tap(tester, 'journal-profile-action:Enter');
       expect(engine.console.journalProfile, isNull);
-      expect(find.text('Active Liberals'), findsOneWidget);
+      expect(_key('personnel-directory'), findsOneWidget);
       expect(_snapshot(), before);
       expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
       await _tap(tester, 'journal-equipment');
@@ -378,16 +392,7 @@ void main() {
       await _settle(tester);
       final before = _snapshot();
       await _tap(tester, 'journal-clipboard');
-      final action = engine.console.actions.singleWhere(
-        (a) => a.entityType == 'person' && a.entityId == person.id.toString(),
-      );
-      final select = _key(
-        'direct-action:${action.y}:${action.x}:${action.key}',
-      );
-      await tester.ensureVisible(select);
-      await _settle(tester);
-      await tester.tap(select);
-      await _settle(tester);
+      await _openPersonnel(tester, person.id);
       for (final (key, prompt) in [
         ('r', 'permanently release'),
         ('k', 'kill this squad member?'),
@@ -430,14 +435,7 @@ void main() {
         await _tap(tester, 'journal-clipboard');
         final first = game.squad.first;
         final second = game.squad[1];
-        final open = engine.console.actions.singleWhere(
-          (a) => a.entityType == 'person' && a.entityId == first.id.toString(),
-        );
-        final entry = _key('direct-action:${open.y}:${open.x}:${open.key}');
-        await tester.ensureVisible(entry);
-        await _settle(tester);
-        await tester.tap(entry);
-        await _settle(tester);
+        await _openPersonnel(tester, first.id);
         final before = _snapshot();
         final dossier = tester.state(find.byType(CrewDossier));
         final scroller = find.descendant(
@@ -604,10 +602,7 @@ void main() {
       outside.squad = other;
       await mount(tester, size: const Size(2200, 1200));
       await _tap(tester, 'journal-clipboard');
-      final action = engine.console.actions.singleWhere(
-        (a) => a.entityType == 'person' && a.entityId == outside.id.toString(),
-      );
-      await _tap(tester, 'direct-action:${action.y}:${action.x}:${action.key}');
+      await _openPersonnel(tester, outside.id);
       expect(
         tester.widget<Text>(_key('journal-selected-person')).data,
         outside.name,
@@ -1713,6 +1708,133 @@ void main() {
         reason: 'A required skill choice stays with its original actor.',
       );
       expect(person.activity, same(order));
+      expect(_snapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Clipboard finds hospitalized Chaz and returns to his searched category without changing campaign',
+    (tester) async {
+      final chaz = game.squad.first;
+      chaz
+        ..name = 'Chaz Reasoner'
+        ..squad = null
+        ..location = game.sites.firstWhere(
+          (site) => site.type == SiteType.universityHospital,
+        )
+        ..medicalBills = 1360;
+      await mount(tester, size: const Size(1280, 900));
+      final before = _snapshot();
+      reseedRNG(seed: 28144);
+      final rolls = List.generate(12, (_) => lcsRandom(100000));
+      reseedRNG(seed: 28144);
+      await _tap(tester, 'journal-clipboard');
+      expect(_key('personnel-directory'), findsOneWidget);
+      await _tap(tester, 'personnel-filter:active');
+      expect(_key('personnel-person:${chaz.id}'), findsNothing);
+      await tester.enterText(_key('personnel-search'), 'Chaz');
+      await _settle(tester);
+      expect(_key('personnel-person:${chaz.id}'), findsOneWidget);
+      await _tap(tester, 'personnel-filter:hospital');
+      await _openPersonnel(tester, chaz.id);
+      expect(engine.console.journalProfile?.person.id, chaz.id);
+      final close = _key('journal-profile-action:Enter');
+      await tester.ensureVisible(close);
+      await _settle(tester);
+      await _tap(tester, 'journal-profile-action:Enter');
+      expect(_key('personnel-directory'), findsOneWidget);
+      expect(
+        find.text('1 of ${game.pool.length} people · Hospital'),
+        findsOneWidget,
+      );
+      expect(
+        tester.widget<TextField>(_key('personnel-search')).controller!.text,
+        'Chaz',
+      );
+      await tester.tap(_key('personnel-search'));
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyW);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
+      await _settle(tester);
+      expect(engine.console.screen, 'personnel-directory');
+      expect(_snapshot(), before);
+      expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'directory opens an off-page original person then resolves an earlier source page',
+    (tester) async {
+      final first = game.pool.first;
+      Creature? last;
+      for (var i = 0; i < 42; i++) {
+        last = _extraPerson('Zed ${i.toString().padLeft(2, '0')}');
+      }
+      await mount(tester, size: const Size(1280, 900));
+      final before = _snapshot();
+      await _tap(tester, 'journal-clipboard');
+      await tester.enterText(_key('personnel-search'), last!.name);
+      await _settle(tester);
+      await _openPersonnel(tester, last.id);
+      expect(engine.console.journalProfile?.person.id, last.id);
+      await tester.ensureVisible(_key('journal-profile-action:Enter'));
+      await _settle(tester);
+      await _tap(tester, 'journal-profile-action:Enter');
+      final scroll = find
+          .descendant(
+            of: _key('personnel-directory'),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      tester.state<ScrollableState>(scroll).position.jumpTo(0);
+      await _settle(tester);
+      await tester.enterText(_key('personnel-search'), first.name);
+      await _settle(tester);
+      await _openPersonnel(tester, first.id);
+      expect(engine.console.journalProfile?.person.id, first.id);
+      expect(_snapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Roster tools retain original sorting and cancelled reorder with a clear return',
+    (tester) async {
+      await mount(tester, size: const Size(1280, 900));
+      final before = _snapshot();
+      await _tap(tester, 'journal-clipboard');
+      await _tap(tester, 'personnel-tools');
+      expect(find.text('Roster tools'), findsOneWidget);
+      final sort = engine.console.actions.firstWhere(
+        (action) => action.key == 't',
+      );
+      await tester.ensureVisible(_key('direct-action:${sort.y}:${sort.x}:${sort.key}'));
+      await _settle(tester);
+      await _tap(tester, 'direct-action:${sort.y}:${sort.x}:${sort.key}');
+      expect(find.textContaining('Choose how to sort'), findsWidgets);
+      engine.console.sendInput('Escape');
+      await _settle(tester);
+      await _tap(tester, 'personnel-back-directory');
+      expect(_key('personnel-directory'), findsOneWidget);
+      await _tap(tester, 'personnel-tools');
+      final reorder = engine.console.actions.firstWhere(
+        (action) => action.key == 'z',
+      );
+      await tester.ensureVisible(_key('direct-action:${reorder.y}:${reorder.x}:${reorder.key}'));
+      await _settle(tester);
+      await _tap(
+        tester,
+        'direct-action:${reorder.y}:${reorder.x}:${reorder.key}',
+      );
+      expect(
+        find.textContaining('Choose squad member to replace'),
+        findsWidgets,
+      );
+      engine.console.sendInput('Escape');
+      await _settle(tester);
+      await _tap(tester, 'journal-clipboard');
+      expect(_key('personnel-directory'), findsOneWidget);
       expect(_snapshot(), before);
       expect(tester.takeException(), isNull);
     },

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/creature/attributes.dart';
-import 'package:lcs_new_age/creature/body.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/modern/attribute_help.dart';
+import 'package:lcs_new_age/modern/crew_injury_panel.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/equipment_help.dart';
@@ -697,45 +697,13 @@ class _CrewDossierState extends State<CrewDossier> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _section('Condition', Icons.favorite_border, [
+          CrewInjuryPanel(person: person),
+          const SizedBox(height: 10),
+          DecisionGuideButton(topic: DecisionTopic.health, actor: person),
+        ]),
+        const SizedBox(height: 22),
         _twoColumns(
-          _section('Condition', Icons.favorite_border, [
-            DecisionGuideButton(topic: DecisionTopic.health, actor: person),
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              spacing: 12,
-              runSpacing: 5,
-              children: [
-                const Text(
-                  'Blood',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                Text(
-                  '${person.blood} / ${person.maxBlood}',
-                  key: const ValueKey('crew-dossier-blood'),
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: person.maxBlood == 0
-                    ? 0
-                    : (person.blood / person.maxBlood).clamp(0, 1),
-                minHeight: 8,
-                color: person.blood < person.maxBlood ? _red : _teal,
-                backgroundColor: _rule,
-                semanticsLabel: 'Blood remaining',
-              ),
-            ),
-            const SizedBox(height: 12),
-            _fact('Health', '${person.health}'),
-            if (person.permanentHealthDamage > 0)
-              _fact('Permanent health loss', '${person.permanentHealthDamage}'),
-            const SizedBox(height: 8),
-            ..._injuries(person),
-          ]),
           _section('Current orders', Icons.assignment_outlined, [
             DecisionGuideButton(
               topic: DecisionTopic.availability,
@@ -766,9 +734,6 @@ class _CrewDossierState extends State<CrewDossier> {
             if (person.imprisoned)
               const Text('Currently imprisoned', style: TextStyle(color: _red)),
           ]),
-        ),
-        const SizedBox(height: 22),
-        _twoColumns(
           _section('Equipment', Icons.inventory_2_outlined, [
             Wrap(
               children: [
@@ -846,57 +811,21 @@ class _CrewDossierState extends State<CrewDossier> {
               ),
             if (person.hasWheelchair) _fact('Mobility aid', 'Wheelchair'),
           ]),
-          _section('Attributes', Icons.tune, [
-            for (final attribute in Attribute.values)
-              AttributeTooltip(
-                attribute: attribute,
-                actor: person,
-                child: _fact(
-                  _capitalize(attribute.name),
-                  '${person.attribute(attribute)}',
-                ),
-              ),
-          ]),
         ),
+        const SizedBox(height: 22),
+        _section('Attributes', Icons.tune, [
+          for (final attribute in Attribute.values)
+            AttributeTooltip(
+              attribute: attribute,
+              actor: person,
+              child: _fact(
+                _capitalize(attribute.name),
+                '${person.attribute(attribute)}',
+              ),
+            ),
+        ]),
       ],
     );
-  }
-
-  List<Widget> _injuries(Creature person) {
-    final descriptions = [
-      ...person.body.allSpecialInjuries(),
-      for (final part in person.body.parts.where((part) => part.wounded))
-        _partDescription(part),
-    ];
-    return [
-      Text(
-        descriptions.isEmpty ? 'No recorded injuries' : 'Recorded injuries',
-        style: TextStyle(
-          color: descriptions.isEmpty ? _muted : _red,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      for (final description in descriptions)
-        Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Text(description, style: const TextStyle(color: _red)),
-        ),
-    ];
-  }
-
-  String _partDescription(BodyPart part) {
-    final details = <String>[
-      if (part.missing) 'Missing',
-      if (part.shot) 'Shot',
-      if (part.cut) 'Cut',
-      if (part.bruised) 'Bruised',
-      if (part.burned) 'Burned',
-      if (part.torn) 'Torn',
-      if (part.bleeding > 0) 'Bleeding (${part.bleeding})',
-      if (!part.missing && part.relativeHealth < 1)
-        '${(part.relativeHealth * 100).round()}% tissue health',
-    ];
-    return '${part.name} · ${details.join(', ')}';
   }
 
   Widget _skills() {

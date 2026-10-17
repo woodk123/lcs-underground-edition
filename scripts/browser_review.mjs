@@ -220,10 +220,10 @@ try {
 
   await click(new RegExp(`^Select crew ${escape(crew[0].name)}(?:$|\\s)`));
   await click(/^Clipboard(?:$|\s)/);
-  await wait(/Active Liberals/);
-  assert.equal((await uiText()).split('\n').filter(line => line.trim() === 'Active Liberals').length, 1);
+  await wait(/Personnel directory/);
+  assert.equal((await uiText()).split('\n').filter(line => line.trim() === 'Personnel directory').length, 1);
   await capture('11-clipboard-as-ruled-journal-page');
-  await click(new RegExp(`^A ${escape(crew[0].name)}(?:$|\\s)`));
+  await click(new RegExp('^Open dossier for ' + escape(crew[0].name) + '[.]'));
   await wait(/Campaign record/);
   assert.doesNotMatch(await uiText(), /Profile of a Liberal|SKILL\s+NOW\s+MAX/);
   await capture('12-clipboard-native-personnel-dossier');
@@ -235,8 +235,8 @@ try {
   assert.equal(await page.getByRole('img', { name: new RegExp(`^${escape(crew[1].name)} portrait\\.`) }).count(), 2,
     'The left identity and open dossier must both follow the selected person.');
   await capture('17-profile-member-switch-keeps-skills-tab');
-  await click(/^Back to crew/);
-  await wait(/Active Liberals/);
+  await click(/^Back to directory/);
+  await wait(/Personnel directory/);
   await click(/^Weapons(?:$|\s)/);
   await wait(/Increase ammo allocation/);
   assert.equal((await uiText()).split('\n').filter(line => line.trim() === 'Equipment').length, 1);
@@ -253,11 +253,11 @@ try {
   await page.setViewportSize({ width: 800, height: 600 });
   await capture('15-equipment-800x600-at150');
   await click(/^Clipboard(?:$|\s)/);
-  await wait(/Active Liberals/);
-  await click(new RegExp(`^A ${escape(crew[0].name)}(?:$|\\s)`));
+  await wait(/Personnel directory/);
+  await click(new RegExp('^Open dossier for ' + escape(crew[0].name) + '[.]'));
   await wait(/Campaign record/);
   await capture('16-clipboard-dossier-800x600-at150');
-  await click(/^Back to crew/);
+  await click(/^Back to directory/);
   await click(/^Reading size/);
   await page.getByRole('menuitem', { name: '100%', exact: true }).click();
   await page.setViewportSize({ width: 1440, height: 1000 });

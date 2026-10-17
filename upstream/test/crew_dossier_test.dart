@@ -285,7 +285,7 @@ void main() {
       founder.pastConvictions[Crime.vandalism] = 2;
       founder.sentence = 4;
       await mountInspector(tester, founder);
-      expect(find.text('No Left Eye'), findsOneWidget);
+      expect(find.text('Left eye · Missing'), findsOneWidget);
       expect(
         find.text('Left Arm · Cut, Bleeding (2), 55% tissue health'),
         findsOneWidget,

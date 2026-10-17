@@ -163,6 +163,7 @@ try {
   });
   await journey('clipboard-sort', async () => {
     await hq(); await click(/^Clipboard(?:$|\s)/);
+    await click(/^Roster tools/);
     await click(/^T Sort Liberals/); await screen('clipboard-sort');
     await page.keyboard.press('Escape');
     await click(/^Z Reorder Liberals/); await screen('clipboard-reorder');

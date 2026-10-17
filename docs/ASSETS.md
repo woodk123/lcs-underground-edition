@@ -11,6 +11,7 @@ The journal materials, painted portraits and map illustrations were generated fo
 - `assets/art-city-v2/atlas_metadata.json` and `assets/gangsters-journal/atlas_metadata.json` record the selected files, prompts, source/runtime hashes and crop geometry. Their paths are repository-relative.
 - `assets/art/` retains the prompts for current district/site art.
 - `activist_crew_v1` supplies the crew/personnel illustration across the title, creation and journal screens. Its source PNG and generation prompt are retained with the other static art.
+- `injury_anatomy_front_v1` is the transparent front-view medical engraving in personnel dossiers. [Its generation prompt and landmarks](../assets/injury-status/provenance.json) accompany the PNG master. Flutter draws the injury overlays, callouts and labels; `injury_anatomy.dart` traces the selected image so visual highlights and pointer targets share the same geometry.
 - `assets/portraits-v2/` and `assets/portraits-v3/` retain original portrait sheets, prompts and full manifests. These originals differ from the cropped/resized runtime atlases and are needed for regeneration.
 
 Rejected drafts, partial validations and generated contact sheets are not tracked. Historical edit inputs use `git:<commit>:<path>` references where needed. Asset-review helpers write their review output under `.local/art-review/` by default. Do not renumber shipped atlas cells: saved characters reference portrait IDs. See [PORTRAIT_LIBRARY.md](PORTRAIT_LIBRARY.md) for the mapping.

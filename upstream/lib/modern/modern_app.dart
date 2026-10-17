@@ -1981,7 +1981,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
 
   Widget _profileAction(ConsoleAction action) {
     final (label, icon) = switch (action.key) {
-      'Enter' => ('Back to crew', Icons.arrow_back),
+      'Enter' => ('Back to directory', Icons.arrow_back),
       'Left' => ('Previous', Icons.chevron_left),
       'Right' => ('Next', Icons.chevron_right),
       'a' => ('Assign a task', Icons.assignment_outlined),

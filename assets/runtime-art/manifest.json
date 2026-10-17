@@ -75,6 +75,19 @@
       "runtime_bytes": 695080
     },
     {
+      "original_path": "assets/runtime-art/source/injury_anatomy_front_v1.png",
+      "runtime_path": "upstream/assets/modern/injury_anatomy_front_v1.webp",
+      "width": 979,
+      "height": 1607,
+      "mode": "RGBA",
+      "lossless": false,
+      "has_alpha": true,
+      "original_sha256": "44ab19e2a289921b8f317ac6ac004b61ba3f026d8e664c1d7a0cbef198a6b47d",
+      "runtime_sha256": "ab793f008f73a6099a66133169494083c3c5f1a9e3604fdc6e6829509b8648d7",
+      "original_bytes": 1214908,
+      "runtime_bytes": 225390
+    },
+    {
       "original_path": "assets/runtime-art/source/journal_icons_v1.png",
       "runtime_path": "upstream/assets/modern/journal_icons_v1.webp",
       "width": 1448,

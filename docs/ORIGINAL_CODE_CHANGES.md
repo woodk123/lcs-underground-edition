@@ -10,6 +10,7 @@ The Underground Edition retains the original Dart/Flutter engine and campaign co
 - Invalid imports are rejected without partially replacing the active campaign.
 - Legacy saves retain equipped clothing quality/protection during migration.
 - Inspecting saves does not consume the active campaign RNG.
+- Opening personnel review no longer consolidates or rewrites safehouse inventory. Stack consolidation remains part of explicit equipment management.
 - Completed campaign totals are recorded once.
 - Guilty and lenient trial outcomes retain the full charged counts in conviction history, including earlier cases. Acquittals and retrials add no convictions; sentencing calculations are unchanged.
 - Free Clinic admissions persist across daily turns, exclude patients from ordinary work/squad allocation, and discharge through the existing recovery handler. The clinic's original support and free treatment are preserved; university treatment and billing remain unchanged. Clinic sleeper staff remain at work.
@@ -25,7 +26,7 @@ The Underground Edition retains the original Dart/Flutter engine and campaign co
 - Destination labels show relevant travel prices and requirements; general travel rules are available on request.
 - Squad visits use the original destination planner and shared order card.
 - Skill levels sit next to their names; XP is secondary.
-- Clipboard profiles use the structured personnel dossier; crew and equipment lists use ruled journal rows with compact controls.
+- Clipboard opens a complete personnel directory with counted status filters, global name/status/location search, full locations and hospital bills. Search and filters survive opening and closing a profile. Directory selections resolve exact character IDs through the original source roster pages, retaining rename and other management confirmations. Roster tools preserve the original sorting/reordering controls; squad allocation keeps its existing eligibility rules.
 - Left-hand selection follows profile tabs and equipment rows without resetting scroll or changing equipment; profile arrow navigation keeps the left-hand selection in sync.
 - Field encounters retain the source's visible names, equipment and health. Retreat exposes clickable directions and cancellation; movement availability follows the original frightened-occupant exception.
 - Field portrait dossiers keep the map and current decision in place and block game commands while inspecting. Speaker choices show Persuasion, Seduction and Disguise beside their names.
