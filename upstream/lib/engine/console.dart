@@ -9,6 +9,7 @@ import 'package:lcs_new_age/engine/console_char.dart';
 import 'package:lcs_new_age/engine/console_graphic.dart';
 import 'package:lcs_new_age/engine/creation_context.dart';
 import 'package:lcs_new_age/engine/journal_context.dart';
+import 'package:lcs_new_age/engine/legislation_context.dart';
 import 'package:lcs_new_age/engine/pursuit_context.dart';
 import 'package:lcs_new_age/engine/recovery_context.dart';
 import 'package:lcs_new_age/engine/recruitment_context.dart';
@@ -170,6 +171,7 @@ class Console {
   RecruitmentContext? recruitment;
   RecoveryContext? recovery;
   PursuitContext? pursuit;
+  LegislationContext? legislation;
   // Full text of the current original showMessage acknowledgement. This is
   // presentation metadata only; the retained buffer and input reader remain.
   String? eventMessage;
@@ -401,6 +403,7 @@ class Console {
     recruitment = null;
     recovery = null;
     pursuit = null;
+    legislation = null;
     eventMessage = null;
     eventTitle = null;
     for (List<ConsoleChar> row in buffer) {
