@@ -68,7 +68,9 @@ void main() {
       engine.mvaddstr(9, 1, 'Felix hits the attacker.');
       engine.mvaddstr(10, 1, 'The armor absorbs part of the shot.');
       printEncounter();
-      engine.mvaddstr(22, 1, 'Loot on the ground!');
+      engine.console.writeStatus(
+        () => engine.mvaddstr(24, 57, 'Loot on the ground!'),
+      );
       final before = bufferContents(engine.console);
       final flow = engine.acknowledge(title: 'Operation report');
       expect(

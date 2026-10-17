@@ -182,6 +182,18 @@ class Console {
   JournalProfileContext? journalProfile;
   int journalBodyStart = 0;
   final Set<(int, int)> _writtenCells = {};
+  bool _writingStatus = false;
+
+  /// Draw retained status furniture without adding it to the next report.
+  void writeStatus(void Function() draw) {
+    final previous = _writingStatus;
+    _writingStatus = true;
+    try {
+      draw();
+    } finally {
+      _writingStatus = previous;
+    }
+  }
 
   /// Text written since the preceding reader, excluding retained menus and
   /// status furniture. Reading this never changes the original console buffer.
@@ -198,10 +210,7 @@ class Console {
                   a.label.characters.take(a.width).toString(),
         )
         .toList();
-    // Inline field reports occupy the two message rows. Combat redraws the
-    // encounter and loot below them before pausing; those are status furniture,
-    // even when they were written since the previous reader.
-    final end = screen == 'field_prompt' ? 11 : height;
+    final end = height;
     for (var row = journalBodyStart; row < end; row++) {
       final text = StringBuffer();
       final columns = screen == 'field_prompt' && row >= 11 && row <= 22
@@ -459,7 +468,11 @@ class Console {
   void addchar(String c, {String? mouseClickKey}) {
     if (y < 0 || y >= buffer.length) return;
     if (x < 0 || x >= buffer[y].length) return;
-    _writtenCells.add((y, x));
+    if (_writingStatus) {
+      _writtenCells.remove((y, x));
+    } else {
+      _writtenCells.add((y, x));
+    }
     if (c == '█') {
       buffer[y][x] = ConsoleChar(
         ' ',
