@@ -30,6 +30,9 @@ jobs:
           python-version: '3.12'
       - uses: ./.github/actions/setup-flutter
         id: flutter
+        with:
+          target: tests
+          save-sdk-cache: ${{ matrix.shard == 0 }}
       - name: Restore incremental test compiler cache
         id: test-cache
         uses: actions/cache/restore@v4
@@ -86,6 +89,8 @@ jobs:
       - uses: ./.github/actions/setup-flutter
         id: flutter
         with:
+          target: ${{ matrix.target }}
+          save-sdk-cache: 'true'
           save-cache: ${{ matrix.target != 'web' }}
       - name: Build release players
         run: python scripts/ci_worker.py build --platform ${{ matrix.target }}

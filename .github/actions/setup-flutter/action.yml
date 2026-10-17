@@ -1,8 +1,14 @@
 name: Cached pinned Flutter
 description: Restore SDK and package downloads, then verify the exact pinned SDK.
 inputs:
+  target:
+    description: SDK artifacts required by this worker (tests, windows, linux or web).
+    required: true
+  save-sdk-cache:
+    description: One trusted worker per OS and target writes its SDK cache.
+    default: 'false'
   save-cache:
-    description: Only one trusted build worker per OS writes shared caches.
+    description: Only one trusted build worker per OS writes the shared package cache.
     default: 'false'
 outputs:
   codegen-cache-hit:
@@ -19,7 +25,7 @@ runs:
       uses: actions/cache/restore@v4
       with:
         path: .tools/flutter
-        key: flutter-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/toolchain.json') }}
+        key: flutter-v2-${{ runner.os }}-${{ runner.arch }}-${{ inputs.target }}-${{ hashFiles('scripts/toolchain.json', 'scripts/ci_setup.py') }}
     - name: Restore Dart package downloads
       id: pub
       uses: actions/cache/restore@v4
@@ -40,16 +46,21 @@ runs:
       shell: bash
       env:
         PUB_CACHE: ${{ github.workspace }}/.local/pub-cache
-      run: python scripts/ci_setup.py
+        FLUTTER_TARGET: ${{ inputs.target }}
+      run: python scripts/ci_setup.py --target "$FLUTTER_TARGET"
     - name: Set package cache for subsequent steps
       shell: bash
       env:
         CODEGEN_CACHE_HIT: ${{ steps.codegen.outputs.cache-hit }}
+        SDK_CACHE_HIT: ${{ steps.sdk.outputs.cache-hit }}
+        FLUTTER_TARGET: ${{ inputs.target }}
       run: |
         echo "PUB_CACHE=${GITHUB_WORKSPACE}/.local/pub-cache" >> "$GITHUB_ENV"
         echo "CI_CODEGEN_CACHE_HIT=${CODEGEN_CACHE_HIT}" >> "$GITHUB_ENV"
+        echo "CI_SDK_CACHE_HIT=${SDK_CACHE_HIT}" >> "$GITHUB_ENV"
+        echo "CI_SDK_TARGET=${FLUTTER_TARGET}" >> "$GITHUB_ENV"
     - name: Save pinned SDK
-      if: inputs.save-cache == 'true' && github.event_name != 'pull_request' && steps.sdk.outputs.cache-hit != 'true'
+      if: inputs.save-sdk-cache == 'true' && github.event_name != 'pull_request' && steps.sdk.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
       with:
         path: .tools/flutter

@@ -26,6 +26,8 @@ jobs:
       - uses: ./.github/actions/setup-flutter
         id: flutter
         with:
+          target: linux
+          save-sdk-cache: 'true'
           save-cache: 'true'
       - name: Test release tools and verify assets
         run: |
