@@ -14,11 +14,13 @@ import 'package:lcs_new_age/title_screen/world.dart';
 import 'package:lcs_new_age/utils/colors.dart';
 import 'package:lcs_new_age/utils/debug_flags.dart';
 import 'package:lcs_new_age/utils/game_options.dart';
+import 'package:lcs_new_age/utils/game_version.dart';
 import 'package:lcs_new_age/utils/interface_options.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const String gameVersion = "1.5.6";
+export 'package:lcs_new_age/utils/game_version.dart' show gameVersion;
+
 bool megaFounderCheat = false;
 
 Future<void> titleScreen() async {

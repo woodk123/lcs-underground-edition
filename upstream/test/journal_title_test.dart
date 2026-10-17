@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/modern/journal_title.dart';
+import 'package:lcs_new_age/utils/game_version.dart';
 
 Console titleConsole({bool canContinue = false, bool hasSaves = false}) {
   final console = Console()..screen = 'title';
@@ -103,6 +104,7 @@ void main() {
       );
       expect(find.textContaining('New Age by Ashley S. Fox'), findsOneWidget);
       expect(find.textContaining('GPL-2.0'), findsOneWidget);
+      expect(find.textContaining(gameVersionLabel), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );

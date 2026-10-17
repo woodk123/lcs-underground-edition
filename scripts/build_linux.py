@@ -38,7 +38,8 @@ def build(root: Path) -> None:
                               'lib/engine/console.dart', 'lib/engine/console_widget.dart',
                               'lib/engine/console_char.dart', 'lib/engine/console_graphic.dart']),
         ('full-analysis', [flutter, 'analyze', '--no-pub', '--no-fatal-infos', '--no-fatal-warnings']),
-        ('linux-release', [flutter, 'build', 'linux', '--release', '--no-pub']),
+        ('linux-release', [flutter, 'build', 'linux', '--release', '--no-pub',
+                           f'--dart-define=LCS_BUILD={commit[:8]}']),
     ]
     try:
         for name, command in commands:

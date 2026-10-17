@@ -34,6 +34,7 @@ import 'package:lcs_new_age/modern/journal_title.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/modern/organisation_journal.dart';
 import 'package:lcs_new_age/modern/tactical_map.dart';
+import 'package:lcs_new_age/utils/game_version.dart';
 
 const ink = JournalPalette.ink;
 const paper = JournalPalette.page;
@@ -920,7 +921,8 @@ class _ModernGameShellState extends State<ModernGameShell> {
                       const Text(
                         'Original game by Tarn Adams · New Age by Ashley S. Fox\n'
                         'The Underground Edition by Kevin Wood\n'
-                        'Open source · GPL-2.0',
+                        'Open source · GPL-2.0\n'
+                        '$gameVersionLabel',
                         style: TextStyle(fontSize: 11, color: muted),
                       ),
                     ],

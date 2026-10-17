@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
+import 'package:lcs_new_age/utils/game_version.dart';
 
 /// The title menu is a live campaign desk inside the journal. Its choices are
 /// exactly the current original-engine actions; artwork never supplies input.
@@ -378,7 +379,8 @@ class JournalTitlePage extends StatelessWidget {
     child: Text(
       'Original game by Tarn Adams · New Age by Ashley S. Fox\n'
       'The Underground Edition by Kevin Wood\n'
-      'Open source · GPL-2.0',
+      'Open source · GPL-2.0\n'
+      '$gameVersionLabel',
       textAlign: TextAlign.center,
       style: JournalPalette.small,
     ),

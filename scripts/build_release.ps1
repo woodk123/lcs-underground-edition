@@ -73,11 +73,12 @@ try {
     )
     # Keep legacy infos/warnings visible in a separate full-project report. Errors remain fatal.
     Invoke-BuildStep '05-full-analysis' $flutter @('--suppress-analytics', 'analyze', '--no-pub', '--no-fatal-infos', '--no-fatal-warnings')
-    Invoke-BuildStep '06-web-release' $flutter @('--suppress-analytics', 'build', 'web', '--release', '--no-pub', '--no-wasm-dry-run', '--base-href', '/')
+    $buildDefine = '--dart-define=LCS_BUILD=' + $sourceCommit.Substring(0, 8)
+    Invoke-BuildStep '06-web-release' $flutter @('--suppress-analytics', 'build', 'web', '--release', '--no-pub', '--no-wasm-dry-run', '--base-href', '/', $buildDefine)
     # The upstream injector requires a fresh build and must run exactly once per build.
     Invoke-BuildStep '07-offline-manifest' $dart @('run', 'tool/inject_service_worker.dart', 'build/web')
     if ($Windows -or $Nightly) {
-        Invoke-BuildStep '08-windows-release' $flutter @('--suppress-analytics', 'build', 'windows', '--release', '--no-pub')
+        Invoke-BuildStep '08-windows-release' $flutter @('--suppress-analytics', 'build', 'windows', '--release', '--no-pub', $buildDefine)
     }
     Write-BuildReport 'automated_checks_passed_manual_qa_pending'
     $packageArguments = @((Join-Path $root 'scripts\package_release.py'), '--root', $root, '--report', $reportDir)
