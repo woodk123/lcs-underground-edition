@@ -75,7 +75,7 @@ The Underground Edition is a modernization of Liberal Crime Squad: New Age, with
 * Nyx / nyxwise (2011) - direct contributor to main project
 * Pesi (2011-2012) - suggested changes on forum that were implemented by blomkvist
 * Puzzlemaker (2008) - direct contributor to main project
-ransomeliolds (2011-2014) - direct contributor to main project
+* ransomeliolds (2011-2014) - direct contributor to main project
 * Rich McGrew / Liberal Elitist / yetisyny (2013-2015) - direct contributor to main project
 * Scott C. Walton / LiteralKa (2009-2011) - direct contributor to main project
 * Servant Corps / servantcorps (2009-2011) - direct contributor to main project
@@ -85,7 +85,7 @@ ransomeliolds (2011-2014) - direct contributor to main project
 * SuicideJunkie (2014) - working on enhancing car chases, and hopefully will finish & release this code so it can go in the main game
 * stabbymcstabstab (2011) - suggested a change on forum that was implemented by nyxwise
 * stagnation (2009) - direct contributor to main project
-Tarn Adams / Toady One (2002-2004) - original creator of the game
+* Tarn Adams / Toady One (2002-2004) - original creator of the game
 * usr_share (2013) - contributed Prisons & Guns patch via forums
 * Veroule (2013) - contributed bug report
 * vherid (2013) - direct contributor to main project

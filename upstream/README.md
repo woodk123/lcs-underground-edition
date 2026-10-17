@@ -16,19 +16,10 @@ New Age is additionally intended to be a Radical Design Departure, a Liberal Pla
 
 Liberal Crime Squad: New Age — The Underground Edition welcomes the efforts of Liberal Freedom Fighters who wish to contribute to its development.
 
-1) [Manually install Flutter](https://docs.flutter.dev/get-started/install) or let the [Flutter extension for VS Code](https://marketplace.visualstudio.com/items?itemName=Dart-Code.flutter) or [IntelliJ](https://plugins.jetbrains.com/plugin/9212-flutter) install it for you.
-2) Run `git clone https://github.com/jonathansfox/lcs-new-age.git` in a convenient location to fetch the source code, and `cd lcs-new-age` into it.
-3) Run `flutter pub get` to download and install required library dependencies.
-4) Run `dart run build_runner build` to auto-generate some of the required code files. The generated code is used for JSON (de-)serialization of save game files.
+Clone [the Underground Edition repository](https://github.com/woodk123/lcs-underground-edition), then follow [Building and development](../docs/BUILDING.md) from its root directory, one level above this Flutter project. Use the Flutter version and revision pinned in `scripts/toolchain.json`; the shared release scripts also generate save serializers, run checks and prepare matching player/source packages.
 
-> Note: You'll have to regenerate these files by running this command again whenever the save game format changes!
+For an editable checkout, follow [Development mode](../docs/BUILDING.md#development-mode) to resolve dependencies, generate serializers and launch Chrome without packaging a release. Regenerate serializers whenever saved model fields or JSON annotations change. Native Windows development also requires the [Windows build tools](../docs/WINDOWS_BUILD.md).
 
-5) Start a dev build with `flutter run -d chrome` or `flutter run -d windows` (you'll need Visual Studio to be installed for the windows build toolchain). 
+The gameplay loop is sequential and awaits console input. The illustrated journal uses structured screen/action metadata from that loop; use a full application restart after engine changes. See [Architecture](../docs/ARCHITECTURE.md) for the engine/interface boundary and [Testing](../docs/TESTING.md) for regression and browser checks.
 
-> Note: LCS:NA does not fully support hot reload. All the gameplay is handled by a thread that is designed to be written the same way LCS code has always been written, with curses-style calls to print text to the console and flush the console and blocking calls to get input and so on. Meanwhile, the actual UI state is only an emulated console widget that has no knowledge of what is happening in the game.
-
-6) Create a release build
-    -  For website builds (change or remove --base-href to suit your hosting choices)  
-`flutter build web --source-maps --base-href /lcs-new-age`  
-    -  For a windows build  
-    `flutter build windows` 
+Keep original New Age credits and licenses intact. The [project README](../README.md) links the current players, source and upstream project.

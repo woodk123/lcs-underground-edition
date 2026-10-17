@@ -1,14 +1,18 @@
 # Testing
 
-Run commands from the repository root unless noted otherwise. Install the [pinned toolchain](BUILDING.md) and generate dependencies/serialization with the build script first.
+Run commands from the repository root unless noted otherwise. Install the [pinned toolchain](BUILDING.md) and resolve dependencies/generate serializers using [Development mode](BUILDING.md#development-mode) first. A release build is not required for unit tests.
 
 ## Automated regressions
 
 ```powershell
-Set-Location upstream
+Push-Location upstream
 ..\.tools\flutter\bin\flutter.bat test --no-pub
-..\.tools\flutter\bin\flutter.bat analyze --no-pub
+..\.tools\flutter\bin\flutter.bat analyze --no-pub lib/modern lib/main.dart lib/engine/console.dart lib/engine/console_widget.dart lib/engine/console_char.dart lib/engine/console_graphic.dart
+..\.tools\flutter\bin\flutter.bat analyze --no-pub --no-fatal-infos --no-fatal-warnings
+Pop-Location
 ```
+
+These analysis commands match the release/CI policy: focused interface analysis is strict; full-project errors fail while legacy warnings and infos remain visible.
 
 The suite covers the original engine, command routing, order confirmation/cancellation, saves and migrations, equipment, politics, campaign endings, portraits and responsive UI. Save files under `upstream/test/saves/` are regression fixtures, not disposable player saves.
 
@@ -26,10 +30,10 @@ The tests exercise archive integrity/tampering, complete source snapshots, local
 
 ## Browser regressions
 
-The supported browser helpers use isolated contexts and test fixtures. They require `http://127.0.0.1:18879/` and never operate a player's browser profile. Their Node dependencies are in `upstream/tool/offline_test/`:
+The supported browser helpers use isolated contexts and test fixtures. They require a compiled web build served at `http://127.0.0.1:18879/` and never operate a player's browser profile. Install Node.js/npm and the Edge/Chrome browser required by each helper. Their locked Node dependencies are in `upstream/tool/offline_test/`:
 
 ```powershell
-npm install --prefix upstream/tool/offline_test
+npm ci --prefix upstream/tool/offline_test
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch.ps1 -Port 18879 -NoBrowser
 node scripts/browser_review.mjs --url http://127.0.0.1:18879/
 ```

@@ -23,7 +23,6 @@ dependencies:
   source_maps: ^0.10.13
   http: ^1.3.0
   cupertino_icons: ^1.0.8
-  web: ^1.1.1
   markdown_widget: ^2.3.2
   idb_shim: ^2.6.6
   sembast: ^3.8.5

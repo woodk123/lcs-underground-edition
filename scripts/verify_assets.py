@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 from release_common import digest, safe_relative
 
@@ -23,6 +24,18 @@ def verify(root: Path) -> dict:
 
     def read(name: str) -> dict:
         return json.loads(file(root, name).read_text(encoding='utf-8-sig'))
+
+    flags = ET.parse(file(root, 'upstream/assets/xml/flags.xml'))
+    flag_assets = set()
+    flag_directory = root / 'upstream/assets/flags'
+    for flag in flags.findall('flagtype'):
+        name = flag.findtext('asset', '').strip()
+        if not name or Path(name).name != name or Path(name).suffix != '.svg':
+            raise ValueError(f'Invalid flag asset: {name!r}')
+        flag_assets.add(file(flag_directory, name))
+    actual_flags = {path.resolve() for path in flag_directory.glob('*.svg')}
+    if actual_flags != flag_assets:
+        raise ValueError(f'Unreferenced flag assets: {sorted(str(path.relative_to(root)) for path in actual_flags - flag_assets)}')
 
     for name in ('assets/art-city-v2/atlas_metadata.json',
                  'assets/gangsters-journal/atlas_metadata.json'):
@@ -78,7 +91,8 @@ def verify(root: Path) -> dict:
     if actual_paths != runtime_paths:
         raise ValueError(f'Unexpected or missing runtime images: {sorted(actual_paths ^ runtime_paths)}')
     return {'status': 'passed', 'verified_files': len(checked),
-            'runtime_images': len(runtime_paths), 'portrait_atlases': len(atlases), 'portraits': len(ids)}
+            'runtime_images': len(runtime_paths), 'portrait_atlases': len(atlases),
+            'portraits': len(ids), 'flag_assets': len(flag_assets)}
 
 
 def main() -> None:

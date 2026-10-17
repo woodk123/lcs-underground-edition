@@ -48,7 +48,23 @@ An explicit `-Tag` prepares absolute Source ZIP links for that tag in `woodk123/
 
 ## Development mode
 
-After the build has resolved dependencies and generated serializers:
+Development does not require a clean checkout or release packaging. After installing the pinned SDK above, verify it and generate dependencies/serializers from the repository root:
+
+```powershell
+. ./scripts/common.ps1
+$flutter = Get-LcsFlutter
+Push-Location upstream
+try {
+    & $flutter --suppress-analytics pub get
+    if ($LASTEXITCODE -ne 0) { throw 'Dependency resolution failed.' }
+    ..\.tools\flutter\bin\dart.bat run build_runner build
+    if ($LASTEXITCODE -ne 0) { throw 'Serializer generation failed.' }
+} finally {
+    Pop-Location
+}
+```
+
+Regenerate serializers after changing saved model fields or JSON annotations. Then start the development game:
 
 ```powershell
 Set-Location upstream
@@ -56,6 +72,12 @@ Set-Location upstream
 ```
 
 Restart the application fully after changing engine code. See [architecture](ARCHITECTURE.md), [testing](TESTING.md) and [assets](ASSETS.md).
+
+## Keeping the checkout tidy
+
+Write build logs, browser reports and review images under the ignored `.local/` or `reports/` directories. Release packages belong under ignored `release/`; SDKs and dependency/build caches are generated local files. Historical root-level diagnostic logs have been moved to `reports/legacy-root-logs/` where present. Test counts and outcomes in those logs describe their original run; use a current run to assess current source.
+
+Keep source artwork, prompts, manifests, license notices and `upstream/test/saves/` fixtures. They support regeneration, attribution and regression coverage even when the player does not load them directly. Validate runtime asset removal with `python scripts/verify_assets.py` and check code, XML catalogues and tests for references before deleting a candidate. See [Artwork and assets](ASSETS.md) for the authoritative source/runtime copies.
 
 ## Linux desktop
 

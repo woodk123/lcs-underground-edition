@@ -23,7 +23,9 @@ Keep labels, statistics and controls in Flutter; artwork supplies visual materia
 python scripts/verify_assets.py
 ```
 
-This checks manifest paths, source/runtime hashes, portrait counts and IDs, and rejects unlisted or duplicate runtime image files. Release builds use the checked-in WebP files and do not need Pillow. Flutter tests decode every runtime atlas with the native image codec and check exact alpha against the static PNG masters, allowing at most one RGB level for native premultiplication rounding. The encoder also verifies exact straight-RGBA pixels for all transparent artwork.
+This checks manifest paths, source/runtime hashes, portrait counts and IDs, and rejects unlisted or duplicate runtime image files. It also checks the flag catalogue in `upstream/assets/xml/flags.xml`: each declared asset must exist, and every shipped flag SVG must be listed. Add or remove a flag's catalogue entry and SVG together.
+
+Release builds use the checked-in WebP files and do not need Pillow. Flutter tests decode every runtime atlas with the native image codec and check exact alpha against the static PNG masters, allowing at most one RGB level for native premultiplication rounding. The encoder also verifies exact straight-RGBA pixels for all transparent artwork.
 
 To regenerate static runtime art, install `scripts/requirements-art.txt`, then run:
 
