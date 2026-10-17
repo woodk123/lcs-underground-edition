@@ -27,6 +27,8 @@ This checks manifest paths, source/runtime hashes, portrait counts and IDs, and 
 
 Release builds use the checked-in WebP files and do not need Pillow. Flutter tests decode every runtime atlas with the native image codec, check exact alpha against the transparent static PNG masters, and bound mean squared native colour error to 100 (RMS error at most 10 levels out of 255). The encoder also verifies exact alpha and unchanged dimensions. Colour is lossy; inspect visual comparisons when changing the encoding policy.
 
+The quality 90 policy was selected on 17 October 2026 after source-based comparisons at qualities 90, 85 and 80. All 42 regenerated images matched the reviewed quality 90 candidates. Runtime image bytes dropped by 45.8%, without resizing or changing atlas layout. See [measured player sizes and validation](BUILDING.md#quality-90-size-measurements-17-october-2026) for the rebuilt ZIP results and verification scope.
+
 To regenerate static runtime art, install `scripts/requirements-art.txt`, then run:
 
 ```powershell

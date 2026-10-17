@@ -44,4 +44,8 @@ The Underground Edition retains the original Dart/Flutter engine and campaign co
 - Founder portrait selection keeps its original assignment age through background creation, headquarters and saves, including birthdays at an age-cohort boundary.
 - Crew and personnel illustrations depict contemporary grassroots activists.
 
+## Artwork and player size
+
+- Runtime illustrations, portraits and appearance overlays use WebP quality 90 colour with exact alpha, retaining all dimensions, atlas cells and portrait IDs. Original PNG masters remain available for regeneration. The 17 October 2026 rebuild reduced browser and Windows player ZIPs by approximately 12.1 MB each against the October 16 preview; see [size measurements and validation](BUILDING.md#quality-90-size-measurements-17-october-2026).
+
 See [architecture](ARCHITECTURE.md), [testing](TESTING.md) and [portrait details](PORTRAIT_LIBRARY.md). Detailed development history and retired reviews remain available through Git history and the original release artifacts.

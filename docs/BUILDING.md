@@ -26,6 +26,23 @@ Before creating the offline manifest, the injector removes renderer files proven
 
 Each release writes `size-report.json` beside the ZIPs and `release-sizes.json` in its build evidence. These account for compressed and extracted sizes by artwork, portraits, renderer, code and other data. Player size limits are in `scripts/release_sizes.py`; exceeding either download or extracted-size limits fails packaging. Source archives are reported separately without a player-size limit. Review the artwork and report before deliberately raising a budget.
 
+### Quality 90 size measurements (17 October 2026)
+
+Build `94ef3a09529fa35c0ba8e755c4f526a96987af3f` regenerated all 42 runtime images from their original PNG masters at WebP quality 90. Image dimensions, portrait cells and alpha pixels are unchanged. The shared encoder and regenerated manifests make subsequent builds use the same policy; see [artwork regeneration](ASSETS.md).
+
+Actual player sizes, compared with the `underground-preview-2026.10.16` packages:
+
+| Player | Previous ZIP bytes | Quality 90 ZIP bytes | Download reduction | Quality 90 extracted bytes |
+|---|---:|---:|---:|---:|
+| Browser | 34,540,400 | 22,453,164 | 12,087,236 bytes (35.0%) | 38,081,854 |
+| Windows x64 | 42,700,237 | 30,645,529 | 12,054,708 bytes (28.2%) | 54,732,218 |
+
+The artwork payload itself fell from 26,405,232 to 14,322,460 bytes (45.8%). The package comparison includes other code changes since the preview, so the ZIP differences are whole-build measurements rather than an isolated compression benchmark. Quality 90 was selected after comparing qualities 90, 85 and 80: representative faces, icons, buildings and textures remained close to the existing art, with more visible smoothing at the lower qualities. Visual review covered representative samples, not every image in every gameplay view.
+
+The local artifacts are under `release/local-20261017-090800-94ef3a09/`, including player ZIPs, matching source, checksum sidecars and `size-report.json`. Build evidence is under `.local/reports/build-20261017-090455/`. These directories are ignored by Git and are not hosted download links. Validation passed all 736 Flutter tests, both focused and full analysis, asset verification, ZIP integrity and checksum checks, and byte comparisons of all 42 packaged images against the regenerated files. Manual gameplay and clean-machine launch checks remain pending.
+
+### Running and packaging players
+
 Double-click **Play.cmd** in the checkout or extracted browser player. It serves `upstream/build/web` in a checkout, or `web/` in a player package, at **http://127.0.0.1:8765/**. Playing requires Python 3 but no Flutter SDK.
 
 Use the same browser profile and address for existing saves. Export important saves before clearing browser data. Do not open `index.html` directly.
