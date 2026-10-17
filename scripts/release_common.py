@@ -12,6 +12,7 @@ from pathlib import Path, PurePosixPath
 
 
 WEB_SCRIPTS = ("launch.ps1", "common.ps1", "serve.py", "stop.ps1")
+WINDOWS_RUNTIME_FILES = ('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll')
 
 
 CACHE_NAMES = {
@@ -179,8 +180,8 @@ def runtime_hashes(package: Path, target: str) -> dict[str, str]:
         return {name: value for name, value in file_hashes(package).items()
                 if name == 'lcs_new_age' or name.startswith(('lib/', 'data/'))}
     require_files(package, (
-        "lcs_new_age.exe", "flutter_windows.dll", "msvcp140.dll", "vcruntime140.dll",
-        "vcruntime140_1.dll", "data/app.so", "data/icudtl.dat", "data/flutter_assets/NOTICES.Z",
+        "lcs_new_age.exe", "flutter_windows.dll", *WINDOWS_RUNTIME_FILES,
+        "data/app.so", "data/icudtl.dat", "data/flutter_assets/NOTICES.Z",
     ))
     result = {f"data/{name}": value for name, value in file_hashes(package / "data").items()}
     for path in package.iterdir():

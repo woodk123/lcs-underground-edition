@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 
 from release_common import (
-    WEB_SCRIPTS, archive_package, cache_ignore, copy_file, digest, file_hashes,
+    WEB_SCRIPTS, WINDOWS_RUNTIME_FILES, archive_package, cache_ignore, copy_file, digest, file_hashes,
     filtered_source_hashes, require_files, runtime_hashes, source_reference, write_json,
 )
 from release_sizes import report_sizes
@@ -55,6 +55,10 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
     if info.get('ci_evidence'):
         from ci_worker import verify_packaging_evidence
         verify_packaging_evidence(root, report, linux)
+        checked_runtime = root / 'upstream/build/windows/x64/runner/Release'
+        if runtime is not None and runtime.resolve() != checked_runtime.resolve():
+            raise ValueError('CI Windows runtime must come from the checked native payload.')
+        runtime = checked_runtime
     required = ['01-dependencies', '02-serialization', '03-tests', '04-focused-analysis',
                 '05-full-analysis', '06-web-release', '07-offline-manifest']
     if runtime is not None:
@@ -82,11 +86,10 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
     require_files(web, ('index.html', 'main.dart.js', 'flutter_bootstrap.js', 'sw.js'))
     if 'const RESOURCES = null; // build: manifest' in (web / 'sw.js').read_text(encoding='utf-8'):
         raise ValueError('Web offline manifest was not injected.')
-    runtime_files = ('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll')
     if runtime is not None:
         require_files(native, ('lcs_new_age.exe', 'flutter_windows.dll', 'data/app.so',
                               'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z'))
-        require_files(runtime, runtime_files)
+        require_files(runtime, WINDOWS_RUNTIME_FILES)
     output.mkdir(parents=True)
     preview = re.fullmatch(r'underground-preview-(\d{4}\.\d{2}\.\d{2})', tag) if published else None
     asset_version = preview.group(1) if preview else tag
@@ -155,7 +158,7 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
                             'Python and Flutter are not required.')
         else:
             shutil.copytree(built, player, ignore=shutil.ignore_patterns('*.pdb', '*.exp', '*.lib'))
-            for name in runtime_files:
+            for name in WINDOWS_RUNTIME_FILES:
                 copy_file(runtime / name, player / name)
             instructions = ('Extract the entire folder, then run lcs_new_age.exe. Keep data/ and all DLLs '
                             'beside it. Windows 10/11 x64; Python and Flutter are not required.')
@@ -212,7 +215,10 @@ def main() -> None:
     fingerprint = os.environ['NIGHTLY_FINGERPRINT'] if args.nightly else None
     repository = os.environ['GITHUB_REPOSITORY'] if args.nightly else args.repository
     output = args.output.resolve() if args.output else root / 'release' / ('nightly' if args.nightly else tag)
-    result = package(root, report, vc_runtime() if args.windows or args.nightly else None,
+    # CI payloads already include the exact, hashed redistributables collected
+    # by their Windows builder. Local Windows builds still discover them here.
+    runtime = vc_runtime() if (args.windows or args.nightly) and not info.get('ci_evidence') else None
+    result = package(root, report, runtime,
                      output, tag, fingerprint, repository, published=args.tag is not None,
                      linux=args.linux.resolve() if args.linux else None)
     print(json.dumps(result, indent=2))

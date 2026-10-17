@@ -10,7 +10,7 @@ from unittest.mock import patch
 import ci_reuse
 import ci_worker as ci
 import package_release
-from release_common import digest, file_hashes, write_json
+from release_common import WINDOWS_RUNTIME_FILES, digest, file_hashes, verify_package, write_json
 
 
 class EvidenceTests(unittest.TestCase):
@@ -53,7 +53,7 @@ class EvidenceTests(unittest.TestCase):
                             'linux': {'bundle': ['lcs_new_age', 'lib/libflutter_linux_gtk.so', 'lib/libapp.so',
                                                  'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z']},
                             'web': {'web': ['index.html', 'main.dart.js', 'flutter_bootstrap.js', 'sw.js']},
-                            'windows': {'native': ['lcs_new_age.exe', 'flutter_windows.dll', 'data/app.so',
+                            'windows': {'native': ['lcs_new_age.exe', 'flutter_windows.dll', *WINDOWS_RUNTIME_FILES, 'data/app.so',
                                                    'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z']},
                         }[target]
                         for folder, entries in files.items():
@@ -105,6 +105,20 @@ class EvidenceTests(unittest.TestCase):
         (self.artifacts / 'build-web/web/main.dart.js').write_text('tampered')
         with self.assertRaisesRegex(ValueError, 'hashes differ'):
             ci.verify_evidence(self.root, self.artifacts)
+
+    def test_missing_or_modified_windows_redistributables_are_rejected(self):
+        for name in WINDOWS_RUNTIME_FILES:
+            dll = self.artifacts / 'build-windows/native' / name
+            original = dll.read_bytes()
+            with self.subTest(dll=name, failure='modified'):
+                dll.write_text('modified redistributable')
+                with self.assertRaisesRegex(ValueError, 'hashes differ'):
+                    ci.verify_evidence(self.root, self.artifacts)
+            with self.subTest(dll=name, failure='missing'):
+                dll.unlink()
+                with self.assertRaisesRegex(ValueError, 'Required runtime'):
+                    ci.verify_evidence(self.root, self.artifacts)
+            dll.write_bytes(original)
 
     def test_missing_web_build_or_wrong_host_is_rejected(self):
         self.mutate('build-web', lambda i: i.update(host_platform='windows'))
@@ -166,6 +180,42 @@ class EvidenceTests(unittest.TestCase):
         (self.root / 'upstream/build/web/main.dart.js').write_text('changed after preparation')
         with self.assertRaisesRegex(ValueError, 'hashes differ'):
             ci.verify_packaging_evidence(self.root, report, self.root / '.local/linux')
+
+    def test_windows_runtime_is_rechecked_at_packaging_boundary(self):
+        report = ci.prepare_release(self.root, self.artifacts)
+        (self.root / 'upstream/build/windows/x64/runner/Release/vcruntime140.dll').write_text('tampered')
+        with self.assertRaisesRegex(ValueError, 'hashes differ'):
+            package_release.package(self.root, report, None, self.root / 'release',
+                                    'test', None, 'owner/repo', linux=self.root / '.local/linux')
+
+    def test_ci_nightly_packages_all_players_without_discovering_a_host_windows_toolchain(self):
+        report = ci.prepare_release(self.root, self.artifacts)
+        for name in ('LICENSE', 'AUTHORS.md', 'README.md', '.gitignore', 'Play.cmd',
+                     'scripts/launch.ps1', 'scripts/stop.ps1', 'scripts/common.ps1', 'scripts/serve.py',
+                     'docs/BUILDING.md', 'upstream/fonts/journal/OFL.txt',
+                     'upstream/fonts/modern/roboto_license.txt'):
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('fixture')
+        linux = self.root / '.local/linux'
+        output = self.root / 'release/nightly'
+        with patch.object(package_release, 'vc_runtime', side_effect=AssertionError('Host runtime discovery is forbidden')), \
+                patch('sys.argv', ['package_release.py', '--root', str(self.root), '--report', str(report),
+                                   '--nightly', '--linux', str(linux)]), \
+                patch.dict(os.environ, NIGHTLY_TAG='nightly-test', NIGHTLY_FINGERPRINT='f' * 64,
+                           GITHUB_REPOSITORY='owner/repo'):
+            package_release.main()
+        metadata = json.loads((output / 'release.json').read_text())
+        self.assertEqual(len(metadata['assets']), 8)
+        for suffix in ('Source', 'Web-Player', 'Windows-x64-Player', 'Linux-x64-Player'):
+            player = output / f'LCS-Underground-Edition-nightly-test-{suffix}'
+            self.assertEqual(verify_package(player)['status'], 'passed')
+        native = output / 'LCS-Underground-Edition-nightly-test-Windows-x64-Player'
+        for name in WINDOWS_RUNTIME_FILES:
+            self.assertEqual(digest(native / name), digest(self.artifacts / 'build-windows/native' / name))
+        with self.assertRaisesRegex(ValueError, 'checked native payload'):
+            package_release.package(self.root, report, self.root / 'unverified-runtime', output,
+                                    'test', None, 'owner/repo', linux=linux)
 
 
 class ReuseTests(unittest.TestCase):

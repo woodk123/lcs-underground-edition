@@ -11,9 +11,9 @@ import subprocess
 import sys
 import time
 
-from package_release import verify_source_checkout
+from package_release import vc_runtime, verify_source_checkout
 from ci_shards import SHARDS, test_files
-from release_common import digest, file_hashes, require_files, runtime_hashes, safe_relative, write_json
+from release_common import WINDOWS_RUNTIME_FILES, digest, file_hashes, require_files, runtime_hashes, safe_relative, write_json
 
 PLATFORMS = ('linux', 'windows')
 BUILD_TARGETS = ('linux', 'windows', 'web')
@@ -48,6 +48,8 @@ def run_worker(root: Path, kind: str, target: str, shard: int) -> None:
             'shard': shard if kind == 'checks' else None, 'shards': SHARDS,
             'run_id': os.environ.get('GITHUB_RUN_ID'), 'status': 'running', 'steps': [],
             'codegen_cache_hit': os.environ.get('CI_CODEGEN_CACHE_HIT') == 'true',
+            'sdk_cache_hit': os.environ.get('CI_SDK_CACHE_HIT') == 'true',
+            'sdk_target': os.environ.get('CI_SDK_TARGET'),
             'test_compiler_cache_hit': os.environ.get('CI_TEST_CACHE_HIT') == 'true',
             'host_platform': host}
     verify_source_checkout(root, info['source_commit'])
@@ -119,10 +121,16 @@ def run_worker(root: Path, kind: str, target: str, shard: int) -> None:
             locations = BUILD_OUTPUTS[target]
             for folder, built in locations.items():
                 shutil.copytree(root / 'upstream/build' / built, output / folder)
-            info['payload_hashes'] = {folder: file_hashes(output / folder) for folder in locations}
             if target == 'windows':
+                # Discover redistributables on the machine that compiled the
+                # player, so any publisher host can seal the complete runtime.
+                runtime = vc_runtime()
+                require_files(runtime, WINDOWS_RUNTIME_FILES)
+                for filename in WINDOWS_RUNTIME_FILES:
+                    shutil.copyfile(runtime / filename, output / 'native' / filename)
                 shutil.copyfile(root / '.tools/flutter/LICENSE', output / 'Flutter-LICENSE.txt')
                 info['flutter_license_hash'] = digest(output / 'Flutter-LICENSE.txt')
+            info['payload_hashes'] = {folder: file_hashes(output / folder) for folder in locations}
         info['status'] = 'passed'
     except Exception:
         info['status'] = 'failed'
@@ -167,8 +175,7 @@ def verify_evidence(root: Path, artifacts: Path) -> dict[str, dict]:
                     elif target == 'windows':
                         if info.get('flutter_license_hash') != digest(artifacts / name / 'Flutter-LICENSE.txt'):
                             raise ValueError('Flutter license differs from the build artifact.')
-                        require_files(artifacts / name / 'native', ('lcs_new_age.exe', 'flutter_windows.dll',
-                                      'data/app.so', 'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z'))
+                        runtime_hashes(artifacts / name / 'native', 'windows-x64')
                     else:
                         require_files(artifacts / name / 'web', ('index.html', 'main.dart.js', 'flutter_bootstrap.js', 'sw.js'))
                         if 'const RESOURCES = null; // build: manifest' in (artifacts / name / 'web/sw.js').read_text(encoding='utf-8'):

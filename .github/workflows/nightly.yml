@@ -53,14 +53,14 @@ jobs:
       always() && !cancelled() && needs.changes.result == 'success' &&
       needs.changes.outputs.changed == 'true' &&
       (needs.changes.outputs.reuse_run != '' || needs.build.result == 'success')
-    runs-on: windows-2022
+    runs-on: ubuntu-22.04
     timeout-minutes: 90
     permissions:
       contents: write
       actions: read
     defaults:
       run:
-        shell: pwsh
+        shell: bash
     steps:
       - uses: actions/checkout@v6
         with:
@@ -81,9 +81,7 @@ jobs:
           NIGHTLY_TAG: ${{ needs.changes.outputs.tag }}
         run: |
           python scripts/ci_worker.py prepare
-          if ($LASTEXITCODE -ne 0) { throw 'CI evidence validation failed.' }
           python scripts/package_release.py --root "$PWD" --report "$PWD/.local/reports/ci-release" --nightly --linux "$PWD/.local/linux"
-          if ($LASTEXITCODE -ne 0) { throw 'Nightly packaging failed.' }
       - name: Publish complete Nightly prerelease
         env:
           GH_TOKEN: ${{ github.token }}
