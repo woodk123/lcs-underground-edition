@@ -13,7 +13,7 @@
       "height": 1254,
       "mode": "RGB",
       "sha256": "c2b5275322ab51be597e2349a3e3bb83bdff4eb9c4a93add1fb3932f9be4518b",
-      "runtime_sha256": "9c387011e116229ad4b2221dc2dd6b2309c44ddd8b8461f62c0469c335283bd3"
+      "runtime_sha256": "8bfad807ffb61ecfbf2ffdb88f52da553a65c23133b3be27fbe5abfbb8d5d8ab"
     },
     "journal_paper_v1.png": {
       "runtime_path": "upstream/assets/modern/journal_paper_v1.webp",
@@ -23,7 +23,7 @@
       "height": 1254,
       "mode": "RGB",
       "sha256": "4ded547ed5561c66fc504858416ac1a49d38073a7ff3aa2e5d60f28126ab824d",
-      "runtime_sha256": "26238e07b68d95eecfb37217c0debccc81851347dff9437dc376ef51a883cf31"
+      "runtime_sha256": "6396413f7ffab5866d694c95cf4828b35969181764fe4de831c1332a8f537d7e"
     },
     "journal_portraits_v1.png": {
       "runtime_path": "upstream/assets/modern/journal_portraits_v1.webp",
@@ -223,7 +223,7 @@
         }
       ],
       "usage": "Cosmetic adult likeness only; same stable existing gender-index banks. Do not infer biography, consume RNG, or replace factual text. Preserve child/nonhuman fallback.",
-      "runtime_sha256": "4b644863e923fb83c66c1a4e247811009783723a00bc26a1104327e0eb538961"
+      "runtime_sha256": "5cc2e98ed9ea5eaf97bc6fe48248b048a0d295e019e5ced0fde99109272dc2c9"
     },
     "journal_icons_v1.png": {
       "runtime_path": "upstream/assets/modern/journal_icons_v1.webp",
@@ -375,7 +375,7 @@
       ],
       "inspection": "Twelve separate principal alpha>=32 connected components inspected. Source rectangles include each complete illustration plus eight pixels of transparent margin; portraits/labels are not embedded in controls.",
       "usage": "Decorative pictorial art in live labelled controls. No input handler or extra focus stop.",
-      "runtime_sha256": "6261229712f0a8ea53320f2e0a0ed97c6b92a1b41bcfbeac85467fac22690d30"
+      "runtime_sha256": "44258bf3b41c6048ea59a281faa38a9508bb584f90bab4067f72984ac79bb4aa"
     },
     "journal_order_icons_v1.png": {
       "runtime_path": "upstream/assets/modern/journal_order_icons_v1.webp",
@@ -629,7 +629,7 @@
       "inspection": "All sixteen pictorial symbols inspected at full resolution. Seventeen principal alpha>=32 components: donation hands form two separate components. Explicit crops preserve each complete symbol; no pixel processing.",
       "usage": "Pure exact ActivityType enum mapping in journal_order_icon.dart. Unsupported types use accurate Material icon fallbacks. Art never invents an action, writes an activity, handles input, changes time, or consumes RNG.",
       "rights_provenance": "Original art commissioned/generated for this project with built-in ChatGPT image generation; style reference is the project original generated atlas, not any copyrighted original-game bitmap.",
-      "runtime_sha256": "03be40c634006f9f41eb14adf32f7ccb1b382cc3506394734ed7417e91c902ba"
+      "runtime_sha256": "d32ac3d4f7183d5cdd6f04ff26939ce3f011a7478742b6b5af840a448d302d28"
     }
   },
   "fonts": {

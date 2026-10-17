@@ -53,7 +53,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "da88504787389d3c33c3cc8e0eddc5f0aed48fa296e2969a0b1becb6885c177a",
-      "runtimeSha256": "221f1f8f705c76b14fa9fcbc6b2ba74202a6c97430a6e83d41349da22e1e57cb"
+      "runtimeSha256": "f657858ba56765d29923d8f327187ff19bd3bb3aea0e50041273505071913dce"
     },
     {
       "batch": 17,
@@ -69,7 +69,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "94fd2484608a9b9fdad3162572823d9a967a29b2d251ec3eefa373619758ff2e",
-      "runtimeSha256": "a9afa8cc392a4789b4f3e1aba3c1dc9078e7c79d79073544f60df0466354fc36"
+      "runtimeSha256": "95afbc9140361b86405004308218f9c3ca2909da6f2c416aa63d06433a3b6fc4"
     },
     {
       "batch": 18,
@@ -85,7 +85,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "2a44b8d2ac0dc38fcb6a7bd4890c0c7de40cd033102e2dfaada9b841cb5a8148",
-      "runtimeSha256": "0f887c5cae30f02362d46a565da09d1cb5e304b6c58c6d01ba375c671c5db92f"
+      "runtimeSha256": "b8293dcb6223d40af694246dbbf6dbbb6ff2afe54adf267496a9e55c5cef1f8c"
     },
     {
       "batch": 19,
@@ -101,7 +101,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "89606d0f66209eeb30cd11abfd99267768d4e876e9d1d5465758db793fadfa81",
-      "runtimeSha256": "4da0997a76ec5447f8deaea6fab8fbd6fabfd25ac173cab77bf69db739f7427e"
+      "runtimeSha256": "581ef9b8bc847d12d4725b43b0ea0928d90e22f0cc5084a919b78c3c9113aa5b"
     },
     {
       "batch": 20,
@@ -117,7 +117,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "fee5dc2615de95b459a5b2718fd6ab07f198cdcc5c744f619146734cd8370a0e",
-      "runtimeSha256": "9e70afee8c74848360b7e8a6fa0d24aa452a131a872a23fc91b57921e7cd5a39"
+      "runtimeSha256": "43a109549b458a43f7e8fff7797bcf57cc01be9387e3f12826b46523ffba684f"
     },
     {
       "batch": 21,
@@ -133,7 +133,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "56d16154d46cceae706b32c4c2f60a27c96ba9abfb2a0fee58498604698ea0cf",
-      "runtimeSha256": "e35aadaed38b70d08c370e7090108a3edd345fbdab0505a9d185f6e93d2fee6c"
+      "runtimeSha256": "419313c0daf32651ac8bdc0672b0a66cc9dd92bfa14afe0686da6d8e1e4e2e55"
     },
     {
       "batch": 22,
@@ -149,7 +149,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "1333b8e0db70975a13c269070704fc6b09ab47d7c45f080c84b8cebb17713539",
-      "runtimeSha256": "9256766dcf87f02a318eaba93ffe804dd7f308d381b81412942dbf95625f7947"
+      "runtimeSha256": "2f0ac116abef7faa3382983ea7a69ba6a62fb07f205a01287e87e45c93f22ca8"
     },
     {
       "batch": 23,
@@ -165,7 +165,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "90f8e5c15d422dfa38b19bd7ab7156a85b1a96de2d4e4d6af340f27d4e5fa78f",
-      "runtimeSha256": "22dcaa6a9137cc5aec1562022853cf25302a71aedee6fe0c2a9b0e5915f92057"
+      "runtimeSha256": "68390cd64414df28a3c08ddc7f061b72e733654d50337b01521cd0e8cb613331"
     }
   ],
   "portraits": [
@@ -3516,7 +3516,8 @@
   ],
   "runtimeEncoding": {
     "format": "WebP",
-    "opaqueQuality": 95,
+    "opaqueQuality": 90,
+    "transparentQuality": 90,
     "alpha": "lossless",
     "method": 6,
     "geometry": "Unchanged dimensions, atlas cells and alpha; no palette reduction."
@@ -4154,6 +4155,6 @@
         }
       }
     ],
-    "runtimeSha256": "0647d4513bf2433ebf8fa6b2a3745efd4ed287f276cb3b956abda745ac538a55"
+    "runtimeSha256": "d77aa34634026cff0ab74bf840bdba55405990c2634ae51e53dc74ef4d502470"
   }
 }

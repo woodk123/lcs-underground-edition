@@ -357,7 +357,7 @@
           ]
         }
       ],
-      "runtime_sha256": "94754b45f4f0b64883af5aecc8dec32d3575dcd4bc9309f5d0bed3eca070976c"
+      "runtime_sha256": "243cc74db537d20b3c66b9c8dd88e9ce7e5c6a14f58b9bcc8c3761da79f0e15c"
     },
     "portraits": {
       "runtime_path": "upstream/assets/modern/crew_portraits_v1.webp",
@@ -537,7 +537,7 @@
         }
       ],
       "usage": "Stable illustrative likeness selected from existing creature presentation fields; never changes or invents simulation attributes.",
-      "runtime_sha256": "3c7f85adacc7aea7b0917a21982fd243bc546dc8139f98bdf23c96d8eb5b74d6"
+      "runtime_sha256": "69d9e54714bb8460abf623c216f6045917e6c0412ba01feb07978cadfcdcbb75"
     },
     "pedestrian_walk": {
       "runtime_path": "upstream/assets/modern/pedestrian_walk_v2.webp",
@@ -677,7 +677,7 @@
       ],
       "usage": "Actual image frame animation with common pixel scale and per-frame foot anchors. Do not stretch each frame independently. Decorative street pedestrian, does not imply crew movement or change campaign time.",
       "inspection": "Eight distinct narrow/wide stride poses and alternating arm swings. Initial repeated-stride sheet rejected. Fully transparent background; dark RGB under alpha0 is intentionally preserved and invisible with correct alpha compositing.",
-      "runtime_sha256": "034f0427c15b2f7b802d51746c13b5b618e6775c735b9665cd62bf8b9566d2ba"
+      "runtime_sha256": "4c433aa22328b7a75577f585c3bcacf4451a58e223ed9b68097fab39697812f3"
     }
   }
 }

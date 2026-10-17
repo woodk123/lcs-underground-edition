@@ -6,7 +6,8 @@
   "runtimeAtlasSize": 1024,
   "runtimeEncoding": {
     "format": "WebP",
-    "opaqueQuality": 95,
+    "opaqueQuality": 90,
+    "transparentQuality": 90,
     "alpha": "lossless",
     "method": 6,
     "geometry": "Unchanged dimensions, atlas cells and alpha; no palette reduction."
@@ -42,7 +43,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "ee9fe2da7bd63cf085c8941bd158398fd6e169f0464954b011aa801341ac1dd6",
-      "runtimeSha256": "ac59f126292f04b2ce03968da8886001af6ab8cf282b822f8c2dfa88a3e8134d"
+      "runtimeSha256": "119b0d62cf9c6534a08d4afcf5e5542ef6d3abd98922a5922f17f59740cc8db8"
     },
     {
       "batch": 1,
@@ -58,7 +59,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "a77a407806ba0af8a713abe215e16f12ef89495ff5df861299128be176c20b80",
-      "runtimeSha256": "1fb8cc9915cbe8a44cf92067bdc4946f6f66cca5589c8fca576ff96559ed221f"
+      "runtimeSha256": "c33394999812e6bf6e5db91ed8136578d859aa8607dc492bb05c603262762b78"
     },
     {
       "batch": 2,
@@ -74,7 +75,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "20d92e01782550aad98ed2793c89b183b96554399fe549b2abc1f28e0e594c0d",
-      "runtimeSha256": "19bde2dc109492b0f8b7080da933f651eb42ece2a4a183d1625b63fa85e59d7f"
+      "runtimeSha256": "3a184c184a8f8737f767a77334c6cf9f8d7b9283a4591b4484cab9980129a59a"
     },
     {
       "batch": 3,
@@ -90,7 +91,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "5ac9ad6d6a257041d5eb9d8d29d79598da7541abd840cccc2d93f232ac41787f",
-      "runtimeSha256": "1b814e6d26ccd29a3f958875b58e61a274033fe4e78c4a948bb864db33c72548"
+      "runtimeSha256": "6172166a077d488f846f27672671843bdd211b3fb482fcccc32fc6116d626327"
     },
     {
       "batch": 4,
@@ -106,7 +107,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "d3d83964181e405b7cafff6ad26a76553e30a643b82782658a850be48cb2fdf7",
-      "runtimeSha256": "88076e6e84c6671fd1a24bf168a1796b270068af50f09c4c1541ccd894af9cd5"
+      "runtimeSha256": "46bdd03321418fe9da142cec3b42835331de46a431c959c910a59efdfdc02819"
     },
     {
       "batch": 5,
@@ -122,7 +123,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "326c1953bdfc5d543aaddb0dd4b6c11265dc63bb191dd5b37cf6825e32af3676",
-      "runtimeSha256": "3e483e5bec9e4c6159544f2d9af65d7c817593ed77a65cd75b5d1873cc638308"
+      "runtimeSha256": "315ce1d7c11059a7a3809b52976ec0d7b37e2139ce9abc10f2836f924a67e099"
     },
     {
       "batch": 6,
@@ -138,7 +139,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "9ad38ee8388e83ed4158709e98422cf1a4761cf74726365e88d7012aa0ab8063",
-      "runtimeSha256": "a7f02617a94fbee511f8190899d1c5f7635fe304a979c53022073d8f6642e9b6"
+      "runtimeSha256": "49eebd78f17b6328224b5ef5ce0a524c4e9721326a59b74507e036cddab24f93"
     },
     {
       "batch": 7,
@@ -154,7 +155,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "dd19eb81c597990f9d90af07d9979ef2b89d39704ba75b97510677403ab5af78",
-      "runtimeSha256": "d032b9934f0bb32a45f34bdeec2c25fc287f6dfd713301ba96931a49de457ae1"
+      "runtimeSha256": "4d90d6727fa1b0dc468b99746229fb67e6ed73c1ed41061594e50b4be04d4f66"
     },
     {
       "batch": 8,
@@ -170,7 +171,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "429a236c22812464e20b7d4678b8bd38fa360f8a8e9795cde5100ecf3f4e7e4c",
-      "runtimeSha256": "70bad72321a9055c7f1e6e8ed13084a169a6e4bb649b0df70708824ac62b9df9"
+      "runtimeSha256": "c79a938e540e0c03357d1497091cdeac0cd54c99f4e8d7bc9b6ead46f3da777b"
     },
     {
       "batch": 9,
@@ -186,7 +187,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "488da06d2c88cf4b1821266ab8bb98e154b7581e052e4d5bce168d5d94b57435",
-      "runtimeSha256": "cdf36702b15db5c474a562d7357addbc0ce6b2eb03e801200a3fb5a80311b9f3"
+      "runtimeSha256": "fa0782f8aa2984fceb9f333375e13869b3183d4ca4c39399a0b3670dabefc608"
     },
     {
       "batch": 10,
@@ -202,7 +203,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "d01cf18cd3558d3c52d2e34e7be2bbe937f0e37ec63a5cdc326f331ad4a3c9e1",
-      "runtimeSha256": "7a2dbd65666ea93b55245d340fb27827e9b6797124975eeb6642b3b29b5238a8"
+      "runtimeSha256": "f935bee11687673510c4932b403697be7f125226ce52f97cd430a168f05b19f8"
     },
     {
       "batch": 11,
@@ -218,7 +219,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "77218e27cdbbeccd54d04408aa5aca99a96e84823769e2518a0fac84638d88bb",
-      "runtimeSha256": "98c17104a51f25fb77d08b82bcff8263572d1add7e2e8a9d33824a80e421154d"
+      "runtimeSha256": "af0531acac7575139c7579e432ee985e4f076b44f85de57df81fab9d4ee6d7b0"
     },
     {
       "batch": 12,
@@ -234,7 +235,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "11142eea445d14aa61a81ce78ca7be47118f5b47e99bd0595a8de6a61a7a9adf",
-      "runtimeSha256": "4948d492197bcd6dec0f66cfb0709e61da6342d04ccb6e2aab3210c67bb8505d"
+      "runtimeSha256": "f6dae08e262aa7f2586ec5e0ba8c38385ad601b8ecff9cd4a773bfe13d4831ad"
     },
     {
       "batch": 13,
@@ -250,7 +251,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "9aa6c907dc44b6b84c0e8b2b3ad8ffd75ca0405fe0722135b07d2929e2fb9283",
-      "runtimeSha256": "314dab0915bd700e45fdaf05e459616b5963d6c1bafd7a7f4caa5c3f267639ca"
+      "runtimeSha256": "c4cecbaa894be0dd8c664db6be3cf2e380fc85515db2e616c6a11f6f8d8f4261"
     },
     {
       "batch": 14,
@@ -266,7 +267,7 @@
       ],
       "validPortraits": 16,
       "sourceSha256": "1376bf5392a3e6cfc9416aee94b61bf38a33327fbd7967e3ca6da7cc997c9b65",
-      "runtimeSha256": "15c021c6fec31387906e791afbf75067a69628de349ff26df4217a2f6e667a14"
+      "runtimeSha256": "876f28c02fc7261672a03a48b8db5d1b1a13f6353fe2e2e83bb1df8a34212f60"
     },
     {
       "batch": 15,
@@ -282,7 +283,7 @@
       ],
       "validPortraits": 10,
       "sourceSha256": "8d1f9bd226f32eafce68a7ff76efd4a019b4f8ee0d5a339a16cba041d8fac60a",
-      "runtimeSha256": "04d77d570ece8b3d11752a83e98c7d3c6f06440ffbeb1ea86fdb5704c8e9f137"
+      "runtimeSha256": "1cb845c18cc6bd263ab510b3862351e3f1ec60b974ed88133a424f2cf96019b3"
     }
   ],
   "portraits": [

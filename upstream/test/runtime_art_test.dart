@@ -65,7 +65,7 @@ void main() {
             as Map<String, dynamic>;
     for (final item in manifest['assets'] as List<dynamic>) {
       final record = item as Map<String, dynamic>;
-      if (record['lossless'] != true) continue;
+      if (record['has_alpha'] != true) continue;
       final original = await ui.instantiateImageCodec(
         await File('../${record['original_path']}').readAsBytes(),
       );
@@ -78,22 +78,22 @@ void main() {
       final runtimePixels = await runtimeImage.toByteData();
       final before = originalPixels!.buffer.asUint8List();
       final after = runtimePixels!.buffer.asUint8List();
-      var maximumColorDifference = 0;
+      var squaredColorDifference = 0;
       var alphaDifferences = 0;
       for (var offset = 0; offset < before.length; offset++) {
         final difference = (before[offset] - after[offset]).abs();
         if (offset % 4 == 3) {
           if (difference != 0) alphaDifferences++;
-        } else if (difference > maximumColorDifference) {
-          maximumColorDifference = difference;
+        } else {
+          squaredColorDifference += difference * difference;
         }
       }
       expect(alphaDifferences, 0, reason: record['runtime_path'] as String);
-      // PNG and WebP codecs round premultiplied RGB independently at alpha edges.
-      // The encoded straight-RGBA pixels are verified identical by the generator.
+      // Colour is lossy at quality 90; alpha and atlas geometry stay exact.
+      // Bound average native-decoded colour error without requiring identical RGB.
       expect(
-        maximumColorDifference,
-        lessThanOrEqualTo(1),
+        squaredColorDifference / (before.length * 3 / 4),
+        lessThanOrEqualTo(100),
         reason: record['runtime_path'] as String,
       );
       originalImage.dispose();

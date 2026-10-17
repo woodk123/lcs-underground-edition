@@ -4,7 +4,7 @@ The library has **378 saved identities**: 250 ordinary adults and 128 specialist
 
 ## Files and IDs
 
-Original PNG sheets and prompts are under `assets/portraits-v2/` and `assets/portraits-v3/`. Their full manifests record source/runtime hashes and crop rectangles. Runtime WebP atlases are `upstream/assets/modern/portraits_v2/`: quality 95 for paintings and lossless for transparent appearance overlays. Each portrait remains in its original 256px cell; saved IDs and crop geometry are unchanged.
+Original PNG sheets and prompts are under `assets/portraits-v2/` and `assets/portraits-v3/`. Their full manifests record source/runtime hashes and crop rectangles. Runtime WebP atlases are `upstream/assets/modern/portraits_v2/`: quality 90 colour for paintings and appearance overlays, with pixel-exact lossless alpha. Each portrait remains in its original 256px cell; saved IDs and crop geometry are unchanged.
 
 | IDs | Source batches | Contents |
 |---|---|---|

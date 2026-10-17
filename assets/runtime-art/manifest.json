@@ -2,7 +2,8 @@
   "version": 1,
   "encoding": {
     "format": "WebP",
-    "opaqueQuality": 95,
+    "opaqueQuality": 90,
+    "transparentQuality": 90,
     "alpha": "lossless",
     "method": 6,
     "geometry": "Unchanged dimensions, atlas cells and alpha; no palette reduction."
@@ -14,11 +15,12 @@
       "width": 1536,
       "height": 1024,
       "mode": "RGBA",
-      "lossless": true,
+      "lossless": false,
+      "has_alpha": true,
       "original_sha256": "c512f56a0258b77f1fc7240487bce23ce309af6d81c09149b7848ba21a05998b",
-      "runtime_sha256": "58d08349ed59bc6030145a381742e86a7edf24625ab75e6963db05c73c225d0d",
+      "runtime_sha256": "f0476816ec0961370a579e1bca6bff0b1b06dd865b908a2f97a127de294a50b6",
       "original_bytes": 2819385,
-      "runtime_bytes": 1837942
+      "runtime_bytes": 479438
     },
     {
       "original_path": "assets/runtime-art/source/building_sprites_v2.png",
@@ -26,11 +28,12 @@
       "width": 1254,
       "height": 1254,
       "mode": "RGBA",
-      "lossless": true,
+      "lossless": false,
+      "has_alpha": true,
       "original_sha256": "bae3af57cfe77627eefdbaff3a9c193a29154e5a5c976cd1f73fd398b0c47263",
-      "runtime_sha256": "94754b45f4f0b64883af5aecc8dec32d3575dcd4bc9309f5d0bed3eca070976c",
+      "runtime_sha256": "243cc74db537d20b3c66b9c8dd88e9ce7e5c6a14f58b9bcc8c3761da79f0e15c",
       "original_bytes": 1850246,
-      "runtime_bytes": 1222938
+      "runtime_bytes": 399566
     },
     {
       "original_path": "assets/runtime-art/source/city_panorama.png",
@@ -39,10 +42,11 @@
       "height": 1024,
       "mode": "RGB",
       "lossless": false,
+      "has_alpha": false,
       "original_sha256": "45c13fe656e6073fa3d22303fcbfe89cfbb6e7fcb9025c0966cc6fb3a6062a4c",
-      "runtime_sha256": "c90be17f1a9e755ea711d4f51fcba7adf3fafccf5f787d400009c22c279963da",
+      "runtime_sha256": "24e4aea2d935b0a9f1ae9a4144bd9acf1f37b11c26a8ab4e0cc41fe71510c680",
       "original_bytes": 3242469,
-      "runtime_bytes": 742980
+      "runtime_bytes": 571076
     },
     {
       "original_path": "assets/runtime-art/source/crew_portraits_v1.png",
@@ -51,10 +55,11 @@
       "height": 1254,
       "mode": "RGB",
       "lossless": false,
+      "has_alpha": false,
       "original_sha256": "25134e519a8151730ededaf2b94fed8f43543a81d917a04a5e74102e45cf6e07",
-      "runtime_sha256": "3c7f85adacc7aea7b0917a21982fd243bc546dc8139f98bdf23c96d8eb5b74d6",
+      "runtime_sha256": "69d9e54714bb8460abf623c216f6045917e6c0412ba01feb07978cadfcdcbb75",
       "original_bytes": 3034286,
-      "runtime_bytes": 585464
+      "runtime_bytes": 394588
     },
     {
       "original_path": "assets/runtime-art/source/district_atlas_v1.png",
@@ -63,10 +68,11 @@
       "height": 1254,
       "mode": "RGB",
       "lossless": false,
+      "has_alpha": false,
       "original_sha256": "4dd1a0ca3a7bd5a4baaaf66f858b7aef1de674c295b03771857df4f034127085",
-      "runtime_sha256": "fa1a72859b195d031e50cd8e37c4873bdba6f4b8ecb43db2ffd1fb2d024d5f27",
+      "runtime_sha256": "99505260f6818fedc91f548c5a6859f3c1c32fb61d2bf85fb5e8d542b0386fbe",
       "original_bytes": 3973381,
-      "runtime_bytes": 918320
+      "runtime_bytes": 695080
     },
     {
       "original_path": "assets/runtime-art/source/journal_icons_v1.png",
@@ -74,11 +80,12 @@
       "width": 1448,
       "height": 1086,
       "mode": "RGBA",
-      "lossless": true,
+      "lossless": false,
+      "has_alpha": true,
       "original_sha256": "5044642d06d418cc6a7289d0fc6380a6855dc7cc15d12f66ccf09cfb0ddca043",
-      "runtime_sha256": "6261229712f0a8ea53320f2e0a0ed97c6b92a1b41bcfbeac85467fac22690d30",
+      "runtime_sha256": "44258bf3b41c6048ea59a281faa38a9508bb584f90bab4067f72984ac79bb4aa",
       "original_bytes": 1832962,
-      "runtime_bytes": 1201720
+      "runtime_bytes": 391922
     },
     {
       "original_path": "assets/runtime-art/source/journal_leather_v1.png",
@@ -87,10 +94,11 @@
       "height": 1254,
       "mode": "RGB",
       "lossless": false,
+      "has_alpha": false,
       "original_sha256": "c2b5275322ab51be597e2349a3e3bb83bdff4eb9c4a93add1fb3932f9be4518b",
-      "runtime_sha256": "9c387011e116229ad4b2221dc2dd6b2309c44ddd8b8461f62c0469c335283bd3",
+      "runtime_sha256": "8bfad807ffb61ecfbf2ffdb88f52da553a65c23133b3be27fbe5abfbb8d5d8ab",
       "original_bytes": 3747643,
-      "runtime_bytes": 814064
+      "runtime_bytes": 588628
     },
     {
       "original_path": "assets/runtime-art/source/journal_order_icons_extra_v1.png",
@@ -98,11 +106,12 @@
       "width": 1448,
       "height": 1086,
       "mode": "RGBA",
-      "lossless": true,
+      "lossless": false,
+      "has_alpha": true,
       "original_sha256": "867ab0e4458dfde010380f5396517f626b4b5991e07e9ef2b6234ceeb7a9b393",
-      "runtime_sha256": "2a3425ff049945d3ba6b07e0420f3ca067ec7a19e2eb37f45beff738534e22e1",
+      "runtime_sha256": "9cdc1182b4a69f43ca0d87e38d417857ef1de06a7f0c874b2e78304fb896c4df",
       "original_bytes": 2121462,
-      "runtime_bytes": 1393056
+      "runtime_bytes": 449968
     },
     {
       "original_path": "assets/runtime-art/source/journal_order_icons_v1.png",
@@ -110,11 +119,12 @@
       "width": 1254,
       "height": 1254,
       "mode": "RGBA",
-      "lossless": true,
+      "lossless": false,
+      "has_alpha": true,
       "original_sha256": "4cad6bdf225e0d5e0070ab9c8e94403c458eba383499830bec38d34a5f8585e5",
-      "runtime_sha256": "03be40c634006f9f41eb14adf32f7ccb1b382cc3506394734ed7417e91c902ba",
+      "runtime_sha256": "d32ac3d4f7183d5cdd6f04ff26939ce3f011a7478742b6b5af840a448d302d28",
       "original_bytes": 2035573,
-      "runtime_bytes": 1346694
+      "runtime_bytes": 464730
     },
     {
       "original_path": "assets/runtime-art/source/journal_paper_v1.png",
@@ -123,10 +133,11 @@
       "height": 1254,
       "mode": "RGB",
       "lossless": false,
+      "has_alpha": false,
       "original_sha256": "4ded547ed5561c66fc504858416ac1a49d38073a7ff3aa2e5d60f28126ab824d",
-      "runtime_sha256": "26238e07b68d95eecfb37217c0debccc81851347dff9437dc376ef51a883cf31",
+      "runtime_sha256": "6396413f7ffab5866d694c95cf4828b35969181764fe4de831c1332a8f537d7e",
       "original_bytes": 2647357,
-      "runtime_bytes": 438856
+      "runtime_bytes": 262090
     },
     {
       "original_path": "assets/runtime-art/source/journal_portraits_v1.png",
@@ -135,10 +146,11 @@
       "height": 1254,
       "mode": "RGB",
       "lossless": false,
+      "has_alpha": false,
       "original_sha256": "cfc84cc822f3a124e1ab7ddae5447157654d0a84e8a8fa1f74ec9ce26c087121",
-      "runtime_sha256": "4b644863e923fb83c66c1a4e247811009783723a00bc26a1104327e0eb538961",
+      "runtime_sha256": "5cc2e98ed9ea5eaf97bc6fe48248b048a0d295e019e5ced0fde99109272dc2c9",
       "original_bytes": 2661667,
-      "runtime_bytes": 466404
+      "runtime_bytes": 297624
     },
     {
       "original_path": "assets/runtime-art/source/journal_weed_brownies_v1.png",
@@ -146,11 +158,12 @@
       "width": 1254,
       "height": 1254,
       "mode": "RGBA",
-      "lossless": true,
+      "lossless": false,
+      "has_alpha": true,
       "original_sha256": "54f5c42ef237d4f43327292576e2d918f28b9e7339a6198c3d6cf0269d3a950c",
-      "runtime_sha256": "2a573cf93212b09b56f3f34625fc817168f23cdd454667882a329f804223fb7e",
+      "runtime_sha256": "fb7ede4523c82d6768d62d45ee50a5bc8476dfa722bf75ba39f9a471a3c2c4dc",
       "original_bytes": 1745281,
-      "runtime_bytes": 1122654
+      "runtime_bytes": 320048
     },
     {
       "original_path": "assets/runtime-art/source/pedestrian_walk_v2.png",
@@ -158,11 +171,12 @@
       "width": 1536,
       "height": 1024,
       "mode": "RGBA",
-      "lossless": true,
+      "lossless": false,
+      "has_alpha": true,
       "original_sha256": "ed117eb4a247ef4848997971a326ee0541f2106b98560983c9b1378d8f1e5048",
-      "runtime_sha256": "034f0427c15b2f7b802d51746c13b5b618e6775c735b9665cd62bf8b9566d2ba",
+      "runtime_sha256": "4c433aa22328b7a75577f585c3bcacf4451a58e223ed9b68097fab39697812f3",
       "original_bytes": 1848231,
-      "runtime_bytes": 1127630
+      "runtime_bytes": 211568
     },
     {
       "original_path": "assets/runtime-art/source/safehouse.png",
@@ -171,10 +185,11 @@
       "height": 1024,
       "mode": "RGB",
       "lossless": false,
+      "has_alpha": false,
       "original_sha256": "fbdf7c6c3e751168ff9b8414f3c0707f0e6ccd4fcc9a4a803bf893d60eec4040",
-      "runtime_sha256": "2f1311c168a83b489e367787b120b3758e1d1480e7daef47949c39f979455c6f",
+      "runtime_sha256": "a00b75e30b8cf24f739f575706e0e724a3d33fdf9f13652861f77f225d146e09",
       "original_bytes": 3056330,
-      "runtime_bytes": 678800
+      "runtime_bytes": 507382
     },
     {
       "original_path": "assets/runtime-art/source/site_atlas_1_v1.png",
@@ -183,10 +198,11 @@
       "height": 1254,
       "mode": "RGB",
       "lossless": false,
+      "has_alpha": false,
       "original_sha256": "709aed55841b622ce55fc4572348e4345fc42d763ab5ea8fcadd89713961d09b",
-      "runtime_sha256": "c3f3c3364f1520b4240fd31533f685c5059211bc02409046a85d043a9c36a3c0",
+      "runtime_sha256": "e848fb145bec9a5ef61fd39af540ef008b4079bc62b94bae32c928a265be2dbe",
       "original_bytes": 3413032,
-      "runtime_bytes": 712590
+      "runtime_bytes": 536380
     },
     {
       "original_path": "assets/runtime-art/source/site_atlas_2_v1.png",
@@ -195,10 +211,11 @@
       "height": 1254,
       "mode": "RGB",
       "lossless": false,
+      "has_alpha": false,
       "original_sha256": "375d571e3ba2854afa00e1b8f2aa0f808701a5cb6f4aef692cd23eb038c18501",
-      "runtime_sha256": "891e7f8129bb308e30957e2e437f4ad4ff5520ef899498d5c1ea5f06a52c2e80",
+      "runtime_sha256": "7e1ed7eb812a2830ad64a42ffe7033e743a57ea59cb230d907f814d5f8117b05",
       "original_bytes": 3448397,
-      "runtime_bytes": 735812
+      "runtime_bytes": 543282
     },
     {
       "original_path": "assets/runtime-art/source/site_atlas_3_v1.png",
@@ -207,10 +224,11 @@
       "height": 1254,
       "mode": "RGB",
       "lossless": false,
+      "has_alpha": false,
       "original_sha256": "0b3662412998adac475ac97d6490f61724f514875ff37c65c38813998bea5094",
-      "runtime_sha256": "38b7c4c373ddd3f451885b595ff2ff71419ca274b3c771008f83742a64e6847d",
+      "runtime_sha256": "d65d86675ef2b4bd5f5f3e5242ea1687212ff2e6625ab6ca8f9bcd27a8607202",
       "original_bytes": 3487394,
-      "runtime_bytes": 750432
+      "runtime_bytes": 554152
     }
   ]
 }

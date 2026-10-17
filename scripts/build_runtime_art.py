@@ -23,7 +23,7 @@ def build(root: Path) -> dict:
             record = {'original_path': source.relative_to(root).as_posix(),
                       'runtime_path': runtime.relative_to(root).as_posix(),
                       'width': image.width, 'height': image.height, 'mode': image.mode,
-                      'lossless': 'A' in image.getbands()}
+                      'lossless': False, 'has_alpha': 'A' in image.getbands()}
         record.update(original_sha256=digest(source), runtime_sha256=digest(runtime),
                       original_bytes=source.stat().st_size, runtime_bytes=runtime.stat().st_size)
         records.append(record)

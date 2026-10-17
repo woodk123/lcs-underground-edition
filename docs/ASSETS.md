@@ -6,7 +6,7 @@ The journal materials, painted portraits and map illustrations were generated fo
 
 ## Authoritative copies
 
-- `upstream/assets/modern/` contains compressed WebP runtime illustrations, textures, atlases and renderer metadata. Opaque paintings use quality 95; transparent artwork uses pixel-exact lossless encoding. Dimensions and atlas cells are preserved.
+- `upstream/assets/modern/` contains compressed WebP runtime illustrations, textures, atlases and renderer metadata. All artwork uses quality 90 colour compression with pixel-exact lossless alpha. Dimensions and atlas cells are preserved.
 - `assets/runtime-art/source/` retains the original static PNGs. `assets/runtime-art/manifest.json` records their source/runtime hashes, geometry and encoding policy. These originals are included in Source ZIPs only.
 - `assets/art-city-v2/atlas_metadata.json` and `assets/gangsters-journal/atlas_metadata.json` record the selected files, prompts, source/runtime hashes and crop geometry. Their paths are repository-relative.
 - `assets/art/` retains the prompts for current district/site art.
@@ -25,7 +25,7 @@ python scripts/verify_assets.py
 
 This checks manifest paths, source/runtime hashes, portrait counts and IDs, and rejects unlisted or duplicate runtime image files. It also checks the flag catalogue in `upstream/assets/xml/flags.xml`: each declared asset must exist, and every shipped flag SVG must be listed. Add or remove a flag's catalogue entry and SVG together.
 
-Release builds use the checked-in WebP files and do not need Pillow. Flutter tests decode every runtime atlas with the native image codec and check exact alpha against the static PNG masters, allowing at most one RGB level for native premultiplication rounding. The encoder also verifies exact straight-RGBA pixels for all transparent artwork.
+Release builds use the checked-in WebP files and do not need Pillow. Flutter tests decode every runtime atlas with the native image codec, check exact alpha against the transparent static PNG masters, and bound mean squared native colour error to 100 (RMS error at most 10 levels out of 255). The encoder also verifies exact alpha and unchanged dimensions. Colour is lossy; inspect visual comparisons when changing the encoding policy.
 
 To regenerate static runtime art, install `scripts/requirements-art.txt`, then run:
 
