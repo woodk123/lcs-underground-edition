@@ -1,0 +1,54 @@
+name: Linux desktop build
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: Linux x64 tests and build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip xz-utils zip clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev
+      - name: Install pinned Flutter SDK
+        run: |
+          version=$(python -c 'import json; print(json.load(open("scripts/toolchain.json"))["flutter_version"])')
+          repository=$(python -c 'import json; print(json.load(open("scripts/toolchain.json"))["flutter_repository"])')
+          git clone --depth 1 --branch "$version" "$repository" .tools/flutter
+          .tools/flutter/bin/flutter config --no-analytics --enable-linux-desktop
+      - name: Test release tools and verify assets
+        run: |
+          python -m unittest discover -s scripts -p 'test_*.py' -v
+          python scripts/verify_assets.py
+      - name: Test, analyze and build Linux
+        run: python scripts/build_linux.py
+      - name: Retain checked Linux bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64-bundle
+          path: .local/linux/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error
+      - name: Retain Linux logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build-logs
+          path: .local/linux/evidence/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: ignore

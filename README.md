@@ -40,7 +40,7 @@ The **[matching source ZIP](https://github.com/woodk123/lcs-underground-edition/
 
 Windows and browser saves are separate. Use the game's export/import controls to transfer a campaign between them.
 
-**[Nightly builds](https://github.com/woodk123/lcs-underground-edition/releases?q=nightly-)** provide the latest automatically checked Windows and browser builds when code or build inputs change. These are development prereleases; export important saves before trying them. The preview above remains a separate release. See [nightly build details](docs/BUILDING.md#nightly-builds-on-github) and [workflow status](https://github.com/woodk123/lcs-underground-edition/actions/workflows/nightly.yml).
+**[Nightly builds](https://github.com/woodk123/lcs-underground-edition/releases?q=nightly-)** provide automatically checked Windows, Linux x64 and browser players when code or build inputs change. These are development prereleases; export important saves before trying them. The preview above remains a separate release. See [nightly build details](docs/BUILDING.md#nightly-builds-on-github) and [workflow status](https://github.com/woodk123/lcs-underground-edition/actions/workflows/nightly.yml).
 
 ## More information
 

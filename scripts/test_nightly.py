@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import nightly_release as release
 import package_release as packaging
-from release_common import verify_package
+from release_common import file_hashes, verify_package
 
 
 def put(root: Path, name: str, content: str = 'fixture') -> None:
@@ -41,8 +41,10 @@ class NightlyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
             assets = []
-            for number in range(6):
-                name = f'asset-{number}.zip'
+            for target, suffix in ((target, suffix) for target in
+                                   ('Source', 'Web-Player', 'Windows-x64-Player', 'Linux-x64-Player')
+                                   for suffix in ('', '.sha256')):
+                name = f'LCS-Underground-Edition-nightly-456-1-{target}.zip{suffix}'
                 put(output, name)
                 assets.append({'name': name, 'sha256': packaging.digest(output / name)})
             put(output, 'release.json', json.dumps({'tag': 'nightly-456-1', 'fingerprint': 'b' * 64,
@@ -64,12 +66,32 @@ class NightlyTests(unittest.TestCase):
                     release.publish('owner/repo', output)
             self.assertEqual([call[:2] for call in calls], [('release', 'create'), ('release', 'upload')])
 
+    def test_missing_linux_assets_prevent_any_publication(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            put(output, 'release.json', json.dumps({
+                'tag': 'nightly-456-1', 'fingerprint': 'b' * 64, 'source_commit': 'c' * 40,
+                'assets': [{'name': f'LCS-Underground-Edition-nightly-456-1-{target}.zip{suffix}',
+                            'sha256': 'a' * 64}
+                           for target in ('Source', 'Web-Player', 'Windows-x64-Player')
+                           for suffix in ('', '.sha256')],
+            }))
+            with patch.dict(os.environ, NIGHTLY_TAG='nightly-456-1', NIGHTLY_FINGERPRINT='b' * 64), \
+                    patch.object(release, 'git', return_value='c' * 40), \
+                    patch.object(release, 'fingerprint', return_value='b' * 64), \
+                    patch.object(release, 'gh') as github:
+                with self.assertRaisesRegex(ValueError, 'Expected Windows, Linux'):
+                    release.publish('owner/repo', output)
+                github.assert_not_called()
+
     def test_publication_retires_only_managed_nightlies_after_publish(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
             assets = []
-            for number in range(6):
-                name = f'asset-{number}.zip'
+            for target, suffix in ((target, suffix) for target in
+                                   ('Source', 'Web-Player', 'Windows-x64-Player', 'Linux-x64-Player')
+                                   for suffix in ('', '.sha256')):
+                name = f'LCS-Underground-Edition-nightly-456-1-{target}.zip{suffix}'
                 put(output, name)
                 assets.append({'name': name, 'sha256': packaging.digest(output / name)})
             put(output, 'release.json', json.dumps({'tag': 'nightly-456-1', 'fingerprint': 'b' * 64,
@@ -130,9 +152,19 @@ class NightlyTests(unittest.TestCase):
             info = {'status': 'automated_checks_passed_manual_qa_pending', 'source_commit': revision,
                     'toolchain': {}, 'steps': [{'name': name, 'exit_code': 0} for name in steps]}
             put(report, 'build-info.json', json.dumps(info))
+            linux = root / '.local/linux'
+            for name in ('lcs_new_age', 'lib/libflutter_linux_gtk.so', 'lib/libapp.so',
+                         'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z'):
+                put(linux / 'bundle', name)
+            put(linux, 'evidence/build-info.json', json.dumps({
+                'status': 'passed', 'source_commit': revision, 'toolchain': {},
+                'steps': [{'name': name, 'exit_code': 0} for name in
+                          ('dependencies', 'serialization', 'tests', 'focused-analysis', 'full-analysis', 'linux-release')],
+                'bundle_hashes': file_hashes(linux / 'bundle'),
+            }))
             output = root / 'release/nightly'
-            result = packaging.package(root, report, runtime, output, 'nightly-123-1', 'b' * 64, 'owner/repo')
-            self.assertEqual(len(result['assets']), 6)
+            result = packaging.package(root, report, runtime, output, 'nightly-123-1', 'b' * 64, 'owner/repo', linux=linux)
+            self.assertEqual(len(result['assets']), 8)
             for directory in output.iterdir():
                 if directory.is_dir():
                     self.assertEqual(verify_package(directory)['status'], 'passed')

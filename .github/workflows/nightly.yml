@@ -1,4 +1,4 @@
-name: Nightly Windows and web
+name: Nightly Windows, Linux and web
 
 on:
   schedule:
@@ -13,9 +13,35 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  nightly:
+  changes:
     # A manual run on a feature branch must never replace the public nightly.
     if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-22.04
+    outputs:
+      changed: ${{ steps.changes.outputs.changed }}
+      fingerprint: ${{ steps.changes.outputs.fingerprint }}
+      tag: ${{ steps.changes.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Check for changed build inputs
+        id: changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/nightly_release.py check
+
+  linux:
+    needs: changes
+    if: needs.changes.outputs.changed == 'true'
+    uses: ./.github/workflows/linux.yml
+
+  nightly:
+    needs: [changes, linux]
+    if: needs.changes.outputs.changed == 'true'
     runs-on: windows-2022
     timeout-minutes: 90
     permissions:
@@ -30,13 +56,12 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - name: Check for changed build inputs
-        id: changes
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python scripts/nightly_release.py check
+      - name: Download checked Linux bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-x64-bundle
+          path: .local/linux
       - name: Install pinned Flutter SDK
-        if: steps.changes.outputs.changed == 'true'
         run: |
           $pin = Get-Content scripts/toolchain.json -Raw | ConvertFrom-Json
           New-Item -ItemType Directory -Force .tools | Out-Null
@@ -45,27 +70,24 @@ jobs:
           .tools/flutter/bin/flutter.bat config --no-analytics --enable-windows-desktop
           if ($LASTEXITCODE -ne 0) { throw 'Flutter setup failed.' }
       - name: Verify nightly tooling
-        if: steps.changes.outputs.changed == 'true'
         run: |
           python -m unittest discover -s scripts -p 'test_*.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Release tooling tests failed.' }
           python scripts/verify_assets.py
           if ($LASTEXITCODE -ne 0) { throw 'Asset verification failed.' }
-      - name: Test, analyze, build and package Windows and web
-        if: steps.changes.outputs.changed == 'true'
+      - name: Test, analyze, build and package all players
         env:
-          NIGHTLY_FINGERPRINT: ${{ steps.changes.outputs.fingerprint }}
-          NIGHTLY_TAG: ${{ steps.changes.outputs.tag }}
-        run: ./scripts/build_release.ps1 -Nightly
+          NIGHTLY_FINGERPRINT: ${{ needs.changes.outputs.fingerprint }}
+          NIGHTLY_TAG: ${{ needs.changes.outputs.tag }}
+        run: ./scripts/build_release.ps1 -Nightly -LinuxBundle "$PWD/.local/linux"
       - name: Publish complete Nightly prerelease
-        if: steps.changes.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          NIGHTLY_FINGERPRINT: ${{ steps.changes.outputs.fingerprint }}
-          NIGHTLY_TAG: ${{ steps.changes.outputs.tag }}
+          NIGHTLY_FINGERPRINT: ${{ needs.changes.outputs.fingerprint }}
+          NIGHTLY_TAG: ${{ needs.changes.outputs.tag }}
         run: python scripts/nightly_release.py publish
       - name: Retain build logs
-        if: always() && steps.changes.outputs.changed == 'true'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: nightly-build-logs-${{ github.run_id }}-${{ github.run_attempt }}

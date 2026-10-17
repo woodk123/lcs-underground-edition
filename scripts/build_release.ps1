@@ -2,6 +2,7 @@
 param(
     [switch]$Windows,
     [switch]$Nightly,
+    [string]$LinuxBundle,
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]*$')][string]$Tag
 )
 
@@ -10,6 +11,7 @@ $ErrorActionPreference = 'Stop'
 $root = Get-LcsRoot
 $project = Join-Path $root 'upstream'
 if ($Nightly -and $Tag) { throw '-Tag and -Nightly cannot be combined.' }
+if ($Nightly -and -not $LinuxBundle) { throw '-Nightly requires -LinuxBundle with the checked Linux artifact.' }
 if (Test-Path -LiteralPath (Join-Path $root '.git')) {
     $changes = git -C $root status --porcelain --untracked-files=normal
     if ($LASTEXITCODE -ne 0) { throw 'Could not verify the source checkout.' }
@@ -82,6 +84,7 @@ try {
     if ($Nightly) { $packageArguments += '--nightly' }
     elseif ($Windows) { $packageArguments += '--windows' }
     if ($Tag) { $packageArguments += @('--tag', $Tag) }
+    if ($LinuxBundle) { $packageArguments += @('--linux', $LinuxBundle) }
     $packageStep = if ($Windows -or $Nightly) { '09-package' } else { '08-package' }
     Invoke-BuildStep $packageStep $python $packageArguments
     Write-BuildReport 'automated_checks_and_packaging_passed_manual_qa_pending'

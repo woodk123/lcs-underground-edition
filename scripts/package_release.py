@@ -1,4 +1,4 @@
-"""Package checked web/Windows players and one matching source archive."""
+"""Package checked web, Windows and Linux players and one matching source archive."""
 from __future__ import annotations
 
 import argparse
@@ -46,7 +46,7 @@ def verify_source_checkout(root: Path, expected_commit: str) -> None:
 
 
 def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: str, fingerprint: str | None,
-            repository: str, *, published: bool = False) -> dict:
+            repository: str, *, published: bool = False, linux: Path | None = None) -> dict:
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*', tag):
         raise ValueError('Invalid release tag.')
     if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repository):
@@ -61,6 +61,17 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
             or any(step['exit_code'] != 0 for step in info['steps'])):
         raise ValueError('Both builds and all checks must pass before packaging a Windows release.' if runtime is not None else 'The web build and all checks must pass before packaging.')
     verify_source_checkout(root, info['source_commit'])
+    if linux is not None:
+        linux_info = json.loads((linux / 'evidence/build-info.json').read_text(encoding='utf-8'))
+        linux_steps = ['dependencies', 'serialization', 'tests', 'focused-analysis',
+                       'full-analysis', 'linux-release']
+        if (linux_info['status'] != 'passed' or linux_info['source_commit'] != info['source_commit']
+                or linux_info['toolchain'] != info['toolchain']
+                or [step['name'] for step in linux_info['steps']] != linux_steps
+                or any(step['exit_code'] != 0 for step in linux_info['steps'])
+                or linux_info['bundle_hashes'] != file_hashes(linux / 'bundle')):
+            raise ValueError('Linux bundle must pass all checks and match this source and toolchain.')
+        runtime_hashes(linux / 'bundle', 'linux-x64')
     if output.exists():
         raise ValueError(f'Choose a fresh release output directory: {output}')
     web = root / 'upstream/build/web'
@@ -99,6 +110,8 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
     if not any(name.endswith('.g.dart') for name in before):
         raise ValueError('Generated serialization source is missing.')
     shutil.copytree(report, source / 'build-evidence', ignore=shutil.ignore_patterns('*package*.log'))
+    if linux is not None:
+        shutil.copytree(linux / 'evidence', source / 'build-evidence/linux')
     identity = {'runtime_source_commit': info['source_commit'], 'packaging_commit': info['source_commit']}
     common = {**identity, 'source_commit': info['source_commit'], 'release_tag': tag,
               'fingerprint': fingerprint, 'verification_scope': 'Automated checks only; manual gameplay and clean-machine launch QA pending.'}
@@ -118,6 +131,8 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
     targets = [('web', web, 'Web-Player')]
     if runtime is not None:
         targets.append(('windows-x64', native, 'Windows-x64-Player'))
+    if linux is not None:
+        targets.append(('linux-x64', linux / 'bundle', 'Linux-x64-Player'))
     for target, built, suffix in targets:
         player = output / f'{prefix}-{suffix}'
         if target == 'web':
@@ -128,6 +143,13 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
             instructions = ('Extract the entire folder, then run Play.cmd. Python 3 is required. '
                             'Keep the same browser and http://127.0.0.1:8765/ address to retain saves. '
                             'On other systems: python3 scripts/serve.py --directory web --port 8765')
+        elif target == 'linux-x64':
+            shutil.copytree(built, player)
+            instructions = ('Extract the entire folder, then run ./lcs_new_age. Keep lib/ and data/ beside it. '
+                            'Linux x64, built on Ubuntu 22.04; requires GTK 3 and a graphical desktop. '
+                            'On Ubuntu: sudo apt-get install libgtk-3-0 libblkid1 liblzma5. '
+                            'If your extractor drops executable permissions: chmod +x lcs_new_age. '
+                            'Python and Flutter are not required.')
         else:
             shutil.copytree(built, player, ignore=shutil.ignore_patterns('*.pdb', '*.exp', '*.lib'))
             for name in runtime_files:
@@ -150,7 +172,7 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
         write_json(player / 'BUILD_INFO.json', {**common, 'target': target, 'source_archive': source_archive,
                                                'source_archive_sha256': source_result['archive_sha256']})
         runtime_hashes(player, target)  # Fail on an incomplete runtime before sealing the archive.
-        results.append(archive_package(player))
+        results.append(archive_package(player, executables=('lcs_new_age',) if target == 'linux-x64' else ()))
     # Neither packaging pass may mutate the corresponding game source.
     if before != filtered_source_hashes(root / 'upstream'):
         raise ValueError('Game source changed while packaging.')
@@ -172,10 +194,13 @@ def main() -> None:
     parser.add_argument('--report', type=Path, required=True)
     parser.add_argument('--windows', action='store_true')
     parser.add_argument('--nightly', action='store_true')
+    parser.add_argument('--linux', type=Path, help='Checked Linux artifact directory containing bundle/ and evidence/.')
     parser.add_argument('--tag', help='Prepare a named GitHub release with absolute matching source-download links; does not publish it.')
     parser.add_argument('--repository', default='woodk123/lcs-underground-edition')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
+    if args.nightly and args.linux is None:
+        parser.error('--nightly requires --linux with the checked Linux bundle')
     if args.nightly and args.tag:
         parser.error('--tag and --nightly cannot be combined')
     root, report = args.root.resolve(), args.report.resolve()
@@ -185,7 +210,8 @@ def main() -> None:
     repository = os.environ['GITHUB_REPOSITORY'] if args.nightly else args.repository
     output = args.output.resolve() if args.output else root / 'release' / ('nightly' if args.nightly else tag)
     result = package(root, report, vc_runtime() if args.windows or args.nightly else None,
-                     output, tag, fingerprint, repository, published=args.tag is not None)
+                     output, tag, fingerprint, repository, published=args.tag is not None,
+                     linux=args.linux.resolve() if args.linux else None)
     print(json.dumps(result, indent=2))
 
 

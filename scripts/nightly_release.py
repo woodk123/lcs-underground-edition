@@ -55,7 +55,7 @@ def check(repository: str) -> None:
     tag = f"nightly-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
     with Path(os.environ['GITHUB_OUTPUT']).open('a', encoding='utf-8') as output:
         output.write(f'changed={str(changed).lower()}\nfingerprint={value}\ntag={tag}\n')
-    message = 'Build inputs changed; building Windows and web.' if changed else 'Build inputs unchanged since the last published nightly; skipped.'
+    message = 'Build inputs changed; building Windows, Linux and web.' if changed else 'Build inputs unchanged since the last published nightly; skipped.'
     print(message)
     with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a', encoding='utf-8') as summary:
         summary.write(message + '\n')
@@ -71,18 +71,24 @@ def publish(repository: str, output: Path) -> None:
             or not re.fullmatch(r'nightly-\d+-\d+', tag)):
         raise ValueError('Nightly identity does not match this build.')
     assets = [output / item['name'] for item in metadata['assets']]
-    if len(assets) != 6 or len(set(assets)) != 6:
-        raise ValueError('Expected three archives and their checksum sidecars.')
+    prefix = f'LCS-Underground-Edition-{tag}'
+    expected_names = {f'{prefix}-{target}.zip{sidecar}'
+                      for target in ('Source', 'Web-Player', 'Windows-x64-Player', 'Linux-x64-Player')
+                      for sidecar in ('', '.sha256')}
+    if len(assets) != 8 or {path.name for path in assets} != expected_names:
+        raise ValueError('Expected Windows, Linux, web and source archives and their checksum sidecars.')
     for path, item in zip(assets, metadata['assets']):
         if path.parent != output or not path.is_file() or digest(path) != item['sha256']:
             raise ValueError(f'Nightly asset missing or changed: {path}')
     notes = output / 'release-notes.md'
     notes.write_text(
-        f'Automated Windows x64 and browser builds from `{commit}`.\n\n'
+        f'Automated Windows x64, Linux x64 and browser builds from `{commit}`.\n\n'
         'Download a player ZIP and extract the whole folder. Windows: run `lcs_new_age.exe`. '
+        'Linux: run `./lcs_new_age` (Ubuntu 22.04 or compatible, GTK 3 required; '
+        'use `chmod +x lcs_new_age` if needed). '
         'Web: run `Play.cmd` (requires Python 3). The Source ZIP is the matching modified source; '
         'keep it alongside the player downloads when redistributing.\n\n'
-        'Tests, analysis, both release builds and archive integrity checks passed. '
+        'Tests, analysis, all three release builds and archive integrity checks passed. '
         'Automated nightlies have no manual gameplay or clean-machine launch certification. '
         'Export important saves before trying a nightly.\n\n'
         f'[Build logs](https://github.com/{repository}/actions/runs/{os.environ["GITHUB_RUN_ID"]})\n\n'

@@ -173,6 +173,11 @@ def runtime_hashes(package: Path, target: str) -> dict[str, str]:
     if target == "web":
         require_files(package, ("web/index.html", "web/main.dart.js", "web/flutter_bootstrap.js", "web/sw.js"))
         return {f"web/{name}": value for name, value in file_hashes(package / "web").items()}
+    if target == 'linux-x64':
+        require_files(package, ('lcs_new_age', 'lib/libflutter_linux_gtk.so', 'lib/libapp.so',
+                                'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z'))
+        return {name: value for name, value in file_hashes(package).items()
+                if name == 'lcs_new_age' or name.startswith(('lib/', 'data/'))}
     require_files(package, (
         "lcs_new_age.exe", "flutter_windows.dll", "msvcp140.dll", "vcruntime140.dll",
         "vcruntime140_1.dll", "data/app.so", "data/icudtl.dat", "data/flutter_assets/NOTICES.Z",
@@ -184,7 +189,7 @@ def runtime_hashes(package: Path, target: str) -> dict[str, str]:
     return result
 
 
-def archive_package(directory: Path) -> dict:
+def archive_package(directory: Path, *, executables: tuple[str, ...] = ()) -> dict:
     entries = file_hashes(directory)
     (directory / "FILES.sha256").write_text(
         "".join(f"{value}  {name}\n" for name, value in sorted(entries.items())), encoding="utf-8",
@@ -196,7 +201,9 @@ def archive_package(directory: Path) -> dict:
                 # Fixed timestamps/permissions avoid host-specific ZIP metadata.
                 entry = zipfile.ZipInfo(f"{directory.name}/{path.relative_to(directory).as_posix()}")
                 entry.compress_type = zipfile.ZIP_DEFLATED
-                entry.external_attr = (stat.S_IFREG | 0o644) << 16
+                entry.create_system = 3  # Preserve Linux executable permissions, even on Windows.
+                mode = 0o755 if path.relative_to(directory).as_posix() in executables else 0o644
+                entry.external_attr = (stat.S_IFREG | mode) << 16
                 with path.open("rb") as source, bundle.open(entry, "w", force_zip64=True) as output:
                     shutil.copyfileobj(source, output, length=1024 * 1024)
     archive.with_name(archive.name + ".sha256").write_text(

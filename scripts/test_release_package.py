@@ -10,7 +10,7 @@ from unittest.mock import patch
 import zipfile
 
 import package_release
-from release_common import archive_package, digest, runtime_hashes, verify_package
+from release_common import archive_package, digest, file_hashes, runtime_hashes, verify_package
 
 
 def put(root, name, data='fixture'):
@@ -109,6 +109,52 @@ class ReleasePackageTests(unittest.TestCase):
                       (player / 'SOURCE_REFERENCE.md').read_text())
         self.assertEqual(verify_package(player)['status'], 'passed')
         self.assertEqual(verify_package(source)['status'], 'passed')
+
+    def linux_fixture(self, root, info):
+        linux = root / '.local/linux'
+        for name in ('lcs_new_age', 'lib/libflutter_linux_gtk.so', 'lib/libapp.so',
+                     'lib/plugin.so', 'data/icudtl.dat', 'data/flutter_assets/NOTICES.Z'):
+            put(linux / 'bundle', name)
+        steps = ['dependencies', 'serialization', 'tests', 'focused-analysis', 'full-analysis', 'linux-release']
+        evidence = {'status': 'passed', 'source_commit': info['source_commit'], 'toolchain': info['toolchain'],
+                    'steps': [{'name': name, 'exit_code': 0} for name in steps],
+                    'bundle_hashes': file_hashes(linux / 'bundle')}
+        put(linux, 'evidence/build-info.json', json.dumps(evidence))
+        return linux, evidence
+
+    def test_linux_player_keeps_runtime_source_reference_and_executable_mode(self):
+        root, report, info = self.source_fixture()
+        linux, _ = self.linux_fixture(root, info)
+        output = root / 'release/linux-test'
+        result = package_release.package(root, report, None, output, 'linux-test', None, 'owner/repo', linux=linux)
+        self.assertEqual(len(result['assets']), 6)
+        player = output / 'LCS-Underground-Edition-linux-test-Linux-x64-Player'
+        self.assertEqual(verify_package(player)['status'], 'passed')
+        self.assertIn('linux-test-Source.zip', (player / 'SOURCE_REFERENCE.md').read_text())
+        self.assertTrue((output / 'LCS-Underground-Edition-linux-test-Source/build-evidence/linux/build-info.json').is_file())
+        with zipfile.ZipFile(player.with_suffix('.zip')) as archive:
+            self.assertEqual((archive.getinfo(f'{player.name}/lcs_new_age').external_attr >> 16) & 0o777, 0o755)
+            self.assertEqual((archive.getinfo(f'{player.name}/lib/plugin.so').external_attr >> 16) & 0o777, 0o644)
+
+    def test_linux_failed_stale_or_modified_bundle_is_rejected(self):
+        for failure in ('failed', 'commit', 'toolchain', 'modified', 'missing'):
+            with self.subTest(failure=failure):
+                root, report, info = self.source_fixture()
+                linux, evidence = self.linux_fixture(root, info)
+                if failure == 'failed':
+                    evidence['steps'][-1]['exit_code'] = 1
+                elif failure == 'commit':
+                    evidence['source_commit'] = 'b' * 40
+                elif failure == 'toolchain':
+                    evidence['toolchain'] = {'different': True}
+                elif failure == 'modified':
+                    put(linux, 'bundle/lcs_new_age', 'tampered')
+                else:
+                    (linux / 'bundle/lib/libapp.so').unlink()
+                put(linux, 'evidence/build-info.json', json.dumps(evidence))
+                with self.assertRaisesRegex(ValueError, 'Linux bundle'):
+                    package_release.package(root, report, None, root / 'release/rejected',
+                                            'linux-test', None, 'owner/repo', linux=linux)
 
     def test_named_preview_has_exact_absolute_source_link_and_identity(self):
         root, report, info = self.source_fixture()
