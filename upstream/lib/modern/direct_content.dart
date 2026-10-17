@@ -611,9 +611,19 @@ class DirectContent extends StatelessWidget {
     final selected =
         action?.entityType == 'person' &&
         action?.entityId == selectedPersonId?.toString();
-    final title = action == null
-        ? frame.slice(y, columns.first.start, columns.first.end).trim()
-        : _title(action);
+    final actionTitle = action == null ? '' : _title(action);
+    final title = actionTitle.isEmpty
+        ? frame
+              .slice(
+                y,
+                action == null
+                    ? columns.first.start
+                    : action.x +
+                          stripConsoleColors(action.label).characters.length,
+                columns.first.end,
+              )
+              .trim()
+        : actionTitle;
     Widget value(_Column column) {
       final spans = frame.spans(y, column.start, column.end, trim: true);
       if (!journalPage &&

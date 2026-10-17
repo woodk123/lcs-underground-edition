@@ -86,6 +86,31 @@ void main() {
     game.activeSquadMember = null;
   });
 
+  for (final size in [const Size(1280, 800), const Size(800, 600)]) {
+    testWidgets('save rows retain dates after a separate shortcut at $size', (
+      tester,
+    ) async {
+      engine.mvaddstr(0, 0, 'Liberal Save Game Management System');
+      engine.mvaddstr(2, 0, '─' * 80);
+      engine.mvaddstr(2, 4, 'IN GAME DATE');
+      engine.mvaddstr(2, 20, 'LCS LEADER');
+      engine.mvaddstr(2, 50, 'LAST PLAYED');
+      engine.mvaddstr(2, 70, 'VERSION');
+      engine.addOptionText(3, 0, 'a', 'A - ');
+      engine.mvaddstr(3, 4, 'Apr 4, 2023');
+      engine.mvaddstr(3, 20, 'Felix Kobayashi');
+      engine.mvaddstr(3, 50, 'Oct 17, 2026');
+      engine.mvaddstr(3, 70, '1.5.6');
+      final flow = engine.getKey();
+      await mountContent(tester, size, flow.then((_) {}));
+      expect(find.text('Apr 4, 2023', findRichText: true), findsOneWidget);
+      expect(find.text('Felix Kobayashi', findRichText: true), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      engine.console.sendInput('a');
+      await flow;
+    });
+  }
+
   testWidgets('Unicode option labels retain their following value', (
     tester,
   ) async {
