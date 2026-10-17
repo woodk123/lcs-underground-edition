@@ -343,6 +343,7 @@ class DirectContent extends StatelessWidget {
           final actions = frame.at(next).where(frame.embedded).toList();
           if (frame.rows[next].trim().isEmpty ||
               frame.isRule(next) ||
+              _isKeyboardNote(frame.rows[next].trim()) ||
               actions.length > 1 ||
               !columns
                   .skip(1)

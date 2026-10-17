@@ -168,6 +168,11 @@ void main() {
         await key(tester, category);
         await key(tester, choice);
         expect(engine.console.awaitingInput, isTrue);
+        expect(
+          find.text('Press a Letter to sel', findRichText: true),
+          findsNothing,
+        );
+        expect(find.text('ect a', findRichText: true), findsNothing);
         expect(engine.console.actions.where((a) => a.enabled), isNotEmpty);
         final next = engine.console.actions.where(
           (a) => a.key == 'PageDown' || a.key == ']',

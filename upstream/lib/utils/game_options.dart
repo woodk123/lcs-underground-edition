@@ -6,11 +6,13 @@ class GameOptions {
   static const String _interfacePgUpKey = 'interfacePgUp';
   static const String _fontSizeKey = 'fontSize';
   static const String _lighterToneKey = 'lighterTone';
+  static const String _journalScaleKey = 'journalReadingScale';
   bool encounterWarnings = false;
   bool mouseInput = true;
   double fontSize = 16;
   String interfacePgUp = "[";
   bool lighterTone = false;
+  double journalScale = 1;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -19,6 +21,13 @@ class GameOptions {
     interfacePgUp = prefs.getString(_interfacePgUpKey) ?? "[";
     fontSize = prefs.getDouble(_fontSizeKey) ?? 16;
     lighterTone = prefs.getBool(_lighterToneKey) ?? false;
+    final scale = prefs.getDouble(_journalScaleKey) ?? 1;
+    journalScale = const [1.0, 1.25, 1.5].contains(scale) ? scale : 1;
+  }
+
+  Future<void> saveJournalScale() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_journalScaleKey, journalScale);
   }
 
   Future<void> save() async {

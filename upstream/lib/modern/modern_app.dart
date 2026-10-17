@@ -34,6 +34,7 @@ import 'package:lcs_new_age/modern/journal_title.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/modern/organisation_journal.dart';
 import 'package:lcs_new_age/modern/tactical_map.dart';
+import 'package:lcs_new_age/utils/game_options.dart';
 import 'package:lcs_new_age/utils/game_version.dart';
 
 const ink = JournalPalette.ink;
@@ -61,7 +62,12 @@ class _ModernGameShellState extends State<ModernGameShell> {
   (int, String?)? _navigationTarget;
   int? _inspectedPersonId;
   double get _textScale => journalReadingScale.value;
-  set _textScale(double value) => journalReadingScale.value = value;
+  set _textScale(double value) {
+    journalReadingScale.value = value;
+    gameOptions.journalScale = value;
+    unawaited(gameOptions.saveJournalScale());
+  }
+
   int _tab = 0;
   int _renderedRevision = -1;
   bool _wasTextInput = false;

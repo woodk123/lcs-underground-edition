@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/saveload/load_cpc_images.dart';
 import 'package:lcs_new_age/saveload/load_xml_data.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
@@ -17,6 +18,7 @@ Future<void> launchGame() async {
   await loadXmlData();
   await loadCpcGraphics();
   await gameOptions.load();
+  journalReadingScale.value = gameOptions.journalScale;
   await initStorage();
   while (true) {
     try {
@@ -29,8 +31,12 @@ Future<void> launchGame() async {
 
 Future<void> errorScreen(Error e, {bool willContinue = false}) async {
   erase();
-  mvaddstrc(0, 0, red,
-      "CRASH REPORT:  A screenshot of this will help the developer fix this bug.");
+  mvaddstrc(
+    0,
+    0,
+    red,
+    "CRASH REPORT:  A screenshot of this will help the developer fix this bug.",
+  );
   String message = e.toString();
   mvaddstrc(1, 0, yellow, message);
   StackTrace? trace = await convertStackTrace(e.stackTrace);
@@ -69,11 +75,19 @@ Future<void> errorScreen(Error e, {bool willContinue = false}) async {
     y++;
   }
   if (willContinue) {
-    mvaddstrc(24, 0, lightGreen,
-        "Press any key to continue the game after this Conservative interruption.");
+    mvaddstrc(
+      24,
+      0,
+      lightGreen,
+      "Press any key to continue the game after this Conservative interruption.",
+    );
   } else {
-    mvaddstrc(24, 0, lightGreen,
-        "Press any key to restart the game after this Conservative interruption.");
+    mvaddstrc(
+      24,
+      0,
+      lightGreen,
+      "Press any key to restart the game after this Conservative interruption.",
+    );
   }
   checkKey();
   await Future.delayed(const Duration(milliseconds: 250));

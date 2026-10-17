@@ -149,7 +149,7 @@ Future<bool> _completeRecruitMeeting(RecruitmentSession r, Creature p) async {
     addstr(p.name);
     addstr("!");
 
-    await getKey();
+    await acknowledge(title: 'Recruitment report');
 
     return true;
   }
@@ -236,7 +236,7 @@ Future<bool> _completeRecruitMeeting(RecruitmentSession r, Creature p) async {
 
     if (c == Key.c && p.subordinatesLeft > 0 && r.eagerness >= 4) {
       mvaddstr(y, 0, "${p.name} offers to let ${r.recruit.name} join the LCS.");
-      await getKey();
+      await acknowledge(title: 'Recruitment report');
 
       mvaddstrc(
         y += 2,
@@ -246,7 +246,7 @@ Future<bool> _completeRecruitMeeting(RecruitmentSession r, Creature p) async {
       );
       r.recruit.hireId = p.id;
       liberalize(r.recruit);
-      await getKey();
+      await acknowledge(title: 'Recruitment report');
 
       pool.add(r.recruit);
       erase();
@@ -303,7 +303,7 @@ Future<bool> _completeRecruitMeeting(RecruitmentSession r, Creature p) async {
 
         mvaddstr(y++, 0, "${p.name} shares ${_issueEventStrings.random}.");
 
-        await getKey();
+        await acknowledge(title: 'Recruitment report');
       } else {
         move(y++, 0);
         addstr(p.name);
@@ -313,7 +313,7 @@ Future<bool> _completeRecruitMeeting(RecruitmentSession r, Creature p) async {
         addstr(Law.values.random.label);
         addstr(".");
 
-        await getKey();
+        await acknowledge(title: 'Recruitment report');
       }
 
       difficulty += r.recruit.level - 1;
@@ -368,12 +368,12 @@ Future<bool> _completeRecruitMeeting(RecruitmentSession r, Creature p) async {
           );
         }
 
-        await getKey();
+        await acknowledge(title: 'Recruitment report');
 
         return true;
       }
 
-      await getKey();
+      await acknowledge(title: 'Recruitment report');
 
       return false;
     }

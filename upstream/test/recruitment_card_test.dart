@@ -9,7 +9,9 @@ import 'package:lcs_new_age/daily/recruitment.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/engine/recruitment_context.dart';
+import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
+import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/direct_content.dart';
 import 'package:lcs_new_age/modern/modern_app.dart';
 import 'package:lcs_new_age/modern/recruitment_card.dart';
@@ -233,4 +235,68 @@ void main() {
       expect(game.pool.any((person) => person.id == p.id), isFalse);
     },
   );
+
+  for (final paid in [false, true]) {
+    for (final size in [const Size(1280, 800), const Size(800, 600)]) {
+      testWidgets(
+        '${paid ? 'paid' : 'free'} recruitment results replace stale choices at $size',
+        (tester) async {
+          game.mode = GameMode.base;
+          final p = prospect();
+          final recruiter = game.pool.first..meetings = 0;
+          p.location = recruiter.location;
+          game.ledger.forceSetFunds(100);
+          final session = RecruitmentSession.fromJson({
+            'recruit': jsonDecode(jsonEncode(p)),
+            'recruiter': recruiter.id,
+            'rawEagerness': 0,
+          })..recruiter = recruiter;
+          var done = false;
+          final flow = completeRecruitMeeting(session, recruiter).then((value) {
+            done = true;
+            return value;
+          });
+          tester.view.devicePixelRatio = 1;
+          tester.view.physicalSize = size;
+          try {
+            await tester.pumpWidget(const MainApp());
+            await tester.pumpAndSettle();
+            expect(engine.console.sendInput(paid ? 'a' : 'b'), isTrue);
+            await tester.pumpAndSettle();
+            expect(engine.console.eventTitle, 'Recruitment report');
+            expect(engine.console.eventMessage, contains(recruiter.name));
+            expect(game.ledger.funds, paid ? 50 : 100);
+            expect(
+              find.textContaining('Spend \$50', findRichText: true),
+              findsNothing,
+            );
+            for (var i = 0; i < 5 && !done; i++) {
+              expect(engine.console.eventMessage, isNotNull);
+              final continueButton = find.text('Continue').first;
+              await tester.ensureVisible(continueButton);
+              await tester.tap(continueButton);
+              await tester.pumpAndSettle();
+            }
+            expect(done, isTrue);
+            expect(
+              game.ledger.funds,
+              paid ? 50 : 100,
+              reason: 'Acknowledgement must never repeat the purchase.',
+            );
+            expect(tester.takeException(), isNull);
+          } finally {
+            for (var i = 0; i < 10 && !done; i++) {
+              if (engine.console.awaitingInput)
+                engine.console.sendInput('Enter');
+              await tester.pump();
+            }
+            if (done) await flow;
+            await tester.pumpWidget(const SizedBox.shrink());
+            tester.view.resetPhysicalSize();
+            tester.view.resetDevicePixelRatio();
+          }
+        },
+      );
+    }
+  }
 }
