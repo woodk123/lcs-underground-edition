@@ -29,6 +29,10 @@ The interface and artwork are being developed with AI assistance; the paintings 
 
 ## Playing
 
+**[Play the latest nightly in your browser](https://woodk123.github.io/lcs-underground-edition/)** — no installation or account required. This is a development build, updated automatically after successful nightly publication. Saves belong to your browser profile on this site; export important campaigns before clearing browser data or switching devices. Downloaded browser players use separate save storage; use export/import to transfer a campaign.
+
+[Hosted build source and credits](https://woodk123.github.io/lcs-underground-edition/source.html) includes the exact matching source download for the version currently online.
+
 The **[preview release](https://github.com/woodk123/lcs-underground-edition/releases/tag/underground-preview-2026.10.16)** includes the latest journal, portrait and crew-selection improvements. Download a player ZIP and extract the whole folder:
 
 - **[Windows player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.16/LCS-Underground-Edition-2026.10.16-Windows-x64-Player.zip)** — Windows 10/11 (64-bit). Double-click **lcs_new_age.exe**; no Python or Flutter needed.

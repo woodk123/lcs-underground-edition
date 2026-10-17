@@ -1,0 +1,80 @@
+name: Play latest nightly
+
+on:
+  workflow_run:
+    workflows: ['Nightly Windows, Linux and web']
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Select the latest published nightly once a deployment starts. Serialize complete
+# deployments so an older run cannot replace a newer site after it finishes.
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: >-
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == github.event.repository.default_branch &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Test Pages preparation
+        run: python -m unittest discover -s scripts -p 'test_*pages*.py' -v
+      - name: Download latest published Nightly
+        id: nightly
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/download_pages_nightly.py --output .local/pages-downloads
+      - name: Prepare hosted copy and matching source
+        env:
+          NIGHTLY_TAG: ${{ steps.nightly.outputs.tag }}
+          BASE_PATH: /${{ github.event.repository.name }}/
+        run: >-
+          python scripts/prepare_pages.py --downloads .local/pages-downloads
+          --output .local/pages --base-path "$BASE_PATH" --tag "$NIGHTLY_TAG"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: upstream/tool/offline_test/package-lock.json
+      - name: Install browser test dependencies
+        working-directory: upstream/tool/offline_test
+        run: npm ci
+      - name: Verify hosted path, service worker and offline startup
+        env:
+          LCS_BROWSER_CHANNEL: chrome
+          BASE_PATH: /${{ github.event.repository.name }}/
+        run: node upstream/tool/offline_test/test_offline.mjs .local/pages "$BASE_PATH"
+      - name: Upload verified Pages site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: .local/pages
+
+  deploy:
+    needs: prepare
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy latest checked nightly
+        id: deployment
+        uses: actions/deploy-pages@v4
