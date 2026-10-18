@@ -446,6 +446,12 @@ void main() {
     testWidgets(
       'left crew selection retains profile page and scroll at $size',
       (tester) async {
+        final first = game.squad.first;
+        final second = game.squad[1];
+        final outfit = first.equippedClothing!;
+        outfit.bloody = true;
+        outfit.damaged = true;
+        second.equippedClothing = null;
         await mount(tester, size: size);
         if (size.width == 800) {
           await tester.tap(find.byTooltip('Reading size'));
@@ -454,8 +460,6 @@ void main() {
           await _settle(tester);
         }
         await _tap(tester, 'journal-clipboard');
-        final first = game.squad.first;
-        final second = game.squad[1];
         await _openPersonnel(tester, first.id);
         final before = _snapshot();
         final dossier = tester.state(find.byType(CrewDossier));
@@ -480,6 +484,16 @@ void main() {
               ? second
               : first;
           await _showCrewMember(tester, next.id);
+          final clothingLabel = next.id == first.id
+              ? '${outfit.type.name} · Bloodstained · Damaged'
+              : 'No equipped clothing';
+          expect(
+            tester
+                .widget<Text>(_key('journal-member-clothing:${next.id}'))
+                .data,
+            clothingLabel,
+          );
+          expect(find.byTooltip('Wearing: $clothingLabel'), findsOneWidget);
           await _tap(tester, 'journal-member:${next.id}');
           expect(engine.console.journalProfile!.person.id, next.id);
           expect(engine.console.journalProfile!.page, page);

@@ -1579,6 +1579,17 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   );
 
   Widget _memberRow(Creature member) {
+    final clothing = member.equippedClothing;
+    final clothingSummary = clothing == null
+        ? 'No equipped clothing'
+        : [
+            if (clothing.quality > clothing.type.qualityLevels)
+              'Tattered Rags'
+            else
+              clothing.type.name,
+            if (clothing.bloody) 'Bloodstained',
+            if (clothing.damaged) 'Damaged',
+          ].join(' · ');
     final strengths =
         Skill.values.where((skill) => member.skill(skill) > 0).toList()
           ..sort((a, b) {
@@ -1653,19 +1664,51 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 ),
                 child: Semantics(
                   label:
-                      'Select crew ${member.name}\nStrongest skills: $skillSummary',
+                      'Select crew ${member.name}\nStrongest skills: $skillSummary\nWearing: $clothingSummary',
                   excludeSemantics: true,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        member.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: JournalPalette.body.copyWith(
-                          fontSize: 13,
-                          height: 1.25,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: Text(
+                              member.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: JournalPalette.body.copyWith(
+                                fontSize: 13,
+                                height: 1.25,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            flex: 6,
+                            child: Tooltip(
+                              message: 'Wearing: $clothingSummary',
+                              child: Text(
+                                clothingSummary,
+                                key: ValueKey(
+                                  'journal-member-clothing:${member.id}',
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: JournalPalette.small.copyWith(
+                                  fontSize: 11,
+                                  height: 1.3,
+                                  color:
+                                      clothing == null ||
+                                          clothing.bloody ||
+                                          clothing.damaged
+                                      ? JournalPalette.danger
+                                      : JournalPalette.small.color,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       Tooltip(
                         message: 'Strongest skills: $skillSummary',
