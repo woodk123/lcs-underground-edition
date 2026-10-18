@@ -17,6 +17,7 @@ import 'package:lcs_new_age/location/location.dart';
 import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
+import 'package:lcs_new_age/modern/injury_status.dart';
 import 'package:lcs_new_age/modern/journal_bases.dart';
 import 'package:lcs_new_age/modern/journal_city_plan.dart';
 import 'package:lcs_new_age/modern/journal_network.dart';
@@ -1579,6 +1580,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   );
 
   Widget _memberRow(Creature member) {
+    final injury = crewInjurySummary(member);
     final clothing = member.equippedClothing;
     final clothingSummary = clothing == null
         ? 'No equipped clothing'
@@ -1664,7 +1666,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 ),
                 child: Semantics(
                   label:
-                      'Select crew ${member.name}\nStrongest skills: $skillSummary\nWearing: $clothingSummary',
+                      'Select crew ${member.name}\nStrongest skills: $skillSummary\nWearing: $clothingSummary${injury == null ? '' : '\nCondition: ${injury.details}'}',
                   excludeSemantics: true,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1710,17 +1712,64 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                           ),
                         ],
                       ),
-                      Tooltip(
-                        message: 'Strongest skills: $skillSummary',
-                        child: Text(
-                          skillSummary,
-                          key: ValueKey('journal-member-skills:${member.id}'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: JournalPalette.small.copyWith(
-                            fontSize: 11,
-                            height: 1.3,
-                          ),
+                      LayoutBuilder(
+                        builder: (context, bounds) => Row(
+                          children: [
+                            Expanded(
+                              child: Tooltip(
+                                message: 'Strongest skills: $skillSummary',
+                                child: Text(
+                                  skillSummary,
+                                  key: ValueKey(
+                                    'journal-member-skills:${member.id}',
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: JournalPalette.small.copyWith(
+                                    fontSize: 11,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (injury != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 6),
+                                child: Tooltip(
+                                  message: injury.details,
+                                  child: Row(
+                                    key: ValueKey(
+                                      'journal-member-injury:${member.id}',
+                                    ),
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        injury.label == 'Bleeding'
+                                            ? Icons.bloodtype_outlined
+                                            : Icons.healing,
+                                        size: 12,
+                                        color: injury.urgent
+                                            ? JournalPalette.danger
+                                            : JournalPalette.brassDark,
+                                      ),
+                                      if (bounds.maxWidth >= 240) ...[
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          injury.label,
+                                          style: JournalPalette.small.copyWith(
+                                            fontSize: 11,
+                                            height: 1.3,
+                                            color: injury.urgent
+                                                ? JournalPalette.danger
+                                                : JournalPalette.brassDark,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ],

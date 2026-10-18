@@ -30,6 +30,7 @@ import 'package:lcs_new_age/location/siege.dart';
 import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/article_view.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
+import 'package:lcs_new_age/modern/injury_status.dart';
 import 'package:lcs_new_age/modern/journal_city_plan.dart';
 import 'package:lcs_new_age/modern/journal_ledger.dart';
 import 'package:lcs_new_age/modern/journal_media.dart';
@@ -452,6 +453,8 @@ void main() {
         outfit.bloody = true;
         outfit.damaged = true;
         second.equippedClothing = null;
+        first.body.parts.first.bleeding = 2;
+        second.blood = second.maxBlood ~/ 2;
         await mount(tester, size: size);
         if (size.width == 800) {
           await tester.tap(find.byTooltip('Reading size'));
@@ -494,6 +497,11 @@ void main() {
             clothingLabel,
           );
           expect(find.byTooltip('Wearing: $clothingLabel'), findsOneWidget);
+          expect(_key('journal-member-injury:${next.id}'), findsOneWidget);
+          expect(
+            find.byTooltip(crewInjurySummary(next)!.details),
+            findsOneWidget,
+          );
           await _tap(tester, 'journal-member:${next.id}');
           expect(engine.console.journalProfile!.person.id, next.id);
           expect(engine.console.journalProfile!.page, page);

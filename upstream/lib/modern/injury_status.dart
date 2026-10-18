@@ -7,6 +7,51 @@ enum InjuryRegion { head, torso, leftArm, rightArm, leftLeg, rightLeg }
 /// Presentation priorities, not additional damage or treatment thresholds.
 enum InjurySeverity { healthy, minor, serious, critical, missing }
 
+/// Compact roster warning, using the same recorded findings as the medical plate.
+/// A healthy person needs no badge; blood loss and permanent damage still count
+/// even when there are no visible wounds.
+({String label, String details, bool urgent})? crewInjurySummary(
+  Creature person,
+) {
+  final affected = injuryLocations(person).where((entry) => entry.affected);
+  final bleeding = person.body.parts.any((part) => part.bleeding > 0);
+  final fraction = person.blood / person.maxBlood;
+  final critical = affected.any(
+    (entry) => entry.severity == InjurySeverity.critical,
+  );
+  final label = !person.alive
+      ? 'Deceased'
+      : bleeding
+      ? 'Bleeding'
+      : fraction < .25
+      ? 'Very low blood'
+      : critical
+      ? 'Critical injury'
+      : fraction < .75
+      ? 'Low blood'
+      : affected.isNotEmpty
+      ? 'Injured'
+      : fraction < 1
+      ? 'Recovering'
+      : person.permanentHealthDamage > 0
+      ? 'Health loss'
+      : null;
+  if (label == null) return null;
+  return (
+    label: label,
+    details: [
+      label,
+      '${person.blood}/${person.maxBlood} blood',
+      for (final entry in affected)
+        '${entry.name}: ${entry.findings.join(', ')}',
+      if (person.permanentHealthDamage > 0)
+        'Permanent maximum-health loss: ${person.permanentHealthDamage}',
+      'Open dossier for injury details.',
+    ].join('\n'),
+    urgent: !person.alive || bleeding || fraction < .5 || critical,
+  );
+}
+
 /// A detached, read-only description of one recorded location or special injury.
 class InjuryLocation {
   InjuryLocation({

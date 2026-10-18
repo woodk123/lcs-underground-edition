@@ -33,6 +33,50 @@ void main() {
   InjuryLocation location(String id) =>
       injuryLocations(person).singleWhere((entry) => entry.id == id);
 
+  test('roster warnings distinguish wounds, bleeding and blood recovery', () {
+    expect(crewInjurySummary(person), isNull);
+    body.leftArm.bruised = true;
+    expect(crewInjurySummary(person)!.label, 'Injured');
+    expect(crewInjurySummary(person)!.details, contains('Bruised'));
+    body.leftArm.bleeding = 1;
+    expect(crewInjurySummary(person)!.label, 'Bleeding');
+    expect(crewInjurySummary(person)!.urgent, isTrue);
+    body.leftArm.heal();
+    person.blood = person.maxBlood ~/ 5;
+    expect(crewInjurySummary(person)!.label, 'Very low blood');
+    person.blood = person.maxBlood ~/ 2;
+    expect(crewInjurySummary(person)!.label, 'Low blood');
+    person.blood = person.maxBlood - 1;
+    expect(crewInjurySummary(person)!.label, 'Recovering');
+    person.blood = person.maxBlood;
+    expect(crewInjurySummary(person), isNull);
+  });
+
+  test(
+    'roster includes internal injuries and permanent losses at full blood',
+    () {
+      final before = jsonEncode(person.toJson());
+      reseedRNG(seed: 18733);
+      final rolls = List.generate(5, (_) => lcsRandom(10000));
+      reseedRNG(seed: 18733);
+      expect(crewInjurySummary(person), isNull);
+      expect(jsonEncode(person.toJson()), before);
+      expect(List.generate(5, (_) => lcsRandom(10000)), rolls);
+      body.puncturedHeart = true;
+      expect(crewInjurySummary(person)!.label, 'Critical injury');
+      expect(crewInjurySummary(person)!.details, contains('Punctured heart'));
+      body.puncturedHeart = false;
+      body.leftArm.cleanOff = true;
+      expect(crewInjurySummary(person)!.label, 'Injured');
+      expect(crewInjurySummary(person)!.details, contains('Missing'));
+      body.leftArm.cleanOff = false;
+      person.permanentHealthDamage = 1;
+      expect(crewInjurySummary(person)!.label, 'Health loss');
+      person.die();
+      expect(crewInjurySummary(person)!.label, 'Deceased');
+    },
+  );
+
   test('healthy humans expose six independently addressable body regions', () {
     final entries = injuryLocations(person);
     expect(entries.map((entry) => entry.id), [
