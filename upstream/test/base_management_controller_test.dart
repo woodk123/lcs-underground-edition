@@ -14,6 +14,7 @@ import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/gamestate/ledger.dart';
 import 'package:lcs_new_age/gamestate/squad.dart';
 import 'package:lcs_new_age/items/item.dart';
+import 'package:lcs_new_age/location/compound.dart';
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/location/siege.dart';
 import 'package:lcs_new_age/location/site.dart';
@@ -22,6 +23,7 @@ import 'package:lcs_new_age/modern/journal_bases.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
+import 'package:lcs_new_age/title_screen/world.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 
 import 'test_support.dart';
@@ -130,6 +132,104 @@ void main() {
       engine.console.actions.singleWhere(
         (action) => action.entityType == type && action.entityId == id,
       );
+
+  test('unused shelters become bases when occupied, stocked or acquired', () {
+    final site = newBase('Unused shelter')
+      ..compound = Compound()
+      ..heat = 0;
+    expect(isAvailableShelter(site), isTrue);
+    final person = game.pool.firstWhere((person) => person.alive);
+    final oldBase = person.base;
+    final oldLocation = person.location;
+    person.base = site;
+    expect(isAvailableShelter(site), isFalse);
+    person.base = oldBase;
+    person.location = site;
+    expect(isAvailableShelter(site), isFalse);
+    person.location = oldLocation;
+    expect(isAvailableShelter(site), isTrue);
+
+    site.loot.add(Item('WEAPON_22_REVOLVER'));
+    expect(isAvailableShelter(site), isFalse);
+    site.loot.clear();
+    site.compound.rations = 10;
+    expect(isAvailableShelter(site), isFalse);
+    site.compound.rations = 0;
+    site.compound.diesel = 10;
+    expect(isAvailableShelter(site), isFalse);
+    site.compound.diesel = 0;
+    site.compound.cameras = true;
+    expect(isAvailableShelter(site), isFalse);
+    site.compound.cameras = false;
+    site.heat = 10;
+    expect(isAvailableShelter(site), isFalse);
+    site.heat = 0;
+    site.siege.activeSiegeType = SiegeType.police;
+    expect(isAvailableShelter(site), isFalse);
+    site.siege = Siege();
+    expect(isAvailableShelter(site), isTrue);
+    for (final type in [SiteType.apartment, SiteType.drugHouse]) {
+      site.type = type;
+      expect(isAvailableShelter(site), isFalse);
+    }
+  });
+
+  for (final size in [const Size(1280, 900), const Size(640, 1050)]) {
+    testWidgets(
+      'fresh bases distinguish one home from seven shelters at $size',
+      (tester) async {
+        final founder = game.pool.firstWhere((person) => person.alive);
+        game.gameState = game.GameState();
+        makeWorld();
+        final camp = game.sites.firstWhere(
+          (site) => site.type == SiteType.homelessEncampment,
+        );
+        game.pool.add(founder);
+        founder.base = camp;
+        founder.location = camp;
+        organisation = OrganisationController(console: engine.console);
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final before = jsonEncode(game.gameState.toJson());
+        reseedRNG(seed: 61426);
+        final expected = List.generate(8, (_) => lcsRandom(100000));
+        reseedRNG(seed: 61426);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: buildJournalTheme(),
+            home: JournalBasesView(
+              console: engine.console,
+              controller: organisation!,
+            ),
+          ),
+        );
+        expect(find.text('1 base in use'), findsOneWidget);
+        expect(find.text('7 available shelters'), findsOneWidget);
+        expect(find.text('8 LCS bases'), findsNothing);
+        expect(find.text('Available shelter · not in use'), findsNWidgets(7));
+        expect(find.text(camp.getName(includeCity: true)), findsNWidgets(2));
+        final warehouse = game.sites.firstWhere(
+          (site) => site.type == SiteType.warehouse,
+        );
+        final row = find.text(warehouse.getName(includeCity: true));
+        await tester.ensureVisible(row);
+        await tester.tap(row);
+        await tester.pump();
+        expect(
+          find.textContaining('Selecting it here only inspects the location.'),
+          findsOneWidget,
+        );
+        expect(find.text('1 base in use'), findsOneWidget);
+        expect(find.text('7 available shelters'), findsOneWidget);
+        expect(jsonEncode(game.gameState.toJson()), before);
+        expect(List.generate(8, (_) => lcsRandom(100000)), expected);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
 
   test('directory inspection preserves campaign, item stacks and RNG', () {
     final base = newBase('Read-only warehouse');

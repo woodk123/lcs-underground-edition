@@ -63,6 +63,7 @@ class JournalBasesViewState extends State<JournalBasesView> {
       if (sourceSite != null) return sourceSite;
     }
     return bases.where((site) => site.id == _selectedId).firstOrNull ??
+        bases.where((site) => !isAvailableShelter(site)).firstOrNull ??
         bases.firstOrNull;
   }
 
@@ -255,6 +256,8 @@ class JournalBasesViewState extends State<JournalBasesView> {
 
   Widget _directory() {
     final bases = organisationBases();
+    final inUse = bases.where((site) => !isAvailableShelter(site)).toList();
+    final available = bases.where(isAvailableShelter).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -291,56 +294,71 @@ class JournalBasesViewState extends State<JournalBasesView> {
           style: JournalPalette.small,
         ),
         const Divider(height: 28, color: JournalPalette.rule),
-        Text('${bases.length} LCS bases', style: JournalPalette.heading),
+        Text(
+          '${inUse.length} ${inUse.length == 1 ? 'base' : 'bases'} in use',
+          style: JournalPalette.heading,
+        ),
         const SizedBox(height: 8),
-        if (bases.isEmpty)
+        if (inUse.isEmpty)
           const Text(
-            'No LCS bases are currently held. Acquire a safehouse through the normal location actions.',
+            'No bases are in use. Available shelters are listed below.',
           ),
-        for (final site in bases)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Material(
-              color: _site == site
-                  ? JournalPalette.selected
-                  : JournalPalette.card,
-              shape: RoundedRectangleBorder(
-                side: const BorderSide(color: JournalPalette.rule),
-                borderRadius: BorderRadius.circular(3),
-              ),
-              child: InkWell(
-                onTap: _busy ? null : () => _select(site),
-                child: Padding(
-                  padding: const EdgeInsets.all(11),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        site.getName(includeCity: true),
-                        style: JournalPalette.heading,
-                      ),
-                      Text(
-                        '${baseResidents(site).length} based here · ${site.loot.length} stored stacks',
-                        style: JournalPalette.small,
-                      ),
-                      if (site.siege.underSiege)
-                        Text(
-                          site.siege.underAttack
-                              ? 'Under attack'
-                              : 'Under siege',
-                          style: JournalPalette.small.copyWith(
-                            color: JournalPalette.danger,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+        for (final site in inUse) _directorySite(site),
+        const Divider(height: 28, color: JournalPalette.rule),
+        Text(
+          '${available.length} available ${available.length == 1 ? 'shelter' : 'shelters'}',
+          style: JournalPalette.heading,
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Free camps and empty warehouses you can move into. Travel requirements still apply.',
+          style: JournalPalette.small,
+        ),
+        const SizedBox(height: 8),
+        if (available.isEmpty) const Text('No unused shelters are available.'),
+        for (final site in available) _directorySite(site),
       ],
     );
   }
+
+  Widget _directorySite(Site site) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Material(
+      color: _site == site ? JournalPalette.selected : JournalPalette.card,
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: JournalPalette.rule),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: InkWell(
+        onTap: _busy ? null : () => _select(site),
+        child: Padding(
+          padding: const EdgeInsets.all(11),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                site.getName(includeCity: true),
+                style: JournalPalette.heading,
+              ),
+              Text(
+                isAvailableShelter(site)
+                    ? 'Available shelter · not in use'
+                    : '${baseResidents(site).length} based here · ${site.loot.length} stored stacks',
+                style: JournalPalette.small,
+              ),
+              if (site.siege.underSiege)
+                Text(
+                  site.siege.underAttack ? 'Under attack' : 'Under siege',
+                  style: JournalPalette.small.copyWith(
+                    color: JournalPalette.danger,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 
   Widget _routeButton(
     String title,
@@ -379,6 +397,12 @@ class JournalBasesViewState extends State<JournalBasesView> {
         if (site != null) ...[
           Text(site.getName(includeCity: true), style: JournalPalette.title),
           Text(site.type.name, style: JournalPalette.small),
+          if (isAvailableShelter(site))
+            _note(
+              'Available shelter — not currently in use. '
+              'Move your squad here through Organisation or City maps to make it a home base. '
+              'Selecting it here only inspects the location.',
+            ),
           const SizedBox(height: 14),
           _supplies(site),
           const SizedBox(height: 16),
