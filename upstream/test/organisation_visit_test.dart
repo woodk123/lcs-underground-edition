@@ -19,9 +19,11 @@ import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/location_details.dart';
+import 'package:lcs_new_age/modern/location_effects.dart';
 import 'package:lcs_new_age/modern/location_help.dart';
 import 'package:lcs_new_age/modern/travel_help.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
+import 'package:lcs_new_age/sitemode/sitemap.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 import 'package:lcs_new_age/vehicles/vehicle.dart';
 import 'package:lcs_new_age/vehicles/vehicle_type.dart';
@@ -318,26 +320,120 @@ void main() {
     testWidgets('location guide is readable and passive at $size', (
       tester,
     ) async {
-      await mount(tester, size: size);
+      final harness = await mount(tester, size: size);
       if (size.width == 800) {
         await tester.tap(find.byTooltip('Reading size'));
         await _settle(tester);
         await tester.tap(find.text('150%'));
         await _settle(tester);
       }
-      await inspectFromBusiness(tester, target());
+      final site = target()..type = SiteType.insuranceOffice;
+      await inspectFromBusiness(tester, site);
       final before = _snapshot();
+      final revision = engine.console.revision.value;
+      final actions = List<ConsoleAction>.of(engine.console.actions);
+      final commandCount = harness.commands.length;
+      reseedRNG(seed: 84271);
+      final rolls = List.generate(12, (_) => lcsRandom(100000));
+      reseedRNG(seed: 84271);
       await _tap(tester, 'journal-location-details');
+      expect(find.text('What your actions can change'), findsOneWidget);
+      expect(find.text('Normal clothing and disguises'), findsOneWidget);
+      expect(find.text('Clothing in public areas'), findsOneWidget);
+      expect(find.text('Clothing in restricted areas'), findsOneWidget);
+      expect(
+        find.textContaining('Approve denied medical claims'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('medical bills'), findsOneWidget);
       expect(find.text('People and likelihood'), findsOneWidget);
       expect(find.textContaining('chance of a person type'), findsOneWidget);
+      final guideScroll = find
+          .descendant(
+            of: find.byType(Dialog),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      await tester.scrollUntilVisible(
+        find.text('Clothing in restricted areas'),
+        150,
+        scrollable: guideScroll,
+      );
+      await tester.tap(find.text('Clothing in restricted areas'));
+      await _settle(tester);
+      expect(find.text('Blends in · no clothing penalty'), findsOneWidget);
+      expect(find.text('Authority role · −2 to Disguise'), findsOneWidget);
+      expect(find.textContaining('Cheap Suit'), findsWidgets);
+      await tester.tap(find.text('Clothing in restricted areas'));
+      await _settle(tester);
+      await tester.scrollUntilVisible(
+        find.text('What can still give you away?'),
+        150,
+        scrollable: guideScroll,
+      );
+      await tester.tap(find.text('What can still give you away?'));
+      await _settle(tester);
+      expect(find.textContaining('not success chances'), findsOneWidget);
+      await tester.tap(find.text('What can still give you away?'));
+      await _settle(tester);
+      await tester.scrollUntilVisible(
+        find.text('Restricted areas'),
+        150,
+        scrollable: guideScroll,
+      );
       await tester.tap(find.text('Restricted areas'));
       await _settle(tester);
+      final facility = find.byKey(
+        PageStorageKey(
+          'location-facility:${site.idString}:insuranceClaimsTerminal',
+        ),
+      );
+      await tester.scrollUntilVisible(facility, 200, scrollable: guideScroll);
+      await _settle(tester);
+      await tester.tap(find.text('Insurance claims terminal'));
+      await _settle(tester);
+      final help = locationFeatureHelp(TileSpecial.insuranceClaimsTerminal)!;
+      expect(find.text(help), findsOneWidget);
+      final tooltip = tester.state<TooltipState>(
+        find.descendant(of: facility, matching: find.byType(Tooltip)),
+      );
+      tooltip.ensureTooltipVisible();
+      await _settle(tester);
+      expect(find.text(help), findsNWidgets(2));
+      final hintBounds = tester.getRect(find.text(help).last);
+      expect(hintBounds.top, greaterThanOrEqualTo(0));
+      expect(hintBounds.bottom, lessThanOrEqualTo(size.height));
+      expect(hintBounds.left, greaterThanOrEqualTo(0));
+      expect(hintBounds.right, lessThanOrEqualTo(size.width));
+      Tooltip.dismissAllToolTips();
+      await _settle(tester);
+      // Keyboard activation while inspecting must never reach the game reader.
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyW, character: 'w');
+      await _settle(tester);
       expect(_snapshot(), before);
+      expect(engine.console.revision.value, revision);
+      expect(engine.console.actions, orderedEquals(actions));
+      expect(engine.console.awaitingInput, isTrue);
+      expect(harness.commands.length, commandCount);
       expect(tester.takeException(), isNull);
       await tester.tap(find.byTooltip('Close location details'));
       await _settle(tester);
       expect(find.byType(Dialog), findsNothing);
       expect(_snapshot(), before);
+      // Reopen in the same application lifetime: saved expansion/scroll keys
+      // must not collide, and the underlying selected destination must survive.
+      await _tap(tester, 'journal-location-details');
+      expect(find.text('What your actions can change'), findsOneWidget);
+      await tester.tap(find.byTooltip('Close location details'));
+      await _settle(tester);
+      expect(find.text(site.getName()), findsWidgets);
+      expect(_snapshot(), before);
+      final gameFocus = tester
+          .widgetList<Focus>(find.byType(Focus))
+          .singleWhere((item) => item.focusNode?.debugLabel == 'Game keyboard')
+          .focusNode!;
+      expect(gameFocus.hasPrimaryFocus, isTrue);
+      expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
     });
   }
 

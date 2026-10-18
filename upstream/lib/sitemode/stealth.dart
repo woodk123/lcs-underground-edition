@@ -6,6 +6,7 @@ import 'package:lcs_new_age/creature/difficulty.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/engine.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
+import 'package:lcs_new_age/items/clothing.dart';
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/location/siege.dart';
 import 'package:lcs_new_age/location/site.dart';
@@ -463,42 +464,59 @@ enum DisguiseQuality {
 }
 
 /* checks if a creature's uniform is appropriate to the location */
-DisguiseQuality disguiseQuality(Creature cr) {
-  SiteType type = activeSite?.type ?? SiteType.downtown;
+DisguiseQuality disguiseQuality(Creature cr) => clothingDisguiseQuality(
+  cr.clothing,
+  site: activeSite,
+  restricted: activeSite != null && currentTile.restricted,
+  indecent: cr.indecent,
+  hasClothing: cr.equippedClothing != null,
+  deathSquads: deathSquadsActive,
+  dystopianPrison: nineteenEightyFour,
+  onFire: siteOnFire,
+);
 
-  bool isFarRight = cr.clothing.type.culture.any(
-    (c) => ["FAR RIGHT"].contains(c),
-  );
-  bool isPolice = cr.clothing.type.culture.any((c) => ["POLICE"].contains(c));
-  bool isMilitary = cr.clothing.type.culture.any(
-    (c) => ["MILITARY"].contains(c),
-  );
-  bool isChaos = cr.clothing.type.culture.any((c) => ["CHAOS"].contains(c));
-  bool isFormal = cr.clothing.type.culture.any((c) => ["FORMAL"].contains(c));
-  bool isReligious = cr.clothing.type.culture.any(
+/// The same clothing rules used in play, with an explicit read-only context.
+/// Catalogue previews must not equip a person, alter the map or make rolls.
+DisguiseQuality clothingDisguiseQuality(
+  Clothing clothing, {
+  required Site? site,
+  required bool restricted,
+  required bool deathSquads,
+  required bool dystopianPrison,
+  bool indecent = false,
+  bool hasClothing = true,
+  bool onFire = false,
+}) {
+  SiteType type = site?.type ?? SiteType.downtown;
+
+  bool isFarRight = clothing.type.culture.any((c) => ["FAR RIGHT"].contains(c));
+  bool isPolice = clothing.type.culture.any((c) => ["POLICE"].contains(c));
+  bool isMilitary = clothing.type.culture.any((c) => ["MILITARY"].contains(c));
+  bool isChaos = clothing.type.culture.any((c) => ["CHAOS"].contains(c));
+  bool isFormal = clothing.type.culture.any((c) => ["FORMAL"].contains(c));
+  bool isReligious = clothing.type.culture.any(
     (c) => ["RELIGIOUS"].contains(c),
   );
-  bool isJanitor = cr.clothing.type.idName == "CLOTHING_OVERALLS";
+  bool isJanitor = clothing.type.idName == "CLOTHING_OVERALLS";
 
-  if (deathSquadsActive &&
-      cr.clothing.type.idName == "CLOTHING_DEATHSQUADUNIFORM") {
+  if (deathSquads && clothing.type.idName == "CLOTHING_DEATHSQUADUNIFORM") {
     isPolice = true;
   }
 
   DisguiseQuality uniformed = DisguiseQuality.trespassing;
-  if (!cr.clothing.type.allowVisibleArmor &&
-      cr.clothing.armor?.visible == true &&
-      cr.clothing.armor?.idName != cr.clothing.type.intrinsicArmorId) {
+  if (!clothing.type.allowVisibleArmor &&
+      clothing.armor?.visible == true &&
+      clothing.armor?.idName != clothing.type.intrinsicArmorId) {
     return DisguiseQuality.alarming;
   }
 
-  if (activeSiteUnderSiege) {
-    switch (activeSite!.siege.activeSiegeType) {
+  if (site?.siege.underSiege ?? false) {
+    switch (site!.siege.activeSiegeType) {
       case SiegeType.cia:
         if ([
           "CLOTHING_BLACKSUIT",
           "CLOTHING_BLACKDRESS",
-        ].contains(cr.clothing.type.idName)) {
+        ].contains(clothing.type.idName)) {
           uniformed = DisguiseQuality.inconspicuous;
         }
       case SiegeType.corporateMercs:
@@ -507,7 +525,7 @@ DisguiseQuality disguiseQuality(Creature cr) {
           "CLOTHING_ARMYARMOR",
           "CLOTHING_SEALSUIT",
           "CLOTHING_TACHARNESS",
-        ].contains(cr.clothing.type.idName)) {
+        ].contains(clothing.type.idName)) {
           uniformed = DisguiseQuality.inconspicuous;
         }
       case SiegeType.medicalDebtCollectors:
@@ -516,28 +534,28 @@ DisguiseQuality disguiseQuality(Creature cr) {
           "CLOTHING_EXPENSIVESUIT",
           "CLOTHING_CHEAPDRESS",
           "CLOTHING_EXPENSIVEDRESS",
-        ].contains(cr.clothing.type.idName)) {
+        ].contains(clothing.type.idName)) {
           uniformed = DisguiseQuality.inconspicuous;
         }
       case SiegeType.angryRuralMob:
-        if (cr.clothing.type.idName == "CLOTHING_CLOTHES") {
+        if (clothing.type.idName == "CLOTHING_CLOTHES") {
           uniformed = DisguiseQuality.unusual;
         }
         if ([
           "CLOTHING_OVERALLS",
           "CLOTHING_WIFEBEATER",
-        ].contains(cr.clothing.type.idName)) {
+        ].contains(clothing.type.idName)) {
           uniformed = DisguiseQuality.inconspicuous;
         }
       case SiegeType.ccs:
         uniformed = DisguiseQuality.trespassing;
       case SiegeType.police:
-        if (activeSite!.siege.escalationState == SiegeEscalation.police) {
+        if (site.siege.escalationState == SiegeEscalation.police) {
           if ([
             "CLOTHING_POLICEUNIFORM",
             "CLOTHING_POLICEARMOR",
             "CLOTHING_SWATARMOR",
-          ].contains(cr.clothing.type.idName)) {
+          ].contains(clothing.type.idName)) {
             uniformed = DisguiseQuality.inconspicuous;
           }
         } else {
@@ -545,14 +563,14 @@ DisguiseQuality disguiseQuality(Creature cr) {
             "CLOTHING_MILITARY",
             "CLOTHING_ARMYARMOR",
             "CLOTHING_SEALSUIT",
-          ].contains(cr.clothing.type.idName)) {
+          ].contains(clothing.type.idName)) {
             uniformed = DisguiseQuality.inconspicuous;
           }
         }
       default:
     }
   } else {
-    if (!cr.indecent && cr.clothing.type.idName != "CLOTHING_HEAVYARMOR") {
+    if (!indecent && clothing.type.idName != "CLOTHING_HEAVYARMOR") {
       uniformed = DisguiseQuality.inconspicuous;
     }
 
@@ -589,7 +607,7 @@ DisguiseQuality disguiseQuality(Creature cr) {
         }
       case SiteType.cosmeticsLab:
       case SiteType.geneticsLab:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
           if (isJanitor) {
             uniformed = DisguiseQuality.inconspicuous;
@@ -597,11 +615,11 @@ DisguiseQuality disguiseQuality(Creature cr) {
           if ([
             "CLOTHING_LABCOAT",
             "CLOTHING_SCRUBS",
-          ].contains(cr.clothing.type.idName)) {
+          ].contains(clothing.type.idName)) {
             uniformed = DisguiseQuality.inconspicuous;
           }
-          if (["CLOTHING_SECURITYUNIFORM"].contains(cr.clothing.type.idName)) {
-            if (activeSite!.hasHighSecurity) {
+          if (["CLOTHING_SECURITYUNIFORM"].contains(clothing.type.idName)) {
+            if (site!.hasHighSecurity) {
               uniformed = DisguiseQuality.inconspicuous;
             } else {
               uniformed = DisguiseQuality.authorityFigure;
@@ -609,21 +627,21 @@ DisguiseQuality disguiseQuality(Creature cr) {
           }
         }
       case SiteType.policeStation:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
           if (isPolice) {
             uniformed = DisguiseQuality.inconspicuous;
           }
         }
       case SiteType.whiteHouse:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
           if (isMilitary || isReligious || isFormal) {
             uniformed = DisguiseQuality.inconspicuous;
           }
         }
       case SiteType.courthouse:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
           if (isPolice ||
               isFormal ||
@@ -631,63 +649,63 @@ DisguiseQuality disguiseQuality(Creature cr) {
               [
                 "CLOTHING_BLACKROBE",
                 "CLOTHING_SECURITYUNIFORM",
-              ].contains(cr.clothing.type.idName)) {
+              ].contains(clothing.type.idName)) {
             uniformed = DisguiseQuality.inconspicuous;
           }
         }
       case SiteType.prison:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
-          if (nineteenEightyFour) {
-            if (cr.clothing.type.idName == "CLOTHING_LABCOAT") {
+          if (dystopianPrison) {
+            if (clothing.type.idName == "CLOTHING_LABCOAT") {
               uniformed = DisguiseQuality.inconspicuous;
             }
-          } else if (cr.clothing.type.idName == "CLOTHING_PRISONGUARD") {
+          } else if (clothing.type.idName == "CLOTHING_PRISONGUARD") {
             uniformed = DisguiseQuality.inconspicuous;
           }
           if ([
             "CLOTHING_PRISONER",
             "CLOTHING_SCRUBS",
-          ].contains(cr.clothing.type.idName)) {
+          ].contains(clothing.type.idName)) {
             uniformed = DisguiseQuality.inconspicuous;
           }
         }
       case SiteType.armyBase:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
           if (isMilitary) {
             uniformed = DisguiseQuality.inconspicuous;
           }
         }
       case SiteType.intelligenceHQ:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
           if ([
             "CLOTHING_BLACKSUIT",
             "CLOTHING_BLACKDRESS",
-          ].contains(cr.clothing.type.idName)) {
+          ].contains(clothing.type.idName)) {
             uniformed = DisguiseQuality.inconspicuous;
           }
         }
       case SiteType.fireStation:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
           if (isReligious ||
               [
                 "CLOTHING_BUNKERGEAR",
                 "CLOTHING_WORKCLOTHES",
                 "CLOTHING_OVERALLS",
-              ].contains(cr.clothing.type.idName)) {
+              ].contains(clothing.type.idName)) {
             uniformed = DisguiseQuality.inconspicuous;
           }
-          if (activeSite?.hasHighSecurity ?? false) {
+          if (site?.hasHighSecurity ?? false) {
             if (isPolice) {
               uniformed = DisguiseQuality.inconspicuous;
             }
           }
         }
       case SiteType.bank:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
           if (isFormal || isPolice) {
             uniformed = DisguiseQuality.inconspicuous;
@@ -698,15 +716,15 @@ DisguiseQuality disguiseQuality(Creature cr) {
         if (isFormal) {
           uniformed = DisguiseQuality.inconspicuous;
         }
-        if (activeSite!.controller == SiteController.ccs && isFarRight) {
+        if (site!.controller == SiteController.ccs && isFarRight) {
           uniformed = DisguiseQuality.inconspicuous;
         }
       case SiteType.sweatshop:
         uniformed = DisguiseQuality.trespassing;
-        if (cr.equippedClothing == null) {
+        if (!hasClothing) {
           uniformed = DisguiseQuality.inconspicuous;
         }
-        if (cr.clothing.type.idName == "CLOTHING_SECURITYUNIFORM") {
+        if (clothing.type.idName == "CLOTHING_SECURITYUNIFORM") {
           uniformed = DisguiseQuality.inconspicuous;
         }
       case SiteType.dirtyIndustry:
@@ -714,22 +732,22 @@ DisguiseQuality disguiseQuality(Creature cr) {
         if ([
           "CLOTHING_WORKCLOTHES",
           "CLOTHING_HARDHAT",
-        ].contains(cr.clothing.type.idName)) {
+        ].contains(clothing.type.idName)) {
           uniformed = DisguiseQuality.inconspicuous;
         }
-        if (activeSite!.hasHighSecurity &&
-            cr.clothing.type.idName == "CLOTHING_SECURITYUNIFORM") {
+        if (site!.hasHighSecurity &&
+            clothing.type.idName == "CLOTHING_SECURITYUNIFORM") {
           uniformed = DisguiseQuality.inconspicuous;
         }
       case SiteType.nuclearPlant:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
           if ([
             "CLOTHING_SECURITYUNIFORM",
             "CLOTHING_LABCOAT",
             "CLOTHING_HARDHAT",
             "CLOTHING_OVERALLS",
-          ].contains(cr.clothing.type.idName)) {
+          ].contains(clothing.type.idName)) {
             uniformed = DisguiseQuality.inconspicuous;
           }
         }
@@ -737,7 +755,7 @@ DisguiseQuality disguiseQuality(Creature cr) {
         uniformed = DisguiseQuality.trespassing;
         if (isFormal ||
             isJanitor ||
-            cr.clothing.type.idName == "CLOTHING_SECURITYUNIFORM") {
+            clothing.type.idName == "CLOTHING_SECURITYUNIFORM") {
           uniformed = DisguiseQuality.inconspicuous;
         }
       case SiteType.ceoHouse:
@@ -748,29 +766,29 @@ DisguiseQuality disguiseQuality(Creature cr) {
         if ([
           "CLOTHING_SECURITYUNIFORM",
           "CLOTHING_SERVANTUNIFORM",
-        ].contains(cr.clothing.type.idName)) {
+        ].contains(clothing.type.idName)) {
           uniformed = DisguiseQuality.inconspicuous;
         }
-        if (activeSite!.hasHighSecurity) {
-          if (["CLOTHING_PMC"].contains(cr.clothing.type.idName)) {
+        if (site!.hasHighSecurity) {
+          if (["CLOTHING_PMC"].contains(clothing.type.idName)) {
             uniformed = DisguiseQuality.inconspicuous;
           }
         }
       case SiteType.amRadioStation:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
           if (isFormal ||
               isJanitor ||
-              cr.clothing.type.idName == "CLOTHING_SECURITYUNIFORM") {
+              clothing.type.idName == "CLOTHING_SECURITYUNIFORM") {
             uniformed = DisguiseQuality.inconspicuous;
           }
         }
       case SiteType.cableNewsStation:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
           if (isFormal ||
               isJanitor ||
-              cr.clothing.type.idName == "CLOTHING_SECURITYUNIFORM") {
+              clothing.type.idName == "CLOTHING_SECURITYUNIFORM") {
             uniformed = DisguiseQuality.inconspicuous;
           }
         }
@@ -778,11 +796,11 @@ DisguiseQuality disguiseQuality(Creature cr) {
         if (isFarRight) {
           uniformed = DisguiseQuality.unusual;
         }
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
         }
       case SiteType.apartment:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
         }
       case SiteType.upscaleApartment:
@@ -793,7 +811,7 @@ DisguiseQuality disguiseQuality(Creature cr) {
         } else {
           uniformed = DisguiseQuality.trespassing;
         }
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
         }
       case SiteType.veganCoOp:
@@ -813,25 +831,25 @@ DisguiseQuality disguiseQuality(Creature cr) {
           uniformed = DisguiseQuality.alarming;
         }
       case SiteType.insuranceOffice:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
           if (isFormal) {
             uniformed = DisguiseQuality.inconspicuous;
           }
         }
       case SiteType.nursingHome:
-        if (levelMap[locx][locy][locz].flag & SITEBLOCK_RESTRICTED != 0) {
+        if (restricted) {
           uniformed = DisguiseQuality.trespassing;
           if (isReligious ||
               isFormal ||
-              cr.clothing.type.idName == "CLOTHING_SCRUBS") {
+              clothing.type.idName == "CLOTHING_SCRUBS") {
             uniformed = DisguiseQuality.inconspicuous;
           }
         }
     }
   }
 
-  if (activeSite?.controller == SiteController.lcs) {
+  if (site?.controller == SiteController.lcs) {
     uniformed = DisguiseQuality.inconspicuous;
   }
 
@@ -839,21 +857,21 @@ DisguiseQuality disguiseQuality(Creature cr) {
     if (isPolice) {
       uniformed = DisguiseQuality.authorityFigure;
     }
-    if (deathSquadsActive &&
+    if (deathSquads &&
         [
           "CLOTHING_DEATHSQUADUNIFORM",
           "CLOTHING_DEATHSQUADBODYARMOR",
-        ].contains(cr.clothing.type.idName)) {
+        ].contains(clothing.type.idName)) {
       uniformed = DisguiseQuality.authorityFigure;
     }
-    if (siteOnFire && cr.clothing.type.idName == "CLOTHING_BUNKERGEAR") {
+    if (onFire && clothing.type.idName == "CLOTHING_BUNKERGEAR") {
       uniformed = DisguiseQuality.inconspicuous;
     }
   }
 
   if (uniformed != DisguiseQuality.trespassing) {
-    int qlmax = cr.clothing.type.qualityLevels;
-    int ql = cr.clothing.quality + (cr.clothing.damaged ? 1 : 0);
+    int qlmax = clothing.type.qualityLevels;
+    int ql = clothing.quality + (clothing.damaged ? 1 : 0);
     if (ql > qlmax) {
       // Shredded clothes are obvious
       if (uniformed == DisguiseQuality.inconspicuous ||

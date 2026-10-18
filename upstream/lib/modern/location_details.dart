@@ -8,10 +8,14 @@ import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/equipment_help.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/location_catalog.dart';
+import 'package:lcs_new_age/modern/location_clothing.dart';
+import 'package:lcs_new_age/modern/location_effects.dart';
 import 'package:lcs_new_age/modern/location_help.dart';
+import 'package:lcs_new_age/modern/skill_help.dart';
 import 'package:lcs_new_age/sitemode/newencounter.dart';
 import 'package:lcs_new_age/sitemode/shop.dart';
 import 'package:lcs_new_age/sitemode/sitemap.dart';
+import 'package:lcs_new_age/sitemode/stealth.dart';
 
 String? locationShopId(SiteType type) => switch (type) {
   SiteType.pawnShop => 'PAWNSHOP',
@@ -89,6 +93,8 @@ String locationFeatureLabel(TileSpecial feature) => switch (feature) {
     'Care records · possible elder-abuse evidence',
   TileSpecial.insuranceFiles => 'Insurance records · possible fraud evidence',
   TileSpecial.insuranceClaimsTerminal => 'Insurance claims terminal',
+  TileSpecial.insuranceCEO => 'Insurance CEO',
+  TileSpecial.ceoOffice => 'CEO’s office',
   TileSpecial.ovalOfficeNW ||
   TileSpecial.ovalOfficeNE ||
   TileSpecial.ovalOfficeSW ||
@@ -129,11 +135,19 @@ class _LocationDetailsState extends State<_LocationDetails> {
       highSecurity: _security,
       alarm: _area == 2,
     );
-    final features =
-        (locationFeatureCatalog[site.type] ?? const <TileSpecial>[])
-            .map(locationFeatureLabel)
-            .toSet()
-            .toList();
+    final features = <String, TileSpecial>{
+      for (final feature
+          in locationFeatureCatalog[site.type] ?? const <TileSpecial>[])
+        locationFeatureLabel(feature): feature,
+    };
+    final effects = locationEffects(site.type);
+    final publicClothing = locationClothing(site, restricted: false);
+    final restrictedClothing = locationClothing(site, restricted: true);
+    final sameClothing =
+        publicClothing.length == restrictedClothing.length &&
+        Iterable.generate(publicClothing.length).every(
+          (i) => publicClothing[i].quality == restrictedClothing[i].quality,
+        );
     final loot = locationLootCatalog[site.type] ?? const <String>[];
     final shop = shopTypes[locationShopId(site.type)];
     return Dialog(
@@ -159,6 +173,7 @@ class _LocationDetailsState extends State<_LocationDetails> {
             ),
             Flexible(
               child: SingleChildScrollView(
+                key: PageStorageKey('location-guide-scroll:${site.idString}'),
                 padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -169,6 +184,20 @@ class _LocationDetailsState extends State<_LocationDetails> {
                     ),
                     const SizedBox(height: 6),
                     Text(locationAccess(site), style: JournalPalette.small),
+                    _heading('What your actions can change'),
+                    Text(
+                      'Opportunities: ${effects.opportunities}',
+                      style: JournalPalette.body,
+                    ),
+                    const SizedBox(height: 8),
+                    Text('Risks: ${effects.risks}', style: JournalPalette.body),
+                    if (locationUsesEncounters(site.type)) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        locationOperationConsequences,
+                        style: JournalPalette.small,
+                      ),
+                    ],
                     if (site.isSafehouse)
                       Wrap(
                         children: [
@@ -205,6 +234,40 @@ class _LocationDetailsState extends State<_LocationDetails> {
                         style: JournalPalette.body,
                       ),
                     ],
+                    _heading('Normal clothing and disguises'),
+                    const Text(
+                      'Current laws and site control apply. Examples assume clean, undamaged, best-quality outfits with their original armor. Clothing fit does not guarantee entry. Expand an area to see all clothing ratings.',
+                      style: JournalPalette.small,
+                    ),
+                    _clothing(
+                      sameClothing
+                          ? 'Clothing throughout this location'
+                          : 'Clothing in public areas',
+                      'public',
+                      publicClothing,
+                    ),
+                    if (!sameClothing)
+                      _clothing(
+                        'Clothing in restricted areas',
+                        'restricted',
+                        restrictedClothing,
+                      ),
+                    ExpansionTile(
+                      key: PageStorageKey(
+                        'location-clothing-limits:${site.idString}',
+                      ),
+                      tilePadding: EdgeInsets.zero,
+                      title: const Text('What can still give you away?'),
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            clothingDisguiseLimits,
+                            style: JournalPalette.small,
+                          ),
+                        ),
+                      ],
+                    ),
                     if (locationUsesEncounters(site.type)) ...[
                       _heading('People and likelihood'),
                       const Text(
@@ -258,18 +321,14 @@ class _LocationDetailsState extends State<_LocationDetails> {
                     ],
                     _heading('Facilities and things to look for'),
                     const Text(
-                      'Possible features from the location’s map templates. Layout, site control and prior actions can change what is present. This does not reveal the current floor plan.',
+                      'Possible features from the location’s map templates. Layout, site control and prior actions can change what is present. This does not reveal the current floor plan. Select a facility for its effects and risks; hover or long-press for a hint.',
                       style: JournalPalette.small,
                     ),
                     if (features.isEmpty)
                       const Text(
                         'No dedicated special facility is listed for this site type.',
                       ),
-                    for (final feature in features)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 5),
-                        child: Text('• $feature', style: JournalPalette.body),
-                      ),
+                    for (final feature in features.values) _facility(feature),
                     if (loot.isNotEmpty) ...[
                       _heading('Possible loose items'),
                       const Text(
@@ -295,6 +354,87 @@ class _LocationDetailsState extends State<_LocationDetails> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _clothing(String title, String area, List<LocationOutfit> outfits) =>
+      ExpansionTile(
+        key: PageStorageKey('location-clothing:${widget.site.idString}:$area'),
+        tilePadding: EdgeInsets.zero,
+        title: Text(title, style: JournalPalette.body),
+        subtitle: Text(
+          clothingFitSummary(outfits),
+          style: JournalPalette.small,
+        ),
+        children: [
+          for (final quality in [
+            DisguiseQuality.inconspicuous,
+            DisguiseQuality.authorityFigure,
+            DisguiseQuality.unusual,
+            DisguiseQuality.disturbing,
+            DisguiseQuality.trespassing,
+            DisguiseQuality.alarming,
+          ])
+            if (outfits.any((outfit) => outfit.quality == quality))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      clothingFitLabel(quality),
+                      style: JournalPalette.small.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      outfits
+                          .where((outfit) => outfit.quality == quality)
+                          .map((outfit) => outfit.type.name)
+                          .toSet()
+                          .join(' · '),
+                      style: JournalPalette.small,
+                    ),
+                  ],
+                ),
+              ),
+        ],
+      );
+
+  Widget _facility(TileSpecial feature) {
+    final label = locationFeatureLabel(feature);
+    final help = locationFeatureHelp(feature);
+    if (help == null) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 5),
+        child: Text('• $label', style: JournalPalette.body),
+      );
+    }
+    return ExpansionTile(
+      key: PageStorageKey(
+        'location-facility:${widget.site.idString}:${feature.name}',
+      ),
+      tilePadding: EdgeInsets.zero,
+      title: MechanicsTooltip(
+        message: help,
+        excludeFromSemantics: true,
+        child: Row(
+          children: [
+            Expanded(child: Text(label, style: JournalPalette.body)),
+            const SizedBox(width: 8),
+            const Icon(Icons.info_outline, size: 18),
+          ],
+        ),
+      ),
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(help, style: JournalPalette.small),
+          ),
+        ),
+      ],
     );
   }
 
