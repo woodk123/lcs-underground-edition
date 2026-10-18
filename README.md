@@ -49,6 +49,7 @@ Windows and browser saves are separate. Use the game's export/import controls to
 ## More information
 
 - [Building and development](docs/BUILDING.md)
+- [Development lessons and working practices](docs/DEVELOPMENT_LESSONS.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Testing](docs/TESTING.md)
 - [Changes and bug fixes](docs/ORIGINAL_CODE_CHANGES.md)

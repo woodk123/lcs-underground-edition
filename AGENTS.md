@@ -2,6 +2,15 @@
 
 The Flutter game lives in `upstream/`; fork documentation and build tools live at the repository root. Follow [building](docs/BUILDING.md), [testing](docs/TESTING.md) and [architecture](docs/ARCHITECTURE.md) for the existing workflows. Keep generated reports and review captures in ignored `.local/` or `reports/` directories.
 
+## Development practice
+
+Follow [development lessons](docs/DEVELOPMENT_LESSONS.md) for the working loop and checks matched to the change.
+
+- Inspect Git status before editing, preserve concurrent work, and stage only an explicit task-owned path allowlist when committing.
+- Keep the original gameplay reader and source-authored action identities/revisions authoritative. Inspection, help and cosmetic animation must preserve campaign state, pending input and gameplay RNG.
+- For UI/routing changes, check the affected journey with retained scroll/selection state, cancellation, revisiting screens and keyboard focus. Include compact/enlarged layouts where affected; an isolated widget pass does not cover the whole interaction.
+- Iterate with focused checks, then verify the integrated result appropriate to the change. Use the pinned SDK, fully restart after engine changes, and identify the exact build served during isolated browser QA. Keep historical test/timing reports distinct from current verification.
+
 ## Versioning and changelog decisions
 
 Apply [the versioning policy](docs/VERSIONING.md) whenever changing player-visible behavior or preparing a release.
