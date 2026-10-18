@@ -1,5 +1,6 @@
 """Pages preparation preserves nightly payloads and rejects untrusted archives."""
 import json
+import shutil
 from pathlib import Path
 import tempfile
 import unittest
@@ -77,6 +78,30 @@ class PreparePagesTests(unittest.TestCase):
         self.assertTrue((self.output / '.nojekyll').exists())
         self.assertIn(result['service_worker_version'], worker)
         self.assertEqual((self.output / 'LICENSE').read_bytes(), (self.player / 'LICENSE').read_bytes())
+
+    def test_numbered_release_preserves_payload_with_no_nightly_fingerprint(self):
+        tag = 'underground-v0.1.0'
+        prefix = f'LCS-Underground-Edition-{tag}'
+        source = self.downloads / f'{prefix}-Source'
+        player = self.downloads / f'{prefix}-Web-Player'
+        shutil.copytree(self.source, source)
+        shutil.copytree(self.player, player)
+        for folder in (source, player):
+            (folder / 'FILES.sha256').unlink()
+        source_info = json.loads((source / 'BUILD_INFO.json').read_text())
+        source_info.update(release_tag=tag, fingerprint=None)
+        put(source, 'BUILD_INFO.json', json.dumps(source_info))
+        result = archive_package(source)
+        info = {**self.info, 'release_tag': tag, 'fingerprint': None,
+                'source_archive': source.name + '.zip', 'source_archive_sha256': result['archive_sha256']}
+        put(player, 'BUILD_INFO.json', json.dumps(info))
+        archive_package(player)
+        prepared = prepare_pages.prepare(self.downloads, self.output, '/lcs-underground-edition/', tag)
+        self.assertEqual(prepared['tag'], tag)
+        self.assertIn(f'Release build: <code>{tag}</code>', (self.output / 'source.html').read_text())
+        self.assertEqual(digest(self.output / 'main.dart.js'), digest(player / 'web/main.dart.js'))
+        self.assertEqual(digest(self.output / (source.name + '.zip')), result['archive_sha256'])
+        prepare_pages.read_manifest(self.output)
 
     def test_bad_archive_checksum(self):
         with self.player.with_suffix('.zip').open('ab') as archive:

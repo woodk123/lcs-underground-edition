@@ -1,4 +1,4 @@
-"""Pages selects published managed nightlies, never a preview or draft."""
+"""Pages selects published managed nightlies or explicitly requested numbered releases."""
 import tempfile
 import unittest
 from pathlib import Path
@@ -19,6 +19,31 @@ def nightly(**extra):
 
 
 class DownloadTests(unittest.TestCase):
+    def test_explicit_numbered_release_downloads_exact_assets(self):
+        tag = 'underground-v0.1.0'
+        release = nightly(tag_name=tag, prerelease=False, body='Short release notes')
+        release['assets'] = [{'name': a['name'].replace('nightly-123-1', tag)}
+                             for a in release['assets']]
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(pages, 'releases', return_value=[nightly(), release]), \
+                patch.object(pages, 'gh') as github:
+            self.assertEqual(pages.download('owner/repo', Path(temporary) / 'release', tag), tag)
+            self.assertEqual(github.call_args.args[:3], ('release', 'download', tag))
+            self.assertIn(f'LCS-Underground-Edition-{tag}-Source.zip.sha256', github.call_args.args)
+
+    def test_numbered_release_rejects_drafts_prereleases_and_invalid_tags(self):
+        for overrides in ({'draft': True}, {'prerelease': True}, {'published_at': None}):
+            release = nightly(tag_name='underground-v0.1.0', prerelease=False)
+            release.update(overrides)
+            with self.subTest(overrides=overrides), \
+                    patch.object(pages, 'releases', return_value=[release]), \
+                    patch.object(pages, 'gh') as github:
+                with self.assertRaisesRegex(ValueError, 'not publicly published'):
+                    pages.download('owner/repo', Path('unused'), 'underground-v0.1.0')
+                github.assert_not_called()
+        with self.assertRaisesRegex(ValueError, 'numbered'):
+            pages.download('owner/repo', Path('unused'), '../other')
+
     def test_only_latest_published_managed_nightly_is_downloaded(self):
         items = [nightly(), nightly(draft=True, published_at='2026-10-18T06:00:00Z'),
                  nightly(tag_name='underground-preview-2026.10.17',

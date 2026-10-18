@@ -1,4 +1,4 @@
-"""Prepare GitHub Pages from verified nightly archives, without rebuilding the game."""
+"""Prepare GitHub Pages from verified release archives, without rebuilding the game."""
 from __future__ import annotations
 
 import argparse
@@ -82,8 +82,9 @@ def prepare(downloads: Path, output: Path, base_path: str, tag: str | None = Non
         if len(candidates) != 1:
             raise ValueError('Specify --tag or download exactly one nightly Web-Player ZIP.')
         tag = candidates[0].name.removeprefix('LCS-Underground-Edition-').removesuffix('-Web-Player.zip')
-    if not re.fullmatch(r'nightly-\d+-\d+', tag):
-        raise ValueError('Expected a managed nightly-N-N tag.')
+    nightly = bool(re.fullmatch(r'nightly-\d+-\d+', tag))
+    if not nightly and not re.fullmatch(r'underground-v\d+\.\d+\.\d+', tag):
+        raise ValueError('Expected a managed nightly-N-N or numbered underground-vX.Y.Z tag.')
     prefix = f'LCS-Underground-Edition-{tag}'
     web_zip = downloads / f'{prefix}-Web-Player.zip'
     source_zip = downloads / f'{prefix}-Source.zip'
@@ -103,8 +104,10 @@ def prepare(downloads: Path, output: Path, base_path: str, tag: str | None = Non
                 or source_info.get('release_tag') != tag
                 or source_info.get('target') != 'corresponding-source'
                 or any(not info.get(key) or info[key] != source_info.get(key)
-                       for key in ('runtime_source_commit', 'packaging_commit', 'source_commit', 'fingerprint'))):
-            raise ValueError('Web and corresponding-source nightly metadata do not match.')
+                        for key in ('runtime_source_commit', 'packaging_commit', 'source_commit'))
+                or info.get('fingerprint') != source_info.get('fingerprint')
+                or (nightly and not info.get('fingerprint'))):
+            raise ValueError('Web and corresponding-source build metadata do not match.')
         worker, resources = read_manifest(player / 'web')
         staged = temporary / 'site'
         shutil.copytree(player / 'web', staged)
@@ -118,7 +121,7 @@ def prepare(downloads: Path, output: Path, base_path: str, tag: str | None = Non
             '<meta name="viewport" content="width=device-width, initial-scale=1">'
             '<title>Source and credits — The Underground Edition</title>'
             '<main><h1>The Underground Edition: source and credits</h1>'
-            f'<p>Nightly build: <code>{html.escape(tag)}</code>.</p>'
+            f'<p>{"Nightly" if nightly else "Release"} build: <code>{html.escape(tag)}</code>.</p>'
             f'<p><a href="{source_zip.name}">Download the complete matching source ZIP</a> '
             '(including build instructions, modified game source and artwork).</p>'
             f'<p>SHA-256: <code>{info["source_archive_sha256"]}</code></p>'
@@ -159,7 +162,7 @@ def main() -> None:
     parser.add_argument('--downloads', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
     parser.add_argument('--base-path', required=True)
-    parser.add_argument('--tag', help='Managed nightly-N-N release tag; inferred when unambiguous.')
+    parser.add_argument('--tag', help='Managed nightly or numbered release tag; nightly inferred when unambiguous.')
     args = parser.parse_args()
     print(json.dumps(prepare(args.downloads, args.output, args.base_path, args.tag), indent=2))
 

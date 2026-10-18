@@ -1,15 +1,22 @@
-name: Play latest nightly
+name: Play hosted game
 
 on:
   workflow_run:
     workflows: ['Nightly Windows, Linux and web']
     types: [completed]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Published underground-vX.Y.Z release; leave empty for the latest nightly
+        type: string
+        default: ''
+  release:
+    types: [published]
 
 permissions:
   contents: read
 
-# Select the latest published nightly once a deployment starts. Serialize complete
+# Select the published release or latest nightly once a deployment starts. Serialize complete
 # deployments so an older run cannot replace a newer site after it finishes.
 concurrency:
   group: github-pages
@@ -18,11 +25,13 @@ concurrency:
 jobs:
   prepare:
     if: >-
-      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      (github.event_name == 'release' && !github.event.release.prerelease &&
+       !github.event.release.draft && startsWith(github.event.release.tag_name, 'underground-v')) ||
+      (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
       (github.event_name == 'workflow_dispatch' ||
        (github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == github.event.repository.default_branch &&
-        github.event.workflow_run.head_repository.full_name == github.repository))
+        github.event.workflow_run.head_repository.full_name == github.repository)))
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
@@ -34,18 +43,19 @@ jobs:
           python-version: '3.12'
       - name: Test Pages preparation
         run: python -m unittest discover -s scripts -p 'test_*pages*.py' -v
-      - name: Download latest published Nightly
+      - name: Download published release or latest Nightly
         id: nightly
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python scripts/download_pages_nightly.py --output .local/pages-downloads
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: python scripts/download_pages_nightly.py --output .local/pages-downloads --tag "$RELEASE_TAG"
       - name: Prepare hosted copy and matching source
         env:
-          NIGHTLY_TAG: ${{ steps.nightly.outputs.tag }}
+          RELEASE_TAG: ${{ steps.nightly.outputs.tag }}
           BASE_PATH: /${{ github.event.repository.name }}/
         run: >-
           python scripts/prepare_pages.py --downloads .local/pages-downloads
-          --output .local/pages --base-path "$BASE_PATH" --tag "$NIGHTLY_TAG"
+          --output .local/pages --base-path "$BASE_PATH" --tag "$RELEASE_TAG"
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
@@ -75,6 +85,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy latest checked nightly
+      - name: Deploy checked browser player
         id: deployment
         uses: actions/deploy-pages@v4
