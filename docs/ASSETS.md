@@ -11,6 +11,7 @@ The journal materials, painted portraits and map illustrations were generated fo
 - `assets/art-city-v2/atlas_metadata.json` and `assets/gangsters-journal/atlas_metadata.json` record the selected files, prompts, source/runtime hashes and crop geometry. Their paths are repository-relative.
 - `assets/art/` retains the prompts for current district/site art.
 - `activist_crew_v1` supplies the crew/personnel illustration across the title, creation and journal screens. Its source PNG and generation prompt are retained with the other static art.
+- `journal_network_emblem_v1` supplies the Network tab's paired undercover figures, and `journal_network_empty_v1` supplies its empty-directory vignette. Their transparent PNG masters use the normal static-art pipeline; [prompts and provenance](../assets/network/provenance.json) accompany both assets. Labels and review counts remain live Flutter text.
 - `injury_anatomy_front_v1` is the transparent front-view medical engraving in personnel dossiers. [Its generation prompt and landmarks](../assets/injury-status/provenance.json) accompany the PNG master. Flutter draws the injury overlays, callouts and labels; `injury_anatomy.dart` traces the selected image so visual highlights and pointer targets share the same geometry.
 - `assets/portraits-v2/` and `assets/portraits-v3/` retain original portrait sheets, prompts and full manifests. These originals differ from the cropped/resized runtime atlases and are needed for regeneration.
 

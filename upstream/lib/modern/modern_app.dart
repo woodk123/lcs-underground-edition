@@ -1067,6 +1067,8 @@ class _ModernGameShellState extends State<ModernGameShell> {
         await _organisation.returnToHeadquarters();
       case 7:
         await _organisation.returnToHeadquarters();
+      case networkJournalSection:
+        await _organisation.returnToHeadquarters();
     }
   }
 
@@ -1123,6 +1125,15 @@ class _ModernGameShellState extends State<ModernGameShell> {
       detail = JournalMediaOverview(console: console, onAction: _mediaAction);
     } else if (_journalSection == 7 && !console.textInput) {
       detail = _journalOptions();
+    } else if (_journalSection == networkJournalSection &&
+        !console.textInput &&
+        console.journalProfile == null &&
+        (primary ||
+            _organisation.busy ||
+            console.navigation?.section == 'assignments')) {
+      // The Network owns its roster and inspector while using the original
+      // sleeper readers underneath. Required decisions retain their own view.
+      detail = null;
     } else if (!primary) {
       detail = _workspace(false, true, embeddedJournal: true);
     } else if (_journalSection == 2 &&
@@ -1147,7 +1158,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
       onClassic: () => setState(() => _classic = !_classic),
       onTextScale: (value) => setState(() => _textScale = value),
       textScale: _textScale,
-      section: isLegislativeVoteScreen(console)
+      section: hq && _organisation.headquarters?.siege != null
+          ? 0
+          : isLegislativeVoteScreen(console)
           ? 3
           : ledgerReportFrame(console) != null
           ? 1

@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "generated_on": "2026-10-18",
+  "generator": "Built-in image_gen.imagegen",
+  "use_case": "stylized-concept",
+  "purpose": "Original Network-tab look-and-feel assets for proposal 1: visible undercover sleeper management.",
+  "style_reference": "assets/runtime-art/source/journal_icons_v1.png (original generated project art only)",
+  "source_reference": "Approved concept-01-network.png used for layout/design direction only; no copyrighted original-game bitmap used.",
+  "rights_provenance": "Original artwork generated for this project through built-in image generation. No external branding or embedded text.",
+  "assets": [
+    {
+      "original_path": "assets/runtime-art/source/journal_network_emblem_v1.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 665853,
+      "meaningful_alpha_bounds_ge_8": [
+        43,
+        98,
+        1232,
+        1165
+      ],
+      "original_sha256": "06ffe697017735c9c7b5d331957da1831f47acb3c16d94ce9c57b59b79ac8413",
+      "original_bytes": 1946477,
+      "prompt_path": "assets/network/journal_network_emblem_v1.prompt.txt",
+      "recommended_runtime_path": "upstream/assets/modern/journal_network_emblem_v1.webp",
+      "source_postprocessing": "None: copied built-in PNG output unchanged; alpha preserved.",
+      "role": "Decorative Network top-tab emblem; contains no gameplay data or input handler. Recommended 36–48px BoxFit.contain."
+    },
+    {
+      "original_path": "assets/runtime-art/source/journal_network_empty_v1.png",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "fully_transparent_pixels": 990216,
+      "meaningful_alpha_bounds_ge_8": [
+        129,
+        191,
+        1469,
+        839
+      ],
+      "original_sha256": "0e1923290c08f0a3a73c61000dc8fa38d12864485cf5fda19e6a9acb4fdf794a",
+      "original_bytes": 1949071,
+      "prompt_path": "assets/network/journal_network_empty_v1.prompt.txt",
+      "recommended_runtime_path": "upstream/assets/modern/journal_network_empty_v1.webp",
+      "source_postprocessing": "None: copied built-in PNG output unchanged; alpha preserved.",
+      "role": "Optional decorative empty-network vignette. Recommended width 180–260px. Keep all explanatory text and controls in Flutter."
+    }
+  ]
+}

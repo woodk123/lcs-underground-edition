@@ -18,6 +18,7 @@ import 'package:lcs_new_age/engine/organisation_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/gamestate/squad.dart';
+import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/location/siege.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/politics/alignment.dart';
@@ -153,6 +154,31 @@ void main() {
       isTrue,
     );
   }
+
+  test(
+    'controller owns role reviews and reloads after campaign replacement',
+    () async {
+      final person = _extraPerson()..sleeperAgent = true;
+      final journal = start();
+      await journal.networkReviews.load(game.gameState.uniqueGameId);
+      expect(journal.networkReviews.needsReview(person), isTrue);
+      await journal.networkReviews.markReviewed(person);
+      final original = game.gameState.uniqueGameId;
+      engine.console.revision.value++;
+      expect(journal.networkReviews.needsReview(person), isFalse);
+
+      game.gameState.uniqueGameId = original + 1;
+      final before = _snapshot();
+      engine.console.revision.value++;
+      expect(journal.networkReviews.loaded, isFalse);
+      await journal.networkReviews.load(game.gameState.uniqueGameId);
+      expect(journal.networkReviews.needsReview(person), isTrue);
+      expect(_snapshot(), before);
+      journal.dispose();
+      engine.console.revision.value++;
+      expect(journal.networkReviews.needsReview(person), isFalse);
+    },
+  );
 
   test(
     'profile selection follows source arrows and retains every tab',
@@ -798,6 +824,36 @@ void main() {
       expect(_snapshot(), before);
     },
   );
+
+  for (final state in <(String, void Function(Creature))>[
+    ('deceased', (person) => person.alive = false),
+    ('not Liberal', (person) => person.align = Alignment.moderate),
+    ('hiding', (person) => person.hidingDaysLeft = 2),
+    ('vacation', (person) => person.vacationDaysLeft = 2),
+    (
+      'hospitalized',
+      (person) => person.location = game.sites.firstWhere(
+        (site) => site.type == SiteType.universityHospital,
+      ),
+    ),
+  ]) {
+    test(
+      'unavailable sleeper ${state.$1} rejects orders before navigating',
+      () async {
+        final person = _extraPerson()..sleeperAgent = true;
+        state.$2(person);
+        final journal = start();
+        final before = _snapshot();
+        final revision = engine.console.revision.value;
+        final screen = engine.console.screen;
+        expect(await journal.openOrders(person.id), isFalse);
+        expect(journal.message, sleeperOrderUnavailableReason(person));
+        expect(engine.console.revision.value, revision);
+        expect(engine.console.screen, screen);
+        expect(_snapshot(), before);
+      },
+    );
+  }
 
   test(
     'all seven regular categories preview without changing an order',

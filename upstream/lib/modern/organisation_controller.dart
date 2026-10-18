@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:lcs_new_age/basemode/activate_sleepers.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/engine/console.dart';
@@ -8,6 +9,7 @@ import 'package:lcs_new_age/engine/organisation_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/gamestate/squad.dart';
+import 'package:lcs_new_age/modern/network_reviews.dart';
 
 /// Coordinates a single organisation journal with the original awaited menus.
 ///
@@ -16,11 +18,13 @@ import 'package:lcs_new_age/gamestate/squad.dart';
 /// squad, activity, save field, time, money or random state is written here.
 class OrganisationController extends ChangeNotifier {
   OrganisationController({required this.console}) {
+    networkReviews.addListener(_notify);
     console.revision.addListener(_frameChanged);
     _frameChanged();
   }
 
   final Console console;
+  final NetworkReviewStore networkReviews = NetworkReviewStore();
   bool _disposed = false;
   bool _busy = false;
   String? _message;
@@ -253,7 +257,10 @@ class OrganisationController extends ChangeNotifier {
     if (person == null) {
       return _fail('That person is no longer in the organisation.');
     }
-    if (!person.alive) {
+    if (person.sleeperAgent) {
+      final reason = sleeperOrderUnavailableReason(person);
+      if (reason != null) return _fail(reason);
+    } else if (!person.alive) {
       return _fail('A deceased person cannot take daily orders.');
     }
     if (!person.sleeperAgent && !person.isActiveLiberal) {
@@ -274,7 +281,11 @@ class OrganisationController extends ChangeNotifier {
     }
     final action = _action(person.sleeperAgent ? 'b' : 'a');
     if (action == null || !action.enabled || !await _dispatch(action)) {
-      return _fail('Daily orders are not available for this person right now.');
+      return _fail(
+        person.sleeperAgent
+            ? 'Sleeper orders are not available for this person right now.'
+            : 'Daily orders are not available for this person right now.',
+      );
     }
     final personAction = await _findPersonInOrderList(personId);
     if (personAction == null || !await _dispatch(personAction)) return false;
@@ -541,7 +552,7 @@ class OrganisationController extends ChangeNotifier {
       final page = _pageAction(forward: true);
       if (page == null || !await _dispatch(page)) break;
     }
-    _fail('The original daily-order list does not include this person.');
+    _fail('The original order list does not include this person.');
     return null;
   }
 
@@ -618,6 +629,7 @@ class OrganisationController extends ChangeNotifier {
   }
 
   void _frameChanged() {
+    unawaited(networkReviews.load(game.gameState.uniqueGameId));
     // Keyboard/legacy Next Squad commands use the same source state. A cached
     // tab selection must never point at a different team from the one that
     // will receive the engine's equipment and operation commands.
@@ -655,6 +667,8 @@ class OrganisationController extends ChangeNotifier {
   void dispose() {
     if (_disposed) return;
     console.revision.removeListener(_frameChanged);
+    networkReviews.removeListener(_notify);
+    networkReviews.dispose();
     _disposed = true;
     super.dispose();
   }

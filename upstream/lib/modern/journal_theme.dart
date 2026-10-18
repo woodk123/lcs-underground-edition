@@ -103,6 +103,7 @@ enum JournalIcon {
   personnel,
   activism,
   operations,
+  network,
 }
 
 /// Original pictorial art, ordered like the original organiser's eight tabs and
@@ -152,7 +153,12 @@ class JournalIllustratedIcon extends StatelessWidget {
     final visuals =
         Theme.of(context).extension<JournalVisuals>() ?? const JournalVisuals();
     final isCrew = icon == JournalIcon.crew || icon == JournalIcon.personnel;
-    final asset = isCrew ? visuals.crewAsset : visuals.iconAsset;
+    final isNetwork = icon == JournalIcon.network;
+    final asset = isNetwork
+        ? 'assets/modern/journal_network_emblem_v1.webp'
+        : isCrew
+        ? visuals.crewAsset
+        : visuals.iconAsset;
     return ExcludeSemantics(
       child: IgnorePointer(
         child: SizedBox.square(
@@ -164,7 +170,7 @@ class JournalIllustratedIcon extends StatelessWidget {
                 : CustomPaint(
                     painter: _JournalIconPainter(
                       snapshot.data!,
-                      isCrew
+                      isCrew || isNetwork
                           ? Rect.fromLTWH(
                               0,
                               0,
@@ -182,6 +188,7 @@ class JournalIllustratedIcon extends StatelessWidget {
 
   IconData _fallbackIcon(JournalIcon icon) => switch (icon) {
     JournalIcon.crew || JournalIcon.personnel => Icons.groups,
+    JournalIcon.network => Icons.visibility_outlined,
     JournalIcon.accounts => Icons.account_balance_wallet_outlined,
     JournalIcon.law => Icons.balance,
     JournalIcon.diplomacy => Icons.handshake_outlined,

@@ -11,18 +11,25 @@ import 'package:lcs_new_age/politics/alignment.dart';
 import 'package:lcs_new_age/utils/colors.dart';
 import 'package:lcs_new_age/utils/interface_options.dart';
 
+/// The original sleeper roster's eligibility, shared by every order entry point.
+/// Keep this separate from active-crew rules: working at a clinic, for example,
+/// does not make a sleeper a hospitalized patient.
+String? sleeperOrderUnavailableReason(Creature person) {
+  if (!person.alive) return 'A deceased person cannot receive sleeper orders.';
+  if (!person.sleeperAgent) return 'This person is not a sleeper agent.';
+  if (person.align != Alignment.liberal) {
+    return 'Only Liberal sleeper agents can receive orders.';
+  }
+  if (person.inHiding) return 'This sleeper is in hiding.';
+  if (person.hospitalized) return 'This sleeper is hospitalized.';
+  if (person.vacationDaysLeft != 0) return 'This sleeper is on vacation.';
+  return null;
+}
+
 Future<void> activateSleepers() async {
   // Comb the pool of Liberals for sleeper agents that can work
   List<Creature> temppool = pool
-      .where(
-        (p) =>
-            p.alive &&
-            p.sleeperAgent &&
-            p.align == Alignment.liberal &&
-            !p.inHiding &&
-            !p.hospitalized &&
-            p.vacationDaysLeft == 0,
-      )
+      .where((person) => sleeperOrderUnavailableReason(person) == null)
       .toList();
 
   if (temppool.isEmpty) return;
@@ -332,13 +339,16 @@ Future<void> activateSleeper(Creature cr) async {
     final orderFrame = ActivityOrderFrame(
       actorId: cr.id,
       sleeper: true,
-      confirmation: console.actions.singleWhere((action) =>
-          action.entityType == 'sleeper-activity-confirm' &&
-          action.entityCategory == cr.id.toString()),
+      confirmation: console.actions.singleWhere(
+        (action) =>
+            action.entityType == 'sleeper-activity-confirm' &&
+            action.entityCategory == cr.id.toString(),
+      ),
       navigation: console.navigation!,
       categoryKeys: const ['a', 'b'],
-      selectedCategoryKey:
-          state == Key.a || state == Key.b ? String.fromCharCode(state) : null,
+      selectedCategoryKey: state == Key.a || state == Key.b
+          ? String.fromCharCode(state)
+          : null,
     );
     console.screen = 'activity-orders';
     describeActivityOrders(console, orderFrame);
@@ -395,15 +405,7 @@ Future<void> activateSleeper(Creature cr) async {
 
 Future<void> activateSleepersBulk() async {
   List<Creature> temppool = pool
-      .where(
-        (p) =>
-            p.alive &&
-            p.sleeperAgent &&
-            p.align == Alignment.liberal &&
-            !p.inHiding &&
-            !p.hospitalized &&
-            p.vacationDaysLeft == 0,
-      )
+      .where((person) => sleeperOrderUnavailableReason(person) == null)
       .toList();
 
   if (temppool.isEmpty) return;

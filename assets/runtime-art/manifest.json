@@ -114,6 +114,32 @@
       "runtime_bytes": 588628
     },
     {
+      "original_path": "assets/runtime-art/source/journal_network_emblem_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_network_emblem_v1.webp",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "lossless": false,
+      "has_alpha": true,
+      "original_sha256": "06ffe697017735c9c7b5d331957da1831f47acb3c16d94ce9c57b59b79ac8413",
+      "runtime_sha256": "2b0348a685ddfec8378d33dd71f7553d2eb8585a04a37b08fafa0c9336335706",
+      "original_bytes": 1946477,
+      "runtime_bytes": 306514
+    },
+    {
+      "original_path": "assets/runtime-art/source/journal_network_empty_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_network_empty_v1.webp",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "lossless": false,
+      "has_alpha": true,
+      "original_sha256": "0e1923290c08f0a3a73c61000dc8fa38d12864485cf5fda19e6a9acb4fdf794a",
+      "runtime_sha256": "92ad321eec76dc148b52b2cc725ce8d9086004344be18908211fab45242c3089",
+      "original_bytes": 1949071,
+      "runtime_bytes": 195498
+    },
+    {
       "original_path": "assets/runtime-art/source/journal_order_icons_extra_v1.png",
       "runtime_path": "upstream/assets/modern/journal_order_icons_extra_v1.webp",
       "width": 1448,

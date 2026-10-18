@@ -24,12 +24,11 @@ import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/gamestate/ledger.dart';
 import 'package:lcs_new_age/gamestate/squad.dart';
-import 'package:lcs_new_age/location/siege.dart';
 import 'package:lcs_new_age/location/location_type.dart';
+import 'package:lcs_new_age/location/siege.dart';
 import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/article_view.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
-import 'package:lcs_new_age/modern/direct_content.dart';
 import 'package:lcs_new_age/modern/journal_city_plan.dart';
 import 'package:lcs_new_age/modern/journal_ledger.dart';
 import 'package:lcs_new_age/modern/journal_media.dart';
@@ -1240,7 +1239,7 @@ void main() {
         await mount(tester, size: size);
         await business(tester);
         await _tap(tester, 'journal-activity:donations');
-        for (var i = 0; i < 8; i++) {
+        for (var i = 0; i <= networkJournalSection; i++) {
           _insideViewport(
             tester,
             _key('journal-section:$i'),
@@ -1292,7 +1291,12 @@ void main() {
           size,
           'Scaled Confirm',
         );
-        for (var i = 0; i < 8; i++) {
+        final beforeTabScroll = _snapshot();
+        for (var i = 0; i <= networkJournalSection; i++) {
+          // Enlarged reading keeps nine readable tabs in a horizontal strip.
+          // Each destination must remain reachable without dispatching it.
+          await tester.ensureVisible(_key('journal-section:$i'));
+          await _settle(tester);
           _insideViewport(
             tester,
             _key('journal-section:$i'),
@@ -1300,6 +1304,7 @@ void main() {
             'Scaled section $i',
           );
         }
+        expect(_snapshot(), beforeTabScroll);
         expect(tester.takeException(), isNull);
       },
     );
@@ -1809,7 +1814,9 @@ void main() {
       final sort = engine.console.actions.firstWhere(
         (action) => action.key == 't',
       );
-      await tester.ensureVisible(_key('direct-action:${sort.y}:${sort.x}:${sort.key}'));
+      await tester.ensureVisible(
+        _key('direct-action:${sort.y}:${sort.x}:${sort.key}'),
+      );
       await _settle(tester);
       await _tap(tester, 'direct-action:${sort.y}:${sort.x}:${sort.key}');
       expect(find.textContaining('Choose how to sort'), findsWidgets);
@@ -1821,7 +1828,9 @@ void main() {
       final reorder = engine.console.actions.firstWhere(
         (action) => action.key == 'z',
       );
-      await tester.ensureVisible(_key('direct-action:${reorder.y}:${reorder.x}:${reorder.key}'));
+      await tester.ensureVisible(
+        _key('direct-action:${reorder.y}:${reorder.x}:${reorder.key}'),
+      );
       await _settle(tester);
       await _tap(
         tester,

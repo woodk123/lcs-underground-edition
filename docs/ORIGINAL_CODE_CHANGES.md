@@ -2,6 +2,8 @@
 
 The Underground Edition retains the original Dart/Flutter engine and campaign content. It adds an illustrated journal interface, crew portraits/dossiers, city maps, assignment cards and scoped navigation. UI controls use source-authored command identities and eligibility rather than recreating gameplay handlers.
 
+The Network tab makes sleeper agents directly accessible from the top of the journal. Its roster shows workplace, infiltration, standing role and unavailable reasons; the inspector distinguishes monthly effects, useful Lay Low work, prepared changes and next-eligible-day recall. Role-review badges remember explicit acknowledgements locally without changing campaign saves or repeating for normal infiltration growth. New painted Network and empty-state assets retain their source masters and prompts.
+
 ## Engine and save fixes
 
 - Unaffordable clothing/flag crafting no longer consumes recycled cloth.

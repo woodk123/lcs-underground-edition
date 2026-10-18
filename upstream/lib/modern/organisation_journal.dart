@@ -18,6 +18,7 @@ import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_city_plan.dart';
+import 'package:lcs_new_age/modern/journal_network.dart';
 import 'package:lcs_new_age/modern/journal_order_icon.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
@@ -29,6 +30,9 @@ import 'package:lcs_new_age/modern/personnel_directory.dart';
 import 'package:lcs_new_age/modern/recruitment_target_picker.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 import 'package:lcs_new_age/modern/travel_help.dart';
+
+// Existing section IDs remain stable for retained journal routes and shortcuts.
+const networkJournalSection = 8;
 
 /// The organiser is one open journal: team and job card on the left, the
 /// selected report, pool, or target map on the right. Changing a portrait or a
@@ -73,6 +77,7 @@ class OrganisationJournal extends StatefulWidget {
 }
 
 class OrganisationJournalState extends State<OrganisationJournal> {
+  final _networkKey = GlobalKey<JournalNetworkViewState>();
   final ScrollController _narrowJournalScroll = ScrollController();
   final PersonnelDirectoryController _personnel =
       PersonnelDirectoryController();
@@ -160,6 +165,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   /// Journal shortcuts use the same prepare/confirm path as pointer controls.
   /// The original immediate keyboard handlers remain available in Classic view.
   bool handleGameShortcut(String key) {
+    if (widget.section == networkJournalSection &&
+        _networkKey.currentState != null) {
+      return _networkKey.currentState!.handleGameShortcut(key);
+    }
     if (controller.busy || _visitRouting) return false;
     if (console.screen == 'personnel-directory' &&
         normalizeConsoleKey(key) == 'Escape') {
@@ -303,9 +312,22 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   _sectionTabs(narrow),
                   Expanded(
                     child:
-                        (widget.section != 0 || widget.fullSpreadDetail) &&
-                            !activityFrame &&
-                            !allocating
+                        widget.section == networkJournalSection &&
+                            !widget.fullSpreadDetail &&
+                            !allocating &&
+                            widget.detail == null
+                        ? JournalNetworkView(
+                            key: _networkKey,
+                            console: console,
+                            controller: controller,
+                            onInspect: widget.onInspect,
+                            onCloseInspection:
+                                widget.onCloseInspection ?? () {},
+                            inspectedPerson: widget.inspectedPerson,
+                          )
+                        : (widget.section != 0 || widget.fullSpreadDetail) &&
+                              !activityFrame &&
+                              !allocating
                         ? JournalSurface(
                             padding: const EdgeInsets.all(12),
                             child:
@@ -361,78 +383,133 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   );
 
   Widget _sectionTabs(bool narrow) {
-    const tabs = <(String, IconData)>[
-      ('Organisation', Icons.groups),
-      ('Ledger', Icons.account_balance),
-      ('Justice', Icons.balance),
-      ('Agenda', Icons.handshake),
-      ('Newspaper', Icons.newspaper),
-      ('Reports', Icons.stacked_bar_chart),
-      ('City maps', Icons.map),
-      ('Options', Icons.settings),
+    const tabs = <(int, String, JournalIcon)>[
+      (0, 'Organisation', JournalIcon.crew),
+      (networkJournalSection, 'Network', JournalIcon.network),
+      (1, 'Ledger', JournalIcon.accounts),
+      (2, 'Justice', JournalIcon.law),
+      (3, 'Agenda', JournalIcon.diplomacy),
+      (4, 'Newspaper', JournalIcon.newspaper),
+      (5, 'Reports', JournalIcon.reports),
+      (6, 'City maps', JournalIcon.city),
+      (7, 'Options', JournalIcon.options),
     ];
-    return SizedBox(
-      height: narrow ? 68 : 80,
-      child: Row(
-        children: [
-          for (var i = 0; i < tabs.length; i++)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: Tooltip(
-                  message: controller.canNavigate
-                      ? tabs[i].$1
-                      : '${tabs[i].$1}: finish the current decision first.',
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Ink(
-                      key: ValueKey('journal-section:$i'),
-                      decoration: journalTabDecoration(
-                        selected: widget.section == i,
-                        enabled: controller.canNavigate,
+    final reviews = controller.networkReviews.count(game.pool);
+    Widget tab((int, String, JournalIcon) item) => Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Tooltip(
+        message: controller.canNavigate
+            ? item.$1 == networkJournalSection
+                  ? 'Sleeper agents · monthly standing orders'
+                  : item.$2
+            : '${item.$2}: finish the current decision first.',
+        child: Material(
+          color: Colors.transparent,
+          child: Ink(
+            key: ValueKey('journal-section:${item.$1}'),
+            decoration: journalTabDecoration(
+              selected: widget.section == item.$1,
+              enabled: controller.canNavigate,
+            ),
+            child: InkWell(
+              onTap: controller.canNavigate
+                  ? () => widget.onSection?.call(item.$1)
+                  : null,
+              child: Semantics(
+                button: true,
+                excludeSemantics: true,
+                selected: widget.section == item.$1,
+                label: item.$1 == networkJournalSection && reviews > 0
+                    ? 'Network. $reviews ${reviews == 1 ? 'role' : 'roles'} to review.'
+                    : item.$2,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 3,
+                    vertical: 4,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      JournalIllustratedIcon(
+                        icon: item.$3,
+                        size: narrow ? 30 : 40,
                       ),
-                      child: InkWell(
-                        onTap: controller.canNavigate
-                            ? () => widget.onSection?.call(i)
-                            : null,
-                        child: Semantics(
-                          button: true,
-                          excludeSemantics: true,
-                          selected: widget.section == i,
-                          label: tabs[i].$1,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 3,
-                              vertical: 4,
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                JournalIllustratedIcon(
-                                  icon: JournalIcon.values[i],
-                                  size: narrow ? 30 : 40,
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  tabs[i].$1,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: JournalPalette.small.copyWith(
-                                    fontSize: narrow ? 10 : 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: JournalPalette.ink,
-                                  ),
-                                ),
-                              ],
+                      const SizedBox(height: 2),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              item.$2,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: JournalPalette.small.copyWith(
+                                fontSize: narrow ? 10 : 12,
+                                fontWeight: FontWeight.w700,
+                                color: JournalPalette.ink,
+                              ),
                             ),
                           ),
-                        ),
+                          if (item.$1 == networkJournalSection && reviews > 0)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: JournalPalette.selected,
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  child: Text(
+                                    '$reviews',
+                                    style: JournalPalette.small.copyWith(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+    return SizedBox(
+      height: narrow ? 72 : 80,
+      child: Row(
+        children: [
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, bounds) =>
+                  bounds.maxWidth < 950 && widget.textScale > 1.1
+                  ? Scrollbar(
+                      child: SingleChildScrollView(
+                        key: const ValueKey('journal-section-scroll'),
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final item in tabs)
+                              SizedBox(width: 130, child: tab(item)),
+                          ],
+                        ),
+                      ),
+                    )
+                  : Row(
+                      children: [
+                        for (final item in tabs) Expanded(child: tab(item)),
+                      ],
+                    ),
+            ),
+          ),
           IconButton(
             tooltip: 'Field guide',
             onPressed: widget.onHelp,
