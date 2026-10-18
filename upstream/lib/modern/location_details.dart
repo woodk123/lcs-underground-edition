@@ -230,7 +230,7 @@ class _LocationDetailsState extends State<_LocationDetails> {
                         site.type == SiteType.universityHospital) ...[
                       _heading('Services'),
                       const Text(
-                        'Medical treatment for injured crew. Treatment eligibility, fees and recovery time are determined for the patient on arrival.',
+                        'Admission treats all living squad members who need care and removes them from the squad. The free clinic adds no bills; university-hospital charges accrue during treatment according to healthcare law. Discharged crew need reassignment. See the opportunities and risks above.',
                         style: JournalPalette.body,
                       ),
                     ],
@@ -332,7 +332,7 @@ class _LocationDetailsState extends State<_LocationDetails> {
                     if (loot.isNotEmpty) ...[
                       _heading('Possible loose items'),
                       const Text(
-                        'Items that this site type’s loot rules can produce. Individual items, evidence and weapons are not guaranteed; taking them can attract attention.',
+                        'Possible items across this site type’s loot rules and law variations. Current laws can exclude listed weapons. Individual finds are not guaranteed, and taking them can attract attention.',
                         style: JournalPalette.small,
                       ),
                       for (final item in loot)
@@ -416,7 +416,8 @@ class _LocationDetailsState extends State<_LocationDetails> {
       ),
       tilePadding: EdgeInsets.zero,
       title: MechanicsTooltip(
-        message: help,
+        message:
+            '${locationFeatureSummary(feature)}\nExpand for checks, rewards and consequences.',
         excludeFromSemantics: true,
         child: Row(
           children: [

@@ -4,15 +4,16 @@ import 'package:lcs_new_age/location/site.dart';
 /// General knowledge about a building, not its generated rooms or occupants.
 String locationPurpose(SiteType type) => switch (type) {
   SiteType.clinic =>
-    'Medical care for wounded crew. Visiting opens treatment options.',
+    'Free inpatient medical care for wounded crew. Visiting opens admission options.',
   SiteType.universityHospital =>
-    'Hospital care for wounded crew. Visiting opens treatment options.',
+    'Inpatient hospital care for wounded crew. Treatment can generate law-dependent medical bills.',
   SiteType.pawnShop =>
     'Buy equipment or sell unwanted items. Stock follows current laws.',
   SiteType.departmentStore => 'Shop for clothing and supplies.',
   SiteType.oubliette => 'Specialist clothing and equipment shop.',
   SiteType.armsDealer => 'Black-market weapons and ammunition.',
-  SiteType.carDealership => 'Buy a used car for squad transport.',
+  SiteType.carDealership =>
+    'Buy a used car for squad transport or sell the buyer’s assigned vehicle.',
   SiteType.homelessEncampment =>
     'A place to shelter the crew and meet people living on the streets.',
   SiteType.tenement =>
@@ -70,7 +71,8 @@ String locationPurpose(SiteType type) => switch (type) {
     'Insurance staff and offices. A target for an operation focused on health insurance.',
   SiteType.nursingHome =>
     'Residents and care staff. A target for an operation focused on elder care.',
-  SiteType.liberalPartyHQ => 'Party staff and political offices.',
+  SiteType.liberalPartyHQ =>
+    'Political premises with ordinary encounters and conversation options.',
   SiteType.whiteHouse =>
     'Government offices and protected leadership. Restricted access and armed security.',
   SiteType.downtown =>
@@ -94,6 +96,11 @@ String locationAccess(Site site) {
   ];
   if (notes.isNotEmpty) return notes.join(' · ');
   return switch (site.type) {
+    SiteType.downtown ||
+    SiteType.commercialDistrict ||
+    SiteType.universityDistrict ||
+    SiteType.industrialDistrict ||
+    SiteType.outOfTown => 'District · Choose a building',
     SiteType.clinic || SiteType.universityHospital => 'Treatment visit',
     SiteType.pawnShop ||
     SiteType.departmentStore ||

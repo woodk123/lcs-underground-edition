@@ -17,6 +17,7 @@ The existing fork now has its own 0.1.0 development baseline. These notes will b
 ### Changed
 
 * The left-hand Crew list now shows each person's clothing, including bloodstained or damaged outfits and missing clothing.
+* Location guides now explain actual skill checks, rewards, attempt limits, evidence publication, sleeper benefits and retaliation across all locations, including clearer hospital billing, prison rescues and bank access requirements. Short hover hints keep the full explanations readable in expandable sections.
 * The left-hand Crew list now shows each person's three strongest trained skills and levels beneath their name.
 * Tactical maps now illustrate detention and patient rooms, offices, banks and specialist equipment, with clearer signs, faction graffiti and visited-room markers.
 * Bases now separates bases in use from available shelters, so unused camps and warehouses no longer inflate your base count.

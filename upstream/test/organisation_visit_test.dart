@@ -342,10 +342,10 @@ void main() {
       expect(find.text('Clothing in public areas'), findsOneWidget);
       expect(find.text('Clothing in restricted areas'), findsOneWidget);
       expect(
-        find.textContaining('Approve denied medical claims'),
+        find.textContaining('Approve members of the public’s denied claims'),
         findsOneWidget,
       );
-      expect(find.textContaining('medical bills'), findsOneWidget);
+      expect(find.textContaining('hospital debt'), findsOneWidget);
       expect(find.text('People and likelihood'), findsOneWidget);
       expect(find.textContaining('chance of a person type'), findsOneWidget);
       final guideScroll = find
@@ -399,8 +399,11 @@ void main() {
       );
       tooltip.ensureTooltipVisible();
       await _settle(tester);
-      expect(find.text(help), findsNWidgets(2));
-      final hintBounds = tester.getRect(find.text(help).last);
+      final hint =
+          '${locationFeatureSummary(TileSpecial.insuranceClaimsTerminal)}\nExpand for checks, rewards and consequences.';
+      expect(find.text(help), findsOneWidget);
+      expect(find.text(hint), findsOneWidget);
+      final hintBounds = tester.getRect(find.text(hint));
       expect(hintBounds.top, greaterThanOrEqualTo(0));
       expect(hintBounds.bottom, lessThanOrEqualTo(size.height));
       expect(hintBounds.left, greaterThanOrEqualTo(0));
