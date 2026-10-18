@@ -83,7 +83,10 @@ def run_worker(root: Path, kind: str, target: str, shard: int) -> None:
             ])
     else:
         define = f"--dart-define=LCS_BUILD={info['source_commit'][:8]}"
-        channel = '--dart-define=LCS_CHANNEL=Nightly'
+        info['channel'] = os.environ.get('LCS_CHANNEL', 'Nightly')
+        if info['channel'] not in ('Nightly', 'Preview', 'Release'):
+            raise ValueError('Invalid CI player channel.')
+        channel = f"--dart-define=LCS_CHANNEL={info['channel']}"
         if target == 'linux':
             commands.append(('linux-release', [flutter, 'build', 'linux', '--release', '--no-pub', define, channel], root / 'upstream'))
         elif target == 'windows':
@@ -168,6 +171,9 @@ def verify_evidence(root: Path, artifacts: Path) -> dict[str, dict]:
                 if kind == 'checks' and info.get('test_files') != test_files(root, shard, target):
                     raise ValueError(f'Test shard inventory differs: {name}')
                 if kind == 'build':
+                    channel = info.get('channel', 'Nightly')
+                    if channel not in ('Nightly', 'Preview', 'Release') or channel != os.environ.get('LCS_CHANNEL', 'Nightly'):
+                        raise ValueError(f'CI player channel differs from the requested release: {name}')
                     if info.get('generated_hashes') != file_hashes(artifacts / name / 'generated'):
                         raise ValueError('Generated source differs from the build artifact.')
                     folders = BUILD_OUTPUTS[target]

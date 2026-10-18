@@ -4,13 +4,15 @@ A work-in-progress fork of [Liberal Crime Squad: New Age](https://github.com/ash
 
 ## Screenshots
 
-*The organisation journal: manage your crew, review job cards and explore the city.*
+*A police-station firefight: follow the squad's attacks and the consequences in the field journal.*
 
-![The Underground Edition's paper-and-leather journal showing crew members, an assignment card and the city map](docs/screenshots/city-and-orders.png)
+![A live combat report during a police-station operation in The Underground Edition](docs/screenshots/police-station-combat.png)
 
-*Character dossiers bring portraits, skills and campaign records together.*
+*The aftermath: inspect wounds, blood loss and a collapsed lung in the personnel dossier.*
 
-![A character dossier showing a painted portrait, skill values and training progress](docs/screenshots/character-dossier.png)
+![An injury dossier with a painted portrait, anatomical chart, low blood warning and collapsed-lung details](docs/screenshots/injury-dossier.png)
+
+Screenshots are captured in-game using disposable review campaigns; the injury example uses prepared wounds.
 
 ## Why this exists
 
@@ -33,18 +35,19 @@ The interface and artwork are being developed with AI assistance; the paintings 
 
 [Hosted build source and credits](https://woodk123.github.io/lcs-underground-edition/source.html) includes the exact matching source download for the version currently online.
 
-The **[preview release](https://github.com/woodk123/lcs-underground-edition/releases/tag/underground-preview-2026.10.16)** includes the latest journal, portrait and crew-selection improvements. Download a player ZIP and extract the whole folder:
+The **[0.1.0 release](https://github.com/woodk123/lcs-underground-edition/releases/tag/underground-v0.1.0)** includes field operations, injury dossiers, dedicated campaign-management pages and Linux support. Download a player ZIP and extract the whole folder:
 
-- **[Windows player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.16/LCS-Underground-Edition-2026.10.16-Windows-x64-Player.zip)** — Windows 10/11 (64-bit). Double-click **lcs_new_age.exe**; no Python or Flutter needed.
-- **[Browser player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.16/LCS-Underground-Edition-2026.10.16-Web-Player.zip)** — double-click **Play.cmd**. Requires Python 3; opens **http://127.0.0.1:8765/**.
+- **[Windows player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-v0.1.0/LCS-Underground-Edition-underground-v0.1.0-Windows-x64-Player.zip)** — Windows 10/11 (64-bit). Double-click **lcs_new_age.exe**; no Python or Flutter needed.
+- **[Linux x64 player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-v0.1.0/LCS-Underground-Edition-underground-v0.1.0-Linux-x64-Player.zip)** — Ubuntu 22.04 or compatible, with GTK 3. Run **./lcs_new_age**; keep `lib/` and `data/` alongside it.
+- **[Browser player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-v0.1.0/LCS-Underground-Edition-underground-v0.1.0-Web-Player.zip)** — double-click **Play.cmd**. Requires Python 3; opens **http://127.0.0.1:8765/**.
 
-The **[matching source ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-preview-2026.10.16/LCS-Underground-Edition-2026.10.16-Source.zip)** is a separate download for building or modifying the game. See [build instructions](docs/BUILDING.md). If you redistribute a player ZIP, keep its matching source available alongside it under GPL v2.
+The **[matching source ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-v0.1.0/LCS-Underground-Edition-underground-v0.1.0-Source.zip)** is a separate download for building or modifying the game. See [build instructions](docs/BUILDING.md). If you redistribute a player ZIP, keep its matching source available alongside it under GPL v2.
 
 **Keep the same browser profile and address to keep using your browser saves.** `localhost`, another port or another browser has separate save storage. Export important saves from the game before clearing browser data.
 
 Windows and browser saves are separate. Use the game's export/import controls to transfer a campaign between them.
 
-**[Nightly builds](https://github.com/woodk123/lcs-underground-edition/releases?q=nightly-)** provide automatically checked Windows, Linux x64 and browser players when code or build inputs change. These are development prereleases; export important saves before trying them. The preview above remains a separate release. See [nightly build details](docs/BUILDING.md#nightly-builds-on-github) and [workflow status](https://github.com/woodk123/lcs-underground-edition/actions/workflows/nightly.yml).
+**[Nightly builds](https://github.com/woodk123/lcs-underground-edition/releases?q=nightly-)** provide automatically checked Windows, Linux x64 and browser players when code or build inputs change. These are development prereleases; export important saves before trying them. The numbered release above remains available separately. See [nightly build details](docs/BUILDING.md#nightly-builds-on-github) and [workflow status](https://github.com/woodk123/lcs-underground-edition/actions/workflows/nightly.yml).
 
 ## More information
 

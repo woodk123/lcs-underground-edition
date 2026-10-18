@@ -1,0 +1,75 @@
+name: Named release players
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Unique release tag (created when the checked release is published)
+        required: true
+        type: string
+        default: underground-v0.1.0
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: named-release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    uses: ./.github/workflows/ci.yml
+    with:
+      channel: Release
+
+  package:
+    needs: build
+    runs-on: ubuntu-22.04
+    env:
+      LCS_CHANNEL: Release
+      CI_ARTIFACT_RUN_ID: ${{ github.run_id }}
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Validate tag and release version
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os, pathlib, re
+          version = re.search(r"gameVersion = '([^']+)'", pathlib.Path('upstream/lib/utils/game_version.dart').read_text())[1]
+          assert os.environ['RELEASE_TAG'] == f'underground-v{version}', 'Tag must match the embedded Underground version'
+          assert f'## Underground Edition {version} — ' in pathlib.Path('upstream/assets/changelog.md').read_text(), 'Date the release changelog first'
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          path: .local/artifacts
+      - name: Verify all checks and package matching players and source
+        shell: bash
+        run: |
+          python scripts/ci_worker.py prepare
+          python scripts/package_release.py --root "$PWD" --report "$PWD/.local/reports/ci-release" --tag "$RELEASE_TAG" --linux "$PWD/.local/linux"
+      - name: Retain verified release for review and publication
+        uses: actions/upload-artifact@v4
+        with:
+          name: named-release-${{ inputs.tag }}
+          path: |
+            release/${{ inputs.tag }}/*.zip
+            release/${{ inputs.tag }}/*.sha256
+            release/${{ inputs.tag }}/release.json
+            release/${{ inputs.tag }}/size-report.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Retain packaging evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: named-release-evidence
+          path: .local/reports/
+          include-hidden-files: true
+          retention-days: 14

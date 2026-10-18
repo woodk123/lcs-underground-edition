@@ -141,9 +141,10 @@ async function recordDecision() {
     .evaluateAll(ns => ns.map(n => ({ label: n.getAttribute('aria-label') ?? n.textContent,
       disabled: n.getAttribute('aria-disabled') === 'true' }))) });
 }
-async function reports() {
+async function reports({ combat = false } = {}) {
   for (let i = 0; i < 100; i++) {
     if (!await available(/^Continue$/)) return;
+    if (combat) await capture(`combat-report-${i}`);
     await recordDecision();
     await click(/^Continue$/);
   }
@@ -309,7 +310,7 @@ try {
     await capture('retreat-directions');
     await click(/Cancel escape$/);
     await click(/^F Fight$/);
-    await reports();
+    await reports({ combat: true });
     check('combat dispatched through the current source control');
     if (!await available(/^V (?:Flee|Sneak away)$/)) await waitEncounter(/^V (?:Flee|Sneak away)$/);
     await click(/^V (?:Flee|Sneak away)$/);

@@ -15,6 +15,9 @@ from release_common import WINDOWS_RUNTIME_FILES, digest, file_hashes, verify_pa
 
 class EvidenceTests(unittest.TestCase):
     def setUp(self):
+        channel = patch.dict(os.environ, {'LCS_CHANNEL': 'Nightly'})
+        channel.start()
+        self.addCleanup(channel.stop)
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
@@ -79,6 +82,17 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(len(set().union(*map(set, shards))), sum(map(len, shards)))
         self.assertEqual(sum(map(len, shards)), 5)
         self.assertEqual(len(ci.verify_evidence(self.root, self.artifacts)), 11)
+
+    def test_release_rejects_nightly_or_mixed_channel_players(self):
+        with patch.dict(os.environ, {'LCS_CHANNEL': 'Release'}):
+            with self.assertRaisesRegex(ValueError, 'channel differs'):
+                ci.verify_evidence(self.root, self.artifacts)
+            for target in ci.BUILD_TARGETS:
+                self.mutate(f'build-{target}', lambda i: i.update(channel='Release'))
+            self.assertEqual(len(ci.verify_evidence(self.root, self.artifacts)), 11)
+            self.mutate('build-web', lambda i: i.update(channel='Nightly'))
+            with self.assertRaisesRegex(ValueError, 'channel differs'):
+                ci.verify_evidence(self.root, self.artifacts)
 
     def test_failed_missing_or_wrong_checks_are_rejected(self):
         path = self.artifacts / 'checks-windows-0/report.json'

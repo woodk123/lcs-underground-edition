@@ -159,3 +159,9 @@ Pages uses the exact compiled JavaScript and assets from the downloaded Web Play
 Before deployment, the browser smoke test checks online startup at the project path, service worker precaching and offline reload. Preparation, smoke test or deployment failure leaves the previously deployed site available. Deployments are serialized, and a successful nightly run that skipped unchanged inputs can safely redeploy the same published version. GitHub repository Settings → Pages must use **GitHub Actions** as its publishing source.
 
 Saves use IndexedDB in each player's browser profile. Deploying at the same site address retains those saves; the service worker updates runtime caches without deleting IndexedDB. Browser profiles/devices have separate saves; profiles shared by multiple people share their save list. Export/import transfers campaigns between devices or the downloaded player. Clearing site data can remove saves. Keeping the address stable does not replace save-format compatibility testing for future game changes.
+
+## Named releases on GitHub
+
+Run **Named release players** (`release.yml`) on the intended committed source with its unique `underground-vX.Y.Z` tag. It runs the complete Windows/Linux checks and all three builds with the **Release** channel, verifies their shared source and payload hashes, then packages Windows, Linux x64, browser and matching source archives with SHA-256 sidecars. The embedded version and dated changelog must match the requested tag.
+
+Download the `named-release-<tag>` Actions artifact for final package and gameplay review, then publish those exact files with the short notes in `docs/releases/<version>.md`. The workflow prepares artifacts without publishing them. Retain the named release independently of automatic nightlies.

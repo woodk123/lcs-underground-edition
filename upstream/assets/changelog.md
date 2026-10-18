@@ -2,37 +2,20 @@
 
 ## Unreleased
 
-The existing fork now has its own 0.1.0 development baseline. These notes will be dated and grouped under that version when the first numbered Underground preview or release is prepared.
+## Underground Edition 0.1.0 — 2026-10-18
 
-### Added
+First numbered Underground release. Since Preview 2026.10.16:
 
-* Crew inspectors now show wanted offences beside personal heat. Dossiers record significant completed operations, including personal consequences and squad results; existing campaigns keep their records and start collecting history from this update.
-* Location guides now show which outfits blend in across public and restricted areas, including authority disguises, outfits that stand out and the limits of dressing the part.
-* Location guides now explain useful actions, risks and lasting consequences, with facility hints and expandable details for claims terminals, evidence safes, rescues, sabotage and other interactions.
-* Crew inspectors and dossiers now show command capacity, free recruitment slots, who each person reports to and their direct reports.
-* Character dossiers, founder creation and recruitment now explain age bonuses and penalties, with current stat modifiers and details about starting skills and old-age Health risks.
-* An illustrated paper-and-leather journal with crew dossiers, persistent portraits, city plans, order cards and tactical maps.
-* People, Bases, Network, newspaper production and account views make campaign management and its consequences easier to follow.
-* Illustrated equipment and vehicle catalogues, with readable guides and contextual choices.
+* Take the journal into field operations, car chases and headquarters sieges, with clearer combat reports, retreat choices and aftermath.
+* Inspect injuries on an anatomical chart, follow treatment and custody, and review personal operation history and wanted offences.
+* Manage People, Bases, sleeper Network roles, newspaper production and accounts through dedicated journal pages.
+* See crew skills, clothing, injuries and command capacity at a glance, with better recruitment, age and Juice explanations.
+* Explore illustrated equipment and vehicle catalogues, richer tactical maps and detailed location and disguise guides.
+* Play on Linux x64 alongside Windows and browser editions, with smaller artwork downloads and fixes to scrolling, orders and report continuation.
 
-### Changed
+Existing campaigns retain save compatibility 1.5.6. Personal operation history starts collecting from this update.
 
-* Base storage now explains how to sell loot at the Pawn Shop directly from the visiting squad leader’s home-base supplies.
-* The left-hand Crew list now flags injuries, active bleeding and blood loss, with wound details available on hover.
-* The left-hand Crew list now shows each person's clothing, including bloodstained or damaged outfits and missing clothing.
-* Location guides now explain actual skill checks, rewards, attempt limits, evidence publication, sleeper benefits and retaliation across all locations, including clearer hospital billing, prison rescues and bank access requirements. Short hover hints keep the full explanations readable in expandable sections.
-* The left-hand Crew list now shows each person's three strongest trained skills and levels beneath their name.
-* Tactical maps now illustrate detention and patient rooms, offices, banks and specialist equipment, with clearer signs, faction graffiti and visited-room markers.
-* Bases now separates bases in use from available shelters, so unused camps and warehouses no longer inflate your base count.
-* Recruitment prospect cards now show political alignment alongside profession and age.
-* The title now identifies the Underground Edition version and build channel, alongside the New Age base and exact source build for bug reports.
-* Underground release numbering starts at 0.1.0 and is independent of save compatibility. Existing campaigns retain their current save format and migration behavior.
-
-### Fixed
-
-* Network orders no longer show a duplicate Lay Low button, and selecting an agent's current order offers to keep it instead of preparing a change.
-* Save import, recovery and failed-save handling protect campaign progress.
-* Crafting, calendar advancement, treatment, court records, pursuits and siege responses include fixes made during development of this fork.
+The paper-and-leather journal, persistent portraits and original New Age gameplay form the initial 0.1.0 baseline.
 
 # New Age history
 

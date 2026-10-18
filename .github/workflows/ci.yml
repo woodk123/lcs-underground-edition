@@ -2,6 +2,13 @@ name: Checked player artifacts
 
 on:
   workflow_call:
+    inputs:
+      channel:
+        type: string
+        default: Nightly
+
+env:
+  LCS_CHANNEL: ${{ inputs.channel || 'Nightly' }}
 
 permissions:
   contents: read

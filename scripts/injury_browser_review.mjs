@@ -172,7 +172,7 @@ try {
   assert.equal(before.date, fixture.date, 'Import and load must not advance campaign time.');
   report.checks.push('Prepared conditions survive real import and normalization');
   await openDossier();
-  assert.equal(await page.getByRole('dialog').getByText('Age 22', { exact: true }).count(), 1);
+  assert.match(await uiText(), /Age 22: No age attribute modifiers/);
   await show(inspect('Right lung'));
   await inspect('Right lung').hover();
   await detail('Right lung', /Adds 2 to the injury modifier/);

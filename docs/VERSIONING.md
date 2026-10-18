@@ -1,6 +1,6 @@
 # Versioning
 
-The Underground Edition has its own player-facing version, starting at **0.1.0**. This establishes a development baseline for the existing fork; it does not announce a new published release or renumber the earlier date-tagged preview. Versions below 1.0 reflect the current work in progress.
+The Underground Edition has its own player-facing version, starting at **0.1.0**, the first numbered release prepared on 18 October 2026. It finalizes the fork's initial development baseline; the earlier date-tagged previews retain their original identities. Versions below 1.0 reflect the current work in progress.
 
 ## Identifiers and their sources
 
