@@ -15,7 +15,9 @@ import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/equipment_help.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
+import 'package:lcs_new_age/modern/legal_status.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
+import 'package:lcs_new_age/modern/operation_history_panel.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 
 const _ink = JournalPalette.ink;
@@ -167,6 +169,8 @@ class CrewInspector extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        LegalStatusSummary(person: person),
+                        const SizedBox(height: 12),
                         JuiceProgress(person: person),
                         const SizedBox(height: 9),
                         CrewCommandPanel(person: person),
@@ -292,11 +296,6 @@ class CrewInspector extends StatelessWidget {
                                 ),
                             ],
                           ),
-                        ),
-                        _inlineFact('Legal heat', '${person.heat}'),
-                        const Text(
-                          'Legal heat measures police attention, not a percentage.',
-                          style: TextStyle(fontSize: 11, color: _muted),
                         ),
                       ],
                     ),
@@ -1015,6 +1014,7 @@ class _CrewDossierState extends State<CrewDossier> {
               ),
             for (final charge in charges)
               _fact(charge.key.wantedFor, '${charge.value}'),
+            LegalStatusExplanation(person: person),
             if (convictions.isNotEmpty) ...[
               const SizedBox(height: 14),
               const Text(
@@ -1038,6 +1038,8 @@ class _CrewDossierState extends State<CrewDossier> {
               ),
           ]),
         ),
+        const SizedBox(height: 24),
+        OperationHistoryPanel(person: person),
         const SizedBox(height: 24),
         const Text(
           'Portraits are stylized visual identities. The campaign record above supplies this person’s actual traits and history.',

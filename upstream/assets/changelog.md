@@ -6,6 +6,7 @@ The existing fork now has its own 0.1.0 development baseline. These notes will b
 
 ### Added
 
+* Crew inspectors now show wanted offences beside personal heat. Dossiers record significant completed operations, including personal consequences and squad results; existing campaigns keep their records and start collecting history from this update.
 * Location guides now show which outfits blend in across public and restricted areas, including authority disguises, outfits that stand out and the limits of dressing the part.
 * Location guides now explain useful actions, risks and lasting consequences, with facility hints and expandable details for claims terminals, evidence safes, rescues, sabotage and other interactions.
 * Crew inspectors and dossiers now show command capacity, free recruitment slots, who each person reports to and their direct reports.

@@ -323,6 +323,24 @@ try {
     assert.ok(after.state.date > baseline.state.date, 'The completed operation advances campaign time.');
     assert.ok(after.state.lcs.pool.filter(p => p.squadId != null).every(p => p.locationId === `Site${p.baseId}`));
     check('retreat resolves the operation, returns survivors to HQ and retains spent ammunition');
+    const participants = baseline.state.lcs.pool.filter(p => p.squadId === baseline.state.activeSquadId);
+    assert.ok(participants.length > 0, 'Exercise the original active squad.');
+    for (const participant of participants) {
+      const returned = after.state.lcs.pool.find(p => p.id === participant.id);
+      assert.ok(returned, 'Preserve the operation participant identity.');
+      assert.equal(returned.operationHistory.length, (participant.operationHistory?.length ?? 0) + 1,
+        'A completed real operation must append exactly one personal history entry.');
+      const record = returned.operationHistory.at(-1);
+      assert.match(record.siteName, /Police Station/);
+      assert.ok(record.participants.includes(participant.name));
+      assert.ok(['returned', 'captured', 'killed', 'missing'].includes(record.outcome));
+      for (const [crime, count] of Object.entries(record.newCharges)) {
+        assert.ok(count > 0);
+        assert.ok(returned.wantedForCrimes[crime] >= count,
+          'History records actual wanted counts, not merely potential crimes.');
+      }
+    }
+    check('completed original operation appends personal histories with actual wanted counts');
     report.scenarios.operation = { date: after.state.date, originalAmmo, remainingAmmo,
       people: after.state.lcs.pool.map(p => ({ id: p.id, alive: p.alive, blood: p._blood, location: p.locationId })) };
     await capture('returned-to-headquarters');

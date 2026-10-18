@@ -34,6 +34,7 @@ import 'package:lcs_new_age/sitemode/map_specials.dart';
 import 'package:lcs_new_age/sitemode/miscactions.dart';
 import 'package:lcs_new_age/sitemode/newencounter.dart';
 import 'package:lcs_new_age/sitemode/operation_cleanup.dart';
+import 'package:lcs_new_age/sitemode/operation_history.dart';
 import 'package:lcs_new_age/sitemode/site_display.dart';
 import 'package:lcs_new_age/sitemode/sitemap.dart';
 import 'package:lcs_new_age/sitemode/stealth.dart';
@@ -45,6 +46,12 @@ import 'package:lcs_new_age/utils/interface_options.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 
 Future<void> siteMode(Site loc) async {
+  final history = OperationHistoryCapture(loc);
+  await _runSiteMode(loc);
+  history.finish();
+}
+
+Future<void> _runSiteMode(Site loc) async {
   activeSite = loc;
   siteAlarm = false;
   siteAlarmTimer = -1;

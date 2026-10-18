@@ -42,7 +42,7 @@ Run the common creation, opening-week, organisation and save journey from the re
 python scripts/shared_acceptance.py
 ```
 
-Install the pinned SDK and resolve dependencies as described in [Building](BUILDING.md#development-mode). The browser helpers use installed Chrome and Edge, with locked dependencies installed by `npm ci --prefix upstream/tool/offline_test`. The runner verifies the SDK pin, regenerates serializers, runs nine existing focused test files, builds a separate release web player and injects its offline manifest. It then runs these existing helpers against that one build:
+Install the pinned SDK and resolve dependencies as described in [Building](BUILDING.md#development-mode). The browser helpers use installed Chrome and Edge, with locked dependencies installed by `npm ci --prefix upstream/tool/offline_test`. The runner verifies the SDK pin, regenerates serializers, runs the focused test files (including legal summaries and operation history), builds a separate release web player and injects its offline manifest. It then runs these existing helpers against that one build:
 
 | Stage | What it establishes |
 |---|---|

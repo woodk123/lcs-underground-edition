@@ -28,6 +28,7 @@ TESTS = (
     'organisation_journal_test.dart', 'page_storage_isolation_test.dart',
     'network_journal_test.dart', 'personnel_directory_test.dart',
     'save_load_test.dart', 'save_round_trip_test.dart', 'save_recovery_test.dart',
+    'operation_history_test.dart', 'crew_operation_history_test.dart',
 )
 PORTS = (18879, 18882)  # Existing helpers deliberately pin these QA origins.
 

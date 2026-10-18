@@ -27,12 +27,23 @@ actor.portraitAssignedAge = 22;
 actor.rawSkill.art = 12;
 actor.rawSkillXP.art = 25;
 actor.rawAttributes.heart = 14;
+actor.wantedForCrimes = Object.fromEntries(Object.keys(actor.wantedForCrimes).map(crime => [crime, 0]));
+actor.wantedForCrimes.theft = 5;
+actor.wantedForCrimes.breakingAndEntering = 1;
+actor.heat = 0;
+actor.operationHistory = [{
+  date: fixture.date, siteName: 'Prepared insurance operation', outcome: 'returned',
+  heatBefore: 0, heatAfter: 0, participants: [actor.name], juiceChange: 50,
+  bloodChange: -5, newCharges: { theft: 1 }, trainingXp: { security: 20 },
+  injuries: ['Torso: bruised'], squadResults: ['Carried out: Insurance Fraud Evidence ×1.'],
+  opinionChanges: {}, siege: false,
+}];
 original.saveData = typeof original.saveData === 'string' ? JSON.stringify(fixture) : fixture;
 const fixturePath = resolve(output, 'synthetic-age22.json');
 await writeFile(fixturePath, JSON.stringify(original));
 const report = {
   status: 'running', url,
-  scope: 'Synthetic copy of the bundled Felix campaign: first actor is 22, Art 12, Heart 14, with a deliberately mismatched saved older portrait. Isolated browser context only.',
+  scope: 'Synthetic copy of the bundled Felix campaign: first actor is 22, Art 12, Heart 14, with a deliberately mismatched saved older portrait, five theft counts, one breaking-and-entering count at zero heat and an explicitly prepared operation-history entry. Isolated browser context only; the history is not earned gameplay.',
   checks: [], screenshots: [], pageErrors: [], consoleErrors: [], failedRequests: [],
 };
 const response = await fetch(new URL('main.dart.js', url));
@@ -77,6 +88,23 @@ async function capture(name) {
   report.checks.push(name);
   console.log(`PASS ${name}`);
 }
+async function revealDossierText(dossier, text, isButton = false) {
+  const target = isButton
+    ? dossier.getByRole('button', { name: new RegExp(`^${escape(text)}`) })
+    : dossier.getByText(text, { exact: true });
+  for (let attempt = 0; attempt < 24; attempt++) {
+    // Flutter excludes clipped rows from browser semantics. Scroll the real
+    // dossier first so an offscreen history entry becomes a reachable node.
+    const bounds = await dossier.boundingBox();
+    assert.ok(bounds, 'Keep the current dossier open while scrolling history.');
+    const box = await target.count() ? await target.boundingBox() : null;
+    if (box && box.y >= bounds.y + 65 && box.y + Math.min(25, box.height / 2) < bounds.y + bounds.height - 75) return target;
+    await page.mouse.move(bounds.x + bounds.width * .65, bounds.y + bounds.height * .65);
+    await page.mouse.wheel(0, box && box.y < bounds.y + 65 ? -220 : 220);
+    await page.waitForTimeout(100);
+  }
+  throw new Error(`Cannot reach dossier text: ${text}`);
+}
 async function exportGame(name) {
   await click(/^Save & exit/);
   await wait(/Start a New Game/);
@@ -114,6 +142,9 @@ try {
     'The repaired ordinary adult face must use the 20–30 painted age row.');
   report.portrait = { characterAge: 22, priorId: 13, priorVisualAge: 68, correctedId: repaired.portraitId, correctedVisualAge: 25 };
   await click(new RegExp(`^Inspect ${escape(actor.name)}(?:$|\\s)`));
+  assert.match(await uiText(), /Wanted for: Theft ×5 · Breaking and Entering ×1/);
+  assert.match(await uiText(), /Zero heat does not clear these offences/);
+  await capture('01-legal-summary-zero-heat');
   await click(/^Full dossier/);
   let dossier = page.getByRole('dialog');
   await dossier.waitFor();
@@ -127,6 +158,11 @@ try {
   assert.equal(await dossier.getByText('Skill levels and progress from the current campaign.', { exact: true }).count(), 0);
   report.skillHeading = { label: 'Art: level 12', bounds: await heading.boundingBox(), note: 'Exact label/value spacing is covered by dossier widget tests at normal and enlarged text.' };
   await capture('02-skill-values-next-to-names');
+  await click(/^Campaign record$/, dossier);
+  await (await revealDossierText(dossier, 'Prepared insurance operation', true)).click();
+  await revealDossierText(dossier, 'New wanted counts at the time: Theft ×1');
+  await wait(/New wanted counts at the time: Theft ×1/);
+  await capture('02-operation-history-expanded');
   await dossier.getByRole('button', { name: 'Close dossier', exact: true }).last().click();
   await click(/^Orders(?:$|\s)/);
   await click(/^Business(?:$|\s)/);
@@ -162,6 +198,15 @@ try {
   await capture('06-mechanics-800x600-at150');
   await page.keyboard.press('Escape');
   assert.ok(await page.getByRole('button', { name: 'Confirm order', exact: true }).isEnabled());
+  await page.keyboard.press('Escape');
+  await click(new RegExp(`^Inspect ${escape(actor.name)}(?:$|\\s)`));
+  await click(/^Full dossier/);
+  dossier = page.getByRole('dialog');
+  await click(/^Campaign record$/, dossier);
+  await (await revealDossierText(dossier, 'Prepared insurance operation', true)).click();
+  await revealDossierText(dossier, 'New wanted counts at the time: Theft ×1');
+  await wait(/New wanted counts at the time: Theft ×1/);
+  await capture('06-operation-history-800x600-at150');
   await page.keyboard.press('Escape');
   const after = await exportGame('after-ui-review');
   assert.deepEqual(after, before, 'Dossiers, mechanics disclosures and cancelled drafts must preserve the exported campaign exactly.');
