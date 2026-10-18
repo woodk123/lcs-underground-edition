@@ -1,0 +1,93 @@
+{
+  "generator": "Built-in image_gen.imagegen",
+  "created": "2026-10-18",
+  "use": "Tactical field plan artwork. Art is presentation only; engine terrain, visibility and commands remain authoritative.",
+  "atlases": [
+    {
+      "name": "tactical_terrain_v1",
+      "columns": 4,
+      "rows": 4,
+      "prompt": "Use case: stylized-concept. Asset type: game terrain texture atlas for a top-down tactical map in a vintage paper-and-leather field journal. Generate ONE square 1024x1024 image arranged as an EXACT 4-column by 4-row uniform grid, no margins, no gaps, every cell 256x256. Flat overhead orthographic textures, subdued warm parchment/olive/brass colors, engraved ink and hand-painted material, low contrast so tactical icons remain clear over them. Row-major cells: row 1 pale ivory linoleum floor, muted olive carpet floor, dusty grey concrete floor, honey oak plank floor; row 2 pale ceramic laboratory tile floor, worn stone flagstones, subdued green grass, fine gravel; row 3 buff brick masonry wall surface, grey concrete wall surface, plaster wall surface, dark ribbed metal wall surface; row 4 dark radio studio acoustic carpet, brown bare earth, weathered pale pavement, neutral parchment floor. Each texture fills its cell edge to edge, subtle small-scale repeating details, no heavy seams or outlines between cells. NO props, NO people, NO shadows cast from objects, NO text, NO numbers, NO labels, NO legend, NO perspective, NO isometric angle, NO decorative frame. Uniform light and scale; designed to read well when each cell is reduced to 32x32 pixels.",
+      "cells": [
+        "linoleum",
+        "olive carpet",
+        "concrete floor",
+        "oak floor",
+        "laboratory tile",
+        "flagstone",
+        "grass",
+        "gravel",
+        "brick wall",
+        "concrete wall",
+        "plaster wall",
+        "metal wall",
+        "studio carpet",
+        "earth",
+        "pavement",
+        "parchment floor"
+      ],
+      "original_path": "assets/runtime-art/source/tactical_terrain_v1.png",
+      "runtime_path": "upstream/assets/modern/tactical_terrain_v1.webp",
+      "width": 1254,
+      "height": 1254,
+      "original_sha256": "74214c24052b9dd3a825e466059ea633e1a7880496b91c6292e80b3020a1146c",
+      "runtime_sha256": "6a9383eaf00682239c13cdccad82a0d58151ea6e291405b176eb64b4ed6e7ab3",
+      "crop_inset_pixels": 1.5
+    },
+    {
+      "name": "tactical_objects_v1",
+      "columns": 4,
+      "rows": 4,
+      "prompt": "Use case: stylized-concept. Asset type: ONE transparent game sprite atlas for a top-down tactical map in a vintage paper-and-leather field journal. Square canvas, EXACT 4 columns by 4 rows uniform grid, no margins between cells; each of 16 objects centered in its own equal cell and fits within middle 76% of cell leaving generous transparent padding, no overlaps. Strict orthographic directly overhead, illustrated engraved ink outlines plus warm watercolor fills, old crime strategy game art, simple bold silhouettes readable at 32x32 pixels. Row-major: row 1 radio broadcasting console with microphone and mixing sliders; computer workstation with keyboard and monitor seen overhead; closed grey steel safe with round wheel; stacked paper files in manila folders. Row 2 industrial machinery with gears; laboratory bench with test tubes; blue-grey control console with switches; small barred animal enclosure. Row 3 plain wooden table; military storage crate; bank cash bundles; sparse rubble pile. Row 4 wooden park bench; small green canvas tent; glass display case containing small valuables; security checkpoint turnstile with metal detector arch. Mostly ivory, aged brass, olive, muted slate and brown. Transparent alpha background, isolated sprites, no opaque cell backgrounds, no text/numbers/labels/borders/gridlines/people/floor tiles. Consistent lighting and scale, minimal shadows. This is a production sprite sheet, not a UI mockup.",
+      "cells": [
+        "radio console",
+        "computer workstation",
+        "safe",
+        "files",
+        "machinery",
+        "lab bench",
+        "control console",
+        "cage",
+        "table",
+        "crate",
+        "cash",
+        "rubble",
+        "bench",
+        "tent",
+        "display case",
+        "checkpoint"
+      ],
+      "original_path": "assets/runtime-art/source/tactical_objects_v1.png",
+      "runtime_path": "upstream/assets/modern/tactical_objects_v1.webp",
+      "width": 1254,
+      "height": 1254,
+      "original_sha256": "e548e023375f7904ef788603f033cfcf429267396116be01562533839e3db53b",
+      "runtime_sha256": "cd0a644b6d13ffb53377dd5a3ac6e07c3da5ead0624d226f6733464468019690",
+      "crop_inset_pixels": 1.5
+    },
+    {
+      "name": "tactical_hazards_v1",
+      "columns": 4,
+      "rows": 2,
+      "prompt": "Use case: stylized-concept. Asset type: ONE transparent hazard-overlay sprite atlas for a top-down tactical game in a parchment field journal. Exact square image, 4-column by 2-row uniform grid, eight equal cells, no lines or labels. Strict overhead viewpoint. Fine ink engraving and restrained watercolor in earthy olive/brown, brick red, amber and charcoal, crisp simple silhouettes that work reduced to 32 pixels. Transparent background and generous transparent 14 percent padding within EVERY cell; all effects fully contained in own cell. Row 1 cells left to right: small spreading flame cluster amber/red; larger intense flame cluster amber/red with charcoal center; dying embers with short wisps grey smoke; scattered angular masonry rubble. Row 2 cells: small muted dark-red blood spatter; larger muted dark-red blood spatter; simple coiled wire snare with small brass plate trap; charred black scorch marks and ash. Stylized tactical markers, restrained and non-graphic; no anatomy, bodies, people, weapons, text, numbers, gridlines, opaque backgrounds, frames or perspective. Distinct readable shape in each cell; do not connect across cell boundaries. Production sprite sheet.",
+      "cells": [
+        "spreading fire",
+        "intense fire",
+        "embers",
+        "rubble",
+        "blood",
+        "heavy blood",
+        "trap",
+        "scorch"
+      ],
+      "original_path": "assets/runtime-art/source/tactical_hazards_v1.png",
+      "runtime_path": "upstream/assets/modern/tactical_hazards_v1.webp",
+      "width": 1774,
+      "height": 887,
+      "original_sha256": "cbf7e9a9f7ba8639465ea0102324b69d15a1044a52463cd46f283accec463478",
+      "runtime_sha256": "0a56acb07cc79226f16cd66ab6555cd9372ba430342f6fd374b45c63fb47b6c5",
+      "crop_inset_pixels": 1.5
+    }
+  ],
+  "postprocessing": "Copied generated PNG masters unchanged into assets/runtime-art/source. Encoded runtime WebP through scripts/runtime_images.py at quality 90, preserving original geometry and exact alpha. No painting, resizing, background removal or recolouring."
+}

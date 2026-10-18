@@ -281,6 +281,45 @@
       "runtime_sha256": "d65d86675ef2b4bd5f5f3e5242ea1687212ff2e6625ab6ca8f9bcd27a8607202",
       "original_bytes": 3487394,
       "runtime_bytes": 554152
+    },
+    {
+      "original_path": "assets/runtime-art/source/tactical_terrain_v1.png",
+      "runtime_path": "upstream/assets/modern/tactical_terrain_v1.webp",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB",
+      "lossless": false,
+      "has_alpha": false,
+      "original_sha256": "74214c24052b9dd3a825e466059ea633e1a7880496b91c6292e80b3020a1146c",
+      "runtime_sha256": "6a9383eaf00682239c13cdccad82a0d58151ea6e291405b176eb64b4ed6e7ab3",
+      "original_bytes": 3662801,
+      "runtime_bytes": 585072
+    },
+    {
+      "original_path": "assets/runtime-art/source/tactical_objects_v1.png",
+      "runtime_path": "upstream/assets/modern/tactical_objects_v1.webp",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "lossless": false,
+      "has_alpha": true,
+      "original_sha256": "e548e023375f7904ef788603f033cfcf429267396116be01562533839e3db53b",
+      "runtime_sha256": "cd0a644b6d13ffb53377dd5a3ac6e07c3da5ead0624d226f6733464468019690",
+      "original_bytes": 2241648,
+      "runtime_bytes": 510514
+    },
+    {
+      "original_path": "assets/runtime-art/source/tactical_hazards_v1.png",
+      "runtime_path": "upstream/assets/modern/tactical_hazards_v1.webp",
+      "width": 1774,
+      "height": 887,
+      "mode": "RGBA",
+      "lossless": false,
+      "has_alpha": true,
+      "original_sha256": "cbf7e9a9f7ba8639465ea0102324b69d15a1044a52463cd46f283accec463478",
+      "runtime_sha256": "0a56acb07cc79226f16cd66ab6555cd9372ba430342f6fd374b45c63fb47b6c5",
+      "original_bytes": 1762139,
+      "runtime_bytes": 565746
     }
   ]
 }

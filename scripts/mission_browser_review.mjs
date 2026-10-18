@@ -14,7 +14,7 @@ const { chromium } = require('playwright');
 const args = process.argv.slice(2);
 const arg = (name, fallback) => args.includes(name) ? args[args.indexOf(name) + 1] : fallback;
 const only = arg('--only', 'all');
-assert.ok(['all', 'operation', 'conversation', 'paid-care', 'unpaid-care', 'custody'].includes(only),
+assert.ok(['all', 'operation', 'tactical', 'conversation', 'paid-care', 'unpaid-care', 'custody'].includes(only),
   'Unknown --only scenario.');
 const url = assertQaUrl(arg('--url', undefined));
 const expected = arg('--expected-hash', '');
@@ -228,7 +228,7 @@ try {
   const baseline = await exportGame('baseline');
   normalizedEnvelope = baseline.envelope;
   normalizedState = baseline.state;
-  if (['all', 'operation'].includes(only)) {
+  if (['all', 'operation', 'tactical'].includes(only)) {
     await visit('Downtown Seattle', 'Police Station');
     await click('Move down'); await reports();
     await click('Move down'); await reports();
@@ -236,6 +236,64 @@ try {
     check('entered a building, opened its entrance and moved inside');
     await waitEncounter(/^V (?:Flee|Sneak away)$/);
     await capture('encounter-visible');
+    if (only === 'tactical') {
+      const encounterText = await uiText();
+      await click(/^M View full map$/);
+      await wait(/Fit floor/);
+      await click('Zoom in');
+      await capture('full-map-inspection');
+      await click(/^Back to operation$/);
+      await wait(/Squad & orders/);
+      assert.match(await uiText(), /Police Station/);
+      check('full-floor zoom and return retain the active operation');
+      await click('Map key');
+      await wait(/Tactical map key/);
+      await page.keyboard.press('ArrowRight');
+      await page.keyboard.press('f');
+      await capture('complete-map-key');
+      await click('Close map key');
+      await wait(/Squad & orders/);
+      check('map-key dialog explains symbols and keeps game shortcuts passive');
+      await page.setViewportSize({ width: 800, height: 600 });
+      await click(/^Reading size$/);
+      await page.getByRole('menuitem', { name: '150%', exact: true }).click();
+      await capture('compact-800x600-at150');
+      await click('Map controls');
+      await page.getByRole('menuitem', { name: 'Fit area', exact: true }).click();
+      await capture('compact-fit-area');
+      await click('Map controls');
+      await page.getByRole('menuitem', { name: 'Center squad at readable size', exact: true }).click();
+      const squadMark = page.getByText(/^Squad.*Current position/).first()
+        .locator('xpath=ancestor::flt-semantics[1]');
+      const squadBox = await squadMark.boundingBox();
+      assert.ok(squadBox, 'Current squad must be visible after centering.');
+      await page.mouse.move(squadBox.x + squadBox.width / 2, squadBox.y + squadBox.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(squadBox.x + squadBox.width / 2 + 45, squadBox.y + squadBox.height / 2 + 20, { steps: 8 });
+      await page.mouse.up();
+      await click('Map controls');
+      await page.getByRole('menuitem', { name: 'Center squad at readable size', exact: true }).click();
+      await page.getByRole('checkbox', { name: /Inspect/ }).click();
+      const inspectBox = await page.getByText(/^Squad.*Current position/).first()
+        .locator('xpath=ancestor::flt-semantics[1]').boundingBox();
+      assert.ok(inspectBox);
+      await page.mouse.click(inspectBox.x + inspectBox.width / 2, inspectBox.y + inspectBox.height / 2);
+      await wait(/Close tile details/);
+      await page.keyboard.press('ArrowRight');
+      await page.keyboard.press('u');
+      await capture('compact-safe-tile-inspection');
+      await click('Close tile details');
+      await page.getByRole('checkbox', { name: /Inspect/ }).click();
+      await capture('compact-centered-restored');
+      check('compact focus, fit, pan, recovery and safe inspection retain the operation');
+      await click(/^Reading size$/);
+      await page.getByRole('menuitem', { name: '100%', exact: true }).click();
+      await page.getByRole('menuitem', { name: '100%', exact: true }).waitFor({ state: 'detached' });
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      await wait(/Squad & orders/);
+      await page.waitForTimeout(250);
+      assert.match(encounterText, /Police Station/);
+    }
     const beforeInspect = await uiText();
     await click(`Inspect ${baseline.state.lcs.pool[0].name} dossier`);
     await wait(/Full dossier/);
@@ -271,7 +329,7 @@ try {
     let recovered = await roundTrip('complete');
     const wounded = recovered.lcs.pool.filter(p => p.alive && p._blood < 1);
     report.scenarios.operation.actualWoundedIds = wounded.map(p => p.id);
-    if (wounded.length) {
+    if (wounded.length && only !== 'tactical') {
       await visit('University District', 'University Hospital');
       await capture('actual-wounds-hospital-menu');
       await click(/^Admit injured squad members$/);

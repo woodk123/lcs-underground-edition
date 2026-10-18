@@ -217,8 +217,10 @@ void main() {
       final painter = TacticalMapPainter(TacticalMapSnapshot.capture());
       final semantics = painter.semanticsBuilder(const Size(690, 300));
       final labels = semantics.map((cell) => cell.properties.label).join(' ');
-      expect(labels, contains('Squad, column 36, row 12'));
-      expect(labels, contains('Open floor, column 37, row 12'));
+      expect(labels, contains(RegExp(r'Squad[^,]*, column 36, row 12')));
+      expect(labels, contains('Current position'));
+      expect(labels, contains(RegExp(r'Open floor[^,]*, column 37, row 12')));
+      expect(labels, contains('Previously explored'));
       expect(labels, isNot(contains('Enemy')));
       expect(labels, isNot(contains('Armored')));
       expect(labels, isNot(contains('vault')));
@@ -251,7 +253,7 @@ void main() {
         await tester.tap(find.byTooltip('Move $direction'));
       }
       expect(inputs, ['Up', 'Down', 'Left', 'Right']);
-      expect(find.text('Your squad · Open floor'), findsOneWidget);
+      expect(find.text('Current tile · Open floor'), findsOneWidget);
       expect(find.text('LEVEL 1'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

@@ -279,18 +279,19 @@ Future<void> helpOnActivity(ActivityType type) async {
 Future<void> helpOnSitemode() async {
   erase();
   _head("=== Direct Action ===");
-  _body("You are taking direct action against the Conservative Menace.\n\n"
-      "If you commit enough crimes, the media will usually report on your "
-      "actions. This is generally a good thing. The more crimes you commit, "
-      "and the more media attention you can attract, the greater the potential "
-      "positive impact on public opinion.\n\n"
-      "If you start causing trouble, people may call the cops or other "
-      "reinforcements. Getting out quickly is safer than an occupation.\n\n"
-      "Killing anyone during direct action will draw a lot of heat and cause "
-      "the news coverage to skew hostile to the LCS. Frequent negative "
-      "media coverage will eventually alienate everyone against you, limiting "
-      "your ability to influence public opinion in the future. Mix up your "
-      "tactics to maintain positive sentiment toward your squad.");
+  _body(
+    "Explore, take action, and get your squad out.\n\n"
+    "Move one tile with arrow keys or an outlined map tile. Moving toward a "
+    "door tries to open it; your squad stays outside until it opens. Hover, "
+    "hold a tile, or enable Inspect to examine it safely. Zoom or center "
+    "your squad for a closer view.\n\n"
+    "On stairs or a usable feature, choose Use / interact (U). Collect items "
+    "with Get loot (G). View full map (M) only inspects. Flee escapes an "
+    "encounter; walking onto an Exit tile leaves the site.\n\n"
+    "Crimes can attract media coverage and affect public opinion. Trouble "
+    "may bring police or reinforcements, so leave promptly. Killing draws "
+    "heat and hostile coverage; vary your tactics.",
+  );
   _footer();
   await acknowledge(title: 'Field guide');
 }

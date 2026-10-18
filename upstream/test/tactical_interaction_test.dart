@@ -47,15 +47,16 @@ void main() {
 
   Future<void> tapTile(WidgetTester tester, int x, int y) async {
     final grid = find.byKey(const ValueKey('tactical-map-grid'));
-    final origin = tester.getTopLeft(grid);
-    final cell = tester.getSize(grid).width / TacticalMapSnapshot.columns;
+    final box = tester.renderObject<RenderBox>(grid);
+    final cell = box.size.width / TacticalMapSnapshot.columns;
     final snapshot = TacticalMapSnapshot.capture();
     await tester.tapAt(
-      origin +
-          Offset(
-            (x - snapshot.xStart + .5) * cell,
-            (y - snapshot.yStart + .5) * cell,
-          ),
+      box.localToGlobal(
+        Offset(
+          (x - snapshot.xStart + .5) * cell,
+          (y - snapshot.yStart + .5) * cell,
+        ),
+      ),
     );
     await tester.pump();
   }
@@ -96,12 +97,9 @@ void main() {
     final moves = <String>[];
     await mount(tester, moves, enabled: false);
     await tapTile(tester, 36, 11);
-    final right = find.byTooltip('Move right');
     expect(
       tester
-          .widget<IconButton>(
-            find.ancestor(of: right, matching: find.byType(IconButton)),
-          )
+          .widget<IconButton>(find.byKey(const ValueKey('tactical-move:right')))
           .onPressed,
       isNull,
     );

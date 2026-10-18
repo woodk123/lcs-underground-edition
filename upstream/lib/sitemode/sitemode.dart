@@ -459,10 +459,10 @@ Future<void> _siteModeAux() async {
       addstrc(partysize > 1 ? lightGray : darkGray, "rder,");
       bool graffiti = false;
       bool useColor;
-      if (currentTile.special != TileSpecial.none &&
-          currentTile.special != TileSpecial.clubBouncerSecondVisit) {
+      if (currentTile.special.hasManualAction) {
         useColor = true;
-      } else if (!(currentTile.graffitiLCS || currentTile.megaBloody)) {
+      } else if (currentTile.special == TileSpecial.none &&
+          !(currentTile.graffitiLCS || currentTile.megaBloody)) {
         if (currentTile.right?.wall == true ||
             currentTile.left?.wall == true ||
             currentTile.down?.wall == true ||

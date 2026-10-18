@@ -4,6 +4,8 @@ The Underground Edition retains the original Dart/Flutter engine and campaign co
 
 The Network tab makes sleeper agents directly accessible from the top of the journal. Its roster shows workplace, infiltration, standing role and unavailable reasons; the inspector distinguishes monthly effects, useful Lay Low work, prepared changes and next-eligible-day recall. Role-review badges remember explicit acknowledgements locally without changing campaign saves or repeating for normal infiltration growth. New painted Network and empty-state assets retain their source masters and prompts.
 
+The tactical field plan and full-floor map use site-specific surface textures and illustrated engine-defined objects and hazards. Distinct unit silhouettes, directional navigation symbols, quieter fog and stronger adjacent-movement cues improve recognition. The tactical camera starts at a readable scale, with pan, zoom, Fit and Center controls. Current-tile guidance stays visible in compact panes; features, fire, restrictions and loot remain visible beneath unit tokens. Hold a tile or enable Inspect for passive details; ordinary adjacent taps still send the original movement direction. The full-floor map adds passive inspection and Find squad. The shared key explains navigation, hazards, visibility and siege-unit symbols. Source-owned interaction classification disables no-op Use controls on automatic entry fixtures while retaining graffiti on eligible open tiles. Presentation overlays block background game keyboard commands even if browser focus returns to the game. Artwork and inspection do not modify campaign/map state, visibility or gameplay RNG.
+
 ## Engine and save fixes
 
 - Unaffordable clothing/flag crafting no longer consumes recycled cloth.

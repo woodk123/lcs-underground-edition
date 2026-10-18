@@ -177,6 +177,23 @@ enum TileSpecial {
   insuranceClaimsTerminal,
 }
 
+/// Shared source-owned interaction classification for controls and map guidance.
+extension TileSpecialInteraction on TileSpecial {
+  bool get activatesOnEntry => switch (this) {
+    TileSpecial.securityCheckpoint || TileSpecial.securityMetalDetectors ||
+    TileSpecial.securitySecondVisit || TileSpecial.clubBouncer ||
+    TileSpecial.clubBouncerSecondVisit || TileSpecial.apartmentLandlord ||
+    TileSpecial.ceoOffice || TileSpecial.insuranceCEO ||
+    TileSpecial.nursingHomeManager || TileSpecial.table || TileSpecial.tent ||
+    TileSpecial.computer || TileSpecial.parkBench || TileSpecial.bankTeller ||
+    TileSpecial.ccsBoss || TileSpecial.ovalOfficeNW || TileSpecial.ovalOfficeNE ||
+    TileSpecial.ovalOfficeSW || TileSpecial.ovalOfficeSE => true,
+    _ => false,
+  };
+
+  bool get hasManualAction => this != TileSpecial.none && !activatesOnEntry;
+}
+
 class SiteTile {
   SiteTile(this.x, this.y, this.z);
   int x;

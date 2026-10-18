@@ -256,6 +256,11 @@ class _ModernGameShellState extends State<ModernGameShell> {
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    // Browser focus can return to the game while a presentation dialog or
+    // popup menu is still open. Those keys belong to the overlay route.
+    if (ModalRoute.of(context)?.isCurrent == false) {
+      return KeyEventResult.ignored;
+    }
     if (_inspectedPersonId != null &&
         !console.textInput &&
         event is KeyDownEvent &&
@@ -2336,6 +2341,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
       (action) => action.entityCategory == 'escape',
     );
     final canMove = directions.values.any((action) => action.enabled);
+    final escapeAction = console.actions
+        .where((action) => action.key.toLowerCase() == 'v' && action.enabled)
+        .firstOrNull;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -2368,7 +2376,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
             fieldPrompt && !fleeing
                 ? 'Answer the current prompt to continue.'
                 : !canMove
-                ? 'Resolve the encounter or choose Flee.'
+                ? escapeAction == null
+                      ? 'Resolve the current decision to move.'
+                      : 'Resolve the encounter or choose ${escapeAction.label}.'
                 : 'Click an adjacent tile or use the arrow keys.',
             style: const TextStyle(color: muted, fontSize: 12),
           ),

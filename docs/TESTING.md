@@ -34,6 +34,18 @@ The tests exercise archive integrity/tampering, complete source snapshots, local
 
 ## Browser regressions
 
+### Tactical artwork
+
+`tactical_artwork_test.dart` checks known-object and hazard sprites, null metadata for hidden terrain, hover/tap inspection, adjacent direction commands, disabled movement callbacks, and unchanged complete campaign/map state and RNG. The existing tactical, interaction, full-floor and field-plan layout suites retain engine visibility, exact tile hit coordinates, zoom isolation and compact 150% text checks. `runtime_art_test.dart` decodes all atlases and checks exact source/runtime alpha and native colour fidelity.
+
+`tactical_visual_review_test.dart` uses explicitly prepared map geometry and loads the real runtime atlases before rendering. Set `LCS_CAPTURE_SCREENS=1` to save desktop, compact and atlas review PNGs under ignored `reports/tactical-artwork/`. These are rendered widget fixtures, not an earned gameplay journey.
+
+`tactical_snapshot_layers_test.dart` checks occupied-tile features, hazards, restrictions, action guidance and isolation from unknown neighbors. `tactical_legend_test.dart` checks the complete scrollable key at enlarged text sizes. `full_site_map_inspection_test.dart` checks passive inspection after transformed zoom/pan, floor changes and short panes. The tactical layout tests require readable default cells and initially visible current-tile guidance, without scrolling to make the assertion pass.
+
+`tactical_shell_acceptance_test.dart` exercises twelve full-shell scenarios in one application-cache lifetime at desktop and 800×600/150%. It deliberately restores background game focus while presentation dialogs and menus are open, then tests F/U/G and arrow keys against the same pending reader and complete campaign/map/RNG state. Optional captures under `reports/tactical-acceptance/shell/` are explicitly synthetic. `tactical_actions_flow_test.dart` runs the actual `siteMode` loop against declared synthetic geometry: stairs change floor, G transfers real loot and clears its marker, safe refusal returns to the field, and passive fixtures disable manual Use. Skills, RNG and outcomes are not overridden.
+
+`scripts/mission_browser_review.mjs --only tactical --expected-hash $expected --out reports/tactical-acceptance/browser-final` checks the rebuilt game on isolated port 18879. It follows actual building entry, door opening, combat, retreat and exit using the original fixture's capabilities, plus full-map return, map-key keyboard isolation, compact focus/fit/pan recovery, safe inspection and exact save/reload/reimport continuity. This option stops after the tactical journey; the broader `operation` option also follows any resulting medical treatment.
+
 ### Juice visibility
 
 `juice_status_test.dart` checks negative and positive rank boundaries, alignment exemptions, recruitment limits, stage progress, verified activity caps and pure inspection. `juice_indicator_test.dart` checks current benefits, next milestones, help on pointer/keyboard/touch, enlarged/mobile layouts, accessible Juice sorting and unchanged live-reader/campaign/RNG state. Existing dossier, crew, recovery and recruitment suites also cover the shared indicators.
