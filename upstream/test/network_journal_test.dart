@@ -258,6 +258,77 @@ void main() {
     },
   );
 
+  for (final current in [ActivityType.none, ActivityType.sleeperLiberal]) {
+    testWidgets(
+      'selecting the current $current order keeps it without a draft',
+      (tester) async {
+        final person = _sleeper('Settled Planner', order: current);
+        final originalOrder = person.activity;
+        final before = _snapshot();
+        reseedRNG(seed: 814004);
+        final expectedSeed = nextRngSeed;
+        reseedRNG(seed: 814004);
+        final harness = await mount(tester);
+
+        Future<void> selectCurrent() async {
+          if (current == ActivityType.none) {
+            await _tap(tester, 'network-lay-low');
+          } else {
+            await _tap(tester, 'network-advocacy');
+            await _tap(tester, 'network-task:${current.name}');
+          }
+        }
+
+        void expectKeepState() {
+          expect(_key('network-task:none'), findsNothing);
+          expect(_key('network-lay-low'), findsOneWidget);
+          expect(_key('network-keep-order'), findsOneWidget);
+          if (current == ActivityType.none) {
+            expect(find.text('Keep Lay Low'), findsOneWidget);
+          }
+          expect(_key('network-confirm-order'), findsNothing);
+          expect(_key('network-cancel-order'), findsNothing);
+          expect(find.text('Prepared change · not confirmed'), findsNothing);
+          expect(find.text('Confirm or cancel draft'), findsNothing);
+          expect(
+            tester.widget<FilledButton>(_key('journal-advance-day')).onPressed,
+            isNotNull,
+          );
+        }
+
+        await selectCurrent();
+        expectKeepState();
+        expect(find.textContaining('1 to review'), findsOneWidget);
+        await _tap(tester, 'network-espionage');
+        await _tap(tester, 'network-task:sleeperSpy');
+        final retainedConfirm = tester
+            .widget<FilledButton>(_key('network-confirm-order'))
+            .onPressed!;
+        await selectCurrent();
+        expectKeepState();
+        final dispatched = List<int>.of(harness.dispatched);
+        retainedConfirm();
+        await _settle(tester);
+        expect(harness.dispatched, dispatched);
+        expectKeepState();
+        await _tap(tester, 'network-keep-order');
+        expect(find.textContaining('to review'), findsNothing);
+        expect(person.activity, same(originalOrder));
+        expect(_snapshot(), before);
+        expect(nextRngSeed, expectedSeed);
+        if (current != ActivityType.none) {
+          await _tap(tester, 'network-lay-low');
+          expect(_key('network-confirm-order'), findsOneWidget);
+          expect(person.activity, same(originalOrder));
+          await _tap(tester, 'network-confirm-order');
+          expect(person.activity.type, ActivityType.none);
+          expect(find.text('Keep Lay Low'), findsOneWidget);
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('roster, dossier, mechanics and Keep Lay Low are read only', (
     tester,
   ) async {

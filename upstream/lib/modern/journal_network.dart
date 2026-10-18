@@ -193,6 +193,14 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
         !console.actions.contains(action)) {
       return;
     }
+    if (activityTypeForAction(action) == person.activity.type) {
+      setState(() {
+        _clearDraft();
+        _notice = null;
+      });
+      _reveal(_roleCardKey);
+      return;
+    }
     setState(() {
       _draft = action;
       _draftRevision = console.revision.value;
@@ -869,6 +877,7 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
     final tasks = console.actions.where(
       (a) =>
           a.entityType == 'sleeper-activity' &&
+          a.entityId != ActivityType.none.name &&
           a.entityId != ActivityType.sleeperJoinLcs.name,
     );
     return [

@@ -17,6 +17,7 @@ The existing fork now has its own 0.1.0 development baseline. These notes will b
 
 ### Fixed
 
+* Network orders no longer show a duplicate Lay Low button, and selecting an agent's current order offers to keep it instead of preparing a change.
 * Save import, recovery and failed-save handling protect campaign progress.
 * Crafting, calendar advancement, treatment, court records, pursuits and siege responses include fixes made during development of this fork.
 
