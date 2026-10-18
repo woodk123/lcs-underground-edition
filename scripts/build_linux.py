@@ -1,6 +1,7 @@
 """Build and check the Linux x64 bundle with the pinned SDK (run on Linux)."""
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 import platform
@@ -11,7 +12,7 @@ from package_release import verify_source_checkout
 from release_common import file_hashes, runtime_hashes, write_json
 
 
-def build(root: Path) -> None:
+def build(root: Path, channel: str = 'Development') -> None:
     if platform.system() != 'Linux' or platform.machine() != 'x86_64':
         raise ValueError('Run this builder on Linux x64.')
     commit = (subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
@@ -39,7 +40,8 @@ def build(root: Path) -> None:
                               'lib/engine/console_char.dart', 'lib/engine/console_graphic.dart']),
         ('full-analysis', [flutter, 'analyze', '--no-pub', '--no-fatal-infos', '--no-fatal-warnings']),
         ('linux-release', [flutter, 'build', 'linux', '--release', '--no-pub',
-                           f'--dart-define=LCS_BUILD={commit[:8]}']),
+                           f'--dart-define=LCS_BUILD={commit[:8]}',
+                           f'--dart-define=LCS_CHANNEL={channel}']),
     ]
     try:
         for name, command in commands:
@@ -68,4 +70,8 @@ def build(root: Path) -> None:
 
 
 if __name__ == '__main__':
-    build(Path(__file__).resolve().parent.parent)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--channel', choices=('Development', 'Preview', 'Nightly', 'Release'),
+                        default='Development')
+    arguments = parser.parse_args()
+    build(Path(__file__).resolve().parent.parent, arguments.channel)

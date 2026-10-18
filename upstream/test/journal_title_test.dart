@@ -105,6 +105,14 @@ void main() {
       expect(find.textContaining('New Age by Ashley S. Fox'), findsOneWidget);
       expect(find.textContaining('GPL-2.0'), findsOneWidget);
       expect(find.textContaining(gameVersionLabel), findsOneWidget);
+      expect(
+        find.textContaining('Underground Edition $gameVersion'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Based on New Age $upstreamVersion'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     },
   );

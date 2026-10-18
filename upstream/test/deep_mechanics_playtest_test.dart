@@ -25,7 +25,7 @@ import 'package:lcs_new_age/saveload/load_cpc_images.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/sitemode/advance.dart';
 import 'package:lcs_new_age/sitemode/fight.dart';
-import 'package:lcs_new_age/title_screen/title_screen.dart';
+import 'package:lcs_new_age/utils/game_version.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 
 import 'campaign_acceptance_test.dart' show playChoices, roundTripLiveCampaign;
@@ -97,7 +97,7 @@ void main() {
         await File('${dir.path}/$name.json').writeAsString(
           jsonEncode(
             SaveFile(
-              version: gameVersion,
+              version: saveCompatibilityVersion,
               saveData: game.gameState.toJson(),
               gameId: id.toString(),
               lastPlayed: DateTime(2026, 10, 14),

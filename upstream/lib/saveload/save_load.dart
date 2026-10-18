@@ -22,8 +22,8 @@ import 'package:lcs_new_age/politics/laws.dart';
 import 'package:lcs_new_age/politics/views.dart';
 import 'package:lcs_new_age/saveload/storage/game_storage.dart';
 import 'package:lcs_new_age/saveload/storage/storage_factory.dart';
-import 'package:lcs_new_age/title_screen/title_screen.dart';
 import 'package:lcs_new_age/utils/colors.dart';
+import 'package:lcs_new_age/utils/game_version.dart';
 import 'package:lcs_new_age/utils/interface_options.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -95,7 +95,7 @@ Future<bool> _migrateFromSharedPreferences() async {
 
 Future<bool> autoSaveGame() async {
   final saveFile = SaveFile(
-    version: gameVersion,
+    version: saveCompatibilityVersion,
     saveData: gameState.toJson(),
     gameId: gameState.uniqueGameId.toString(),
     lastPlayed: DateTime.now(),
@@ -218,10 +218,10 @@ GameState _readCampaign(SaveFile save) {
   if (!_saveVersionPattern.hasMatch(save.version)) {
     throw const FormatException('The save has an unsupported version label.');
   }
-  if (compareVersionStrings(save.version, gameVersion) > 0) {
+  if (compareVersionStrings(save.version, saveCompatibilityVersion) > 0) {
     throw FormatException(
       'This save requires New Age ${save.version} or later. '
-      'This version is $gameVersion.',
+      'This build supports save compatibility $saveCompatibilityVersion.',
     );
   }
   final data = save.saveData;

@@ -52,6 +52,7 @@ Windows and browser saves are separate. Use the game's export/import controls to
 - [Architecture](docs/ARCHITECTURE.md)
 - [Testing](docs/TESTING.md)
 - [Changes and bug fixes](docs/ORIGINAL_CODE_CHANGES.md)
+- [Versioning and releases](docs/VERSIONING.md)
 - [Artwork and assets](docs/ASSETS.md)
 - [Portrait library](docs/PORTRAIT_LIBRARY.md)
 

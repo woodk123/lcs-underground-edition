@@ -2617,7 +2617,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
             _navigating
                 ? 'Opening section…'
                 : title
-                ? 'NEW AGE  /  1.5.6'
+                ? 'UNDERGROUND  /  $gameVersion'
                 : tactical
                 ? 'OPERATION IN PROGRESS'
                 : hq

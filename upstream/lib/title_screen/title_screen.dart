@@ -19,8 +19,6 @@ import 'package:lcs_new_age/utils/interface_options.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-export 'package:lcs_new_age/utils/game_version.dart' show gameVersion;
-
 bool megaFounderCheat = false;
 
 Future<void> titleScreen() async {
@@ -350,7 +348,7 @@ void printTitleScreen(HighScores? highScores) {
   );
 
   setColor(black, background: lightGray);
-  mvaddstr(23, 65, "Version $gameVersion");
+  mvaddstr(23, 55, "Underground $gameVersion");
   setColor(lightGray);
   mvaddstrCenter(24, "(click the game window to give it keyboard focus)");
 }

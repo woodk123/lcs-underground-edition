@@ -30,7 +30,7 @@ import 'package:lcs_new_age/sitemode/fight.dart';
 import 'package:lcs_new_age/sitemode/newencounter.dart';
 import 'package:lcs_new_age/sitemode/sitemap.dart';
 import 'package:lcs_new_age/sitemode/stealth.dart';
-import 'package:lcs_new_age/title_screen/title_screen.dart';
+import 'package:lcs_new_age/utils/game_version.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 import 'package:lcs_new_age/vehicles/vehicle.dart';
 import 'package:lcs_new_age/vehicles/vehicle_type.dart';
@@ -557,7 +557,7 @@ void main() {
         await File('$reportPath/saves/$name.json').writeAsString(
           jsonEncode(
             SaveFile(
-              version: gameVersion,
+              version: saveCompatibilityVersion,
               saveData: data,
               gameId: game.gameState.uniqueGameId.toString(),
               lastPlayed: DateTime(2026, 10, 15),

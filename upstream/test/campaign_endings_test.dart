@@ -20,6 +20,7 @@ import 'package:lcs_new_age/title_screen/game_over.dart';
 import 'package:lcs_new_age/title_screen/high_scores.dart';
 import 'package:lcs_new_age/title_screen/launch_game.dart';
 import 'package:lcs_new_age/title_screen/title_screen.dart';
+import 'package:lcs_new_age/utils/game_version.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 import 'package:path/path.dart' as paths;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -454,7 +455,7 @@ void main() {
       (companion['stats'] as Map<String, dynamic>)['recruits'] = 99;
       await storage.saveGame(
         SaveFile(
-          version: gameVersion,
+          version: saveCompatibilityVersion,
           saveData: companion,
           gameId: companion['uniqueGameId'].toString(),
           lastPlayed: DateTime(2026, 10, 13),

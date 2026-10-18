@@ -24,7 +24,7 @@ import 'package:lcs_new_age/modern/journal_recovery.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/organisation_journal.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
-import 'package:lcs_new_age/title_screen/title_screen.dart' show gameVersion;
+import 'package:lcs_new_age/utils/game_version.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 
 import 'test_support.dart';
@@ -83,7 +83,7 @@ void _roundTrip() {
   expect(_snapshot(), before);
   final exported = jsonEncode(
     SaveFile(
-      version: gameVersion,
+      version: saveCompatibilityVersion,
       saveData: game.gameState.toJson(),
       gameId: game.gameState.uniqueGameId.toString(),
       lastPlayed: DateTime(2026, 10, 16),

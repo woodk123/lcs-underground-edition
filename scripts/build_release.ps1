@@ -3,6 +3,7 @@ param(
     [switch]$Windows,
     [switch]$Nightly,
     [string]$LinuxBundle,
+    [ValidateSet('Development', 'Preview', 'Release')][string]$Channel,
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]*$')][string]$Tag
 )
 
@@ -11,7 +12,9 @@ $ErrorActionPreference = 'Stop'
 $root = Get-LcsRoot
 $project = Join-Path $root 'upstream'
 if ($Nightly -and $Tag) { throw '-Tag and -Nightly cannot be combined.' }
+if ($Nightly -and $Channel) { throw '-Nightly sets its own channel; omit -Channel.' }
 if ($Nightly -and -not $LinuxBundle) { throw '-Nightly requires -LinuxBundle with the checked Linux artifact.' }
+$releaseChannel = if ($Nightly) { 'Nightly' } elseif ($Channel) { $Channel } elseif ($Tag) { 'Preview' } else { 'Development' }
 if (Test-Path -LiteralPath (Join-Path $root '.git')) {
     $changes = git -C $root status --porcelain --untracked-files=normal
     if ($LASTEXITCODE -ne 0) { throw 'Could not verify the source checkout.' }
@@ -74,11 +77,12 @@ try {
     # Keep legacy infos/warnings visible in a separate full-project report. Errors remain fatal.
     Invoke-BuildStep '05-full-analysis' $flutter @('--suppress-analytics', 'analyze', '--no-pub', '--no-fatal-infos', '--no-fatal-warnings')
     $buildDefine = '--dart-define=LCS_BUILD=' + $sourceCommit.Substring(0, 8)
-    Invoke-BuildStep '06-web-release' $flutter @('--suppress-analytics', 'build', 'web', '--release', '--no-pub', '--no-wasm-dry-run', '--base-href', '/', $buildDefine)
+    $channelDefine = '--dart-define=LCS_CHANNEL=' + $releaseChannel
+    Invoke-BuildStep '06-web-release' $flutter @('--suppress-analytics', 'build', 'web', '--release', '--no-pub', '--no-wasm-dry-run', '--base-href', '/', $buildDefine, $channelDefine)
     # The upstream injector requires a fresh build and must run exactly once per build.
     Invoke-BuildStep '07-offline-manifest' $dart @('run', 'tool/inject_service_worker.dart', 'build/web')
     if ($Windows -or $Nightly) {
-        Invoke-BuildStep '08-windows-release' $flutter @('--suppress-analytics', 'build', 'windows', '--release', '--no-pub', $buildDefine)
+        Invoke-BuildStep '08-windows-release' $flutter @('--suppress-analytics', 'build', 'windows', '--release', '--no-pub', $buildDefine, $channelDefine)
     }
     Write-BuildReport 'automated_checks_passed_manual_qa_pending'
     $packageArguments = @((Join-Path $root 'scripts\package_release.py'), '--root', $root, '--report', $reportDir)

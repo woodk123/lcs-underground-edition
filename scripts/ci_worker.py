@@ -83,13 +83,14 @@ def run_worker(root: Path, kind: str, target: str, shard: int) -> None:
             ])
     else:
         define = f"--dart-define=LCS_BUILD={info['source_commit'][:8]}"
+        channel = '--dart-define=LCS_CHANNEL=Nightly'
         if target == 'linux':
-            commands.append(('linux-release', [flutter, 'build', 'linux', '--release', '--no-pub', define], root / 'upstream'))
+            commands.append(('linux-release', [flutter, 'build', 'linux', '--release', '--no-pub', define, channel], root / 'upstream'))
         elif target == 'windows':
-            commands.append(('windows-release', [flutter, 'build', 'windows', '--release', '--no-pub', define], root / 'upstream'))
+            commands.append(('windows-release', [flutter, 'build', 'windows', '--release', '--no-pub', define, channel], root / 'upstream'))
         else:
             commands.extend([
-                ('web-release', [flutter, 'build', 'web', '--release', '--no-pub', '--no-wasm-dry-run', '--base-href', '/', define], root / 'upstream'),
+                ('web-release', [flutter, 'build', 'web', '--release', '--no-pub', '--no-wasm-dry-run', '--base-href', '/', define, channel], root / 'upstream'),
                 ('offline-manifest', [dart, 'run', 'tool/inject_service_worker.dart', 'build/web'], root / 'upstream'),
             ])
     try:

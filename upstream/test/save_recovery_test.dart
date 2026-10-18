@@ -18,7 +18,7 @@ import 'package:lcs_new_age/saveload/storage/sembast_storage.dart';
 import 'package:lcs_new_age/title_screen/game_over.dart';
 import 'package:lcs_new_age/title_screen/high_scores.dart';
 import 'package:lcs_new_age/title_screen/launch_game.dart';
-import 'package:lcs_new_age/title_screen/title_screen.dart';
+import 'package:lcs_new_age/utils/game_version.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 import 'package:path/path.dart' as paths;
 import 'package:sembast/sembast_io.dart';
@@ -103,7 +103,7 @@ Future<SaveFile> fixtureSave(String name) async => SaveFile.fromJson(
 );
 
 SaveFile currentSave() => SaveFile(
-  version: gameVersion,
+  version: saveCompatibilityVersion,
   saveData: game.gameState.toJson(),
   gameId: game.gameState.uniqueGameId.toString(),
   lastPlayed: DateTime(2026, 10, 13),
@@ -161,6 +161,21 @@ void main() {
     game.gameState = game.GameState.fromJson(save.saveData);
     applyBugFixes(save.version);
   });
+
+  test(
+    'autosaves retain compatibility independently of the Underground version',
+    () async {
+      final expected = jsonEncode(game.gameState.toJson());
+      expect(await autoSaveGame(), isTrue);
+      final stored = (await storage.loadGame(
+        game.gameState.uniqueGameId.toString(),
+      ))!;
+      expect(stored.version, saveCompatibilityVersion);
+      final result = await acknowledge(() => loadGameFromSave(stored));
+      expect(result.value, isTrue);
+      expect(jsonEncode(game.gameState.toJson()), expected);
+    },
+  );
 
   test(
     'portable export/import preserves all five normalized shipped campaigns',
@@ -379,7 +394,7 @@ void main() {
       final result = await acknowledge(
         () => loadGameFromSave(
           SaveFile(
-            version: gameVersion,
+            version: saveCompatibilityVersion,
             gameId: 'broken-world',
             saveData: broken,
             lastPlayed: null,
@@ -494,7 +509,7 @@ void main() {
       await records.record('truncated').put(database, {'data': '{"saveData":'});
       await storage.saveGame(
         SaveFile(
-          version: gameVersion,
+          version: saveCompatibilityVersion,
           gameId: 'bad-state',
           saveData: {'cities': []},
           lastPlayed: null,

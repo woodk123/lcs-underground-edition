@@ -14,6 +14,8 @@ Pop-Location
 
 These analysis commands match the release/CI policy: focused interface analysis is strict; full-project errors fail while legacy warnings and infos remain visible.
 
+For changes to versioning, run the focused [version/save/title checks](VERSIONING.md#save-compatibility). These verify that the Underground package and displayed versions agree, autosaves retain their compatibility header, existing campaigns still load, and the longer footer fits at narrow/enlarged layouts.
+
 The suite covers the original engine, command routing, order confirmation/cancellation, saves and migrations, equipment, politics, campaign endings, portraits and responsive UI. Save files under `upstream/test/saves/` are regression fixtures, not disposable player saves.
 
 Fresh-campaign flow regressions include pending recruitment readiness compared with the original meeting menu, new recruit/custody/ended-visit follow-ups across restarts, live victory counts compared with `winCheck`, original rent exemptions and eviction timing, and draft guards for personal orders, Network, visits and Bases purchases. Retained callbacks are exercised after cancellation and replacement; read-only views preserve full campaign snapshots and gameplay RNG. The small-screen checks retain visible first-row actions and order timing at enlarged reading sizes.

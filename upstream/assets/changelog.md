@@ -1,3 +1,29 @@
+# The Underground Edition changelog
+
+## Unreleased
+
+The existing fork now has its own 0.1.0 development baseline. These notes will be dated and grouped under that version when the first numbered Underground preview or release is prepared.
+
+### Added
+
+* An illustrated paper-and-leather journal with crew dossiers, persistent portraits, city plans, order cards and tactical maps.
+* People, Bases, Network, newspaper production and account views make campaign management and its consequences easier to follow.
+* Illustrated equipment and vehicle catalogues, with readable guides and contextual choices.
+
+### Changed
+
+* The title now identifies the Underground Edition version and build channel, alongside the New Age base and exact source build for bug reports.
+* Underground release numbering starts at 0.1.0 and is independent of save compatibility. Existing campaigns retain their current save format and migration behavior.
+
+### Fixed
+
+* Save import, recovery and failed-save handling protect campaign progress.
+* Crafting, calendar advancement, treatment, court records, pursuits and siege responses include fixes made during development of this fork.
+
+# New Age history
+
+The following entries are the inherited New Age changelog.
+
 ## 1.5.6 - 7/8/2026
 * Implemented a change that should fix offline play in the browser version *again*, and updated my build process so that this should stop happening in the future
 
