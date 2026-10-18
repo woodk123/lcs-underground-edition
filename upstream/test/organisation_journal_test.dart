@@ -538,7 +538,7 @@ void main() {
         reseedRNG(seed: 29471);
         final rolls = List.generate(10, (_) => lcsRandom(100000));
         reseedRNG(seed: 29471);
-        await tester.ensureVisible(_key('journal-member:${second.id}'));
+        await _showCrewMember(tester, second.id);
         await _settle(tester);
         await _tap(tester, 'journal-member:${second.id}');
         expect(
@@ -1066,7 +1066,7 @@ void main() {
         await tester.tap(find.byTooltip('Show location index'));
         await _settle(tester);
         await _tap(tester, 'journal-activity:teachLiberalArts');
-        await tester.ensureVisible(_key('journal-member:${next.id}'));
+        await _showCrewMember(tester, next.id);
         await _settle(tester);
         await tester.tap(_key('journal-member:${next.id}'));
         for (var frame = 0; frame < 80; frame++) {
@@ -1088,7 +1088,7 @@ void main() {
         await tester.tap(find.byTooltip('Show city plan'));
         await _settle(tester);
         final third = game.squad[2];
-        await tester.ensureVisible(_key('journal-member:${third.id}'));
+        await _showCrewMember(tester, third.id);
         await _settle(tester);
         viewer.transformationController!.value = Matrix4.identity()
           ..scaleByDouble(1.7, 1.7, 1, 1);
@@ -1124,7 +1124,7 @@ void main() {
     final offset = tester.state<ScrollableState>(scroll).position.pixels;
     expect(offset, greaterThan(0));
     final next = game.squad[1];
-    await tester.ensureVisible(_key('journal-member:${next.id}'));
+    await _showCrewMember(tester, next.id);
     await _settle(tester);
     await _tap(tester, 'journal-member:${next.id}');
     expect(

@@ -1005,7 +1005,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                       narrow ? 108.0 : 120.0,
                     );
               final crewDesired =
-                  members.length * (widget.textScale > 1.1 ? 34.0 : 30.0) + 56;
+                  members.length * (widget.textScale > 1.1 ? 56.0 : 44.0) + 56;
               final jobHeight =
                   (bounds.maxHeight - headerHeight - crewDesired - 12).clamp(
                     widget.textScale > 1.1 ? (planning ? 260.0 : 230.0) : 140.0,
@@ -1579,6 +1579,18 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   );
 
   Widget _memberRow(Creature member) {
+    final strengths =
+        Skill.values.where((skill) => member.skill(skill) > 0).toList()
+          ..sort((a, b) {
+            final level = member.skill(b).compareTo(member.skill(a));
+            return level != 0 ? level : a.displayName.compareTo(b.displayName);
+          });
+    final skillSummary = strengths.isEmpty
+        ? 'No trained skills yet'
+        : strengths
+              .take(3)
+              .map((skill) => '${skill.displayName} ${member.skill(skill)}')
+              .join(' · ');
     bool canSelect() =>
         !controller.busy &&
         !_visitRouting &&
@@ -1640,16 +1652,35 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   shape: const RoundedRectangleBorder(),
                 ),
                 child: Semantics(
-                  label: 'Select crew ${member.name}',
+                  label:
+                      'Select crew ${member.name}\nStrongest skills: $skillSummary',
                   excludeSemantics: true,
-                  child: Text(
-                    member.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: JournalPalette.body.copyWith(
-                      fontSize: 13,
-                      height: 1.25,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        member.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: JournalPalette.body.copyWith(
+                          fontSize: 13,
+                          height: 1.25,
+                        ),
+                      ),
+                      Tooltip(
+                        message: 'Strongest skills: $skillSummary',
+                        child: Text(
+                          skillSummary,
+                          key: ValueKey('journal-member-skills:${member.id}'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: JournalPalette.small.copyWith(
+                            fontSize: 11,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
