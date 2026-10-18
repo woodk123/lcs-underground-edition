@@ -13,6 +13,7 @@ import 'package:lcs_new_age/items/ammo.dart';
 import 'package:lcs_new_age/items/clothing.dart';
 import 'package:lcs_new_age/items/weapon.dart';
 import 'package:lcs_new_age/location/compound_upgrades.dart';
+import 'package:lcs_new_age/modern/catalogue_art.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
@@ -613,6 +614,15 @@ class DirectContent extends StatelessWidget {
     bool compact = false,
     bool intentColumn = false,
   }) {
+    if (choiceItemDescription(console, y) case final description?) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(journalPage ? 12 : 18, 4, 12, 12),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(description, style: JournalPalette.small),
+        ),
+      );
+    }
     final actions = frame.at(y).where(frame.embedded).toList();
     final action = actions.isEmpty ? null : actions.first;
     final selected =
@@ -685,7 +695,7 @@ class DirectContent extends StatelessWidget {
       return text;
     }
 
-    final identity = Row(
+    final identityText = Row(
       children: [
         if (action != null) ...[
           _shortcut(action.key),
@@ -703,6 +713,30 @@ class DirectContent extends StatelessWidget {
         ),
       ],
     );
+    final illustration = action == null
+        ? null
+        : equipmentArtwork(choiceItemTypeId(action)) ??
+              vehicleArtwork(choiceVehicleTypeId(action));
+    final identity = illustration == null
+        ? identityText
+        : LayoutBuilder(
+            builder: (context, bounds) => bounds.maxWidth < 210
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CatalogueIllustration(art: illustration),
+                      const SizedBox(height: 5),
+                      identityText,
+                    ],
+                  )
+                : Row(
+                    children: [
+                      CatalogueIllustration(art: illustration),
+                      const SizedBox(width: 10),
+                      Expanded(child: identityText),
+                    ],
+                  ),
+          );
     final body = compact
         ? Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -868,13 +902,23 @@ class DirectContent extends StatelessWidget {
       );
     }
     final origins = actions.map((action) => action.x).toSet().toList()..sort();
+    final illustrated = actions.any(
+      (action) =>
+          equipmentArtwork(choiceItemTypeId(action)) != null ||
+          vehicleArtwork(choiceVehicleTypeId(action)) != null,
+    );
+    final illustratedColumnWidth = MediaQuery.textScalerOf(context).scale(280);
     // The original two/three-column menus carry independent lists. Retain that
     // relationship rather than interleaving a category with an unrelated task.
     final split = origins.length > 1 && origins.last - origins.first >= 20;
     if (!split) {
       return LayoutBuilder(
         builder: (context, constraints) {
-          final count = constraints.maxWidth >= 1000
+          final count = illustrated
+              ? ((constraints.maxWidth + 12) / (illustratedColumnWidth + 12))
+                    .floor()
+                    .clamp(1, 3)
+              : constraints.maxWidth >= 1000
               ? 3
               : constraints.maxWidth >= 600
               ? 2
@@ -947,7 +991,14 @@ class DirectContent extends StatelessWidget {
     }
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 700) {
+        final minimumWidth = illustrated
+            ? math.max(
+                700,
+                groups.length * illustratedColumnWidth +
+                    (groups.length - 1) * 16,
+              )
+            : 700;
+        if (constraints.maxWidth < minimumWidth) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -1092,6 +1143,9 @@ class DirectContent extends StatelessWidget {
         : null;
     final primary =
         action.key == 'Enter' && !_title(action).toLowerCase().contains('back');
+    final illustration =
+        equipmentArtwork(choiceItemTypeId(action)) ??
+        vehicleArtwork(choiceVehicleTypeId(action));
     final control = _interactive(
       context,
       frame,
@@ -1105,6 +1159,10 @@ class DirectContent extends StatelessWidget {
             children: [
               _shortcut(action.key, primary: primary),
               SizedBox(width: dense ? 6 : 12),
+              if (illustration != null) ...[
+                CatalogueIllustration(art: illustration, width: 56, height: 38),
+                const SizedBox(width: 8),
+              ],
               if (compact)
                 Flexible(
                   child: Text(
@@ -1283,7 +1341,7 @@ class DirectContent extends StatelessWidget {
             item: inspectedItem,
             label:
                 'Inspect ${inspectedItem?.type.name ?? inspectedVehicle!.fullName()}',
-            itemType: inspectedVehicle?.typeName ?? inspectedItem?.typeName,
+            itemType: inspectedVehicle?.typeName ?? inspectedItem?.type.idName,
           ),
         ],
       );

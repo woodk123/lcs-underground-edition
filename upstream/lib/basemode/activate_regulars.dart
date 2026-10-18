@@ -11,6 +11,7 @@ import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/creature/sort_creatures.dart';
 import 'package:lcs_new_age/daily/activities/fundraising.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/item_help_context.dart';
 import 'package:lcs_new_age/engine/organisation_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/gamestate/squad.dart';
@@ -204,9 +205,11 @@ Future<void> assignTask(Creature c) async {
     final orderFrame = ActivityOrderFrame(
       actorId: c.id,
       sleeper: false,
-      confirmation: console.actions.singleWhere((action) =>
-          action.entityType == 'activity-confirm' &&
-          action.entityCategory == c.id.toString()),
+      confirmation: console.actions.singleWhere(
+        (action) =>
+            action.entityType == 'activity-confirm' &&
+            action.entityCategory == c.id.toString(),
+      ),
       navigation: console.navigation!,
       categoryKeys: const ['a', 'b', 'c', 'd', 'e', 't', 'm'],
       selectedCategoryKey: state == 0 ? null : String.fromCharCode(state),
@@ -628,6 +631,7 @@ Future<void> _selectClothingToMake(Creature cr) async {
         "$key - ${craftable[index].name}",
         baseColorKey: color,
       );
+      describeChoiceItemType(console, key, craftable[index].idName);
       addDifficultyText(y, 37, difficulty + 4);
       String price =
           "\$${craftable[index].makePrice + craftable[index].allowedArmor.first.makePrice}";

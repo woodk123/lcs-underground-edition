@@ -10,6 +10,7 @@ import 'package:lcs_new_age/creature/body.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/creature_type.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/item_help_context.dart';
 import 'package:lcs_new_age/engine/recovery_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/gamestate/ledger.dart';
@@ -221,6 +222,7 @@ Future<void> dealership(Site loc) async {
         "S",
         "S - Sell the ${carToSell.fullName()} (\$$price)",
       );
+      describeChoiceVehicle(console, 'S', carToSell);
     } else {
       addInlineOptionText("S", "S - Sell a car", enabledWhen: false);
     }
@@ -287,6 +289,11 @@ Future<void> dealership(Site loc) async {
           "Vehicle",
           true,
           "We don't need a Conservative car",
+          describeOption: (key, index) => describeChoiceVehicleType(
+            console,
+            key,
+            availablevehicle[index].idName,
+          ),
         );
         if (carchoice != -1 && vehicleprice[carchoice] > ledger.funds) {
           mvaddstrc(1, 1, darkRed, "You don't have enough money!");

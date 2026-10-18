@@ -8,6 +8,7 @@ import 'package:lcs_new_age/common_display/print_party.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/daily/shopsnstuff.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/item_help_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/gamestate/ledger.dart';
 import 'package:lcs_new_age/gamestate/squad.dart';
@@ -256,6 +257,9 @@ class Shop extends ShopOption {
           "$letter - $desc",
           enabledWhen: _canChoose(availableOptions[p]),
         );
+        if (availableOptions[p] case final ShopItem item) {
+          describeChoiceItemType(console, letter, item.itemId);
+        }
 
         if (x == 1) {
           x = 2;
@@ -366,6 +370,11 @@ class Shop extends ShopOption {
           enabledWhen: _canChoose(availableOptions[index]),
         );
         if (availableOptions[index] is ShopItem) {
+          describeChoiceItemType(
+            console,
+            letter,
+            (availableOptions[index] as ShopItem).itemId,
+          );
           move(y, 39);
           addstr("\$${(availableOptions[index] as ShopItem).price(false)}");
         }
@@ -413,6 +422,12 @@ class Shop extends ShopOption {
           setColor(midGray);
           move(y, 4);
           addstr(weapon.description ?? "");
+          describeChoiceItemDescription(
+            console,
+            key,
+            y,
+            weapon.description ?? '',
+          );
         } else {
           setColor(lightGray);
           addOptionText(
@@ -422,6 +437,7 @@ class Shop extends ShopOption {
             "$key - ${weapon.name}",
             enabledWhen: _canChoose(availableOptions[i]),
           );
+          describeChoiceItemType(console, key, weapon.idName);
           move(y, 20);
           AmmoType? ammo = weapon.acceptableAmmo.firstOrNull;
           if (ammo != null && weapon.ammoCapacity > 0) {
@@ -485,6 +501,7 @@ class Shop extends ShopOption {
           "$key - ${ammo.name}",
           enabledWhen: _canChoose(availableOptions[index]),
         );
+        describeChoiceItemType(console, key, ammo.idName);
         move(y, 24);
         addstr(ammo.damage.toString());
         if (ammo.multihit > 1) {
@@ -529,6 +546,7 @@ class Shop extends ShopOption {
           "$key - ${clothing.name}",
           enabledWhen: _canChoose(availableOptions[index]),
         );
+        describeChoiceItemType(console, key, clothing.idName);
         move(y, 24);
         addstr(clothing.traitsList(true).join(", "));
         move(y, 59);
@@ -680,6 +698,7 @@ class Shop extends ShopOption {
               ? ColorKey.lightGreen
               : ColorKey.lightGray,
         );
+        describeChoiceItem(console, key, base.loot[l]);
         setColor(baseColor);
         if (base.loot[l].stackSize > 1) {
           if (selected[l] > 0) {

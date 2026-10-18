@@ -6,6 +6,7 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/modern/attribute_help.dart';
+import 'package:lcs_new_age/modern/catalogue_art.dart';
 import 'package:lcs_new_age/modern/crew_injury_panel.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
@@ -745,6 +746,19 @@ class _CrewDossierState extends State<CrewDossier> {
           ]),
           _section('Equipment', Icons.inventory_2_outlined, [
             Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              children: [
+                for (final id in [
+                  person.equippedWeapon?.type.idName,
+                  person.equippedClothing?.type.idName,
+                  person.spareAmmo?.type.idName,
+                ])
+                  if (equipmentArtwork(id) case final art?)
+                    CatalogueIllustration(art: art, width: 92, height: 60),
+              ],
+            ),
+            Wrap(
               children: [
                 DecisionGuideButton(
                   topic: DecisionTopic.weapons,
@@ -813,6 +827,16 @@ class _CrewDossierState extends State<CrewDossier> {
             ),
             if (person.spareAmmo != null)
               _fact('Ammunition quantity', '${person.spareAmmo!.stackSize}'),
+            if (person.car != null)
+              if (vehicleArtwork(person.car!.typeName) case final art?)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: CatalogueIllustration(
+                    art: art,
+                    width: 160,
+                    height: 80,
+                  ),
+                ),
             if (person.car != null)
               _fact(
                 'Vehicle',

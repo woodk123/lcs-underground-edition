@@ -15,6 +15,7 @@ import 'package:lcs_new_age/items/weapon.dart';
 import 'package:lcs_new_age/items/weapon_type.dart';
 import 'package:lcs_new_age/location/compound_upgrades.dart';
 import 'package:lcs_new_age/location/site.dart';
+import 'package:lcs_new_age/modern/catalogue_art.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/politics/laws.dart';
 import 'package:lcs_new_age/politics/views.dart';
@@ -469,11 +470,11 @@ class _DecisionGuideState extends State<_DecisionGuide> {
     final weapon = weaponTypes[_weaponId];
     final clothing = clothingTypes[_clothingId];
     final vehicle = vehicleTypes[_vehicleId];
-    final selectedItem = widget.item?.typeName == _weaponId
+    final selectedItem = widget.item?.type.idName == _weaponId
         ? widget.item
         : null;
     final selectedClothing =
-        widget.item is Clothing && widget.item?.typeName == _clothingId
+        widget.item is Clothing && widget.item?.type.idName == _clothingId
         ? widget.item! as Clothing
         : actor?.equippedClothing?.type.idName == _clothingId
         ? actor?.equippedClothing
@@ -539,6 +540,37 @@ class _DecisionGuideState extends State<_DecisionGuide> {
                             ),
                         ],
                         onChanged: (value) => setState(() => _actorId = value),
+                      ),
+                    if (switch (_topic) {
+                          DecisionTopic.weapons => equipmentArtwork(
+                            widget.item is Ammo
+                                ? widget.item!.type.idName
+                                : _weaponId,
+                          ),
+                          DecisionTopic.clothing => equipmentArtwork(
+                            _clothingId,
+                          ),
+                          DecisionTopic.vehicles => vehicleArtwork(_vehicleId),
+                          _ => null,
+                        }
+                        case final art?)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Column(
+                          children: [
+                            CatalogueIllustration(
+                              art: art,
+                              width: 240,
+                              height: 110,
+                            ),
+                            if (_topic == DecisionTopic.vehicles)
+                              const Text(
+                                'Reference illustration; colour and year vary.',
+                                style: JournalPalette.small,
+                                textAlign: TextAlign.center,
+                              ),
+                          ],
+                        ),
                       ),
                     for (final text in decisionDetails(
                       _topic,

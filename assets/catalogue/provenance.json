@@ -1,0 +1,439 @@
+{
+  "version": 1,
+  "generated_on": "2026-10-18",
+  "generation_tool": "built-in image_gen",
+  "equipment_paintings": 32,
+  "vehicle_paintings": 11,
+  "policy": "Original PNG masters and lossless alpha retained. Each selected image was generated then edited to improve separation. Crops include inspected transparent margins; use full-object rectangles rather than equal grid cuts. Exact stable catalogue IDs only. Paintings do not represent quantities, item condition, installed armour or generated vehicle colour/year. All labels and controls remain live Flutter widgets.",
+  "assets": [
+    {
+      "source_path": "assets/runtime-art/source/journal_equipment_weapons_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_equipment_weapons_v1.webp",
+      "prompt_path": "assets/catalogue/equipment-weapons.prompt.txt",
+      "selected_generation": "exec-79015b34-7d44-454f-ba6d-d81abfb43389.png",
+      "width": 1536,
+      "height": 1024,
+      "logical_columns": 4,
+      "logical_rows": 4,
+      "entries": [
+        {
+          "type_id": "WEAPON_22_REVOLVER",
+          "source_rect": [
+            61,
+            75,
+            275,
+            162
+          ]
+        },
+        {
+          "type_id": "WEAPON_9MM_HANDGUN",
+          "source_rect": [
+            460,
+            70,
+            241,
+            165
+          ]
+        },
+        {
+          "type_id": "WEAPON_DESERT_EAGLE",
+          "source_rect": [
+            816,
+            68,
+            276,
+            165
+          ]
+        },
+        {
+          "type_id": "WEAPON_22_RIFLE",
+          "source_rect": [
+            1169,
+            106,
+            323,
+            98
+          ]
+        },
+        {
+          "type_id": "WEAPON_PUMP_SHOTGUN",
+          "source_rect": [
+            25,
+            349,
+            341,
+            108
+          ]
+        },
+        {
+          "type_id": "WEAPON_AR15",
+          "source_rect": [
+            415,
+            328,
+            342,
+            140
+          ]
+        },
+        {
+          "type_id": "WEAPON_AK102",
+          "source_rect": [
+            787,
+            327,
+            340,
+            143
+          ]
+        },
+        {
+          "type_id": "WEAPON_MP5",
+          "source_rect": [
+            1194,
+            320,
+            295,
+            161
+          ]
+        },
+        {
+          "type_id": "WEAPON_TOMMYGUN",
+          "source_rect": [
+            28,
+            557,
+            338,
+            148
+          ]
+        },
+        {
+          "type_id": "WEAPON_M250_MACHINEGUN",
+          "source_rect": [
+            410,
+            563,
+            347,
+            136
+          ]
+        },
+        {
+          "type_id": "WEAPON_COMBATKNIFE",
+          "source_rect": [
+            806,
+            585,
+            315,
+            93
+          ]
+        },
+        {
+          "type_id": "WEAPON_BASEBALLBAT",
+          "source_rect": [
+            1189,
+            567,
+            313,
+            99
+          ]
+        },
+        {
+          "type_id": "WEAPON_CROWBAR",
+          "source_rect": [
+            41,
+            793,
+            314,
+            129
+          ]
+        },
+        {
+          "type_id": "WEAPON_AXE",
+          "source_rect": [
+            418,
+            776,
+            325,
+            159
+          ]
+        },
+        {
+          "type_id": "AMMO_9MM",
+          "source_rect": [
+            827,
+            765,
+            284,
+            191
+          ]
+        },
+        {
+          "type_id": "AMMO_BUCKSHOT",
+          "source_rect": [
+            1200,
+            771,
+            276,
+            177
+          ]
+        }
+      ],
+      "source_sha256": "c3c95d4a19e6db60df51010b837b0755114cd955fcdd2d05348300aa291e23c0",
+      "runtime_sha256": "2808d85c37dc1b8972f788b7f56dccf270f70a2f0dba1983141cd1b6c1c720ab"
+    },
+    {
+      "source_path": "assets/runtime-art/source/journal_equipment_gear_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_equipment_gear_v1.webp",
+      "prompt_path": "assets/catalogue/equipment-gear.prompt.txt",
+      "selected_generation": "exec-684359ef-73d1-48c0-875e-8f6e534ac2b3.png",
+      "width": 1536,
+      "height": 1024,
+      "logical_columns": 4,
+      "logical_rows": 4,
+      "entries": [
+        {
+          "type_id": "CLOTHING_CLOTHES",
+          "source_rect": [
+            91,
+            60,
+            266,
+            190
+          ]
+        },
+        {
+          "type_id": "CLOTHING_CHEAPSUIT",
+          "source_rect": [
+            461,
+            58,
+            275,
+            193
+          ]
+        },
+        {
+          "type_id": "CLOTHING_LABCOAT",
+          "source_rect": [
+            860,
+            48,
+            201,
+            213
+          ]
+        },
+        {
+          "type_id": "CLOTHING_POLICEUNIFORM",
+          "source_rect": [
+            1206,
+            57,
+            269,
+            198
+          ]
+        },
+        {
+          "type_id": "CLOTHING_CAMOSUIT",
+          "source_rect": [
+            88,
+            289,
+            268,
+            204
+          ]
+        },
+        {
+          "type_id": "CLOTHING_SWATARMOR",
+          "source_rect": [
+            459,
+            291,
+            291,
+            209
+          ]
+        },
+        {
+          "type_id": "CLOTHING_PRISONER",
+          "source_rect": [
+            867,
+            277,
+            183,
+            235
+          ]
+        },
+        {
+          "type_id": "CLOTHING_OVERALLS",
+          "source_rect": [
+            1243,
+            285,
+            201,
+            216
+          ]
+        },
+        {
+          "type_id": "CLOTHING_BLACKROBE",
+          "source_rect": [
+            98,
+            520,
+            219,
+            225
+          ]
+        },
+        {
+          "type_id": "CLOTHING_LEATHER",
+          "source_rect": [
+            458,
+            524,
+            250,
+            212
+          ]
+        },
+        {
+          "type_id": "WEAPON_GUITAR",
+          "source_rect": [
+            825,
+            531,
+            294,
+            214
+          ]
+        },
+        {
+          "type_id": "WEAPON_SPRAYCAN",
+          "source_rect": [
+            1302,
+            530,
+            84,
+            209
+          ]
+        },
+        {
+          "type_id": "LOOT_COMPUTER",
+          "source_rect": [
+            96,
+            767,
+            252,
+            207
+          ]
+        },
+        {
+          "type_id": "LOOT_MICROPHONE",
+          "source_rect": [
+            514,
+            763,
+            122,
+            207
+          ]
+        },
+        {
+          "type_id": "LOOT_FINECLOTH",
+          "source_rect": [
+            818,
+            777,
+            269,
+            189
+          ]
+        },
+        {
+          "type_id": "LOOT_SECRETDOCUMENTS",
+          "source_rect": [
+            1208,
+            770,
+            268,
+            201
+          ]
+        }
+      ],
+      "source_sha256": "ec1d1f80961e8ccfd09c4dc00932e288ec04caf237b18488b14b7f54f45c843e",
+      "runtime_sha256": "567cad912d6e41a0949978699d47f4696995f7b1dfc74f64e37cb5607d5ba650"
+    },
+    {
+      "source_path": "assets/runtime-art/source/journal_vehicles_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_vehicles_v1.webp",
+      "prompt_path": "assets/catalogue/vehicles.prompt.txt",
+      "selected_generation": "exec-75c48a0a-d498-4769-aa64-65e91c348175.png",
+      "width": 1536,
+      "height": 1024,
+      "logical_columns": 3,
+      "logical_rows": 4,
+      "entries": [
+        {
+          "type_id": "BUG",
+          "source_rect": [
+            69,
+            47,
+            391,
+            205
+          ]
+        },
+        {
+          "type_id": "HMMWV",
+          "source_rect": [
+            551,
+            40,
+            438,
+            213
+          ]
+        },
+        {
+          "type_id": "JEEP",
+          "source_rect": [
+            1080,
+            38,
+            393,
+            216
+          ]
+        },
+        {
+          "type_id": "PICKUP",
+          "source_rect": [
+            48,
+            296,
+            441,
+            204
+          ]
+        },
+        {
+          "type_id": "POLICECAR",
+          "source_rect": [
+            538,
+            286,
+            462,
+            212
+          ]
+        },
+        {
+          "type_id": "AGENTCAR",
+          "source_rect": [
+            1062,
+            311,
+            436,
+            186
+          ]
+        },
+        {
+          "type_id": "SPORTSCAR",
+          "source_rect": [
+            48,
+            542,
+            435,
+            185
+          ]
+        },
+        {
+          "type_id": "STATIONWAGON",
+          "source_rect": [
+            537,
+            525,
+            463,
+            198
+          ]
+        },
+        {
+          "type_id": "SUV",
+          "source_rect": [
+            1063,
+            522,
+            433,
+            217
+          ]
+        },
+        {
+          "type_id": "TAXICAB",
+          "source_rect": [
+            47,
+            765,
+            436,
+            207
+          ]
+        },
+        {
+          "type_id": "VAN",
+          "source_rect": [
+            550,
+            759,
+            439,
+            220
+          ]
+        }
+      ],
+      "source_sha256": "d34b793ee865df04b08cbd98b8aad84ba05f2e29aa9b479dc42f0657c616e905",
+      "runtime_sha256": "309b4ed3f7590f64bee77f5095a6fefffb712d960c96f509c65f8cdc8c950422"
+    }
+  ]
+}

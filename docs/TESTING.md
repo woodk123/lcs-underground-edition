@@ -34,6 +34,12 @@ The tests exercise archive integrity/tampering, complete source snapshots, local
 
 ## Browser regressions
 
+### Equipment and vehicle artwork
+
+`catalogue_art_qa_test.dart` checks all 32 equipment paintings and all 11 vehicle types against the retained PNGs, runtime manifests and provenance. It checks complete transparent crops, decoded row/detail paintings, legacy item IDs, exact passenger/driver action metadata, disabled controls, and unchanged campaign state/RNG. Its shared application-cache journey covers guides and rows at desktop, 800×600/150% and 360×640/200%, followed by the actual weapon-shop and dealership purchase handlers. Set `LCS_CAPTURE_SCREENS=1` to retain the contact sheet and source-handler screenshots under ignored `reports/catalogue-art-qa/`.
+
+`scripts/catalogue_browser_review.mjs` requires its own isolated origin, **http://127.0.0.1:18883/**, and an exact compiled `main.dart.js` SHA-256. Build into a separate absolute output directory and inject its service worker once, as described below; keep existing player and QA servers separate. Start that directory with `scripts/launch.ps1 -Port 18883 -NoBrowser -WebRoot $qaWeb`, then run `node scripts/catalogue_browser_review.mjs --expected-hash $expected`. The helper imports a declared disposable copy of the bundled campaign with stored items and eleven vehicles, exposes actual inventory choices, all three guides and dossier equipment at desktop and 150%, and compares complete exports before/after inspection. Asset responses and loaded JavaScript hashes are checked. Prepared possessions are not earned gameplay outcomes; native Windows GUI acceptance remains separate.
+
 ### Tactical artwork
 
 `tactical_artwork_test.dart` checks known-object and hazard sprites, null metadata for hidden terrain, hover/tap inspection, adjacent direction commands, disabled movement callbacks, and unchanged complete campaign/map state and RNG. The existing tactical, interaction, full-floor and field-plan layout suites retain engine visibility, exact tile hit coordinates, zoom isolation and compact 150% text checks. `runtime_art_test.dart` decodes all atlases and checks exact source/runtime alpha and native colour fidelity.

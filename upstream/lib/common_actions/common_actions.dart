@@ -50,12 +50,14 @@ void addjuice(Creature cr, int juice, int cap) {
 /* common - Displays options to choose from and returns an int corresponding
             to the index of the option in the vector. */
 Future<int> choiceprompt(
-    String firstline,
-    String secondline,
-    List<String> option,
-    String optiontypename,
-    bool allowexitwochoice,
-    String exitString) async {
+  String firstline,
+  String secondline,
+  List<String> option,
+  String optiontypename,
+  bool allowexitwochoice,
+  String exitString, {
+  void Function(String key, int index)? describeOption,
+}) async {
   int page = 0;
 
   while (true) {
@@ -64,11 +66,14 @@ Future<int> choiceprompt(
     mvaddstrc(1, 0, lightGray, secondline);
 
     //Write options
-    for (int p = page * 19, y = 2;
-        p < option.length && p < page * 19 + 19;
-        p++, y++) {
+    for (
+      int p = page * 19, y = 2;
+      p < option.length && p < page * 19 + 19;
+      p++, y++
+    ) {
       String letter = letterAPlus(y - 2);
       addOptionText(y, 0, letter, "$letter - ${option[p]}");
+      describeOption?.call(letter, p);
     }
 
     setColor(lightGray);

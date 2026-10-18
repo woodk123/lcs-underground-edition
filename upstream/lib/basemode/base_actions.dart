@@ -151,7 +151,7 @@ void printCars(int page) {
       'Drive ${vehiclePool[l].fullName()}',
       caseSensitive: true,
     );
-    describeChoiceVehicle(console, key, vehiclePool[l]);
+    describeChoiceVehicle(console, key.toLowerCase(), vehiclePool[l]);
     describeChoiceVehicle(console, key.toUpperCase(), vehiclePool[l]);
     x += 26;
     if (x > 53) {

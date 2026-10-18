@@ -320,6 +320,45 @@
       "runtime_sha256": "0a56acb07cc79226f16cd66ab6555cd9372ba430342f6fd374b45c63fb47b6c5",
       "original_bytes": 1762139,
       "runtime_bytes": 565746
+    },
+    {
+      "original_path": "assets/runtime-art/source/journal_equipment_gear_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_equipment_gear_v1.webp",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "lossless": false,
+      "has_alpha": true,
+      "original_sha256": "ec1d1f80961e8ccfd09c4dc00932e288ec04caf237b18488b14b7f54f45c843e",
+      "runtime_sha256": "567cad912d6e41a0949978699d47f4696995f7b1dfc74f64e37cb5607d5ba650",
+      "original_bytes": 2028800,
+      "runtime_bytes": 233506
+    },
+    {
+      "original_path": "assets/runtime-art/source/journal_equipment_weapons_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_equipment_weapons_v1.webp",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "lossless": false,
+      "has_alpha": true,
+      "original_sha256": "c3c95d4a19e6db60df51010b837b0755114cd955fcdd2d05348300aa291e23c0",
+      "runtime_sha256": "2808d85c37dc1b8972f788b7f56dccf270f70a2f0dba1983141cd1b6c1c720ab",
+      "original_bytes": 1763781,
+      "runtime_bytes": 220462
+    },
+    {
+      "original_path": "assets/runtime-art/source/journal_vehicles_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_vehicles_v1.webp",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "lossless": false,
+      "has_alpha": true,
+      "original_sha256": "d34b793ee865df04b08cbd98b8aad84ba05f2e29aa9b479dc42f0657c616e905",
+      "runtime_sha256": "309b4ed3f7590f64bee77f5095a6fefffb712d960c96f509c65f8cdc8c950422",
+      "original_bytes": 2188171,
+      "runtime_bytes": 292596
     }
   ]
 }
