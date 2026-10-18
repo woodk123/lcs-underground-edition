@@ -108,7 +108,7 @@ void main() {
               isTrue,
             );
             final agility = game.pool.first.rawAttributes[Attribute.agility]!;
-            await send(frame.choices.first.key);
+            await send(step == 10 ? 'D' : frame.choices.first.key);
             if (step == 1) {
               expect(game.pool.first.birthDate, DateTime(2004, 6, 30));
               expect(
@@ -139,6 +139,7 @@ void main() {
         expect(game.pool.first.name, 'Journal Founder');
         expect(engine.console.textInput, isFalse);
         expect(engine.console.creation, isNull);
+        if (!fate) expect(game.pool.first.juice, 50);
         final loaded = decodeSaveContents(
           encodeSaveContents(
             SaveFile(
@@ -150,6 +151,7 @@ void main() {
           ),
         );
         expect(loaded.gameState!.lcs.pool.first.portraitId, chosenPortrait);
+        if (!fate) expect(loaded.gameState!.lcs.pool.first.juice, 50);
         expect(
           ensurePortraitId(loaded.gameState!.lcs.pool.first),
           chosenPortrait,

@@ -70,10 +70,10 @@ Keep generated logs, captures and timing data under ignored `.local/` or `report
 
 ## Follow-up improvements worth prioritising
 
-These are proposed improvements, not tooling added by this documentation change.
+The shared acceptance runner now implements the common journey. Keep further additions tied to actual gaps and repeated setup costs.
 
-1. **Keep a small shared acceptance journey current.** Reuse the existing creation, first-week, organisation and save checks to cover the common flow above. Include scroll/revisit, modal keyboard isolation and current-order preservation so new chapters inherit those checks.
-2. **Add one entry point for isolated browser QA when it saves repeated setup.** It could select the existing helper, prepare an output directory, verify a free port and build hash, and collect results. Preserve each helper's fixture and origin requirements. Measure setup friction before building a larger framework.
+1. **Keep the shared acceptance journey current.** Run `python scripts/shared_acceptance.py` for the [common interaction checks](TESTING.md#shared-acceptance-journey). It combines existing focused tests and browser helpers, continues a newly created founder through an actual week, and retains separate prepared recruitment and personnel scenarios. Preserve scroll/revisit, modal keyboard isolation and current-order checks as new chapters are added.
+2. **Extend the shared entry point when it saves repeated setup.** The runner already owns isolated servers, identifies the build and collects results. Add another helper only when its coverage belongs in the common journey, preserving its declared fixture and origin requirements. Measure setup friction before building a larger framework.
 3. **Track recurring failures and the slowest checks.** Record the reproducing journey, source/build, root cause and regression location. Use those records to choose the next fix or test improvement; refresh timing weights from real reports rather than continually adding workers or caches.
 
 The next development priority should be reliable player journeys and clearer decisions. Further build-speed or runtime optimisation should follow a measured bottleneck.

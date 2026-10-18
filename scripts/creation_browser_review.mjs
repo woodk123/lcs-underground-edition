@@ -3,10 +3,10 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -17,14 +17,15 @@ assert.ok(args.includes('--expected-hash'));
 assert.match(expectedHash, /^[a-f0-9]{64}$/);
 const url = assertQaUrl(args.includes('--url') ? args[args.indexOf('--url') + 1] : 'http://127.0.0.1:18879/');
 const stamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
-const output = resolve(root, `reports/browser/creation-${stamp}`);
+const output = resolve(root, args.includes('--out') ? args[args.indexOf('--out') + 1]
+  : `reports/browser/creation-${stamp}`);
 const profile = resolve(root, `.local/browser-profiles/creation-${stamp}`);
 await mkdir(output, { recursive: true });
 await mkdir(profile, { recursive: true });
 const report = { status: 'running', started: new Date().toISOString(), expectedHash, url,
   scope: 'Real original new-game settings, identity, ten background questions, briefing, public-name entry and playable HQ. Normal and150%/800x600 manual/fate journeys in an isolated profile.',
   checks: [], screenshots: [], pageErrors: [], consoleErrors: [], failedRequests: [] };
-let context, page;
+let context, page, verifyLoadedScript;
 async function text() {
   return page.locator('flt-semantics-host').evaluate(host => [host.innerText,
     ...[...host.querySelectorAll('[aria-label]')].map(n => n.getAttribute('aria-label')),
@@ -209,7 +210,8 @@ async function founderFlow({ fate, prefix, name }) {
         await page.waitForTimeout(200);
         continue;
       }
-      await click(/^A(?:\s|$)/);
+      // Include the advertised manifesto reward in the real creation/save path.
+      await click(step === 10 ? /^D(?:\s|$)/ : /^A(?:\s|$)/);
     }
   }
   await wait(/A new Conservative era/); await capture(`${prefix}-04-briefing`);
@@ -229,6 +231,26 @@ async function founderFlow({ fate, prefix, name }) {
   await checkPortrait(identity, `${prefix}-headquarters`);
   await capture(`${prefix}-06-playable-organisation`);
   await click(/^Save & exit/); await wait(/Start a New Game/);
+  if (!fate) {
+    await click(/^Load & Manage Saves/);
+    await click(/^A(?:\s|$)/);
+    await wait(/Manage .*Saved Game/);
+    const downloading = page.waitForEvent('download');
+    await click(/Export Save File/);
+    const savedPath = resolve(output, 'manual-founder.json');
+    await (await downloading).saveAs(savedPath);
+    const envelope = JSON.parse(await readFile(savedPath, 'utf8'));
+    const state = typeof envelope.saveData === 'string' ? JSON.parse(envelope.saveData) : envelope.saveData;
+    const founder = state.lcs.pool.find(person => person.id === identity.person);
+    assert.ok(founder, 'Find the actual created founder in the exported save.');
+    assert.equal(founder.juice, 50, 'The manifesto reward must survive creation and saving.');
+    assert.equal(founder.rawSkill.computers, 1, 'The clicked background skill bonus must persist.');
+    assert.equal(founder.portraitId, identity.portrait);
+    report.manualFounder = { path: savedPath, personId: founder.id, juice: founder.juice };
+    report.checks.push({ name: 'manual-background-rewards-and-portrait-persist-in-export', status: 'passed' });
+    await click(/^L Load Game/); await wait(/Save & exit/);
+    await click(/^Save & exit/); await wait(/Start a New Game/);
+  }
   await click(/^Continue as/); await wait(/Save & exit/);
   await checkPortrait(identity, `${prefix}-reloaded`);
   await click(/^Save & exit/); await wait(/Start a New Game/);
@@ -242,6 +264,7 @@ try {
   });
   report.browserVersion = context.browser().version();
   page = await context.newPage();
+  verifyLoadedScript = observeMainScript(page, report);
   page.on('pageerror', error => report.pageErrors.push(error.stack ?? error.message));
   page.on('console', message => {if(message.type()==='error') report.consoleErrors.push(message.text());});
   page.on('requestfailed', request => report.failedRequests.push({url:request.url(),failure:request.failure()?.errorText}));
@@ -276,6 +299,7 @@ try {
   await click(/^Save & exit/);await wait(/Start a New Game/);
   await click(/^Continue as/);await wait(/Save & exit/);
   await checkPortrait(largeIdentity, 'large-reloaded');
+  await verifyLoadedScript(expectedHash);
   assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.consoleErrors,[]);assert.deepEqual(report.failedRequests,[]);
   report.status='passed';
 } catch(error) {

@@ -10,6 +10,7 @@ Follow [development lessons](docs/DEVELOPMENT_LESSONS.md) for the working loop a
 - Keep the original gameplay reader and source-authored action identities/revisions authoritative. Inspection, help and cosmetic animation must preserve campaign state, pending input and gameplay RNG.
 - For UI/routing changes, check the affected journey with retained scroll/selection state, cancellation, revisiting screens and keyboard focus. Include compact/enlarged layouts where affected; an isolated widget pass does not cover the whole interaction.
 - Iterate with focused checks, then verify the integrated result appropriate to the change. Use the pinned SDK, fully restart after engine changes, and identify the exact build served during isolated browser QA. Keep historical test/timing reports distinct from current verification.
+- For changes spanning creation, orders, navigation or saves, use the [shared acceptance journey](docs/TESTING.md#shared-acceptance-journey): `python scripts/shared_acceptance.py`. Preserve its fresh-campaign continuation and explicitly prepared branch coverage when extending it.
 
 ## Versioning and changelog decisions
 

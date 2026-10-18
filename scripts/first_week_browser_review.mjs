@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -17,30 +17,36 @@ const url = assertQaUrl(arg('--url', 'http://127.0.0.1:18879/'));
 const output = resolve(root, arg('--out', '.local/reports/selection-preview/first-week'));
 await mkdir(output, { recursive: true });
 const decode = save => typeof save.saveData === 'string' ? JSON.parse(save.saveData) : save.saveData;
-const envelope = JSON.parse(await readFile(resolve(root, 'upstream/test/saves/felix_1_0.json'), 'utf8'));
+const campaignPath = arg('--campaign', null);
+const envelope = JSON.parse(await readFile(resolve(root, campaignPath ?? 'upstream/test/saves/felix_1_0.json'), 'utf8'));
 const fixture = decode(envelope);
 // Declare a peaceful onboarding scenario and an explicitly ready prospect.
 // This checks the actual join decision; it does not claim to earn persuasion.
-for (const person of fixture.lcs.pool) {
+for (const person of campaignPath ? [] : fixture.lcs.pool) {
   person.wantedForCrimes = Object.fromEntries(Object.keys(person.wantedForCrimes).map(key => [key, 0]));
   person.heat = 0;
   person.activity = { type: 'none' };
 }
 const recruiter = fixture.lcs.pool[0];
 const fieldMember = fixture.lcs.pool.at(-1);
-const prospect = structuredClone(fieldMember);
-Object.assign(prospect, {
-  id: fixture.nextCreatureId++, name: 'Casey Rivers', properName: 'Casey Rivers',
-  typeId: 'CREATURE_HIPPIE', alreadyNamed: true, hireId: null, squadId: null,
-  equippedWeapon: null, spareAmmo: null, daysSinceJoined: 0,
-});
-fixture.recruitmentSessions.push({ recruit: prospect, recruiter: recruiter.id, rawEagerness: 4 });
-envelope.saveData = typeof envelope.saveData === 'string' ? JSON.stringify(fixture) : fixture;
-const fixturePath = resolve(output, 'synthetic-first-week.json');
-await writeFile(fixturePath, JSON.stringify(envelope));
+let prospect;
+if (!campaignPath) {
+  prospect = structuredClone(fieldMember);
+  Object.assign(prospect, {
+    id: fixture.nextCreatureId++, name: 'Casey Rivers', properName: 'Casey Rivers',
+    typeId: 'CREATURE_HIPPIE', alreadyNamed: true, hireId: null, squadId: null,
+    equippedWeapon: null, spareAmmo: null, daysSinceJoined: 0,
+  });
+  fixture.recruitmentSessions.push({ recruit: prospect, recruiter: recruiter.id, rawEagerness: 4 });
+  envelope.saveData = typeof envelope.saveData === 'string' ? JSON.stringify(fixture) : fixture;
+}
+const fixturePath = campaignPath ? resolve(root, campaignPath) : resolve(output, 'synthetic-first-week.json');
+if (!campaignPath) await writeFile(fixturePath, JSON.stringify(envelope));
 const report = {
   status: 'running', url,
-  scope: 'Automated first-week browser journey. Isolated Felix campaign copy with old wanted crimes cleared and one ready prospect; no funds, skills, dates or outcomes patched. Recruit joining, formation, equipment transfer, orders, nearby shop travel and seven actual daily turns use the shipped UI and engine.',
+  scope: campaignPath
+    ? 'Unmodified founder exported by the creation journey. Actual skill practice, seven daily turns, accounting and fresh-profile save transfer; no prepared people, rewards, dates or outcomes.'
+    : 'Automated first-week browser journey. Isolated Felix campaign copy with old wanted crimes cleared and one ready prospect; no funds, skills, dates or outcomes patched. Recruit joining, formation, equipment transfer, orders, nearby shop travel and seven actual daily turns use the shipped UI and engine.',
   checks: [], screenshots: [], days: [], decisionFrames: [],
   pageErrors: [], consoleErrors: [], failedRequests: [],
 };
@@ -52,10 +58,12 @@ if (expectedHash) assert.equal(report.mainJsSha256, expectedHash.toLowerCase(), 
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 let context;
 let page;
+const verifyLoadedScripts = [];
 const escape = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 async function newContext() {
   context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
   page = await context.newPage();
+  verifyLoadedScripts.push(observeMainScript(page, report));
   page.setDefaultTimeout(10000);
   page.on('pageerror', error => report.pageErrors.push(String(error)));
   page.on('console', message => { if (message.type() === 'error') report.consoleErrors.push(message.text()); });
@@ -202,6 +210,32 @@ try {
   await newContext();
   await importAndLoad(fixturePath);
   const { state: baseline } = await exportGame('baseline');
+  if (campaignPath) {
+    // Continue the same founder created by the preceding browser helper. Keep
+    // this branch free of the prepared recruitment/equipment fixture below.
+    const founder = baseline.lcs.pool[0];
+    assert.equal(baseline.lcs.pool.length, 1);
+    assert.equal(founder.juice, 50, 'Manifesto Juice must survive a fresh-profile import.');
+    await assignSciencePractice(founder);
+    let current = (await exportGame('fresh-founder-practice-order')).state;
+    assert.equal(current.lcs.pool[0].activity.type, 'study');
+    assert.equal(current.lcs.pool[0].activity.skill, 'science');
+    await capture('fresh-01-background-reward-and-confirmed-practice');
+    while (report.days.length < 7) current = await advanceOneDay(current, baseline);
+    const trained = current.lcs.pool.find(person => person.id === founder.id);
+    assert.equal(trained.juice, founder.juice);
+    assert.equal(trained.portraitId, founder.portraitId);
+    assert.ok(trained.rawSkill.science > founder.rawSkill.science ||
+      trained.rawSkill.science === founder.rawSkill.science && trained.rawSkillXP.science > founder.rawSkillXP.science,
+    'The newly created founder must earn real training progress.');
+    const exported = await exportGame('fresh-founder-week-completed');
+    await context.close(); await newContext(); await importAndLoad(exported.path);
+    const restored = (await exportGame('fresh-founder-week-reimported')).state;
+    assert.deepEqual(restored, exported.state, 'Retain the entire fresh campaign across a second profile.');
+    report.checks.push('fresh-founder-seven-real-days-background-reward-and-training',
+      'fresh-founder-week-exact-save-continuity');
+    await capture('fresh-02-week-complete-after-profile-transfer');
+  } else {
   await capture('01-isolated-onboarding-campaign');
   let current = await advanceOneDay(baseline, baseline);
   const joined = current.lcs.pool.find(person => person.id === prospect.id);
@@ -303,6 +337,8 @@ try {
   assert.deepEqual(restored, exported.state, 'Fresh-profile import/export must retain the whole completed campaign exactly.');
   await capture('09-fresh-profile-import-preserves-entire-week');
   report.checks.push('seven-consecutive-calendar-days-and-accounting-verified', 'completed-save-exactly-identical-after-fresh-profile-import');
+  }
+  if (expectedHash) for (const verify of verifyLoadedScripts) await verify(expectedHash.toLowerCase());
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.consoleErrors, []);
   assert.deepEqual(report.failedRequests, []);

@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript, revealPersonnelDossier } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -44,6 +44,7 @@ if (expectedHash) assert.equal(report.mainJsSha256, expectedHash.toLowerCase(),
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
 const page = await context.newPage();
+const verifyLoadedScript = observeMainScript(page, report);
 page.on('pageerror', error => report.pageErrors.push(String(error)));
 page.on('console', message => { if (message.type() === 'error') report.consoleErrors.push(message.text()); });
 page.on('requestfailed', request => report.failedRequests.push(request.url()));
@@ -116,7 +117,7 @@ try {
   await click(/^Full dossier/);
   let dossier = page.getByRole('dialog');
   await dossier.waitFor();
-  assert.equal(await dossier.getByText('Age 22', { exact: true }).count(), 1);
+  assert.equal(await dossier.getByText(/^Age 22(?:$|:)/).count(), 1);
   await capture('01-age22-corrected-portrait');
   await click(/^Skills(?:$|\s)/, dossier);
   await writeFile(resolve(output, 'skill-semantics.html'), await dossier.innerHTML());
@@ -138,9 +139,14 @@ try {
   await details.waitFor();
   await wait(/Calculation: Daily income/);
   await capture('04-order-mechanics-on-request');
+  // Keep the same live draft and reader while traversing a modal's focus.
+  // These are real game shortcuts; none may reach the underlying reader.
+  for (const key of ['Tab', 'w', 'Tab', 'a', 'f', 'g']) await page.keyboard.press(key);
+  assert.equal(await page.getByRole('alertdialog').count(), 1);
   await click('Close', details);
   assert.doesNotMatch(await uiText(), /Calculation: Daily income/);
   assert.ok(await page.getByRole('button', { name: 'Confirm order', exact: true }).isEnabled());
+  report.checks.push('mechanics-modal-keeps-draft-and-blocks-game-shortcuts');
   await page.keyboard.press('Escape'); // Cancel the draft, not an engine action.
   await click(/^Reading size/);
   await page.getByRole('menuitem', { name: '150%', exact: true }).click();
@@ -223,7 +229,7 @@ try {
   await wait(/Personnel directory/);
   assert.equal((await uiText()).split('\n').filter(line => line.trim() === 'Personnel directory').length, 1);
   await capture('11-people-as-ruled-journal-page');
-  await click(new RegExp('^Open dossier for ' + escape(crew[0].name) + '[.]'));
+  await (await revealPersonnelDossier(page, crew[0].name)).click();
   await wait(/Campaign record/);
   assert.doesNotMatch(await uiText(), /Profile of a Liberal|SKILL\s+NOW\s+MAX/);
   await capture('12-people-native-personnel-dossier');
@@ -256,7 +262,7 @@ try {
   await capture('15-equipment-800x600-at150');
   await click(/^People(?:$|[.\s])/);
   await wait(/Personnel directory/);
-  await click(new RegExp('^Open dossier for ' + escape(crew[0].name) + '[.]'));
+  await (await revealPersonnelDossier(page, crew[0].name)).click();
   await wait(/Campaign record/);
   await capture('16-people-dossier-800x600-at150');
   await click(/^Back to directory/);
@@ -266,6 +272,7 @@ try {
   const afterManagement = await exportGame('after-management-inspection');
   assert.deepEqual(afterManagement, assigned, 'People dossiers and equipment inspection preserve the saved campaign.');
   report.checks.push('journal-management-inspection-preserves-campaign');
+  if (expectedHash) await verifyLoadedScript(expectedHash.toLowerCase());
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.consoleErrors, []);
   assert.deepEqual(report.failedRequests, []);

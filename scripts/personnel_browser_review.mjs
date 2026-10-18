@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromiumLaunchOptions } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript, revealPersonnelDossier } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -14,8 +14,7 @@ const args = process.argv.slice(2);
 const value = (flag, fallback) => args.includes(flag) ? args[args.indexOf(flag) + 1] : fallback;
 const expectedHash = value('--expected-hash', '');
 assert.match(expectedHash, /^[a-f0-9]{64}$/i);
-const url = new URL(value('--url', 'http://127.0.0.1:18882/')).href;
-assert.equal(url, 'http://127.0.0.1:18882/');
+const url = assertQaUrl(value('--url', 'http://127.0.0.1:18882/'), 'http://127.0.0.1:18882/');
 const output = resolve(root, value('--out', 'reports/personnel-directory-qa/browser'));
 await mkdir(output, { recursive: true });
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -53,6 +52,7 @@ assert.equal(report.mainJsSha256, expectedHash.toLowerCase());
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 const context = await browser.newContext({ viewport: { width: 1440, height: 1100 }, acceptDownloads: true });
 const page = await context.newPage();
+const verifyLoadedScript = observeMainScript(page, report);
 page.on('pageerror', error => report.pageErrors.push(String(error)));
 page.on('console', message => { if (message.type() === 'error') report.consoleErrors.push(message.text()); });
 page.on('requestfailed', request => report.failedRequests.push(request.url()));
@@ -101,13 +101,7 @@ async function search(text) {
   await input.fill(text); await page.waitForTimeout(250);
 }
 async function row(name, screenshot) {
-  const target = page.getByRole('button', { name: new RegExp(`^Open dossier for ${name}\\.`) });
-  for (let i = 0; i < 18; i++) {
-    const box = await target.boundingBox().catch(() => null);
-    if (box && box.y > 75 && box.y + box.height < page.viewportSize().height - 70) break;
-    await page.mouse.move(page.viewportSize().width * .76, page.viewportSize().height * .55);
-    await page.mouse.wheel(0, 180); await page.waitForTimeout(150);
-  }
+  const target = await revealPersonnelDossier(page, name);
   if (screenshot) await capture(screenshot);
   await target.click(); await page.mouse.move(2, 2); await page.waitForTimeout(300);
 }
@@ -161,6 +155,7 @@ try {
   assert.deepEqual(after, before, 'Entire exported campaign must remain identical.');
   report.campaignSha256 = hash(JSON.stringify(before));
   report.checks.push('Entire campaign exports match before/after all browsing');
+  await verifyLoadedScript(expectedHash.toLowerCase());
   assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.consoleErrors, []); assert.deepEqual(report.failedRequests, []);
   report.checks.push('Exact-build Edge run has no page/console/network failures');
   report.status = 'passed';

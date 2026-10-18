@@ -34,6 +34,30 @@ The tests exercise archive integrity/tampering, complete source snapshots, local
 
 `test_serve.py` exercises real loopback HTTP responses and cold asset connection bursts. The accept queue is deliberately held while 48 clients connect, then every queued request must receive its expected response. MIME/security headers, launcher health, directory listing and path protection are also checked. The symlink case skips when Windows does not grant fixture creation privileges; no permission change is requested.
 
+## Shared acceptance journey
+
+Run the common creation, opening-week, organisation and save journey from the repository root:
+
+```powershell
+python scripts/shared_acceptance.py
+```
+
+Install the pinned SDK and resolve dependencies as described in [Building](BUILDING.md#development-mode). The browser helpers use installed Chrome and Edge, with locked dependencies installed by `npm ci --prefix upstream/tool/offline_test`. The runner verifies the SDK pin, regenerates serializers, runs nine existing focused test files, builds a separate release web player and injects its offline manifest. It then runs these existing helpers against that one build:
+
+| Stage | What it establishes |
+|---|---|
+| Creation | Actual manual and fate creation, desktop/enlarged layouts, portrait continuity, and the manual founder's manifesto Juice and skill rewards in the exported save. |
+| Fresh opening week | Imports that unchanged manual founder, confirms Science practice, advances seven actual days, checks accounting/training/identity, and transfers the complete result through a fresh browser profile. No people or rewards are supplied. |
+| Prepared recruitment week | The existing Felix fixture with cleared wanted crimes and one explicitly ready prospect; real recruitment acceptance, squad formation, equipment transfer, orders, a local visit, seven days and exact save transfer. This does not claim to earn the prospect's persuasion. |
+| Organisation | Existing dossier, draft/cancel, repeated assignment, travel, equipment and personnel journeys, including enlarged layouts and mechanics-dialog keyboard isolation. |
+| Personnel | Existing declared mixed-status fixture, including a hospitalized person; finding absent crew, retained search/category, dossiers and complete campaign preservation. |
+
+The focused tests cover source creation/rewards, order routing and retained scroll/selection, page-storage isolation, current Network orders and modal shortcuts, personnel, and save load/round-trip/recovery. This is the shared integration check; the full suite, rare gameplay branches, offline acceptance and native GUI checks retain their separate scopes below.
+
+The runner reserves **18879 and 18882** by default and fails if either is occupied, with exclusive socket ownership on Windows. For concurrent runs, choose two different unused dedicated ports with `--port 18889 --personnel-port 18892`; only 18879–18999 are accepted. Standalone helpers retain their usual fixed origins. The runner starts and stops only its own loopback servers and uses isolated browser profiles. Player servers, profiles and saves remain untouched. Logs, screenshots, exported saves and `report.json` go into a new ignored `.local/reports/shared-acceptance-*` directory. Use `--out reports/my-acceptance-run` to choose another new ignored directory.
+
+Every stage must pass and report the exact browser-loaded JavaScript hash. The aggregate also records source commit, uncommitted state, source-content fingerprint, pinned toolchain, per-stage logs and complete web-file hashes. A source or artifact change during the run fails acceptance. A supplied build may be reused with `--web-root <directory> --expected-hash <main.dart.js SHA-256>`; the report labels it as supplied rather than claiming it was compiled from the current source. The default command builds its own artifact.
+
 ## Browser regressions
 
 ### Equipment and vehicle artwork
