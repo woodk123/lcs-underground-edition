@@ -449,6 +449,12 @@ Future<void> equipmentBaseAssign() async {
         "${letterAPlus(y - 2)} - ",
         "${letterAPlus(y - 2)} - ${items[p].equipTitle()}${items[p].stackSize > 1 ? " x${items[p].stackSize}" : ""}",
       );
+      console.annotateActionEntity(
+        letterAPlus(y - 2),
+        type: 'equipment-transfer-item',
+        id: p.toString(),
+        category: siteFromItem[items[p]]!.idString,
+      );
       mvaddstrc(
         y,
         25,
@@ -471,6 +477,13 @@ Future<void> equipmentBaseAssign() async {
         "${y - 1} - ${bases[p].getName(short: true, includeCity: true)}",
         baseColorKey: p == selectedbase ? ColorKey.white : ColorKey.lightGray,
       );
+      console.annotateActionEntity(
+        '${y - 1}',
+        type: p == selectedbase
+            ? 'equipment-transfer-destination-selected'
+            : 'equipment-transfer-destination',
+        id: bases[p].idString,
+      );
     }
     if (bases.length > 9) {
       addOptionText(12, 51, "0", "0 - More Bases");
@@ -488,10 +501,18 @@ Future<void> equipmentBaseAssign() async {
     } else {
       addOptionText(24, 0, "T", "T - Sort by type");
     }
+    console.annotateActionEntity(
+      't',
+      type: 'equipment-transfer-sort',
+      id: sortbytype ? 'location' : 'type',
+      category: bases[selectedbase].idString,
+    );
     if (items.length > 19) {
       addPageButtons(y: 24, x: console.x + 5);
     }
 
+    addOptionText(21, 0, 'Enter', 'Enter - Done moving equipment');
+    console.screen = 'equipment-transfer';
     declareMenuNavigation('equipment');
     material.KeyEvent keyEvent = await getKeyEvent();
     int c = keyEventToString(keyEvent).codePoint;
@@ -507,7 +528,7 @@ Future<void> equipmentBaseAssign() async {
       pageLoot++;
     }
     //PAGE DOWN (locations)
-    if (c == Key.num0 && (pageLoc + 1) * 9 < bases.length) {
+    if (c == Key.num0 && bases.length > 9) {
       pageLoc = (pageLoc + 1) % (bases.length / 9).ceil();
     }
 

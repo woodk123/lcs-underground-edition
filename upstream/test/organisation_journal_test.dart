@@ -1234,12 +1234,14 @@ void main() {
 
   for (final size in [const Size(1280, 720), const Size(800, 700)]) {
     testWidgets(
-      'six crew, job card, eight sections and Confirm all fit at ${size.width}x${size.height}',
+      'six crew, job card, eleven reachable sections and Confirm fit at ${size.width}x${size.height}',
       (tester) async {
         await mount(tester, size: size);
         await business(tester);
         await _tap(tester, 'journal-activity:donations');
-        for (var i = 0; i <= networkJournalSection; i++) {
+        for (var i = 0; i <= basesJournalSection; i++) {
+          await tester.ensureVisible(_key('journal-section:$i'));
+          await _settle(tester);
           _insideViewport(
             tester,
             _key('journal-section:$i'),
@@ -1292,8 +1294,8 @@ void main() {
           'Scaled Confirm',
         );
         final beforeTabScroll = _snapshot();
-        for (var i = 0; i <= networkJournalSection; i++) {
-          // Enlarged reading keeps nine readable tabs in a horizontal strip.
+        for (var i = 0; i <= basesJournalSection; i++) {
+          // Enlarged reading keeps eleven readable tabs in a horizontal strip.
           // Each destination must remain reachable without dispatching it.
           await tester.ensureVisible(_key('journal-section:$i'));
           await _settle(tester);
@@ -1842,7 +1844,7 @@ void main() {
       );
       engine.console.sendInput('Escape');
       await _settle(tester);
-      await _tap(tester, 'journal-clipboard');
+      await _tap(tester, 'personnel-back-directory');
       expect(_key('personnel-directory'), findsOneWidget);
       expect(_snapshot(), before);
       expect(tester.takeException(), isNull);

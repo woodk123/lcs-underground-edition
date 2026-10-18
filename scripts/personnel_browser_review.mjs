@@ -120,12 +120,12 @@ try {
   await click(/^L Load Game/); await wait(/Save & exit/);
   const before = await exportGame('before-inspection');
   report.checks.push('Mixed-status fixture imports; no time advancement');
-  await click(/^Clipboard(?:\s|$)/); await wait(/Personnel directory/);
+  await click(/^People(?:$|[.\s])/); await wait(/Personnel directory/);
   assert.match(await uiText(), /Hospital \(1\)/);
   await wait(/Chaz Reasoner/); await wait(/Hospitalized/);
   assert.match(await uiText(), /1,360/);
   await capture('01-desktop-all-personnel');
-  report.checks.push('One click Clipboard lists hospitalized Chaz with bill and location');
+  report.checks.push('One click People lists hospitalized Chaz with bill and location');
   for (const name of ['Hospital', 'Custody', 'Sleepers', 'Away', 'Hostages', 'Dead', 'Active', 'All']) {
     await click(new RegExp(`^${name} \\(`));
     await wait(new RegExp(`people.*${name === 'All' ? 'All personnel' : name}`));
@@ -155,7 +155,8 @@ try {
   await click(/^Back to directory$/); await wait(/people.*Hospital/);
   report.checks.push('800x600 at 150 percent retains readable controls and patient profile navigation');
   await page.setViewportSize({ width: 1440, height: 1100 });
-  await click(/^Back to organisation$/);
+  // The global directory remains open until another top section is chosen.
+  await click(/^Organisation(?:$|\s)/);
   const after = await exportGame('after-inspection');
   assert.deepEqual(after, before, 'Entire exported campaign must remain identical.');
   report.campaignSha256 = hash(JSON.stringify(before));

@@ -118,16 +118,28 @@ try {
   await click(/^D.*Delete Save/); await screen('save-delete-confirmation');
   await click(/^N.*No/);
   await hq(); await screen('headquarters');
-  for (const tab of ['Organisation', 'Ledger', 'Justice', 'Agenda', 'Newspaper', 'Reports', 'City maps', 'Options']) {
+  for (const tab of ['Organisation', 'People', 'Network', 'Bases', 'Ledger', 'Justice', 'Agenda', 'Newspaper', 'Reports', 'City maps', 'Options']) {
     await journey(`tab-${tab}`, async () => {
-      await hq(); await click(new RegExp(`^${tab}(?:$|\\s)`)); await screen(`tab-${tab.toLowerCase().replaceAll(' ', '-')}`);
+      await hq(); await click(new RegExp(`^${tab}(?:$|[.\\s])`)); await screen(`tab-${tab.toLowerCase().replaceAll(' ', '-')}`);
     });
   }
-  for (const rail of ['Clipboard', 'Vehicles', 'Weapons', 'Orders', 'Crew pool']) {
+  for (const rail of ['People', 'Vehicles', 'Weapons', 'Orders', 'Crew pool']) {
     await journey(`rail-${rail}`, async () => {
-      await hq(); await click(new RegExp(`^${rail}(?:$|\\s)`)); await screen(`rail-${rail.toLowerCase().replaceAll(' ', '-')}`);
+      await hq(); await click(new RegExp(`^${rail}(?:$|[.\\s])`)); await screen(`rail-${rail.toLowerCase().replaceAll(' ', '-')}`);
     });
   }
+  await journey('people-scopes', async () => {
+    await hq(); await click(/^People(?:$|[.\s])/);
+    await click(/^Leadership$/); await screen('people-leadership');
+    await click(/^Captives$/); await screen('people-captives');
+    await click(/^Directory$/); await screen('people-directory');
+  });
+  await journey('media-production', async () => {
+    await hq(); await click(/^Newspaper(?:$|\s)/);
+    await click(/^Production$/); await wait(/Liberal Guardian production/);
+    await screen('newspaper-production');
+    await click(/^Archive$/);
+  });
   await journey('agenda-pages', async () => {
     await hq(); await click(/^Agenda(?:$|\s)/);
     for (let i = 1; i <= 5; i++) {
@@ -144,6 +156,7 @@ try {
   });
   await journey('archive-article-pages', async () => {
     await hq(); await click(/^Newspaper(?:$|\s)/);
+    await click(/^Archive$/);
     await screen('newspaper-populated');
     await click(/^(?:Unread\. )?Prepared screen review report 25/); await screen('newspaper-full-article');
     await click(/^Continue$|^Back to reports$/);
@@ -161,12 +174,12 @@ try {
     }
     await page.getByRole('dialog').getByRole('button', { name: 'Close dossier', exact: true }).last().click();
   });
-  await journey('clipboard-sort', async () => {
-    await hq(); await click(/^Clipboard(?:$|\s)/);
+  await journey('people-sort', async () => {
+    await hq(); await click(/^People(?:$|[.\s])/);
     await click(/^Roster tools/);
-    await click(/^T Sort Liberals/); await screen('clipboard-sort');
+    await click(/^T Sort Liberals/); await screen('people-sort');
     await page.keyboard.press('Escape');
-    await click(/^Z Reorder Liberals/); await screen('clipboard-reorder');
+    await click(/^Z Reorder Liberals/); await screen('people-reorder');
     await page.keyboard.press('Escape');
   });
   for (const category of ['Business', 'Personnel', 'Activism', 'Operations']) {

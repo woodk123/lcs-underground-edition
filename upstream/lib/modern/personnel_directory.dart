@@ -8,6 +8,7 @@ import 'package:lcs_new_age/politics/alignment.dart' as politics;
 enum PersonnelFilter {
   all,
   active,
+  availableOutsideSquads,
   hospital,
   custody,
   sleepers,
@@ -58,6 +59,7 @@ class PersonnelDirectoryController extends ChangeNotifier {
 String personnelFilterLabel(PersonnelFilter filter) => switch (filter) {
   PersonnelFilter.all => 'All',
   PersonnelFilter.active => 'Active',
+  PersonnelFilter.availableOutsideSquads => 'Available outside squads',
   PersonnelFilter.hospital => 'Hospital',
   PersonnelFilter.custody => 'Custody',
   PersonnelFilter.sleepers => 'Sleepers',
@@ -66,11 +68,15 @@ String personnelFilterLabel(PersonnelFilter filter) => switch (filter) {
   PersonnelFilter.dead => 'Dead',
 };
 
-bool _matchesFilter(Creature person, PersonnelFilter filter) =>
+bool personnelAvailableForOrders(Creature person) =>
+    person.isActiveLiberal && person.hidingDaysLeft == 0;
+
+bool personnelMatchesFilter(Creature person, PersonnelFilter filter) =>
     switch (filter) {
       PersonnelFilter.all => true,
-      PersonnelFilter.active =>
-        person.isActiveLiberal && person.hidingDaysLeft == 0,
+      PersonnelFilter.active => personnelAvailableForOrders(person),
+      PersonnelFilter.availableOutsideSquads =>
+        personnelAvailableForOrders(person) && person.squad == null,
       PersonnelFilter.hospital => person.alive && person.hospitalized,
       PersonnelFilter.custody => person.alive && person.imprisoned,
       PersonnelFilter.sleepers => person.alive && person.sleeperAgent,
@@ -112,6 +118,8 @@ class PersonnelDirectory extends StatelessWidget {
     required this.onOpen,
     this.onClose,
     this.onTools,
+    this.onAssignOrder,
+    this.onJoinSquad,
     this.enabled = true,
   });
   final List<Creature> people;
@@ -119,6 +127,8 @@ class PersonnelDirectory extends StatelessWidget {
   final ValueChanged<Creature> onOpen;
   final VoidCallback? onClose;
   final VoidCallback? onTools;
+  final ValueChanged<Creature>? onAssignOrder;
+  final ValueChanged<Creature>? onJoinSquad;
   final bool enabled;
 
   @override
@@ -131,7 +141,7 @@ class PersonnelDirectory extends StatelessWidget {
       final counts = {
         for (final filter in PersonnelFilter.values)
           filter: unique
-              .where((person) => _matchesFilter(person, filter))
+              .where((person) => personnelMatchesFilter(person, filter))
               .length,
       };
       final query = controller.query.toLowerCase();
@@ -139,7 +149,7 @@ class PersonnelDirectory extends StatelessWidget {
           unique
               .where(
                 (person) =>
-                    _matchesFilter(person, controller.filter) &&
+                    personnelMatchesFilter(person, controller.filter) &&
                     (query.isEmpty ||
                         [
                           person.name,
@@ -206,7 +216,7 @@ class PersonnelDirectory extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   const Text(
-                    'Find everyone in your organisation. Open a name to inspect their dossier.',
+                    'Find everyone, including people outside squads. Daily orders and squad membership are separate decisions.',
                     style: JournalPalette.small,
                   ),
                   const SizedBox(height: 12),
@@ -314,21 +324,18 @@ class PersonnelDirectory extends StatelessWidget {
                               }
                             : null,
                       ),
+                      if (onTools != null)
+                        TextButton.icon(
+                          key: const ValueKey('personnel-tools'),
+                          onPressed: enabled ? onTools : null,
+                          icon: const Icon(Icons.tune, size: 15),
+                          label: const Text(
+                            'Roster tools',
+                            style: JournalPalette.small,
+                          ),
+                        ),
                     ],
                   ),
-                  if (onTools != null)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        key: const ValueKey('personnel-tools'),
-                        onPressed: enabled ? onTools : null,
-                        icon: const Icon(Icons.tune, size: 15),
-                        label: const Text(
-                          'Roster tools',
-                          style: JournalPalette.small,
-                        ),
-                      ),
-                    ),
                   const Divider(height: 14, color: JournalPalette.rule),
                 ],
               ),
@@ -393,75 +400,140 @@ class PersonnelDirectory extends StatelessWidget {
         'Medical bill \$${_money(person.medicalBills)}',
       if (person.alive && person.isActiveLiberal && person.squad != null)
         person.squad!.name,
+      if (personnelAvailableForOrders(person) && person.squad == null)
+        'Outside squads',
     ].join(' · ');
+    final dossier = OutlinedButton(
+      key: ValueKey('personnel-person:${person.id}'),
+      onPressed: enabled ? () => onOpen(person) : null,
+      style: OutlinedButton.styleFrom(
+        alignment: Alignment.centerLeft,
+        foregroundColor: JournalPalette.ink,
+        backgroundColor: JournalPalette.card.withValues(alpha: .4),
+        padding: const EdgeInsets.all(11),
+        minimumSize: const Size(44, 72),
+        side: BorderSide(
+          color: person.hospitalized && person.alive
+              ? JournalPalette.danger.withValues(alpha: .45)
+              : JournalPalette.rule.withValues(alpha: .7),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
+      ),
+      child: Semantics(
+        label:
+            'Open dossier for ${person.name}. $status. $location. Juice ${person.juice}, ${person.title}. $condition.${personnelAvailableForOrders(person) ? ' Daily order: ${person.activity.description}.' : ''}',
+        excludeSemantics: true,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CrewPortrait(person: person, size: 42),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    person.name,
+                    style: JournalPalette.body.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: JuiceBadge(
+                      person: person,
+                      compact: true,
+                      showHelp: false,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    status,
+                    style: JournalPalette.small.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(location, style: JournalPalette.small),
+                  const SizedBox(height: 4),
+                  Text(condition, style: JournalPalette.small),
+                  if (personnelAvailableForOrders(person))
+                    Text(
+                      'Daily order: ${person.activity.description}',
+                      style: JournalPalette.small,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Padding(
+              padding: EdgeInsets.only(top: 3),
+              child: Icon(Icons.chevron_right, size: 17),
+            ),
+          ],
+        ),
+      ),
+    );
+    final actions = <Widget>[
+      if (personnelAvailableForOrders(person)) ...[
+        if (onAssignOrder != null)
+          OutlinedButton.icon(
+            key: ValueKey('personnel-assign-order:${person.id}'),
+            onPressed: enabled ? () => onAssignOrder!(person) : null,
+            icon: const Icon(Icons.assignment_outlined, size: 16),
+            label: const Text('Assign order'),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(44, 44)),
+          ),
+        if (onJoinSquad != null && person.squad == null)
+          OutlinedButton.icon(
+            key: ValueKey('personnel-join-squad:${person.id}'),
+            onPressed: enabled ? () => onJoinSquad!(person) : null,
+            icon: const Icon(Icons.group_add_outlined, size: 16),
+            label: const Text('Join squad'),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(44, 44)),
+          ),
+      ],
+    ];
     return Padding(
       padding: const EdgeInsets.only(bottom: 7),
-      child: OutlinedButton(
-        key: ValueKey('personnel-person:${person.id}'),
-        onPressed: enabled ? () => onOpen(person) : null,
-        style: OutlinedButton.styleFrom(
-          alignment: Alignment.centerLeft,
-          foregroundColor: JournalPalette.ink,
-          backgroundColor: JournalPalette.card.withValues(alpha: .4),
-          padding: const EdgeInsets.all(11),
-          minimumSize: const Size(44, 72),
-          side: BorderSide(
-            color: person.hospitalized && person.alive
-                ? JournalPalette.danger.withValues(alpha: .45)
-                : JournalPalette.rule.withValues(alpha: .7),
-          ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
-        ),
-        child: Semantics(
-          label:
-              'Open dossier for ${person.name}. $status. $location. Juice ${person.juice}, ${person.title}. $condition.',
-          excludeSemantics: true,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CrewPortrait(person: person, size: 42),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      person.name,
-                      style: JournalPalette.body.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: JuiceBadge(
-                        person: person,
-                        compact: true,
-                        showHelp: false,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      status,
-                      style: JournalPalette.small.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(location, style: JournalPalette.small),
-                    const SizedBox(height: 4),
-                    Text(condition, style: JournalPalette.small),
-                  ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (actions.isEmpty) return dossier;
+          final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
+          final actionWidth = 178 * textScale;
+          if (constraints.maxWidth >= 720 &&
+              actionWidth <= constraints.maxWidth * .4) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: dossier),
+                const SizedBox(width: 9),
+                SizedBox(
+                  width: actionWidth,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final action in actions)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 5),
+                          child: action,
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              const Padding(
-                padding: EdgeInsets.only(top: 3),
-                child: Icon(Icons.chevron_right, size: 17),
-              ),
+              ],
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              dossier,
+              const SizedBox(height: 4),
+              Wrap(spacing: 7, runSpacing: 4, children: actions),
             ],
-          ),
-        ),
+          );
+        },
       ),
     );
   }

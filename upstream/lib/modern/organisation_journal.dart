@@ -17,9 +17,11 @@ import 'package:lcs_new_age/location/location.dart';
 import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
+import 'package:lcs_new_age/modern/journal_bases.dart';
 import 'package:lcs_new_age/modern/journal_city_plan.dart';
 import 'package:lcs_new_age/modern/journal_network.dart';
 import 'package:lcs_new_age/modern/journal_order_icon.dart';
+import 'package:lcs_new_age/modern/journal_people.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/location_details.dart';
@@ -33,6 +35,8 @@ import 'package:lcs_new_age/modern/travel_help.dart';
 
 // Existing section IDs remain stable for retained journal routes and shortcuts.
 const networkJournalSection = 8;
+const peopleJournalSection = 9;
+const basesJournalSection = 10;
 
 /// The organiser is one open journal: team and job card on the left, the
 /// selected report, pool, or target map on the right. Changing a portrait or a
@@ -55,6 +59,7 @@ class OrganisationJournal extends StatefulWidget {
     this.inspectedPerson,
     this.onCloseInspection,
     this.inspectorActions = const [],
+    this.peopleToolsBuilder,
   });
 
   final Console console;
@@ -71,6 +76,7 @@ class OrganisationJournal extends StatefulWidget {
   final Creature? inspectedPerson;
   final VoidCallback? onCloseInspection;
   final List<CrewDossierAction> inspectorActions;
+  final WidgetBuilder? peopleToolsBuilder;
 
   @override
   State<OrganisationJournal> createState() => OrganisationJournalState();
@@ -78,6 +84,9 @@ class OrganisationJournal extends StatefulWidget {
 
 class OrganisationJournalState extends State<OrganisationJournal> {
   final _networkKey = GlobalKey<JournalNetworkViewState>();
+  final _basesKey = GlobalKey<JournalBasesViewState>();
+  JournalPeopleScope _peopleScope = JournalPeopleScope.people;
+  bool _managementDialog = false;
   final ScrollController _narrowJournalScroll = ScrollController();
   final PersonnelDirectoryController _personnel =
       PersonnelDirectoryController();
@@ -115,10 +124,22 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   bool get undercover =>
       confirmation?.entityType == 'sleeper-activity-confirm' ||
       !allocating && controller.selectedPerson?.sleeperAgent == true;
+  Creature? get _individualOrderActor {
+    if (!activityFrame || undercover || allocating) return null;
+    final actorId = int.tryParse(confirmation?.entityCategory ?? '');
+    final actor = game.pool.where((p) => p.id == actorId).firstOrNull;
+    return actor != null &&
+            !(squad?.members.any((p) => p.id == actor.id) ?? false)
+        ? actor
+        : null;
+  }
+
   List<Creature> get members => controller.assembly != null
       ? controller.allocationMembers
       : undercover
       ? game.pool.where((p) => p.sleeperAgent && p.alive).toList()
+      : _individualOrderActor != null
+      ? [_individualOrderActor!]
       : squad?.members ?? const [];
   Creature? get person {
     final profile = console.journalProfile;
@@ -142,6 +163,17 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       )
       .firstOrNull;
   bool get activityFrame => activityOrderFrame(console) != null;
+  bool get _showPeople =>
+      widget.section == peopleJournalSection &&
+      !widget.fullSpreadDetail &&
+      !activityFrame &&
+      !allocating &&
+      widget.detail == null;
+  bool get _showBases =>
+      widget.section == basesJournalSection &&
+      !widget.fullSpreadDetail &&
+      !allocating &&
+      widget.detail == null;
   bool get planning => console.screen == 'planning';
   bool get allocating => controller.assembly != null;
   bool get overview => console.screen == 'organisation';
@@ -165,6 +197,24 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   /// Journal shortcuts use the same prepare/confirm path as pointer controls.
   /// The original immediate keyboard handlers remain available in Classic view.
   bool handleGameShortcut(String key) {
+    if (_managementDialog) {
+      if (normalizeConsoleKey(key) == 'Escape') {
+        unawaited(Navigator.of(context, rootNavigator: true).maybePop());
+      }
+      return true;
+    }
+    if (_showBases && _basesKey.currentState != null) {
+      if (console.screen == 'headquarters' &&
+          normalizeConsoleKey(key) == 'Escape') {
+        widget.onSection?.call(0);
+        return true;
+      }
+      return _basesKey.currentState!.handleGameShortcut(key);
+    }
+    if (_showPeople) {
+      if (normalizeConsoleKey(key) == 'Escape') widget.onSection?.call(0);
+      return true;
+    }
     if (widget.section == networkJournalSection &&
         _networkKey.currentState != null) {
       return _networkKey.currentState!.handleGameShortcut(key);
@@ -311,11 +361,27 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 children: [
                   _sectionTabs(narrow),
                   Expanded(
-                    child:
-                        widget.section == networkJournalSection &&
-                            !widget.fullSpreadDetail &&
-                            !allocating &&
-                            widget.detail == null
+                    child: _showPeople
+                        ? JournalSurface(
+                            padding: const EdgeInsets.all(12),
+                            child: _peopleView(),
+                          )
+                        : _showBases
+                        ? JournalSurface(
+                            padding: EdgeInsets.zero,
+                            child: JournalBasesView(
+                              key: _basesKey,
+                              console: console,
+                              controller: controller,
+                              onInspect: (person) => unawaited(
+                                controller.openPersonnelProfile(person.id),
+                              ),
+                            ),
+                          )
+                        : widget.section == networkJournalSection &&
+                              !widget.fullSpreadDetail &&
+                              !allocating &&
+                              widget.detail == null
                         ? JournalNetworkView(
                             key: _networkKey,
                             console: console,
@@ -325,7 +391,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                                 widget.onCloseInspection ?? () {},
                             inspectedPerson: widget.inspectedPerson,
                           )
-                        : (widget.section != 0 || widget.fullSpreadDetail) &&
+                        : (widget.section != 0 &&
+                                      widget.section != peopleJournalSection ||
+                                  widget.fullSpreadDetail) &&
                               !activityFrame &&
                               !allocating
                         ? JournalSurface(
@@ -385,7 +453,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   Widget _sectionTabs(bool narrow) {
     const tabs = <(int, String, JournalIcon)>[
       (0, 'Organisation', JournalIcon.crew),
+      (peopleJournalSection, 'People', JournalIcon.people),
       (networkJournalSection, 'Network', JournalIcon.network),
+      (basesJournalSection, 'Bases', JournalIcon.bases),
       (1, 'Ledger', JournalIcon.accounts),
       (2, 'Justice', JournalIcon.law),
       (3, 'Agenda', JournalIcon.diplomacy),
@@ -395,6 +465,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       (7, 'Options', JournalIcon.options),
     ];
     final reviews = controller.networkReviews.count(game.pool);
+    final peopleReviews = controller.organisationReviews.notices.length;
     Widget tab((int, String, JournalIcon) item) => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Tooltip(
@@ -419,7 +490,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 button: true,
                 excludeSemantics: true,
                 selected: widget.section == item.$1,
-                label: item.$1 == networkJournalSection && reviews > 0
+                label: item.$1 == peopleJournalSection && peopleReviews > 0
+                    ? 'People. $peopleReviews changes to review.'
+                    : item.$1 == networkJournalSection && reviews > 0
                     ? 'Network. $reviews ${reviews == 1 ? 'role' : 'roles'} to review.'
                     : item.$2,
                 child: Padding(
@@ -450,7 +523,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                               ),
                             ),
                           ),
-                          if (item.$1 == networkJournalSection && reviews > 0)
+                          if (item.$1 == networkJournalSection && reviews > 0 ||
+                              item.$1 == peopleJournalSection &&
+                                  peopleReviews > 0)
                             Padding(
                               padding: const EdgeInsets.only(left: 4),
                               child: DecoratedBox(
@@ -463,7 +538,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                                     horizontal: 4,
                                   ),
                                   child: Text(
-                                    '$reviews',
+                                    '${item.$1 == peopleJournalSection ? peopleReviews : reviews}',
                                     style: JournalPalette.small.copyWith(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
@@ -490,7 +565,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, bounds) =>
-                  bounds.maxWidth < 950 && widget.textScale > 1.1
+                  bounds.maxWidth / tabs.length <
+                      (widget.textScale > 1.1 ? 120 : 78)
                   ? Scrollbar(
                       child: SingleChildScrollView(
                         key: const ValueKey('journal-section-scroll'),
@@ -521,6 +597,249 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ],
       ),
     );
+  }
+
+  Widget _peopleView() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Align(
+        alignment: Alignment.centerRight,
+        child: TextButton.icon(
+          key: const ValueKey('journal-equipment'),
+          onPressed: controller.canNavigate
+              ? () => _openManagementSection('e')
+              : null,
+          icon: const JournalIllustratedIcon(
+            icon: JournalIcon.stores,
+            size: 22,
+          ),
+          label: const Text('Equipment'),
+        ),
+      ),
+      Expanded(
+        child: _personnelTools
+            ? Column(
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Roster tools',
+                          style: JournalPalette.heading,
+                        ),
+                      ),
+                      TextButton.icon(
+                        key: const ValueKey('personnel-back-directory'),
+                        onPressed: () =>
+                            setState(() => _personnelTools = false),
+                        icon: const Icon(Icons.arrow_back, size: 16),
+                        label: const Text('Back to directory'),
+                      ),
+                    ],
+                  ),
+                  Expanded(
+                    child:
+                        widget.peopleToolsBuilder?.call(context) ??
+                        const SizedBox.shrink(),
+                  ),
+                ],
+              )
+            : _peopleDirectory(),
+      ),
+    ],
+  );
+
+  Widget _peopleDirectory() => JournalPeopleView(
+    people: game.pool,
+    directoryController: _personnel,
+    initialScope: _peopleScope,
+    onScopeChanged: (scope) => _peopleScope = scope,
+    scopeArtBuilder: (scope) => JournalIllustratedIcon(
+      icon: switch (scope) {
+        JournalPeopleScope.people => JournalIcon.people,
+        JournalPeopleScope.leadership => JournalIcon.leadership,
+        JournalPeopleScope.captives => JournalIcon.captives,
+      },
+      size: 44,
+    ),
+    reviewPanel: _peopleReviews(),
+    onTools: () => setState(() => _personnelTools = true),
+    enabled: controller.canNavigate && !controller.busy,
+    onOpenProfile: (p) => unawaited(controller.openPersonnelProfile(p.id)),
+    onAssignOrder: (p) => unawaited(preparePersonOrder(p)),
+    onJoinSquad: (p) => unawaited(_joinSquad(p)),
+    onOpenPromotionTools: () => unawaited(controller.openPromotionTools()),
+    onPromotePerson: (p) => unawaited(_promotePerson(p)),
+    onAssignTender: (p) => unawaited(
+      preparePersonOrder(
+        p,
+        categoryId: 'acquisition',
+        activity: ActivityType.interrogation,
+      ),
+    ),
+  );
+
+  Widget _peopleReviews() {
+    final notices = controller.organisationReviews.notices;
+    if (notices.isEmpty) return const SizedBox.shrink();
+    return ExpansionTile(
+      key: const PageStorageKey('people-changes-review'),
+      initiallyExpanded: notices.length <= 2,
+      title: Text(
+        '${notices.length} changes to review',
+        style: JournalPalette.heading,
+      ),
+      leading: const Icon(
+        Icons.notifications_active_outlined,
+        color: JournalPalette.brassDark,
+      ),
+      children: [
+        SizedBox(
+          height: (notices.length * 115.0).clamp(100, 200),
+          child: ListView(
+            children: [
+              for (final notice in notices)
+                if (game.pool.where((p) => p.id == notice.personId).firstOrNull
+                    case final p?)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 5, 8, 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${p.name} · ${notice.title}',
+                          style: JournalPalette.heading,
+                        ),
+                        Text(notice.detail, style: JournalPalette.small),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 3,
+                          children: [
+                            TextButton(
+                              onPressed:
+                                  controller.canNavigate &&
+                                      personnelAvailableForOrders(p)
+                                  ? () => unawaited(preparePersonOrder(p))
+                                  : null,
+                              child: const Text('Choose order'),
+                            ),
+                            if (p.isActiveLiberal && p.squad == null)
+                              TextButton(
+                                onPressed: controller.canNavigate
+                                    ? () => unawaited(_joinSquad(p))
+                                    : null,
+                                child: const Text('Join squad'),
+                              ),
+                            TextButton(
+                              onPressed: () => unawaited(
+                                controller.organisationReviews.acknowledge(
+                                  notice.id,
+                                ),
+                              ),
+                              child: const Text('Keep resting'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Prepares the original actor's order reader and category. Selecting a
+  /// suggested job is still a local draft; the normal Confirm card commits it.
+  Future<void> preparePersonOrder(
+    Creature actor, {
+    String categoryId = 'legal',
+    ActivityType? activity,
+  }) async {
+    widget.onCloseInspection?.call();
+    _pendingOrder = null;
+    if (!await controller.openOrders(actor.id) || !mounted) return;
+    final group = categoryId == 'activism'
+        ? 2
+        : const {'legal', 'illegal'}.contains(categoryId)
+        ? 0
+        : 1;
+    setState(() {
+      _orders = true;
+      _pool = false;
+      _showReports = false;
+      _group = group;
+    });
+    await _openGroup(group, categoryId: categoryId);
+    if (!mounted || activity == null) return;
+    final action = console.actions
+        .where(
+          (a) =>
+              a.entityType == 'activity' &&
+              a.entityId == activity.name &&
+              a.entityCategory == actor.id.toString(),
+        )
+        .firstOrNull;
+    if (action != null && action.enabled) {
+      setState(() {
+        _pendingOrder = action;
+        _pendingRevision = console.revision.value;
+      });
+    }
+  }
+
+  Future<void> _joinSquad(Creature actor) async {
+    widget.onCloseInspection?.call();
+    if (!await controller.openAllocation(squad?.id) || !mounted) return;
+    setState(() {
+      _pool = true;
+      _orders = false;
+      _poolPerson = actor.id;
+      _pendingOrder = null;
+    });
+  }
+
+  Future<void> _promotePerson(Creature actor) async {
+    final action = await controller.preparePromotion(actor.id);
+    if (action == null || !mounted) return;
+    final revision = console.revision.value;
+    final next = game.pool
+        .where((p) => p.id.toString() == action.entityCategory)
+        .firstOrNull;
+    _managementDialog = true;
+    bool? accepted;
+    try {
+      accepted = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Promote ${actor.name}?'),
+          content: Text(
+            'Move their contact to ${next?.name ?? 'the next leader'}. '
+            'Recruitment capacity is recalculated. No time passes.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Promote'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      _managementDialog = false;
+    }
+    if (!mounted) return;
+    if (accepted == true) {
+      await controller.sendAction(action, revision: revision);
+    }
+    if (mounted && controller.canNavigate) {
+      await controller.openPersonnelDirectory();
+    }
   }
 
   Widget _squadTabs(bool narrow) => SizedBox(
@@ -680,6 +999,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     final actor = person;
     final teamName = undercover
         ? 'Undercover network'
+        : _individualOrderActor != null
+        ? 'Individual orders'
         : controller.assembly?.isNew == true
         ? 'New squad'
         : controller.assembly?.squadName ?? squad?.name ?? 'The organisation';
@@ -805,8 +1126,16 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             children: [
               _fact(
                 Icons.people,
-                undercover ? '${members.length} agents' : '${members.length}/6',
-                undercover ? 'Undercover agents' : 'Squad members',
+                undercover
+                    ? '${members.length} agents'
+                    : _individualOrderActor != null
+                    ? '1 person'
+                    : '${members.length}/6',
+                undercover
+                    ? 'Undercover agents'
+                    : _individualOrderActor != null
+                    ? 'Individual assignment'
+                    : 'Squad members',
               ),
               _fact(
                 Icons.shield_outlined,
@@ -929,7 +1258,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ),
         _railButton(
           Icons.assignment_ind,
-          'Clipboard',
+          'People',
           console.navigation?.section == 'people' ||
               console.journalProfile != null,
           controller.canNavigate
@@ -942,7 +1271,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                     _personnelTools = false;
                     _pendingOrder = null;
                   });
-                  await controller.openPersonnelDirectory();
+                  if (widget.onSection != null) {
+                    widget.onSection!(peopleJournalSection);
+                  } else {
+                    await controller.openPersonnelDirectory();
+                  }
                 }
               : null,
           key: 'journal-clipboard',
@@ -1144,6 +1477,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 child: Text(
                   undercover
                       ? 'Undercover agents · ${members.length}'
+                      : _individualOrderActor != null
+                      ? 'Individual assignment'
                       : 'Crew · ${members.length}/6',
                   style: JournalPalette.heading.copyWith(fontSize: 14),
                 ),

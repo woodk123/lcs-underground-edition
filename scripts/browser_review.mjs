@@ -219,17 +219,17 @@ try {
   report.checks.push('travel-details-and-cancel-preserve-campaign');
 
   await click(new RegExp(`^Select crew ${escape(crew[0].name)}(?:$|\\s)`));
-  await click(/^Clipboard(?:$|\s)/);
+  await click(/^People(?:$|[.\s])/);
   await wait(/Personnel directory/);
   assert.equal((await uiText()).split('\n').filter(line => line.trim() === 'Personnel directory').length, 1);
-  await capture('11-clipboard-as-ruled-journal-page');
+  await capture('11-people-as-ruled-journal-page');
   await click(new RegExp('^Open dossier for ' + escape(crew[0].name) + '[.]'));
   await wait(/Campaign record/);
   assert.doesNotMatch(await uiText(), /Profile of a Liberal|SKILL\s+NOW\s+MAX/);
-  await capture('12-clipboard-native-personnel-dossier');
+  await capture('12-people-native-personnel-dossier');
   await click(/^Skills$/);
   await wait(/Skills & training/);
-  await capture('13-clipboard-aligned-skill-values');
+  await capture('13-people-aligned-skill-values');
   await click(new RegExp(`^Select crew ${escape(crew[1].name)}(?:$|\\s)`));
   await wait(/Skills & training/);
   assert.equal(await page.getByRole('img', { name: new RegExp(`^${escape(crew[1].name)} portrait\\.`) }).count(), 2,
@@ -237,7 +237,9 @@ try {
   await capture('17-profile-member-switch-keeps-skills-tab');
   await click(/^Back to directory/);
   await wait(/Personnel directory/);
-  await click(/^Weapons(?:$|\s)/);
+  // The global directory has an Equipment utility; profile/equipment rails
+  // retain their original Weapons label.
+  await click(/^Equipment$/);
   await wait(/Increase ammo allocation/);
   assert.equal((await uiText()).split('\n').filter(line => line.trim() === 'Equipment').length, 1);
   assert.doesNotMatch(await uiText(), /Crew & choices|Equip the Squad|Cursors -/);
@@ -252,17 +254,17 @@ try {
   await page.getByRole('menuitem', { name: '150%', exact: true }).click();
   await page.setViewportSize({ width: 800, height: 600 });
   await capture('15-equipment-800x600-at150');
-  await click(/^Clipboard(?:$|\s)/);
+  await click(/^People(?:$|[.\s])/);
   await wait(/Personnel directory/);
   await click(new RegExp('^Open dossier for ' + escape(crew[0].name) + '[.]'));
   await wait(/Campaign record/);
-  await capture('16-clipboard-dossier-800x600-at150');
+  await capture('16-people-dossier-800x600-at150');
   await click(/^Back to directory/);
   await click(/^Reading size/);
   await page.getByRole('menuitem', { name: '100%', exact: true }).click();
   await page.setViewportSize({ width: 1440, height: 1000 });
   const afterManagement = await exportGame('after-management-inspection');
-  assert.deepEqual(afterManagement, assigned, 'Clipboard dossiers and equipment inspection preserve the saved campaign.');
+  assert.deepEqual(afterManagement, assigned, 'People dossiers and equipment inspection preserve the saved campaign.');
   report.checks.push('journal-management-inspection-preserves-campaign');
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.consoleErrors, []);

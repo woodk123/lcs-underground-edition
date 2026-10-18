@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "generated_on": "2026-10-18",
+  "generator": "Built-in image_gen.imagegen",
+  "use_case": "stylized-concept",
+  "purpose": "Original management-view sprites for People, Bases, Stores, Leadership, Captives and Media; discoverable organisation workflows.",
+  "style_reference": "assets/runtime-art/source/journal_icons_v1.png and assets/runtime-art/source/journal_network_emblem_v1.png inspected for painterly palette and material consistency; the new atlas was generated from a self-contained prompt.",
+  "rights_provenance": "Original artwork generated for this project with built-in image generation. No external branding, embedded text, or original-game bitmap is shipped.",
+  "assets": [
+    {
+      "original_path": "assets/runtime-art/source/journal_operations_icons_v1.png",
+      "recommended_runtime_path": "upstream/assets/modern/journal_operations_icons_v1.webp",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "fully_transparent_pixels": 925035,
+      "meaningful_alpha_bounds_ge_8": [
+        71,
+        81,
+        1479,
+        954
+      ],
+      "original_sha256": "d32defc5d4a39eef59ce35f3e8ccaea7beefe4638fe9633452371472e8fa0466",
+      "original_bytes": 2292770,
+      "prompt_path": "assets/operations/journal_operations_icons_v1.prompt.txt",
+      "layout_edit_prompt_path": "assets/operations/journal_operations_icons_v1.layout-edit.prompt.txt",
+      "source_postprocessing": "None. The selected built-in PNG output was copied unchanged. The original transparent alpha channel is preserved.",
+      "generation_history": "A fresh six-icon atlas was generated, then edited through built-in image generation to improve cell spacing and eliminate object overlap across cell boundaries. The intermediate draft is not shipped.",
+      "columns": 3,
+      "rows": 2,
+      "cell_width": 512,
+      "cell_height": 512,
+      "geometry_contract": "Row-major exact 512×512 cells on a 1536×1024 canvas. All meaningful alpha is contained within the intended cell; edge alpha is at most 1/255. Use rectangular cell crops. Labels, counts, warning states and controls remain live Flutter widgets. Recommended 32–48px display; cropping to each meaningful bounding box with extra transparent padding is optional for equal apparent size.",
+      "cells": [
+        {
+          "index": 0,
+          "id": "people",
+          "column": 0,
+          "row": 0,
+          "rect": [
+            0,
+            0,
+            512,
+            512
+          ],
+          "meaningful_alpha_bounds_within_cell_ge_8": [
+            71,
+            81,
+            490,
+            448
+          ],
+          "description": "Overlapping painted portrait contact cards and brass clip."
+        },
+        {
+          "index": 1,
+          "id": "bases",
+          "column": 1,
+          "row": 0,
+          "rect": [
+            512,
+            0,
+            1024,
+            512
+          ],
+          "meaningful_alpha_bounds_within_cell_ge_8": [
+            54,
+            108,
+            457,
+            482
+          ],
+          "description": "Olive safehouse, warm window and old brass key."
+        },
+        {
+          "index": 2,
+          "id": "stores",
+          "column": 2,
+          "row": 0,
+          "rect": [
+            1024,
+            0,
+            1536,
+            512
+          ],
+          "meaningful_alpha_bounds_within_cell_ge_8": [
+            17,
+            141,
+            441,
+            489
+          ],
+          "description": "Wooden supply crates with folded fabric and an olive canister."
+        },
+        {
+          "index": 3,
+          "id": "leadership",
+          "column": 0,
+          "row": 1,
+          "rect": [
+            0,
+            512,
+            512,
+            1024
+          ],
+          "meaningful_alpha_bounds_within_cell_ge_8": [
+            98,
+            39,
+            447,
+            426
+          ],
+          "description": "Three portrait cards connected by brass hierarchy rods."
+        },
+        {
+          "index": 4,
+          "id": "captives",
+          "column": 1,
+          "row": 1,
+          "rect": [
+            512,
+            512,
+            1024,
+            1024
+          ],
+          "meaningful_alpha_bounds_within_cell_ge_8": [
+            27,
+            81,
+            461,
+            430
+          ],
+          "description": "Closed brass padlock and strapped olive folio."
+        },
+        {
+          "index": 5,
+          "id": "media",
+          "column": 2,
+          "row": 1,
+          "rect": [
+            1024,
+            512,
+            1536,
+            1024
+          ],
+          "meaningful_alpha_bounds_within_cell_ge_8": [
+            30,
+            81,
+            455,
+            442
+          ],
+          "description": "Black and brass typewriter with a blank cream sheet."
+        }
+      ],
+      "visual_review": "All six sprites were inspected in the generated output. Each subject is whole and unclipped, with a distinct silhouette and no baked labels. PIL inspection confirmed RGBA transparency and no meaningful alpha on exact cell edges. The warm RGB tint visible in some previews beneath alpha=0 is transparent data, not a baked background.",
+      "role": "Decorative management navigation and section emblems only. No gameplay data or interaction is encoded in the artwork."
+    }
+  ]
+}

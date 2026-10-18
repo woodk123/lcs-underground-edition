@@ -166,6 +166,20 @@ Future<void> investInLocation(Site loc) async {
         category: loc.idString,
       );
     }
+    console.annotateActionEntity(
+      'r',
+      type: 'base-supplies',
+      id: 'rations',
+      category: loc.idString,
+    );
+    console.annotateActionEntity(
+      'd',
+      type: 'base-supplies',
+      id: 'diesel',
+      category: loc.idString,
+    );
+    console.screen = 'base-investment';
+    declareMenuNavigation('bases', backKey: 'Enter');
     int c = await getKey();
     if (isBackKey(c)) break;
     if (loc.upgradable) {

@@ -140,6 +140,19 @@
       "runtime_bytes": 195498
     },
     {
+      "original_path": "assets/runtime-art/source/journal_operations_icons_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_operations_icons_v1.webp",
+      "width": 1536,
+      "height": 1024,
+      "mode": "RGBA",
+      "lossless": false,
+      "has_alpha": true,
+      "original_sha256": "d32defc5d4a39eef59ce35f3e8ccaea7beefe4638fe9633452371472e8fa0466",
+      "runtime_sha256": "8343a5f9f01c631fd5156f2f288122b7794a17b0ab1216f16964ebbad09b433e",
+      "original_bytes": 2292770,
+      "runtime_bytes": 298734
+    },
+    {
       "original_path": "assets/runtime-art/source/journal_order_icons_extra_v1.png",
       "runtime_path": "upstream/assets/modern/journal_order_icons_extra_v1.webp",
       "width": 1448,

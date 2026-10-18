@@ -1,0 +1,16 @@
+Use case: stylized-concept.
+Asset type: production game UI sprite atlas for a painted vintage organiser interface.
+Primary request: create one atlas with SIX distinct standalone painted object emblems on a genuinely transparent background, precisely arranged in a 3-column by 2-row grid. The canvas should be 1536 pixels wide × 1024 pixels high. Each imaginary cell is 512×512. Cell centres are (256,256), (768,256), (1280,256), (256,768), (768,768), (1280,768). Each emblem is entirely inside its own cell with at least 64 pixels of transparent margin on every cell edge. Do not draw the grid itself. No cropping or overlap.
+Top row, left to right:
+1 PEOPLE: three overlapping cream contact cards with distinct small painted bust portraits, one woman and two men, warm contemporary civilian clothes, the cards held by one small brass clip. Legible broad silhouettes, no words or handwriting. The cards signify the full organisation roster.
+2 BASES: a small olive-painted safehouse facade with a pitched brown roof and one warm amber-lit window; a single large old brass key angled in front of it. A whole compact building, no ground plane or setting.
+3 STORES: two robust small wooden supply crates with one lid ajar showing folded cloth and a plain olive supply canister, clearly a store of equipment, no weapons, no marks or text.
+Bottom row, left to right:
+4 LEADERSHIP: one larger cream portrait card above two smaller cream portrait cards, connected by three simple short brass rods in a very clear hierarchy, small distinct painted bust portraits, no words or writing. It must read as a contact tree at thumbnail size.
+5 CAPTIVES: a sturdy closed dark brass padlock resting diagonally on a closed olive folio with a tan paper edge and a red-brown leather strap; calm guarded-custody metaphor, no prison bars, people, handcuffs or violence.
+6 MEDIA: a compact vintage black and brass typewriter, front three-quarter view, with a clean blank cream sheet in the roller; restrained burgundy carriage accent, broad keys suitable for small icon display.
+Style/medium: cohesive hand-painted gouache/oil illustration, moderately realistic nostalgic detective journal item icons, subtly textured brushwork, small highlights. Shaped cutout silhouettes, matching visual weight and similar footprint across all six cells. Warm sepia, aged cream, muted dark olive, dark brown, restrained oxblood, aged brass. Warm soft upper-left lighting. Retain clear value contrast for display on pale parchment at 32–48 pixels.
+Backdrop: true alpha transparency everywhere around the six objects and in all gutters. No paper backdrop, no checkerboard pattern, no tile fill, no floor, no shadows spilling toward adjacent cells.
+Constraints: all six subjects are whole and unclipped, six and only six sprites, exactly 3 columns × 2 rows, no letters, numbers, text, headings, badges, diagrams outside the leadership emblem, borders, frames around cells, watermark or logos. No flat vector symbols, no glossy 3D, no neon, no modern SaaS icon style. The image is an atlas, not a screenshot or complete interface.
+
+Selected result is the layout-corrected edit; see journal_operations_icons_v1.layout-edit.prompt.txt.

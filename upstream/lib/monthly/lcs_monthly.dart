@@ -8,6 +8,7 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/engine.dart';
 import 'package:lcs_new_age/engine/ledger_context.dart';
+import 'package:lcs_new_age/engine/media_production_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/gamestate/ledger.dart';
 import 'package:lcs_new_age/items/ammo_type.dart';
@@ -332,25 +333,7 @@ Future<void> fundReport(bool disbanding, {bool management = false}) async {
 
 /* monthly - lets the player choose a special edition for the guardian */
 Future<LootType?> chooseSpecialEdition() async {
-  //Temporary, maybe put special edition definition into an xml file. -XML
-  const List<String> docs = [
-    LootTypeIds.amRadioFiles,
-    LootTypeIds.cableNewsFiles,
-    LootTypeIds.ccsBackerList,
-    LootTypeIds.ceoLoveLetters,
-    LootTypeIds.ceoPhotos,
-    LootTypeIds.ceoTaxPapers,
-    LootTypeIds.corpFiles,
-    LootTypeIds.intHqDisk,
-    LootTypeIds.judgeFiles,
-    LootTypeIds.policeRecords,
-    LootTypeIds.prisonFiles,
-    LootTypeIds.researchFiles,
-    LootTypeIds.secretDocuments,
-    LootTypeIds.landlordPapers,
-    LootTypeIds.insuranceFraudEvidence,
-    LootTypeIds.elderAbuseEvidence,
-  ];
+  const docs = guardianSpecialEditionEvidenceIds;
 
   //char havetype[LOOTNUM];
   //for(int l=0;l<LOOTNUM;l++)havetype[l]=0;

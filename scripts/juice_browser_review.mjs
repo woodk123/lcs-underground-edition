@@ -143,7 +143,7 @@ try {
   await page.getByRole('dialog').getByRole('button', { name: 'Close dossier', exact: true }).last().click();
   await click(/^Close crew inspection/);
   report.checks.push('Inspector and full dossier show current Juice, rank benefits and next milestone; nested help closes safely');
-  await click(/^Clipboard(?:\s|$)/); await wait(/Personnel directory/); await wait(/Juice 160/);
+  await click(/^People(?:$|[.\s])/); await wait(/Personnel directory/); await wait(/Juice 160/);
   await page.getByText('Sort: Name', { exact: true }).click();
   await page.getByRole('menuitem', { name: 'Sort: Juice', exact: true }).click();
   await wait(/Sort: Juice/); await capture('05-directory-juice-sort');
@@ -155,7 +155,7 @@ try {
   await search('Chaz'); await row('Chaz Reasoner'); await wait(/Back to directory/);
   await wait(/Juice 160/); await wait(/40 to Urban Commando \(200\)/);
   await capture('06-hospital-native-profile-juice');
-  await click(/^Back to directory$/); await click(/^Back to organisation$/);
+  await click(/^Back to directory$/); await click(/^Organisation(?:$|\s)/);
   await page.setViewportSize({ width: 800, height: 600 });
   await click(/^Reading size$/); await page.getByRole('menuitem', { name: '150%', exact: true }).click();
   await click(/^Inspect Artie Activist(?:\s|$)/); await wait(/Full dossier/);

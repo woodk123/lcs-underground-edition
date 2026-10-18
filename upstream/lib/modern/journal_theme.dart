@@ -104,6 +104,12 @@ enum JournalIcon {
   activism,
   operations,
   network,
+  people,
+  bases,
+  stores,
+  leadership,
+  captives,
+  media,
 }
 
 /// Original pictorial art, ordered like the original organiser's eight tabs and
@@ -154,7 +160,10 @@ class JournalIllustratedIcon extends StatelessWidget {
         Theme.of(context).extension<JournalVisuals>() ?? const JournalVisuals();
     final isCrew = icon == JournalIcon.crew || icon == JournalIcon.personnel;
     final isNetwork = icon == JournalIcon.network;
-    final asset = isNetwork
+    final isOperations = icon.index >= JournalIcon.people.index;
+    final asset = isOperations
+        ? 'assets/modern/journal_operations_icons_v1.webp'
+        : isNetwork
         ? 'assets/modern/journal_network_emblem_v1.webp'
         : isCrew
         ? visuals.crewAsset
@@ -170,7 +179,18 @@ class JournalIllustratedIcon extends StatelessWidget {
                 : CustomPaint(
                     painter: _JournalIconPainter(
                       snapshot.data!,
-                      isCrew || isNetwork
+                      isOperations
+                          ? Rect.fromLTWH(
+                              ((icon.index - JournalIcon.people.index) % 3) *
+                                  snapshot.data!.width /
+                                  3,
+                              ((icon.index - JournalIcon.people.index) ~/ 3) *
+                                  snapshot.data!.height /
+                                  2,
+                              snapshot.data!.width / 3,
+                              snapshot.data!.height / 2,
+                            )
+                          : isCrew || isNetwork
                           ? Rect.fromLTWH(
                               0,
                               0,
@@ -189,6 +209,12 @@ class JournalIllustratedIcon extends StatelessWidget {
   IconData _fallbackIcon(JournalIcon icon) => switch (icon) {
     JournalIcon.crew || JournalIcon.personnel => Icons.groups,
     JournalIcon.network => Icons.visibility_outlined,
+    JournalIcon.people => Icons.groups_outlined,
+    JournalIcon.bases => Icons.home_work_outlined,
+    JournalIcon.stores => Icons.inventory_2_outlined,
+    JournalIcon.leadership => Icons.account_tree_outlined,
+    JournalIcon.captives => Icons.lock_outline,
+    JournalIcon.media => Icons.newspaper_outlined,
     JournalIcon.accounts => Icons.account_balance_wallet_outlined,
     JournalIcon.law => Icons.balance,
     JournalIcon.diplomacy => Icons.handshake_outlined,

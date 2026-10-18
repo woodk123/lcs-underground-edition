@@ -15,6 +15,7 @@ import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/gamestate/time.dart';
 import 'package:lcs_new_age/modern/article_view.dart';
+import 'package:lcs_new_age/modern/base_management_controller.dart';
 import 'package:lcs_new_age/modern/city_planning_view.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
@@ -27,6 +28,7 @@ import 'package:lcs_new_age/modern/journal_creation.dart';
 import 'package:lcs_new_age/modern/journal_ledger.dart';
 import 'package:lcs_new_age/modern/journal_legislation.dart';
 import 'package:lcs_new_age/modern/journal_media.dart';
+import 'package:lcs_new_age/modern/journal_media_production.dart';
 import 'package:lcs_new_age/modern/journal_pursuit.dart';
 import 'package:lcs_new_age/modern/journal_recovery.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
@@ -76,6 +78,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
   bool _journalSession = false;
   String _lastConsoleScreen = 'generic';
   int _journalSection = 0;
+  bool _mediaProduction = false;
   final _journalKey = GlobalKey<OrganisationJournalState>();
   Console get console => engine.console;
   bool get hq => console.screen == 'headquarters';
@@ -248,6 +251,12 @@ class _ModernGameShellState extends State<ModernGameShell> {
         _send('Escape');
         return KeyEventResult.handled;
       }
+      return KeyEventResult.ignored;
+    }
+    final focusedContext = FocusManager.instance.primaryFocus?.context;
+    if (focusedContext?.widget is EditableText ||
+        focusedContext?.findAncestorStateOfType<EditableTextState>() != null) {
+      // Search fields must receive platform text input before game shortcuts.
       return KeyEventResult.ignored;
     }
     if (_helpOpen ||
@@ -1069,6 +1078,10 @@ class _ModernGameShellState extends State<ModernGameShell> {
         await _organisation.returnToHeadquarters();
       case networkJournalSection:
         await _organisation.returnToHeadquarters();
+      case peopleJournalSection:
+        await _organisation.openPersonnelDirectory();
+      case basesJournalSection:
+        await _organisation.returnToHeadquarters();
     }
   }
 
@@ -1122,7 +1135,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
     } else if (agendaOverviewFrame(console) != null) {
       detail = JournalAgendaView(console: console, onAction: _send);
     } else if (mediaOverviewFrame(console) != null) {
-      detail = JournalMediaOverview(console: console, onAction: _mediaAction);
+      detail = _mediaDesk();
     } else if (_journalSection == 7 && !console.textInput) {
       detail = _journalOptions();
     } else if (_journalSection == networkJournalSection &&
@@ -1133,6 +1146,20 @@ class _ModernGameShellState extends State<ModernGameShell> {
             console.navigation?.section == 'assignments')) {
       // The Network owns its roster and inspector while using the original
       // sleeper readers underneath. Required decisions retain their own view.
+      detail = null;
+    } else if (_journalSection == peopleJournalSection &&
+        !console.textInput &&
+        console.journalProfile == null &&
+        activityOrderFrame(console) == null &&
+        squadAllocationFrame(console) == null &&
+        (hq || console.screen == 'personnel-directory' || _organisation.busy)) {
+      detail = null;
+    } else if (_journalSection == basesJournalSection &&
+        !console.textInput &&
+        console.journalProfile == null &&
+        (hq ||
+            BaseManagementController.ownsScreen(console) ||
+            _organisation.busy)) {
       detail = null;
     } else if (!primary) {
       detail = _workspace(false, true, embeddedJournal: true);
@@ -1178,6 +1205,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
           console.screen == 'article' && console.article != null,
       onSection: _openJournalSection,
       detail: detail,
+      peopleToolsBuilder: (_) => _workspace(false, true, embeddedJournal: true),
       inspectedPerson: inspected,
       onCloseInspection: () {
         if (_inspectedPersonId != null) {
@@ -1200,6 +1228,62 @@ class _ModernGameShellState extends State<ModernGameShell> {
       ],
     );
   }
+
+  Widget _mediaDesk() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Wrap(
+        spacing: 8,
+        runSpacing: 5,
+        children: [
+          ChoiceChip(
+            key: const ValueKey('media-archive-tab'),
+            label: const Text('Archive'),
+            selected: !_mediaProduction,
+            onSelected: (_) => setState(() => _mediaProduction = false),
+          ),
+          ChoiceChip(
+            key: const ValueKey('media-production-tab'),
+            label: const Text('Production'),
+            selected: _mediaProduction,
+            onSelected: (_) => setState(() => _mediaProduction = true),
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      Expanded(
+        child: _mediaProduction
+            ? JournalMediaProductionView(
+                enabled: _organisation.canNavigate,
+                onAssign: (request) async {
+                  if (!_organisation.canNavigate) return;
+                  setState(() {
+                    _journalSection = 0;
+                    _inspectedPersonId = null;
+                  });
+                  // Leave the archive first: its source frame owns section 4
+                  // until it closes. Stage only after section 0 has rendered,
+                  // otherwise didUpdateWidget would discard the new draft.
+                  if (!await _organisation.returnToHeadquarters()) return;
+                  await WidgetsBinding.instance.endOfFrame;
+                  if (!mounted) return;
+                  await _journalKey.currentState?.preparePersonOrder(
+                    request.person,
+                    categoryId: 'activism',
+                    activity: request.activity,
+                  );
+                },
+                onOpenPeople: () =>
+                    unawaited(_openJournalSection(peopleJournalSection)),
+                onOpenBases: () =>
+                    unawaited(_openJournalSection(basesJournalSection)),
+                onOpenStores: () =>
+                    unawaited(_openJournalSection(basesJournalSection)),
+              )
+            : JournalMediaOverview(console: console, onAction: _mediaAction),
+      ),
+    ],
+  );
 
   Widget _journalOptions() => JournalSurface(
     lined: true,

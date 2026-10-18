@@ -10,6 +10,7 @@ import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/gamestate/squad.dart';
 import 'package:lcs_new_age/modern/network_reviews.dart';
+import 'package:lcs_new_age/modern/organisation_reviews.dart';
 
 /// Coordinates a single organisation journal with the original awaited menus.
 ///
@@ -19,12 +20,14 @@ import 'package:lcs_new_age/modern/network_reviews.dart';
 class OrganisationController extends ChangeNotifier {
   OrganisationController({required this.console}) {
     networkReviews.addListener(_notify);
+    organisationReviews.addListener(_notify);
     console.revision.addListener(_frameChanged);
     _frameChanged();
   }
 
   final Console console;
   final NetworkReviewStore networkReviews = NetworkReviewStore();
+  final OrganisationReviewStore organisationReviews = OrganisationReviewStore();
   bool _disposed = false;
   bool _busy = false;
   String? _message;
@@ -307,6 +310,68 @@ class OrganisationController extends ChangeNotifier {
 
   /// The complete personnel reader, preserving the original profile actions.
   Future<bool> openPersonnelDirectory() => _run(_openPersonnelDirectory);
+
+  Future<bool> openPromotionTools() => _run(_openPromotionTools);
+
+  Future<bool> _openPromotionTools() async {
+    if (console.screen == 'leadership' &&
+        console.navigation?.section == 'people' &&
+        console.awaitingInput &&
+        !console.textInput) {
+      return true;
+    }
+    if (!await _openOverview()) return false;
+    final action = _action('u');
+    return action != null &&
+        action.enabled &&
+        await _dispatch(action) &&
+        console.screen == 'leadership';
+  }
+
+  /// Opens the actual roster first so a UI confirmation retains one exact
+  /// promotion action, actor, next contact and source revision.
+  Future<ConsoleAction?> preparePromotion(int personId) async {
+    ConsoleAction? result;
+    await _run(() async {
+      if (!await _openPromotionTools()) return false;
+      final seenBack = <String>{};
+      for (var step = 0; step < 256; step++) {
+        final signature = console.actions
+            .where((a) => a.entityType == 'promotion-person')
+            .map((a) => a.entityId)
+            .join(',');
+        if (!seenBack.add(signature)) break;
+        final previous = _pageAction(forward: false);
+        if (previous == null ||
+            !previous.enabled ||
+            !await _dispatch(previous)) {
+          break;
+        }
+      }
+      final seen = <String>{};
+      for (var step = 0; step < 256 && console.screen == 'leadership'; step++) {
+        final action = _entityAction('promotion-person', personId.toString());
+        if (action != null) {
+          if (!action.enabled) {
+            return _fail(
+              'Promotion is unavailable in the current contact chain.',
+            );
+          }
+          result = action;
+          return true;
+        }
+        final signature = console.actions
+            .where((a) => a.entityType == 'promotion-person')
+            .map((a) => a.entityId)
+            .join(',');
+        if (!seen.add(signature)) break;
+        final next = _pageAction(forward: true);
+        if (next == null || !next.enabled || !await _dispatch(next)) break;
+      }
+      return _fail('That person is not in the current promotion roster.');
+    });
+    return result;
+  }
 
   Future<bool> _openPersonnelDirectory() async {
     if (console.screen == 'personnel-directory' &&
@@ -630,6 +695,19 @@ class OrganisationController extends ChangeNotifier {
 
   void _frameChanged() {
     unawaited(networkReviews.load(game.gameState.uniqueGameId));
+    if (isHeadquarters &&
+        console.awaitingInput &&
+        !console.textInput &&
+        console.eventMessage == null &&
+        game.mode == GameMode.base) {
+      unawaited(
+        organisationReviews.observe(
+          game.gameState.uniqueGameId,
+          game.pool,
+          game.date,
+        ),
+      );
+    }
     // Keyboard/legacy Next Squad commands use the same source state. A cached
     // tab selection must never point at a different team from the one that
     // will receive the engine's equipment and operation commands.
@@ -669,6 +747,8 @@ class OrganisationController extends ChangeNotifier {
     console.revision.removeListener(_frameChanged);
     networkReviews.removeListener(_notify);
     networkReviews.dispose();
+    organisationReviews.removeListener(_notify);
+    organisationReviews.dispose();
     _disposed = true;
     super.dispose();
   }

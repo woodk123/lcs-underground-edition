@@ -170,6 +170,11 @@ Future<void> reviewAssetsAndFormSquads() async {
           "8 - Review and Move Equipment ($equipment)",
           enabledWhen: equipment > 0,
         );
+        console.annotateActionEntity(
+          '8',
+          type: 'organisation-section',
+          id: 'stores',
+        );
       } else {
         break;
       }
@@ -181,8 +186,18 @@ Future<void> reviewAssetsAndFormSquads() async {
     addPageButtons(y: 23, x: 0);
     move(console.y, console.x + 3);
     addInlineOptionText("U", "U - Promote Liberals.");
+    console.annotateActionEntity(
+      'u',
+      type: 'organisation-section',
+      id: 'leadership',
+    );
     addOptionText(24, 0, "Z", "Z - Assemble a New Squad.  ");
     addInlineOptionText("T", "T - Assign New Bases to the Squadless.");
+    console.annotateActionEntity(
+      't',
+      type: 'organisation-section',
+      id: 'bases',
+    );
 
     console.screen = 'organisation';
     describeOrganisationOverview(
@@ -199,7 +214,7 @@ Future<void> reviewAssetsAndFormSquads() async {
       page--;
     }
     if ((isPageUp(c) || c == Key.downArrow || c == Key.rightArrow) &&
-        (page + 1) * 19 < squads.length + 7) {
+        (page + 1) * 19 < squads.length + 8) {
       page++;
     }
 
@@ -1193,6 +1208,12 @@ Future<void> assignNewBasesToTheSquadless() async {
             ? ColorKey.red
             : ColorKey.lightGray,
       );
+      console.annotateActionEntity(
+        letter,
+        type: 'base-assignment-person',
+        id: tempp.id.toString(),
+        category: temploc[selectedbase].idString,
+      );
 
       mvaddstr(
         y,
@@ -1219,6 +1240,13 @@ Future<void> assignNewBasesToTheSquadless() async {
         "$number - $name",
         baseColorKey: p == selectedbase ? ColorKey.white : ColorKey.lightGray,
       );
+      console.annotateActionEntity(
+        number,
+        type: p == selectedbase
+            ? 'base-assignment-destination-selected'
+            : 'base-assignment-destination',
+        id: temploc[p].idString,
+      );
     }
 
     setColor(lightGray);
@@ -1240,6 +1268,8 @@ Future<void> assignNewBasesToTheSquadless() async {
     }
     addOptionText(23, 0, 'Enter', 'Enter - Done assigning bases');
 
+    console.screen = 'base-assignment';
+    declareMenuNavigation('people');
     int c = await getKey();
 
     //PAGE UP (people)
@@ -1358,7 +1388,24 @@ Future<void> promoteliberals() async {
       Creature tempp = temppool[p];
       setColor(lightGray);
       String letter = letterAPlus(y - 2);
-      addOptionText(y, 0, letter, "$letter - ");
+      final contact = pool.firstWhereOrNull(
+        (p) => p.alive && p.id == tempp.hireId,
+      );
+      final nextContact = contact == null
+          ? null
+          : pool.firstWhereOrNull((p) => p.alive && p.id == contact.hireId);
+      final canPromote =
+          tempp.hidingDaysLeft == 0 &&
+          !tempp.seduced &&
+          nextContact != null &&
+          (tempp.brainwashed || nextContact.subordinatesLeft > 0);
+      addOptionText(y, 0, letter, "$letter - ", enabledWhen: canPromote);
+      console.annotateActionEntity(
+        letter,
+        type: 'promotion-person',
+        id: tempp.id.toString(),
+        category: nextContact?.id.toString(),
+      );
 
       move(y, 27);
       int p2 = 0;
@@ -1418,10 +1465,12 @@ Future<void> promoteliberals() async {
       "Enlightened Liberals follow anyone. Seduced Liberals follow only their lover.",
     );
     if (temppool.length > pageLength) {
-      move(24, 0);
-      addstr(pageStr);
+      addPageButtons(y: 24, x: 0);
     }
+    addBackButton(y: 24, x: 58);
 
+    console.screen = 'leadership';
+    declareMenuNavigation('people');
     int c = await getKey();
 
     //PAGE UP
@@ -1436,6 +1485,7 @@ Future<void> promoteliberals() async {
 
     if (c >= Key.a && c <= Key.a + pageLength) {
       int p = page * pageLength + c - Key.a;
+      if (p >= temppool.length) continue;
       Creature tempp = temppool[p];
       // can't promote liberals in hiding or seduced
       if (p < temppool.length && tempp.hidingDaysLeft == 0 && !tempp.seduced) {
