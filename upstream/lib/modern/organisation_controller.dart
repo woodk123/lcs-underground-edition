@@ -5,10 +5,12 @@ import 'package:lcs_new_age/basemode/activate_sleepers.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/engine/console.dart';
+import 'package:lcs_new_age/engine/ledger_context.dart';
 import 'package:lcs_new_age/engine/organisation_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/gamestate/squad.dart';
+import 'package:lcs_new_age/modern/monthly_ledger_history.dart';
 import 'package:lcs_new_age/modern/network_reviews.dart';
 import 'package:lcs_new_age/modern/organisation_reviews.dart';
 
@@ -21,6 +23,7 @@ class OrganisationController extends ChangeNotifier {
   OrganisationController({required this.console}) {
     networkReviews.addListener(_notify);
     organisationReviews.addListener(_notify);
+    monthlyLedgerHistory.addListener(_notify);
     console.revision.addListener(_frameChanged);
     _frameChanged();
   }
@@ -28,6 +31,8 @@ class OrganisationController extends ChangeNotifier {
   final Console console;
   final NetworkReviewStore networkReviews = NetworkReviewStore();
   final OrganisationReviewStore organisationReviews = OrganisationReviewStore();
+  final MonthlyLedgerHistoryStore monthlyLedgerHistory =
+      MonthlyLedgerHistoryStore();
   bool _disposed = false;
   bool _busy = false;
   String? _message;
@@ -694,6 +699,13 @@ class OrganisationController extends ChangeNotifier {
   }
 
   void _frameChanged() {
+    unawaited(
+      monthlyLedgerHistory.observe(
+        game.gameState.uniqueGameId,
+        game.date,
+        completed: completedLedgerReport(console),
+      ),
+    );
     unawaited(networkReviews.load(game.gameState.uniqueGameId));
     if (isHeadquarters &&
         console.awaitingInput &&
@@ -749,6 +761,8 @@ class OrganisationController extends ChangeNotifier {
     networkReviews.dispose();
     organisationReviews.removeListener(_notify);
     organisationReviews.dispose();
+    monthlyLedgerHistory.removeListener(_notify);
+    monthlyLedgerHistory.dispose();
     _disposed = true;
     super.dispose();
   }

@@ -18,6 +18,8 @@ The suite covers the original engine, command routing, order confirmation/cancel
 
 Fresh-campaign flow regressions include pending recruitment readiness compared with the original meeting menu, new recruit/custody/ended-visit follow-ups across restarts, live victory counts compared with `winCheck`, original rent exemptions and eviction timing, and draft guards for personal orders, Network, visits and Bases purchases. Retained callbacks are exercised after cancellation and replacement; read-only views preserve full campaign snapshots and gameplay RNG. The small-screen checks retain visible first-row actions and order timing at enlarged reading sizes.
 
+Month-end regressions exercise actual sleeper handlers, coherent earnings/exposure and delivery reports, unsupported workplaces, blind-time completion and unchanged valid-operation RNG. Production tests compare daily writing/streaming with original influence accumulation and active publication staffing; source publication choices verify one-copy consumption and refusal retaining evidence. Ledger tests cover period labels, required acknowledgement before history capture, source-total reset, bounded local history across restarts/campaign changes/older saves, pagination, keyboard isolation and enlarged reading sizes. Prepared source scenarios are separate from genuinely earned browser playthrough results.
+
 Release tooling uses Python's standard library:
 
 ```powershell

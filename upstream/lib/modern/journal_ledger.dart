@@ -1,20 +1,71 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/ledger_context.dart';
+import 'package:lcs_new_age/gamestate/time.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
+import 'package:lcs_new_age/modern/monthly_ledger_history.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 
 /// An account book of the original report's recorded figures and stock values.
 /// It never recalculates income, expenses, sale prices or game balances.
-class JournalLedgerOverview extends StatelessWidget {
+class JournalLedgerOverview extends StatefulWidget {
   const JournalLedgerOverview({
     super.key,
     required this.console,
     required this.onAction,
+    this.history,
   });
   final Console console;
   final ValueChanged<String> onAction;
+  final MonthlyLedgerHistoryStore? history;
+
+  @override
+  State<JournalLedgerOverview> createState() => JournalLedgerOverviewState();
+}
+
+class JournalLedgerOverviewState extends State<JournalLedgerOverview> {
+  bool _previous = false;
+  int _historyPage = 0;
+  Console get console => widget.console;
+  MonthlyLedgerSnapshot? get _snapshot =>
+      _previous && ledgerReportFrame(console)?.management == true
+      ? widget.history?.latest
+      : null;
+
+  /// Historical accounts are a local reader. Keyboard page and close keys must
+  /// not reach the live ledger waiting underneath them.
+  bool handleGameShortcut(KeyEvent event) {
+    final snapshot = _snapshot;
+    if (snapshot == null) return false;
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.enter) {
+      setState(() => _previous = false);
+    } else if ({
+      LogicalKeyboardKey.arrowLeft,
+      LogicalKeyboardKey.arrowUp,
+      LogicalKeyboardKey.pageUp,
+    }.contains(key)) {
+      _turnHistoryPage(-1, snapshot);
+    } else if ({
+      LogicalKeyboardKey.arrowRight,
+      LogicalKeyboardKey.arrowDown,
+      LogicalKeyboardKey.pageDown,
+    }.contains(key)) {
+      _turnHistoryPage(1, snapshot);
+    }
+    return true;
+  }
+
+  void _turnHistoryPage(int delta, MonthlyLedgerSnapshot snapshot) {
+    if (!identical(_snapshot, snapshot)) return;
+    setState(() {
+      _historyPage = (_historyPage + delta) % snapshot.pageCount;
+    });
+  }
+
+  String _period(DateTime date) => '${getMonth(date.month)} ${date.year}';
 
   bool _available(LedgerReportFrame frame, ConsoleAction action) {
     if (!action.enabled) return false;
@@ -34,28 +85,34 @@ class JournalLedgerOverview extends StatelessWidget {
   ) {
     if (!_available(frame, action)) return null;
     return () {
-      if (console.revision.value == revision &&
+      if (_snapshot == null &&
+          console.revision.value == revision &&
           ledgerReportFrame(console) == frame &&
           console.actions.contains(action) &&
           console.lastKey == null) {
-        onAction(action.key);
+        widget.onAction(action.key);
       }
     };
   }
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
-    animation: console.revision,
+    animation: Listenable.merge([
+      console.revision,
+      if (widget.history != null) widget.history!,
+    ]),
     builder: (context, _) {
       final frame = ledgerReportFrame(console);
       if (frame == null) return const SizedBox.shrink();
       final revision = console.revision.value;
+      final snapshot = _snapshot;
+      final lines = snapshot?.lines ?? frame.lines;
+      final pageCount = snapshot?.pageCount ?? frame.pageCount;
+      final page = snapshot == null ? frame.page : _historyPage % pageCount;
       return LayoutBuilder(
         builder: (context, bounds) {
           final narrow = bounds.maxWidth < 650;
-          final visible = frame.lines
-              .where((line) => line.page == frame.page)
-              .toList();
+          final visible = lines.where((line) => line.page == page).toList();
           return JournalSurface(
             key: const ValueKey('journal-ledger'),
             lined: true,
@@ -65,7 +122,9 @@ class JournalLedgerOverview extends StatelessWidget {
               children: [
                 Expanded(
                   child: ListView(
-                    key: ValueKey('journal-ledger-scroll:${frame.page}'),
+                    key: ValueKey(
+                      'journal-ledger-scroll:${snapshot == null ? 'current' : 'history'}:$page',
+                    ),
                     children: [
                       const Text(
                         'Financial ledger',
@@ -74,11 +133,51 @@ class JournalLedgerOverview extends StatelessWidget {
                       const SizedBox(height: 5),
                       const DecisionGuideButton(topic: DecisionTopic.ledger),
                       Text(
-                        frame.management
-                            ? 'Recorded income, expenses & liquid assets'
-                            : 'Month-end financial report',
+                        snapshot != null
+                            ? '${_period(snapshot.period)} · completed month'
+                            : frame.management
+                            ? '${_period(frame.period)} · current month'
+                            : '${_period(frame.period)} · month-end financial report',
+                        key: const ValueKey('journal-ledger-period'),
                         style: JournalPalette.body,
                       ),
+                      if (frame.management &&
+                          widget.history?.latest != null) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 5,
+                          children: [
+                            ChoiceChip(
+                              key: const ValueKey('journal-ledger-current-tab'),
+                              label: const Text('Current month'),
+                              selected: snapshot == null,
+                              onSelected: (_) =>
+                                  setState(() => _previous = false),
+                            ),
+                            ChoiceChip(
+                              key: const ValueKey('journal-ledger-history-tab'),
+                              label: Text(
+                                'Last closed · ${_period(widget.history!.latest!.period)}',
+                              ),
+                              selected: snapshot != null,
+                              onSelected: (_) => setState(() {
+                                _previous = true;
+                                _historyPage = 0;
+                              }),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (snapshot != null) ...[
+                        const SizedBox(height: 7),
+                        Text(
+                          'Read-only copy recorded ${snapshot.reportedAt.day} ${_period(snapshot.reportedAt)}. '
+                          'Cash and stock values are from that report. The latest completed report is kept locally on this device.',
+                          key: const ValueKey('journal-ledger-history-note'),
+                          style: JournalPalette.small,
+                        ),
+                      ],
                       const Divider(
                         height: 22,
                         thickness: 2,
@@ -100,26 +199,29 @@ class JournalLedgerOverview extends StatelessWidget {
                               for (final metric
                                   in <(String, int, String, bool)>[
                                     (
-                                      'Cash available',
-                                      frame.cash,
+                                      snapshot == null
+                                          ? 'Cash available'
+                                          : 'Cash at close',
+                                      snapshot?.cash ?? frame.cash,
                                       'cash',
                                       false,
                                     ),
                                     (
                                       'Monthly net',
-                                      frame.monthlyNet,
+                                      snapshot?.monthlyNet ?? frame.monthlyNet,
                                       'monthly-net',
                                       true,
                                     ),
                                     (
                                       'Daily net',
-                                      frame.dailyNet,
+                                      snapshot?.dailyNet ?? frame.dailyNet,
                                       'daily-net',
                                       true,
                                     ),
                                     (
                                       'Liquid assets',
-                                      frame.totalLiquidAssets,
+                                      snapshot?.totalLiquidAssets ??
+                                          frame.totalLiquidAssets,
                                       'assets',
                                       false,
                                     ),
@@ -165,6 +267,14 @@ class JournalLedgerOverview extends StatelessWidget {
                         },
                       ),
                       const SizedBox(height: 12),
+                      if (frame.management && snapshot == null) ...[
+                        const Text(
+                          'Month totals restart after monthly accounting. Day figures show the latest processed day, which may belong to the previous month.',
+                          key: ValueKey('journal-ledger-reset-note'),
+                          style: JournalPalette.small,
+                        ),
+                        const SizedBox(height: 7),
+                      ],
                       const Text(
                         'Inventory uses the game’s fence values for stock held at safehouses. '
                         'It is not spendable cash until sold.',
@@ -173,7 +283,8 @@ class JournalLedgerOverview extends StatelessWidget {
                       if (!frame.management) ...[
                         const SizedBox(height: 7),
                         const Text(
-                          'Review this report, then Continue to finish the month-end accounting.',
+                          'Review this report, then Continue to finish the month-end accounting. '
+                          'The new month’s totals start from zero. This completed report remains available in Ledger on this device.',
                           key: ValueKey('journal-ledger-required-note'),
                           style: JournalPalette.small,
                         ),
@@ -227,7 +338,7 @@ class JournalLedgerOverview extends StatelessWidget {
                         (line) => line.kind == LedgerLineKind.totalAssets,
                       ))
                         _row(line, narrow, total: true),
-                      if (!frame.lines.any(
+                      if (!lines.any(
                         (line) =>
                             line.kind == LedgerLineKind.income ||
                             line.kind == LedgerLineKind.expense,
@@ -249,38 +360,69 @@ class JournalLedgerOverview extends StatelessWidget {
                   runSpacing: 6,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    FilledButton.icon(
-                      key: const ValueKey('journal-ledger-close'),
-                      onPressed: _command(frame, frame.closeAction, revision),
-                      icon: Icon(
-                        frame.management ? Icons.arrow_back : Icons.check,
-                        size: 17,
+                    if (snapshot != null) ...[
+                      FilledButton.icon(
+                        key: const ValueKey('journal-ledger-history-close'),
+                        onPressed: () => setState(() => _previous = false),
+                        icon: const Icon(Icons.arrow_back, size: 17),
+                        label: const Text('Return to current ledger'),
                       ),
-                      label: Text(
-                        frame.management ? 'Back to organisation' : 'Continue',
+                      Text(
+                        'Page ${page + 1} of $pageCount',
+                        style: JournalPalette.small,
                       ),
-                    ),
-                    Text(
-                      'Page ${frame.page + 1} of ${frame.pageCount}',
-                      key: const ValueKey('journal-ledger-page'),
-                      style: JournalPalette.small,
-                    ),
-                    for (final action in frame.controls.where(
-                      (action) => action != frame.closeAction,
-                    ))
-                      Tooltip(
-                        message: _pageHint(frame, action),
-                        excludeFromSemantics: true,
-                        child: OutlinedButton(
-                          key: ValueKey('journal-ledger-control:${action.key}'),
-                          onPressed: _command(frame, action, revision),
-                          child: Semantics(
-                            excludeSemantics: true,
-                            label: _pageHint(frame, action),
-                            child: Text(_label(action)),
+                      if (pageCount > 1) ...[
+                        OutlinedButton(
+                          key: const ValueKey(
+                            'journal-ledger-history-previous',
                           ),
+                          onPressed: () => _turnHistoryPage(-1, snapshot),
+                          child: const Text('Previous page'),
+                        ),
+                        OutlinedButton(
+                          key: const ValueKey('journal-ledger-history-next'),
+                          onPressed: () => _turnHistoryPage(1, snapshot),
+                          child: const Text('Next page'),
+                        ),
+                      ],
+                    ] else ...[
+                      FilledButton.icon(
+                        key: const ValueKey('journal-ledger-close'),
+                        onPressed: _command(frame, frame.closeAction, revision),
+                        icon: Icon(
+                          frame.management ? Icons.arrow_back : Icons.check,
+                          size: 17,
+                        ),
+                        label: Text(
+                          frame.management
+                              ? 'Back to organisation'
+                              : 'Continue',
                         ),
                       ),
+                      Text(
+                        'Page ${frame.page + 1} of ${frame.pageCount}',
+                        key: const ValueKey('journal-ledger-page'),
+                        style: JournalPalette.small,
+                      ),
+                      for (final action in frame.controls.where(
+                        (action) => action != frame.closeAction,
+                      ))
+                        Tooltip(
+                          message: _pageHint(frame, action),
+                          excludeFromSemantics: true,
+                          child: OutlinedButton(
+                            key: ValueKey(
+                              'journal-ledger-control:${action.key}',
+                            ),
+                            onPressed: _command(frame, action, revision),
+                            child: Semantics(
+                              excludeSemantics: true,
+                              label: _pageHint(frame, action),
+                              child: Text(_label(action)),
+                            ),
+                          ),
+                        ),
+                    ],
                   ],
                 ),
               ],

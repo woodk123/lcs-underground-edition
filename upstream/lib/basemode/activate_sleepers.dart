@@ -26,6 +26,9 @@ String? sleeperOrderUnavailableReason(Creature person) {
   return null;
 }
 
+String? sleeperEquipmentUnavailableReason(Creature person) =>
+    person.workSite == null ? 'No workplace equipment source.' : null;
+
 Future<void> activateSleepers() async {
   // Comb the pool of Liberals for sleeper agents that can work
   List<Creature> temppool = pool
@@ -262,7 +265,10 @@ Future<void> activateSleeper(Creature cr) async {
           12,
           40,
           "3",
-          "3 - Steal Equipment",
+          cr.workSite == null
+              ? "3 - Steal Equipment (no workplace)"
+              : "3 - Steal Equipment",
+          enabledWhen: sleeperEquipmentUnavailableReason(cr) == null,
           baseColorKey: cr.activity.type == ActivityType.sleeperSteal
               ? ColorKey.white
               : ColorKey.lightGray,
@@ -383,7 +389,9 @@ Future<void> activateSleeper(Creature cr) async {
             case Key.num2:
               cr.activity = Activity(ActivityType.sleeperEmbezzle);
             case Key.num3:
-              cr.activity = Activity(ActivityType.sleeperSteal);
+              if (sleeperEquipmentUnavailableReason(cr) == null) {
+                cr.activity = Activity(ActivityType.sleeperSteal);
+              }
             default:
               cr.activity = Activity.none();
           }
@@ -469,7 +477,16 @@ Future<void> activateSleepersBulk() async {
     ) {
       Creature tempp = temppool[p];
       String letter = letterAPlus(p - page * 19);
-      addOptionText(y, 0, letter, "$letter - ${tempp.name}");
+      final equipmentReason = selectedactivity == 4
+          ? sleeperEquipmentUnavailableReason(tempp)
+          : null;
+      addOptionText(
+        y,
+        0,
+        letter,
+        "$letter - ${tempp.name}",
+        enabledWhen: equipmentReason == null,
+      );
       console.annotateActionEntity(
         letter,
         type: 'person',
@@ -482,6 +499,12 @@ Future<void> activateSleepersBulk() async {
           tempp.brainwashed
               ? 'Cannot expand network: enlightened crew cannot recruit.'
               : 'Cannot expand network: no subordinate capacity.',
+        );
+      }
+      if (equipmentReason != null) {
+        console.annotateAction(
+          letter,
+          'Cannot steal equipment: $equipmentReason',
         );
       }
       setColor(lightGray);
@@ -553,7 +576,9 @@ Future<void> activateSleepersBulk() async {
           case 3: // Embezzle Funds
             tempp.activity = Activity(ActivityType.sleeperEmbezzle);
           case 4: // Steal Equipment
-            tempp.activity = Activity(ActivityType.sleeperSteal);
+            if (sleeperEquipmentUnavailableReason(tempp) == null) {
+              tempp.activity = Activity(ActivityType.sleeperSteal);
+            }
           case 5: // Expand Network
             if (tempp.subordinatesLeft > 0 && !tempp.brainwashed) {
               tempp.activity = Activity(ActivityType.sleeperRecruit);

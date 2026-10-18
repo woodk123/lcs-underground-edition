@@ -9,6 +9,7 @@ import 'package:lcs_new_age/basemode/activate_sleepers.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/basemode/base_mode.dart';
 import 'package:lcs_new_age/creature/creature.dart';
+import 'package:lcs_new_age/creature/creature_type.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/engine/organisation_context.dart';
@@ -294,6 +295,89 @@ void main() {
     expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'spy role shows the real dead drop and later edition decision read only',
+    (tester) async {
+      final person = _sleeper('Document Agent', order: ActivityType.sleeperSpy);
+      final worksite = game.sites.firstWhere(
+        (s) => s.type == SiteType.policeStation,
+      );
+      final camp = game.sites.firstWhere(
+        (s) => s.type == SiteType.homelessEncampment && s.city == worksite.city,
+      );
+      person.workLocation = worksite;
+      final before = _snapshot();
+      reseedRNG(seed: 897132);
+      final expected = nextRngSeed;
+      reseedRNG(seed: 897132);
+      journalReadingScale.value = 1.5;
+      await mount(tester, size: const Size(800, 600));
+      await tester.ensureVisible(_key('network-dead-drop'));
+      await _settle(tester);
+      expect(
+        find.textContaining(
+          'Dead drop: ${camp.getName(short: false, includeCity: true)}',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Move equipment between bases'),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(_key('network-edition-timing'));
+      await _settle(tester);
+      expect(find.textContaining('before sleepers resolve'), findsOneWidget);
+      expect(find.textContaining('following monthly decision'), findsOneWidget);
+      expect(_snapshot(), before);
+      expect(nextRngSeed, expected);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('Network disables equipment theft without a workplace source', (
+    tester,
+  ) async {
+    final person = _sleeper('No Workplace Agent');
+    person.workLocation = null;
+    final before = _snapshot();
+    await mount(tester);
+    await _tap(tester, 'network-espionage');
+    final theft = _key('network-task:sleeperSteal');
+    expect(tester.widget<OutlinedButton>(theft).onPressed, isNull);
+    expect(find.textContaining('no workplace'), findsOneWidget);
+    await _keyboard(tester, LogicalKeyboardKey.digit3, character: '3');
+    expect(_key('network-confirm-order'), findsNothing);
+    expect(person.activity.type, ActivityType.none);
+    expect(_snapshot(), before);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'city journalist sees no-document-source warning before choosing a risky spy role',
+    (tester) async {
+      final person = _sleeper('City Journalist', order: ActivityType.sleeperSpy)
+        ..typeId = CreatureTypeIds.journalist
+        ..workLocation = null;
+      final before = _snapshot();
+      await mount(tester);
+      expect(person.workSite, isNull);
+      expect(_key('network-no-document-source'), findsOneWidget);
+      expect(
+        find.textContaining('snooping still risks exposure'),
+        findsOneWidget,
+      );
+      await _tap(tester, 'network-espionage');
+      expect(
+        tester
+            .widget<OutlinedButton>(_key('network-task:sleeperSpy'))
+            .onPressed,
+        isNotNull,
+      );
+      expect(_snapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'cancel and person switching discard drafts; Enter confirms selected actor',

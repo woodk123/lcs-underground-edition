@@ -31,13 +31,26 @@ Future<void> fundReport(bool disbanding, {bool management = false}) async {
 
   int page = 0;
   bool showledger = false;
+  LedgerReportFrame? capturedReport;
+  final reportCampaignId = gameState.uniqueGameId;
+  final reportDate = date;
+  final reportPeriod = DateTime(
+    reportDate.year,
+    reportDate.month - (management ? 0 : 1),
+  );
+  void completeReport() {
+    final frame = capturedReport;
+    if (frame != null) completeLedgerReport(console, frame);
+  }
+
   String num;
   const String dotdotdot =
       ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ";
 
   int expenselines = 0;
   for (int i = 0; i < Expense.values.length; i++) {
-    if ((ledger.expense[Expense.values[i]] ?? 0) != 0) {
+    if ((ledger.expense[Expense.values[i]] ?? 0) != 0 ||
+        (ledger.dailyExpense[Expense.values[i]] ?? 0) != 0) {
       expenselines++;
     }
   }
@@ -60,7 +73,7 @@ Future<void> fundReport(bool disbanding, {bool management = false}) async {
     for (Income inc in Income.values) {
       final monthAmount = ledger.income[inc] ?? 0;
       final dayAmount = ledger.dailyIncome[inc] ?? 0;
-      if (monthAmount != 0) {
+      if (monthAmount != 0 || dayAmount != 0) {
         final label = switch (inc) {
           Income.brownies => "Brownies",
           Income.cars => "Car Sales",
@@ -119,7 +132,7 @@ Future<void> fundReport(bool disbanding, {bool management = false}) async {
     for (Expense exp in Expense.values) {
       final monthAmount = ledger.expense[exp] ?? 0;
       final dayAmount = ledger.dailyExpense[exp] ?? 0;
-      if (monthAmount != 0) {
+      if (monthAmount != 0 || dayAmount != 0) {
         final label = switch (exp) {
           Expense.activism => "Activism",
           Expense.artSupplies => "Art Supplies",
@@ -274,8 +287,11 @@ Future<void> fundReport(bool disbanding, {bool management = false}) async {
       console.screen = 'ledger-report';
       describeLedgerReport(
         console,
-        LedgerReportFrame(
+        capturedReport = LedgerReportFrame(
           management: management,
+          campaignId: reportCampaignId,
+          reportedAt: reportDate,
+          period: reportPeriod,
           page: page,
           pageCount: numpages,
           cash: ledger.funds,
@@ -302,6 +318,7 @@ Future<void> fundReport(bool disbanding, {bool management = false}) async {
         int c = await getKey();
 
         if (isBackKey(c)) {
+          completeReport();
           return;
         }
 
@@ -326,6 +343,7 @@ Future<void> fundReport(bool disbanding, {bool management = false}) async {
       captureReport();
       await getKey();
 
+      completeReport();
       return;
     }
   }
@@ -357,10 +375,10 @@ Future<LootType?> chooseSpecialEdition() async {
   LootType? lootTypeChosen;
   erase();
   await pagedInterface(
-    headerPrompt: "Do you want to publish secrets in the Liberal Guardian?",
-    headerKey: {4: "SECRETS POSSESSED"},
-    backButtonText:
-        "Enter - Now is not the time to attract this sort of attention",
+    headerPrompt:
+        "Guardian special edition: choose one evidence type to publish now",
+    headerKey: {2: "Consumes one copy; publishing may provoke retaliation"},
+    backButtonText: "Enter - Decline this month and keep the evidence",
     count: lootTypesAvailable.length,
     lineBuilder: (y, key, index) {
       mvaddstr(y, 0, "$key - ${lootTypesAvailable[index].name}");

@@ -10,6 +10,8 @@ import 'package:lcs_new_age/basemode/liberal_agenda.dart';
 import 'package:lcs_new_age/basemode/review_mode.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
+import 'package:lcs_new_age/daily/activities/solo_activities.dart';
+import 'package:lcs_new_age/daily/recruitment.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/engine/organisation_context.dart';
@@ -19,6 +21,7 @@ import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/organisation_journal.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
+import 'package:lcs_new_age/utils/lcsrandom.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'test_support.dart';
@@ -27,9 +30,10 @@ Finder _key(String value) => find.byKey(ValueKey(value));
 
 /// Retains the real order and education readers without advancing the campaign.
 class _RequiredChoiceHarness {
-  _RequiredChoiceHarness() {
+  _RequiredChoiceHarness({this.onDay}) {
     done = _loop();
   }
+  final Future<void> Function()? onDay;
   late final Future<void> done;
   bool stopped = false, finished = false;
 
@@ -49,6 +53,8 @@ class _RequiredChoiceHarness {
             await reviewAssetsAndFormSquads();
           case engine.Key.l:
             await liberalAgenda();
+          case engine.Key.w:
+            await onDay?.call();
         }
       }
     } finally {
@@ -122,10 +128,13 @@ void main() {
     memberBefore = jsonEncode(squadMember);
   });
 
-  Future<void> mount(WidgetTester tester) async {
+  Future<void> mount(
+    WidgetTester tester, {
+    Future<void> Function()? onDay,
+  }) async {
     tester.view.physicalSize = const Size(1280, 720);
     tester.view.devicePixelRatio = 1;
-    final harness = _RequiredChoiceHarness();
+    final harness = _RequiredChoiceHarness(onDay: onDay);
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox.shrink());
       await harness.stop(tester);
@@ -202,6 +211,154 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets(
+    'real profession picker uses its recruiter instead of a different selected writer',
+    (tester) async {
+      actor
+        ..squad = game.activeSquad
+        ..activity = Activity(ActivityType.writeGuardian);
+      squadMember
+        ..squad = null
+        ..activity = Activity(ActivityType.recruiting);
+      await mount(tester, onDay: () => soloActivities(false));
+      final journal = tester.state<OrganisationJournalState>(
+        find.byType(OrganisationJournal),
+      );
+      journal.widget.controller.inspectPerson(actor.id);
+      await _settle(tester);
+      expect(
+        tester.widget<Text>(_key('journal-selected-person')).data,
+        actor.name,
+      );
+
+      engine.console.sendInput('w');
+      await _settle(tester);
+      expect(engine.console.recruitmentTarget?.recruiter, same(squadMember));
+      expect(activityOrderFrame(engine.console), isNull);
+      expect(
+        tester.widget<Text>(_key('journal-selected-person')).data,
+        squadMember.name,
+      );
+      expect(
+        tester.widget<Text>(_key('journal-team-name')).data,
+        'Individual orders',
+      );
+      expect(
+        find.descendant(
+          of: _key('journal-crew-list'),
+          matching: find.text(actor.name),
+        ),
+        findsNothing,
+      );
+      final before = jsonEncode(game.gameState);
+      final actions = List.of(engine.console.actions);
+      reseedRNG(seed: 88421);
+      final expectedRng = nextRngSeed;
+      reseedRNG(seed: 88421);
+      journal.widget.controller.inspectPerson(actor.id);
+      await _settle(tester);
+      expect(
+        tester.widget<Text>(_key('journal-selected-person')).data,
+        squadMember.name,
+      );
+      expect(engine.console.lastKey, isNull);
+      expect(engine.console.awaitingInput, isTrue);
+      expect(engine.console.actions, orderedEquals(actions));
+      expect(jsonEncode(game.gameState), before);
+      expect(nextRngSeed, expectedRng);
+
+      engine.console.sendInput('Escape');
+      await _settle(tester);
+      expect(engine.console.recruitmentTarget, isNull);
+      expect(engine.console.screen, 'headquarters');
+      expect(
+        tester.widget<Text>(_key('journal-selected-person')).data,
+        actor.name,
+      );
+      expect(find.text('Individual orders'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'real recruitment follow-up keeps its recruiter and clears identity after exit',
+    (tester) async {
+      actor
+        ..squad = game.activeSquad
+        ..activity = Activity(ActivityType.writeGuardian);
+      squadMember
+        ..squad = null
+        ..meetings = 0
+        ..activity = Activity(ActivityType.recruiting);
+      final prospect =
+          Creature.fromJson(
+              jsonDecode(jsonEncode(squadMember)) as Map<String, dynamic>,
+            )
+            ..id = 997766
+            ..name = 'Jordan Follow-up';
+      final session = RecruitmentSession(prospect, squadMember)
+        ..rawEagerness = 0;
+      await mount(
+        tester,
+        onDay: () async {
+          await completeRecruitMeeting(session, squadMember);
+        },
+      );
+      final journal = tester.state<OrganisationJournalState>(
+        find.byType(OrganisationJournal),
+      );
+      journal.widget.controller.inspectPerson(actor.id);
+      await _settle(tester);
+      expect(
+        tester.widget<Text>(_key('journal-selected-person')).data,
+        actor.name,
+      );
+
+      engine.console.sendInput('w');
+      await _settle(tester);
+      expect(engine.console.recruitment?.recruiter, same(squadMember));
+      expect(engine.console.recruitment?.followUp, isTrue);
+      expect(activityOrderFrame(engine.console), isNull);
+      expect(
+        tester.widget<Text>(_key('journal-selected-person')).data,
+        squadMember.name,
+      );
+      expect(
+        tester.widget<Text>(_key('journal-team-name')).data,
+        'Individual orders',
+      );
+      final before = jsonEncode(game.gameState);
+      final actions = List.of(engine.console.actions);
+      reseedRNG(seed: 75193);
+      final expectedRng = nextRngSeed;
+      reseedRNG(seed: 75193);
+      journal.widget.controller.inspectPerson(actor.id);
+      await _settle(tester);
+      expect(
+        tester.widget<Text>(_key('journal-selected-person')).data,
+        squadMember.name,
+      );
+      expect(engine.console.lastKey, isNull);
+      expect(engine.console.awaitingInput, isTrue);
+      expect(engine.console.actions, orderedEquals(actions));
+      expect(jsonEncode(game.gameState), before);
+      expect(nextRngSeed, expectedRng);
+
+      engine.console.sendInput('d');
+      await _settle(tester);
+      expect(engine.console.recruitment, isNull);
+      expect(engine.console.screen, 'headquarters');
+      expect(
+        tester.widget<Text>(_key('journal-selected-person')).data,
+        actor.name,
+      );
+      expect(find.text('Individual orders'), findsNothing);
+      await _tap(tester, _key('journal-section:3'));
+      expect(find.text('Individual orders'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'canceling required skill leaves orders intact and clears report identity',

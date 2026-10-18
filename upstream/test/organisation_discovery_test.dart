@@ -18,9 +18,11 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/engine/base_management_context.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
+import 'package:lcs_new_age/engine/ledger_context.dart';
 import 'package:lcs_new_age/engine/organisation_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
+import 'package:lcs_new_age/gamestate/ledger.dart';
 import 'package:lcs_new_age/gamestate/squad.dart';
 import 'package:lcs_new_age/items/item.dart';
 import 'package:lcs_new_age/location/location_type.dart';
@@ -31,6 +33,7 @@ import 'package:lcs_new_age/modern/journal_bases.dart';
 import 'package:lcs_new_age/modern/journal_people.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/organisation_journal.dart';
+import 'package:lcs_new_age/monthly/lcs_monthly.dart';
 import 'package:lcs_new_age/politics/alignment.dart' as politics;
 import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
@@ -42,13 +45,14 @@ import 'test_support.dart';
 /// allocation, media, investment and equipment readers are the original ones.
 /// There is deliberately no automatic day advancement or player-save write.
 class _DiscoveryHarness {
-  _DiscoveryHarness() {
+  _DiscoveryHarness({this.onWait}) {
     done = _loop();
   }
   late final Future<void> done;
   bool stopped = false;
   bool finished = false;
   final dispatched = <int>[];
+  final Future<void> Function()? onWait;
 
   Future<void> _loop() async {
     try {
@@ -61,6 +65,8 @@ class _DiscoveryHarness {
         if (stopped) break;
         dispatched.add(key);
         switch (key) {
+          case engine.Key.w:
+            await onWait?.call();
           case engine.Key.r:
             await reviewAssetsAndFormSquads();
           case engine.Key.a:
@@ -237,13 +243,14 @@ void main() {
     WidgetTester tester, {
     Size size = const Size(1440, 1000),
     double scale = 1,
+    Future<void> Function()? onWait,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
     journalReadingScale.value = scale;
     tester.platformDispatcher.accessibilityFeaturesTestValue =
         const FakeAccessibilityFeatures(disableAnimations: true);
-    final harness = _DiscoveryHarness();
+    final harness = _DiscoveryHarness(onWait: onWait);
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox.shrink());
       await harness.stop(tester);
@@ -506,6 +513,136 @@ void main() {
             .where((p) => p.id != writer.id)
             .every((p) => p.activity.type == ActivityType.none),
         isTrue,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'day command from Newspaper returns to Organisation after the controller finishes',
+    (tester) async {
+      final harness = await mount(tester);
+      await _tap(tester, 'journal-section:4');
+      await _tap(tester, 'media-production-tab');
+      expect(
+        tester
+            .widget<OrganisationJournal>(find.byType(OrganisationJournal))
+            .section,
+        4,
+      );
+      expect(engine.console.screen, 'media-archive');
+      await _tap(tester, 'journal-advance-day');
+      expect(
+        harness.dispatched.where((key) => key == engine.Key.w),
+        hasLength(1),
+      );
+      expect(engine.console.screen, 'headquarters');
+      expect(
+        tester
+            .widget<OrganisationJournal>(find.byType(OrganisationJournal))
+            .section,
+        0,
+      );
+      expect(_key('journal-team-name'), findsOneWidget);
+      expect(_key('journal-crew-list'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'return to Organisation waits for the real required month-end reader',
+    (tester) async {
+      final harness = await mount(
+        tester,
+        onWait: () async {
+          // The daily simulation is outside this UI harness; its monthly report is
+          // the real required source reader, with the date already advanced.
+          game.gameState.date = DateTime(2023, 2, 1);
+          game.ledger.income[Income.donations] = 345;
+          await fundReport(false);
+          game.ledger.resetMonthlyAmounts();
+        },
+      );
+      await _tap(tester, 'journal-section:4');
+      await _tap(tester, 'media-production-tab');
+      await _tap(tester, 'journal-advance-day');
+      expect(
+        harness.dispatched.where((key) => key == engine.Key.w),
+        hasLength(1),
+      );
+      expect(ledgerReportFrame(engine.console)!.management, isFalse);
+      expect(
+        tester
+            .widget<OrganisationJournal>(find.byType(OrganisationJournal))
+            .section,
+        1,
+      );
+      expect(
+        find.text('January 2023 · month-end financial report'),
+        findsOneWidget,
+      );
+      expect(_key('journal-ledger-close').hitTestable(), findsOneWidget);
+      expect(game.ledger.income[Income.donations], 345);
+      await _tap(tester, 'journal-ledger-close');
+      expect(engine.console.screen, 'headquarters');
+      expect(
+        tester
+            .widget<OrganisationJournal>(find.byType(OrganisationJournal))
+            .section,
+        0,
+      );
+      expect(_key('journal-team-name'), findsOneWidget);
+      expect(game.ledger.income[Income.donations], 0);
+      expect(
+        harness.dispatched.where((key) => key == engine.Key.w),
+        hasLength(1),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'explicit HQ chapters and custom management tabs survive their intended routes',
+    (tester) async {
+      final harness = await mount(tester);
+      for (final section in [
+        5,
+        6,
+        7,
+        networkJournalSection,
+        peopleJournalSection,
+        basesJournalSection,
+      ]) {
+        await _tap(tester, 'journal-section:4');
+        expect(engine.console.screen, 'media-archive');
+        await _tap(tester, 'journal-section:$section');
+        expect(
+          tester
+              .widget<OrganisationJournal>(find.byType(OrganisationJournal))
+              .section,
+          section,
+        );
+      }
+      // Custom management chapters stay selected when their own original source
+      // readers return to HQ as part of carrying out a day command.
+      for (final section in [
+        networkJournalSection,
+        peopleJournalSection,
+        basesJournalSection,
+      ]) {
+        await _tap(tester, 'journal-section:$section');
+        await _tap(tester, 'journal-advance-day');
+        expect(engine.console.screen, 'headquarters');
+        expect(
+          tester
+              .widget<OrganisationJournal>(find.byType(OrganisationJournal))
+              .section,
+          section,
+        );
+      }
+      expect(
+        harness.dispatched.where((key) => key == engine.Key.w),
+        hasLength(3),
       );
       expect(tester.takeException(), isNull);
     },

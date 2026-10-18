@@ -28,6 +28,9 @@ class LedgerReportLine {
 class LedgerReportFrame {
   LedgerReportFrame({
     required this.management,
+    required this.campaignId,
+    required this.reportedAt,
+    required this.period,
     required this.page,
     required this.pageCount,
     required this.cash,
@@ -42,6 +45,12 @@ class LedgerReportFrame {
        controls = List.unmodifiable(controls);
 
   final bool management;
+  final int campaignId;
+
+  /// Campaign date when this source report was prepared. Monthly accounting
+  /// runs on the first of the next month, after the final day's work.
+  final DateTime reportedAt;
+  final DateTime period;
   final int page;
   final int pageCount;
   final int cash;
@@ -55,9 +64,23 @@ class LedgerReportFrame {
 }
 
 final _ledgerFrames = Expando<LedgerReportFrame>();
+final _completedLedgerReports = Expando<LedgerReportFrame>();
 
 void describeLedgerReport(Console console, LedgerReportFrame frame) =>
     _ledgerFrames[console] = frame;
+
+/// Called only by the original report after its acknowledgement returns. This
+/// records source values, not another input reader or a replayable action.
+void completeLedgerReport(Console console, LedgerReportFrame frame) {
+  if (!console.awaitingInput &&
+      !frame.management &&
+      identical(_ledgerFrames[console], frame)) {
+    _completedLedgerReports[console] = frame;
+  }
+}
+
+LedgerReportFrame? completedLedgerReport(Console console) =>
+    _completedLedgerReports[console];
 
 LedgerReportFrame? ledgerReportFrame(Console console) {
   final frame = _ledgerFrames[console];

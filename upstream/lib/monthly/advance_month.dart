@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/basemode/blind_time_log.dart';
 import 'package:lcs_new_age/basemode/disbanding.dart';
 import 'package:lcs_new_age/basemode/liberal_agenda.dart';
@@ -10,6 +9,7 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/daily/advance_day.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/media_production_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/items/clothing.dart';
 import 'package:lcs_new_age/items/loot_type.dart';
@@ -87,11 +87,7 @@ Future<void> advanceMonth() async {
   }
 
   //YOUR PAPER AND PUBLIC OPINION AND STUFF
-  Iterable<Creature> publishers = pool.where(
-    (p) =>
-        p.isActiveLiberal && p.activity.type == ActivityType.writeGuardian ||
-        p.activity.type == ActivityType.streamGuardian,
-  );
+  Iterable<Creature> publishers = guardianSpecialEditionPublishers(pool);
 
   // Check for game over
   await checkForDefeat();

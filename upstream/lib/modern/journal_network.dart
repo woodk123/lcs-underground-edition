@@ -8,12 +8,14 @@ import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/organisation_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/gamestate/time.dart';
+import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_order_icon.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
+import 'package:lcs_new_age/monthly/sleeper_update.dart';
 
 String sleeperOrderTitle(ActivityType type) => switch (type) {
   ActivityType.none => 'Lay Low',
@@ -664,6 +666,9 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
                     : 'Next resolution: ${nextSleeperResolution(game.date)}',
                 style: JournalPalette.small,
               ),
+              if (displayed == ActivityType.sleeperSpy ||
+                  displayed == ActivityType.sleeperSteal)
+                _deadDrop(person, displayed),
               if (displayed == ActivityType.none)
                 const Text(
                   '+1–5 infiltration points each month, up to 100%.',
@@ -800,6 +805,57 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
               ),
             )
           : content,
+    );
+  }
+
+  Widget _deadDrop(Creature person, ActivityType order) {
+    final camp = game.sites
+        .where(
+          (site) =>
+              site.type == SiteType.homelessEncampment &&
+              site.city == person.workLocation.city,
+        )
+        .firstOrNull;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (order == ActivityType.sleeperSpy &&
+              !sleeperHasDocumentSource(person)) ...[
+            Text(
+              'No document source for this profession or workplace. '
+              'Choose another role; snooping still risks exposure.',
+              key: const ValueKey('network-no-document-source'),
+              style: JournalPalette.body.copyWith(color: JournalPalette.danger),
+            ),
+            const SizedBox(height: 6),
+          ],
+          Text(
+            camp == null
+                ? 'No dead-drop camp in this workplace’s city.'
+                : 'Dead drop: ${camp.getName(short: false, includeCity: true)}. '
+                      'Use Bases → Move equipment between bases to collect its stock.',
+            key: const ValueKey('network-dead-drop'),
+            style: JournalPalette.body,
+          ),
+          if (order == ActivityType.sleeperSteal && person.workSite == null)
+            const Text(
+              'No workplace equipment source. Choose another role.',
+              style: JournalPalette.small,
+            ),
+          if (order == ActivityType.sleeperSpy) ...[
+            const SizedBox(height: 6),
+            const Text(
+              'Special editions are chosen before sleepers resolve. Newly leaked '
+              'documents can be offered at the following monthly decision; '
+              'they must be stored at an LCS-controlled site.',
+              key: ValueKey('network-edition-timing'),
+              style: JournalPalette.small,
+            ),
+          ],
+        ],
+      ),
     );
   }
 

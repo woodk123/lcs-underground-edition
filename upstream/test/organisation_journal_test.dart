@@ -774,6 +774,13 @@ void main() {
         expect(_snapshot(), before);
         await _tap(tester, 'journal-cancel-order');
         expect(engine.console.screen, 'headquarters');
+        expect(
+          tester
+              .widget<OrganisationJournal>(find.byType(OrganisationJournal))
+              .section,
+          6,
+          reason: 'Cancelling the draft must retain its City maps origin.',
+        );
         expect(_snapshot(), before);
         expect(find.text('Confirm or cancel draft'), findsNothing);
         await _tap(tester, 'journal-city-map-prepare-visit');
@@ -786,6 +793,13 @@ void main() {
         team.activity = originalOrder;
         await _tap(tester, 'journal-confirm-order');
         expect(team.activity.type, ActivityType.visit);
+        expect(
+          tester
+              .widget<OrganisationJournal>(find.byType(OrganisationJournal))
+              .section,
+          6,
+          reason: 'Confirming a map visit must retain the City maps context.',
+        );
         expect(team.activity.idString, destination.idString);
         expect(other.activity.type, ActivityType.none);
         expect(game.activeSquad, same(team));

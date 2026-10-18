@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Alignment, View;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/creature/creature.dart';
+import 'package:lcs_new_age/creature/skills.dart';
+import 'package:lcs_new_age/daily/activities/guardian.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/engine/media_production_context.dart';
@@ -16,6 +18,8 @@ import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/modern/journal_media_production.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/monthly/lcs_monthly.dart';
+import 'package:lcs_new_age/politics/alignment.dart';
+import 'package:lcs_new_age/politics/views.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 
@@ -23,6 +27,8 @@ import 'test_support.dart';
 
 String _snapshot() => jsonEncode(game.gameState.toJson());
 Finder _key(String value) => find.byKey(ValueKey(value));
+Creature _copy(Creature person) =>
+    Creature.fromJson(jsonDecode(jsonEncode(person)) as Map<String, dynamic>);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +57,55 @@ void main() {
       site.loot.clear();
     }
   });
+
+  test(
+    'monthly publisher eligibility applies the same active check to writers and streamers',
+    () {
+      final hospital = game.sites.firstWhere(
+        (site) => site.type == SiteType.universityHospital,
+      );
+      final prison = game.sites.firstWhere(
+        (site) => site.type == SiteType.prison,
+      );
+      for (final activity in [
+        ActivityType.writeGuardian,
+        ActivityType.streamGuardian,
+      ]) {
+        Creature candidate() => _copy(person)..activity = Activity(activity);
+        final available = candidate();
+        final dead = candidate()..alive = false;
+        final conservative = candidate()..align = Alignment.conservative;
+        final sleeper = candidate()..sleeperAgent = true;
+        final patient = candidate()..location = hospital;
+        final prisoner = candidate()..location = prison;
+        final vacationer = candidate()..vacationDaysLeft = 1;
+        final hiding = candidate()..hidingDaysLeft = 1;
+        final resting = candidate()..activity = Activity.none();
+
+        final before = _snapshot();
+        reseedRNG(seed: 74311);
+        final expectedRoll = nextRngSeed;
+        reseedRNG(seed: 74311);
+        expect(
+          guardianSpecialEditionPublishers([
+            available,
+            dead,
+            conservative,
+            sleeper,
+            patient,
+            prisoner,
+            vacationer,
+            hiding,
+            resting,
+          ]),
+          orderedEquals([available]),
+          reason: activity.name,
+        );
+        expect(_snapshot(), before);
+        expect(nextRngSeed, expectedRoll);
+      }
+    },
+  );
 
   test(
     'evidence preview shares all 16 source IDs, groups per location and never consolidates',
@@ -229,6 +284,7 @@ void main() {
     VoidCallback? onOpenPeople,
     VoidCallback? onOpenBases,
     VoidCallback? onOpenStores,
+    VoidCallback? onOpenArchive,
     bool enabled = true,
   }) async {
     tester.view.devicePixelRatio = 1;
@@ -247,6 +303,7 @@ void main() {
               onOpenPeople: onOpenPeople ?? () {},
               onOpenBases: onOpenBases ?? () {},
               onOpenStores: onOpenStores ?? () {},
+              onOpenArchive: onOpenArchive,
             ),
           ),
         ),
@@ -255,10 +312,22 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> reveal(WidgetTester tester, Finder target) async {
+    final scrollable = find
+        .descendant(
+          of: _key('media-production-scroll'),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    tester.state<ScrollableState>(scrollable).position.jumpTo(0);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(target, 240, scrollable: scrollable);
+    await tester.pumpAndSettle();
+  }
+
   Future<void> tap(WidgetTester tester, String key) async {
     final target = _key(key);
-    await tester.ensureVisible(target);
-    await tester.pumpAndSettle();
+    await reveal(tester, target);
     expect(target.hitTestable(), findsOneWidget);
     await tester.tap(target);
     await tester.pumpAndSettle();
@@ -271,6 +340,7 @@ void main() {
       var openedPeople = 0;
       var openedBases = 0;
       var openedStores = 0;
+      var openedArchive = 0;
       final before = _snapshot();
       reseedRNG(seed: 68431);
       final expectedRoll = nextRngSeed;
@@ -281,6 +351,7 @@ void main() {
         onOpenPeople: () => openedPeople++,
         onOpenBases: () => openedBases++,
         onOpenStores: () => openedStores++,
+        onOpenArchive: () => openedArchive++,
       );
       expect(_key('media-production-no-producers'), findsOneWidget);
       expect(
@@ -303,7 +374,12 @@ void main() {
       await tap(tester, 'media-production-people');
       await tap(tester, 'media-production-bases');
       await tap(tester, 'media-production-stores');
-      expect((openedPeople, openedBases, openedStores), (1, 1, 1));
+      await tap(tester, 'media-production-archive');
+      expect(
+        (openedPeople, openedBases, openedStores, openedArchive),
+        (1, 1, 1, 1),
+      );
+      await reveal(tester, _key('media-production-no-evidence'));
       expect(_key('media-production-no-evidence'), findsOneWidget);
       expect(find.textContaining('automatically asks'), findsOneWidget);
       expect(find.textContaining('Publish now'), findsNothing);
@@ -330,12 +406,176 @@ void main() {
       await tap(tester, 'media-production-assign:streamGuardian');
       expect(requests.single.activity, ActivityType.streamGuardian);
       final stock = _key('media-evidence:${home.id}:${LootTypeIds.corpFiles}');
-      await tester.ensureVisible(stock);
-      await tester.pumpAndSettle();
+      await reveal(tester, stock);
       expect(tester.widget<Text>(stock).data, contains('2 copies'));
       expect(
         tester.widget<Text>(stock).data,
         contains(home.getName(includeCity: true)),
+      );
+      expect(_snapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'real daily media work feeds the live influence preview without creating archived posts',
+    (tester) async {
+      for (final skill in [
+        Skill.writing,
+        Skill.persuasion,
+        Skill.law,
+        Skill.science,
+        Skill.religion,
+        Skill.business,
+      ]) {
+        person.rawSkill[skill] = 5;
+      }
+      for (final view in View.values) {
+        game.politics.backgroundInfluence[view] = 0;
+      }
+      final opinionsBefore = Map.of(game.politics.publicOpinion);
+      final archiveBefore = List.of(game.gameState.newsArchive);
+      reseedRNG(seed: 63912);
+      doActivityWriteGuardian([person]);
+      final writingInfluence = Map.of(game.politics.backgroundInfluence);
+      final writingIssue = writingInfluence.entries.singleWhere(
+        (entry) => entry.value != 0,
+      );
+      expect(writingIssue.value, greaterThan(0));
+      final afterWriting = _snapshot();
+      await mount(tester);
+      await reveal(tester, _key('media-production-influence-total'));
+      expect(
+        tester.widget<Text>(_key('media-production-influence-total')).data,
+        contains('${writingIssue.value} net power'),
+      );
+      expect(_key('media-influence:${writingIssue.key.name}'), findsNothing);
+      final breakdown = find.text('Issue breakdown (1)');
+      await reveal(tester, breakdown);
+      await tester.tap(breakdown);
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<Text>(_key('media-influence:${writingIssue.key.name}'))
+            .data,
+        contains('+${writingIssue.value} power'),
+      );
+      expect(
+        find.textContaining('do not create a separate archived article'),
+        findsOneWidget,
+      );
+      expect(_snapshot(), afterWriting);
+
+      for (final view in View.values) {
+        game.politics.backgroundInfluence[view] = 0;
+      }
+      reseedRNG(seed: 63912);
+      doActivityStreamGuardian([person]);
+      expect(
+        game.politics.backgroundInfluence[writingIssue.key],
+        writingIssue.value * 4,
+      );
+      expect(game.politics.publicOpinion, opinionsBefore);
+      expect(game.gameState.newsArchive, archiveBefore);
+      final afterStreaming = _snapshot();
+      await mount(tester);
+      await reveal(tester, _key('media-production-influence-total'));
+      expect(
+        tester.widget<Text>(_key('media-production-influence-total')).data,
+        contains('${writingIssue.value * 4} net power'),
+      );
+      expect(_snapshot(), afterStreaming);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'many issue values stay collapsed below the Archive action and expand read only at 150%',
+    (tester) async {
+      for (final view in View.values) {
+        game.politics.backgroundInfluence[view] = 0;
+      }
+      for (var index = 0; index < View.issues.length; index++) {
+        game.politics.backgroundInfluence[View.issues[index]] = index + 1;
+      }
+      final before = _snapshot();
+      reseedRNG(seed: 44819);
+      final expectedRng = nextRngSeed;
+      reseedRNG(seed: 44819);
+      var openedArchive = 0;
+      await mount(tester, onOpenArchive: () => openedArchive++);
+      await reveal(tester, _key('media-production-archive'));
+      expect(_key('media-production-archive').hitTestable(), findsOneWidget);
+      for (final view in View.issues) {
+        expect(_key('media-influence:${view.name}'), findsNothing);
+      }
+      final breakdown = find.text('Issue breakdown (${View.issues.length})');
+      final tileKey = PageStorageKey(
+        'media-production-influence-breakdown:${game.gameState.uniqueGameId}',
+      );
+      expect(find.byKey(tileKey), findsOneWidget);
+      expect(
+        tester.getTopLeft(_key('media-production-archive')).dy,
+        lessThan(tester.getTopLeft(breakdown).dy),
+      );
+      await tester.tap(_key('media-production-archive'));
+      await tester.pumpAndSettle();
+      expect(openedArchive, 1);
+      await reveal(tester, breakdown);
+      await tester.tap(breakdown);
+      await tester.pumpAndSettle();
+      for (var index = 0; index < View.issues.length; index++) {
+        final row = _key('media-influence:${View.issues[index].name}');
+        expect(tester.widget<Text>(row).data, contains('+${index + 1} power'));
+      }
+      expect(_snapshot(), before);
+      expect(nextRngSeed, expectedRng);
+      await reveal(tester, breakdown);
+      await tester.tap(breakdown);
+      await tester.pumpAndSettle();
+      expect(_key('media-influence:${View.issues.first.name}'), findsNothing);
+      await reveal(tester, _key('media-production-monthly-timing'));
+      expect(
+        _key('media-production-monthly-timing').hitTestable(),
+        findsOneWidget,
+      );
+      expect(_snapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'special edition planning shows staff skills, active count and publication before sleeper work',
+    (tester) async {
+      game.pool.removeWhere((candidate) => candidate != person);
+      person.activity = Activity(ActivityType.writeGuardian);
+      final unavailableStreamer = _copy(person)
+        ..id = 876543
+        ..activity = Activity(ActivityType.streamGuardian)
+        ..vacationDaysLeft = 2;
+      game.pool.add(unavailableStreamer);
+      person.rawSkill[Skill.writing] = 7;
+      person.rawSkill[Skill.persuasion] = 4;
+      person.rawSkill[Skill.law] = 2;
+      final before = _snapshot();
+      await mount(tester);
+      await reveal(tester, _key('media-production-person-skills'));
+      expect(
+        tester.widget<Text>(_key('media-production-person-skills')).data,
+        contains('Writing 7 · Persuasion 4'),
+      );
+      await reveal(tester, _key('media-production-publisher-count'));
+      expect(
+        tester.widget<Text>(_key('media-production-publisher-count')).data,
+        startsWith('1 active contributor'),
+      );
+      expect(
+        tester.widget<Text>(_key('media-production-monthly-timing')).data,
+        contains('before sleepers carry out their monthly orders'),
+      );
+      expect(
+        tester.widget<Text>(_key('media-production-edition-staffing')).data,
+        contains('Persuasion roll minus 5'),
       );
       expect(_snapshot(), before);
       expect(tester.takeException(), isNull);
@@ -362,9 +602,18 @@ void main() {
         tester.widget<OutlinedButton>(_key('media-production-bases')).onPressed,
         isNull,
       );
+      await reveal(tester, _key('media-production-stores'));
       expect(
         tester
             .widget<OutlinedButton>(_key('media-production-stores'))
+            .onPressed,
+        isNull,
+      );
+      await mount(tester, enabled: false, onOpenArchive: () {});
+      await reveal(tester, _key('media-production-archive'));
+      expect(
+        tester
+            .widget<OutlinedButton>(_key('media-production-archive'))
             .onPressed,
         isNull,
       );

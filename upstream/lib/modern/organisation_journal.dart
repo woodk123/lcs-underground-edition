@@ -133,7 +133,20 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   Squad? get squad => controller.selectedSquad ?? game.activeSquad;
   bool get undercover =>
       confirmation?.entityType == 'sleeper-activity-confirm' ||
-      !allocating && controller.selectedPerson?.sleeperAgent == true;
+      !allocating &&
+          _requiredRecruitmentActor == null &&
+          controller.selectedPerson?.sleeperAgent == true;
+  Creature? get _requiredRecruitmentActor {
+    if (!console.awaitingInput ||
+        console.lastKey != null ||
+        console.textInput ||
+        console.eventMessage != null) {
+      return null;
+    }
+    return console.recruitmentTarget?.recruiter ??
+        console.recruitment?.recruiter;
+  }
+
   Creature? get _requiredEducationActor {
     if (!console.awaitingInput ||
         console.textInput ||
@@ -150,7 +163,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   }
 
   Creature? get _individualOrderActor {
-    final requiredActor = _requiredEducationActor;
+    final requiredActor = _requiredRecruitmentActor ?? _requiredEducationActor;
     if ((!activityFrame && requiredActor == null) || undercover || allocating) {
       return null;
     }
@@ -171,6 +184,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       ? [_individualOrderActor!]
       : squad?.members ?? const [];
   Creature? get person {
+    final recruiter = _requiredRecruitmentActor;
+    if (recruiter != null) return recruiter;
     final profile = console.journalProfile;
     if (profile != null) return profile.person;
     final requiredActor = _requiredEducationActor;

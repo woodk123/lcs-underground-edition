@@ -79,7 +79,10 @@ class _ModernGameShellState extends State<ModernGameShell> {
   String _lastConsoleScreen = 'generic';
   int _journalSection = 0;
   bool _mediaProduction = false;
+  bool _openingJournalSection = false;
+  bool _pendingJournalReturn = false;
   final _journalKey = GlobalKey<OrganisationJournalState>();
+  final _ledgerKey = GlobalKey<JournalLedgerOverviewState>();
   Console get console => engine.console;
   bool get hq => console.screen == 'headquarters';
   bool get title => console.screen == 'title';
@@ -106,7 +109,27 @@ class _ModernGameShellState extends State<ModernGameShell> {
   }
 
   void _organisationChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    _normaliseJournalReturn();
+    setState(() {});
+  }
+
+  void _normaliseJournalReturn() {
+    if (!_pendingJournalReturn ||
+        !hq ||
+        _organisation.busy ||
+        _openingJournalSection) {
+      return;
+    }
+    // Source-owned chapters have ended when their reader returns to HQ. Keep this
+    // transition pending while a controller command closes that reader and
+    // runs daily work; its final busy notification may be the only later one.
+    // Reports, City maps and Options are native HQ views. In particular,
+    // cancelling or confirming a visit prepared from City maps must retain it.
+    if (_journalSection >= 1 && _journalSection <= 4) {
+      _journalSection = 0;
+    }
+    _pendingJournalReturn = false;
   }
 
   void _refresh() {
@@ -120,9 +143,10 @@ class _ModernGameShellState extends State<ModernGameShell> {
     }
     if (hq && game.pool.isNotEmpty) {
       _journalSession = true;
-      if (_lastConsoleScreen != 'headquarters' && !_organisation.busy) {
-        _journalSection = 0;
+      if (_lastConsoleScreen != 'headquarters' && !_openingJournalSection) {
+        _pendingJournalReturn = true;
       }
+      _normaliseJournalReturn();
     }
     _lastConsoleScreen = console.screen;
     if (title) _journalSession = false;
@@ -299,6 +323,10 @@ class _ModernGameShellState extends State<ModernGameShell> {
         : event.logicalKey == LogicalKeyboardKey.escape
         ? 'Escape'
         : event.character;
+    if (!_classic &&
+        _ledgerKey.currentState?.handleGameShortcut(event) == true) {
+      return KeyEventResult.handled;
+    }
     if (journalKey != null &&
         _journalKey.currentState?.handleGameShortcut(journalKey) == true) {
       return KeyEventResult.handled;
@@ -1039,49 +1067,59 @@ class _ModernGameShellState extends State<ModernGameShell> {
   );
 
   Future<void> _openJournalSection(int section) async {
-    if (!_organisation.canNavigate) return;
+    if (_openingJournalSection || !_organisation.canNavigate) return;
+    _openingJournalSection = true;
+    _pendingJournalReturn = false;
     setState(() {
       _journalSection = section;
       _inspectedPersonId = null;
     });
-    switch (section) {
-      case 0:
-      case 5:
-        await _organisation.returnToHeadquarters();
-      case 1:
-        if (await _organisation.openSection('r')) {
-          final finance = _action('v');
-          if (finance?.enabled == true) {
-            await _organisation.sendAction(
-              finance!,
-              revision: console.revision.value,
-            );
+    try {
+      switch (section) {
+        case 0:
+        case 5:
+          await _organisation.returnToHeadquarters();
+        case 1:
+          if (await _organisation.openSection('r')) {
+            final finance = _action('v');
+            if (finance?.enabled == true) {
+              await _organisation.sendAction(
+                finance!,
+                revision: console.revision.value,
+              );
+            }
           }
-        }
-      case 2:
-        if (await _organisation.openSection('r')) {
-          final justice = _action('4');
-          if (justice?.enabled == true) {
-            await _organisation.sendAction(
-              justice!,
-              revision: console.revision.value,
-            );
+        case 2:
+          if (await _organisation.openSection('r')) {
+            final justice = _action('4');
+            if (justice?.enabled == true) {
+              await _organisation.sendAction(
+                justice!,
+                revision: console.revision.value,
+              );
+            }
           }
-        }
-      case 3:
-        await _organisation.openSection('l');
-      case 4:
-        await _organisation.openSection('m');
-      case 6:
-        await _organisation.returnToHeadquarters();
-      case 7:
-        await _organisation.returnToHeadquarters();
-      case networkJournalSection:
-        await _organisation.returnToHeadquarters();
-      case peopleJournalSection:
-        await _organisation.openPersonnelDirectory();
-      case basesJournalSection:
-        await _organisation.returnToHeadquarters();
+        case 3:
+          await _organisation.openSection('l');
+        case 4:
+          await _organisation.openSection('m');
+        case 6:
+          await _organisation.returnToHeadquarters();
+        case 7:
+          await _organisation.returnToHeadquarters();
+        case networkJournalSection:
+          await _organisation.returnToHeadquarters();
+        case peopleJournalSection:
+          await _organisation.openPersonnelDirectory();
+        case basesJournalSection:
+          await _organisation.returnToHeadquarters();
+      }
+    } finally {
+      _openingJournalSection = false;
+      if (mounted) {
+        _normaliseJournalReturn();
+        setState(() {});
+      }
     }
   }
 
@@ -1131,7 +1169,12 @@ class _ModernGameShellState extends State<ModernGameShell> {
     } else if (isLegislativeVoteScreen(console)) {
       detail = JournalLegislationView(console: console, onAction: _send);
     } else if (ledgerReportFrame(console) != null) {
-      detail = JournalLedgerOverview(console: console, onAction: _ledgerAction);
+      detail = JournalLedgerOverview(
+        key: _ledgerKey,
+        console: console,
+        onAction: _ledgerAction,
+        history: _organisation.monthlyLedgerHistory,
+      );
     } else if (agendaOverviewFrame(console) != null) {
       detail = JournalAgendaView(console: console, onAction: _send);
     } else if (mediaOverviewFrame(console) != null) {
@@ -1255,6 +1298,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
         child: _mediaProduction
             ? JournalMediaProductionView(
                 enabled: _organisation.canNavigate,
+                onOpenArchive: () => setState(() => _mediaProduction = false),
                 onAssign: (request) async {
                   if (!_organisation.canNavigate) return;
                   setState(() {
