@@ -272,7 +272,7 @@ List<String> decisionDetails(
               : ' · Affordable; other prerequisites still apply'}. ${_upgradeEffect(upgrade)}',
         'Solar panels and the AA gun require neither roof option already installed. A business front requires a suitable non-discreet location without an existing front. Existing upgrades are not offered for purchase again.',
         if (base != null)
-          'Stored rations ${base.compound.rations}; approximate food days ${base.foodDaysLeft}; diesel days ${base.compound.diesel}. Food days = round(rations / max(number eating, 1)); this is a stock estimate, not a permanent capacity upgrade.',
+          'Stored rations ${base.compound.rations}; approximate food days ${base.foodDaysLeft}; diesel days ${base.compound.diesel}. Food days = rations / max(number eating, 1), rounded up; a partial final supply prevents starvation for that turn. This is a stock estimate, not a permanent capacity upgrade.',
         'Ration purchase: \$150 for 20 daily rations. Generator diesel purchase: five days for \$300/500/750/1000/2000 as pollution law moves from Arch Conservative to Elite Liberal. Generator fuel is a supply requirement; ordinary upgrade purchase prices are one-off expenses.',
         'Solar-panel price is law-dependent: \$60000/40000/30000/20000/10000. AA gun: \$35000 with Arch Conservative gun control, otherwise \$200000 to install and conceal it.',
       ];

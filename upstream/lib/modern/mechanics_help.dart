@@ -21,7 +21,7 @@ class ActivityMechanics {
     this.requirements = '',
     this.risk = '',
     this.details = '',
-    this.timing = 'Runs when you advance the day.',
+    this.timing = 'Runs each day until changed, completed or interrupted.',
     this.unavailableReason,
     this.calculation,
   });
@@ -81,7 +81,7 @@ ActivityMechanics activityMechanics(
     String risk = '',
     String details = '',
     String? unavailableReason,
-    String timing = 'Runs when you advance the day.',
+    String timing = 'Runs each day until changed, completed or interrupted.',
   }) => ActivityMechanics(
     type: type,
     title: activity?.type == type ? activity!.description : type.label,
@@ -127,8 +127,11 @@ ActivityMechanics activityMechanics(
     case ActivityType.visit:
       return help(
         'Carry out the squad’s destination order.',
+        timing: 'Next day: visit replaces personal orders. Reassign afterward.',
         details:
-            'A squad visit takes precedence over individual daily tasks. '
+            'A squad visit replaces individual daily tasks. '
+            'After the visit, crew return to Lay Low; their earlier daily '
+            'orders do not resume automatically. '
             'Inspecting a building does not move the squad; issuing its order '
             'queues the visit for the next day.',
       );
@@ -308,10 +311,13 @@ ActivityMechanics activityMechanics(
       return help(
         'Find prospective members, then talk them into joining.',
         skills: const [Skill.streetSmarts, Skill.persuasion, Skill.seduction],
+        timing: 'Choose a profession when the day runs; repeats until changed.',
         details:
             'The day’s activity asks which profession to seek. Street '
             'Smarts helps arrange a meeting; conversation or seduction '
-            'determines whether the prospect joins.',
+            'determines whether the prospect joins. Existing follow-up meetings '
+            'continue separately from the recruiter’s daily order; review '
+            'pending meetings in People.',
       );
     case ActivityType.stealCars:
       return help(
@@ -567,7 +573,8 @@ String featureMechanics(FeatureMechanic feature) => switch (feature) {
   FeatureMechanic.squadOrder =>
     'Inspecting changes no orders or time. '
         'Issue a destination order to queue the squad’s visit; advance the day '
-        'to travel. A squad visit takes precedence over individual daily tasks.',
+        'to travel. Visits replace personal orders; after the visit, crew '
+        'return to Lay Low and need new daily orders.',
   FeatureMechanic.juice =>
     'Juice measures personal experience and standing. Rank milestones strengthen '
         'eligible attributes, which can raise training caps and maximum blood; '

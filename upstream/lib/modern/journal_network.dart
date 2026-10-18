@@ -41,6 +41,7 @@ class JournalNetworkView extends StatefulWidget {
     required this.onInspect,
     required this.onCloseInspection,
     this.inspectedPerson,
+    this.onDraftChanged,
   });
 
   final Console console;
@@ -48,6 +49,7 @@ class JournalNetworkView extends StatefulWidget {
   final ValueChanged<Creature> onInspect;
   final VoidCallback onCloseInspection;
   final Creature? inspectedPerson;
+  final ValueChanged<bool>? onDraftChanged;
 
   @override
   State<JournalNetworkView> createState() => JournalNetworkViewState();
@@ -84,6 +86,8 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
       activityOrderFrame(console)?.actorId == _person?.id &&
       activityOrderFrame(console)?.sleeper == true;
 
+  bool get hasPreparedOrder => _validDraft;
+
   void _reveal(GlobalKey target) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final targetContext = target.currentContext;
@@ -100,8 +104,10 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
   }
 
   void _clearDraft() {
+    final hadDraft = _draft != null;
     _draft = null;
     _draftRevision = null;
+    if (hadDraft) widget.onDraftChanged?.call(false);
   }
 
   void _select(Creature person) {
@@ -190,6 +196,7 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
       _draftRevision = console.revision.value;
       _notice = null;
     });
+    widget.onDraftChanged?.call(true);
     _reveal(_roleCardKey);
   }
 

@@ -33,6 +33,7 @@ class _NetworkHarness {
   late final Future<void> done;
   bool stopped = false;
   bool finished = false;
+  final dispatched = <int>[];
 
   Future<void> _loop() async {
     try {
@@ -43,6 +44,7 @@ class _NetworkHarness {
         baseModeOptionsDisplay(location);
         final key = await engine.getKey();
         if (stopped) break;
+        dispatched.add(key);
         switch (key) {
           case engine.Key.a:
             await activateRegulars();
@@ -150,7 +152,7 @@ void main() {
 
   tearDown(() => journalReadingScale.value = 1);
 
-  Future<void> mount(
+  Future<_NetworkHarness> mount(
     WidgetTester tester, {
     Size size = const Size(1440, 1000),
   }) async {
@@ -171,7 +173,70 @@ void main() {
     expect(find.byType(OrganisationJournal), findsOneWidget);
     await _tap(tester, 'journal-section:8');
     expect(find.byType(JournalNetworkView), findsOneWidget);
+    return harness;
   }
+
+  testWidgets(
+    'Network draft rebuilds and guards day controls through cancel and confirm',
+    (tester) async {
+      final person = _sleeper('Careful Planner');
+      final originalOrder = person.activity;
+      final before = _snapshot();
+      final originalDate = game.date;
+      final harness = await mount(tester);
+      final retainedAdvance = tester
+          .widget<FilledButton>(_key('journal-advance-day'))
+          .onPressed!;
+      final retainedCommands = tester
+          .widget<IconButton>(_key('journal-more-commands'))
+          .onPressed!;
+      reseedRNG(seed: 181005);
+      final rolls = List.generate(8, (_) => lcsRandom(100000));
+      reseedRNG(seed: 181005);
+      await _tap(tester, 'network-espionage');
+      await _tap(tester, 'network-task:sleeperSpy');
+      expect(find.text('Confirm or cancel draft'), findsOneWidget);
+      expect(
+        tester.widget<FilledButton>(_key('journal-advance-day')).onPressed,
+        isNull,
+      );
+      expect(
+        tester.widget<IconButton>(_key('journal-more-commands')).onPressed,
+        isNull,
+      );
+      retainedAdvance();
+      retainedCommands();
+      await _settle(tester);
+      expect(find.byType(PopupMenuItem<ConsoleAction>), findsNothing);
+      expect(_key('network-confirm-order'), findsOneWidget);
+      expect(harness.dispatched, isNot(contains(engine.Key.w)));
+      expect(_snapshot(), before);
+      expect(game.date, originalDate);
+      expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
+
+      await _tap(tester, 'network-cancel-order');
+      expect(find.text('Confirm or cancel draft'), findsNothing);
+      expect(
+        tester.widget<FilledButton>(_key('journal-advance-day')).onPressed,
+        isNotNull,
+      );
+      expect(_snapshot(), before);
+      await _tap(tester, 'network-task:sleeperSpy');
+      expect(find.text('Confirm or cancel draft'), findsOneWidget);
+      person.activity = Activity(ActivityType.sleeperSpy);
+      final confirmed = _snapshot();
+      person.activity = originalOrder;
+      await _tap(tester, 'network-confirm-order');
+      expect(_snapshot(), confirmed);
+      expect(game.date, originalDate);
+      expect(find.text('Confirm or cancel draft'), findsNothing);
+      expect(
+        tester.widget<FilledButton>(_key('journal-advance-day')).onPressed,
+        isNotNull,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'Network top tab explains the empty network without changing play',

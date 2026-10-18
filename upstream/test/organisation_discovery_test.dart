@@ -21,6 +21,7 @@ import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/engine/organisation_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
+import 'package:lcs_new_age/gamestate/squad.dart';
 import 'package:lcs_new_age/items/item.dart';
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/location/siege.dart';
@@ -47,6 +48,7 @@ class _DiscoveryHarness {
   late final Future<void> done;
   bool stopped = false;
   bool finished = false;
+  final dispatched = <int>[];
 
   Future<void> _loop() async {
     try {
@@ -57,6 +59,7 @@ class _DiscoveryHarness {
         baseModeOptionsDisplay(site);
         final key = await engine.getKey();
         if (stopped) break;
+        dispatched.add(key);
         switch (key) {
           case engine.Key.r:
             await reviewAssetsAndFormSquads();
@@ -230,7 +233,7 @@ void main() {
     return base;
   }
 
-  Future<void> mount(
+  Future<_DiscoveryHarness> mount(
     WidgetTester tester, {
     Size size = const Size(1440, 1000),
     double scale = 1,
@@ -251,6 +254,7 @@ void main() {
     await tester.pumpWidget(const MainApp());
     await _settle(tester);
     expect(find.byType(OrganisationJournal), findsOneWidget);
+    return harness;
   }
 
   testWidgets(
@@ -515,7 +519,7 @@ void main() {
       final stock = Item('WEAPON_22_REVOLVER');
       source.loot.add(stock);
       game.ledger.forceSetFunds(5000);
-      await mount(tester);
+      final harness = await mount(tester);
       await _tap(tester, 'journal-section:10');
       await _tapFinder(
         tester,
@@ -529,6 +533,17 @@ void main() {
       expect(game.activeSafehouse, source);
       final rations = source.compound.rations;
       final funds = game.ledger.funds;
+      final beforePurchase = _snapshot();
+      final originalDate = game.date;
+      final retainedAdvance = tester
+          .widget<FilledButton>(_key('journal-advance-day'))
+          .onPressed!;
+      final retainedCommands = tester
+          .widget<IconButton>(_key('journal-more-commands'))
+          .onPressed!;
+      reseedRNG(seed: 181006);
+      final rolls = List.generate(8, (_) => lcsRandom(100000));
+      reseedRNG(seed: 181006);
       final rationAction = engine.console.actions.singleWhere(
         (a) => a.entityType == 'base-supplies' && a.entityId == 'rations',
       );
@@ -538,12 +553,53 @@ void main() {
       await _tapFinder(tester, find.widgetWithText(OutlinedButton, label));
       expect(source.compound.rations, rations);
       expect(game.ledger.funds, funds);
+      expect(find.text('Confirm or cancel draft'), findsOneWidget);
+      expect(
+        tester.widget<FilledButton>(_key('journal-advance-day')).onPressed,
+        isNull,
+      );
+      expect(
+        tester.widget<IconButton>(_key('journal-more-commands')).onPressed,
+        isNull,
+      );
+      retainedAdvance();
+      retainedCommands();
+      await _settle(tester);
+      expect(engine.console.screen, 'base-investment');
+      expect(find.byType(PopupMenuItem<ConsoleAction>), findsNothing);
+      expect(
+        find.widgetWithText(FilledButton, 'Confirm purchase'),
+        findsOneWidget,
+      );
+      expect(harness.dispatched, isNot(contains(engine.Key.w)));
+      expect(game.date, originalDate);
+      expect(_snapshot(), beforePurchase);
+      expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
+      await _tapFinder(tester, find.widgetWithText(TextButton, 'Cancel'));
+      expect(find.text('Confirm or cancel draft'), findsNothing);
+      expect(
+        tester.widget<FilledButton>(_key('journal-advance-day')).onPressed,
+        isNotNull,
+      );
+      expect(
+        tester.widget<IconButton>(_key('journal-more-commands')).onPressed,
+        isNotNull,
+      );
+      expect(_snapshot(), beforePurchase);
+      await _tapFinder(tester, find.widgetWithText(OutlinedButton, label));
+      expect(find.text('Confirm or cancel draft'), findsOneWidget);
       await _tapFinder(
         tester,
         find.widgetWithText(FilledButton, 'Confirm purchase'),
       );
       expect(source.compound.rations, rations + 20);
       expect(game.ledger.funds, funds - 150);
+      expect(game.date, originalDate);
+      expect(find.text('Confirm or cancel draft'), findsNothing);
+      expect(
+        tester.widget<FilledButton>(_key('journal-advance-day')).onPressed,
+        isNotNull,
+      );
       await _tapFinder(tester, find.text('Done purchasing'));
       await _tapFinder(
         tester,
@@ -594,7 +650,7 @@ void main() {
       );
       await _tap(tester, 'journal-section:9');
       expect(find.textContaining('Sleeper recalled'), findsOneWidget);
-      expect(find.text('1 changes to review'), findsOneWidget);
+      expect(find.text('1 change to review'), findsOneWidget);
       await _tap(tester, 'journal-section:10');
       await _tap(tester, 'journal-section:9');
       expect(find.textContaining('Sleeper recalled'), findsOneWidget);
@@ -610,6 +666,100 @@ void main() {
       );
       expect(_snapshot(), before);
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'three persisted review notices keep expansion and scroll storage separate',
+    (tester) async {
+      final visitors = Squad()..name = 'Returning visitors';
+      game.squads.add(visitors);
+      for (var i = 1; i <= 3; i++) {
+        addPerson('Returning visitor $i').squad = visitors;
+      }
+      final destination = game.sites.firstWhere(
+        (site) => site.type == SiteType.departmentStore,
+      );
+      visitors.activity = Activity(
+        ActivityType.visit,
+        idString: destination.idString,
+      );
+      await mount(tester);
+      visitors.activity = Activity.none();
+      game.gameState.date = game.date.add(const Duration(days: 1));
+      engine.console.sendInput('Escape');
+      await _settle(tester);
+      final controller = tester
+          .widget<OrganisationJournal>(find.byType(OrganisationJournal))
+          .controller;
+      expect(controller.organisationReviews.notices, hasLength(3));
+      final preferences = await SharedPreferences.getInstance();
+      final saved =
+          jsonDecode(
+                preferences.getString(
+                  'organisationReview.v1.${game.gameState.uniqueGameId}',
+                )!,
+              )
+              as Map<String, dynamic>;
+      expect(saved['notices'], hasLength(3));
+      final before = _snapshot();
+      reseedRNG(seed: 181008);
+      final rolls = List.generate(8, (_) => lcsRandom(100000));
+      reseedRNG(seed: 181008);
+
+      await _tap(tester, 'journal-section:9');
+      final changes = find.text('3 changes to review');
+      await _tapFinder(tester, changes);
+      expect(tester.takeException(), isNull);
+      final reviewList = find.byKey(
+        const PageStorageKey('people-changes-review-list'),
+      );
+      expect(reviewList, findsOneWidget);
+      final reviewScroll = find.descendant(
+        of: reviewList,
+        matching: find.byType(Scrollable),
+      );
+      await tester.drag(reviewList, const Offset(0, -130));
+      await _settle(tester);
+      final offset = tester
+          .state<ScrollableState>(reviewScroll)
+          .position
+          .pixels;
+      expect(offset, greaterThan(0));
+      await _tapFinder(tester, changes);
+      await _tap(tester, 'journal-section:10');
+      await _tap(tester, 'journal-section:9');
+      expect(reviewList, findsNothing);
+      await _tapFinder(tester, changes);
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.state<ScrollableState>(reviewScroll).position.pixels,
+        closeTo(offset, .1),
+      );
+      await _tap(tester, 'journal-section:10');
+      await _tap(tester, 'journal-section:9');
+      expect(reviewList, findsOneWidget);
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.state<ScrollableState>(reviewScroll).position.pixels,
+        closeTo(offset, .1),
+      );
+
+      // A new app/controller reads the persisted notices, while its fresh
+      // route storage starts collapsed and remains safe to expand again.
+      await _tap(tester, 'journal-section:0');
+      expect(engine.console.screen, 'headquarters');
+      await tester.pumpWidget(const SizedBox.shrink());
+      await _settle(tester);
+      await tester.pumpWidget(const MainApp());
+      await _settle(tester);
+      await _tap(tester, 'journal-section:9');
+      expect(changes, findsOneWidget);
+      await _tapFinder(tester, changes);
+      expect(reviewList, findsOneWidget);
+      expect(tester.takeException(), isNull);
+      expect(_snapshot(), before);
+      expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
     },
   );
 

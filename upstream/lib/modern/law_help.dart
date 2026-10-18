@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lcs_new_age/engine/agenda_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
+import 'package:lcs_new_age/modern/campaign_progress.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/politics/alignment.dart' show DeepAlignment;
 import 'package:lcs_new_age/politics/laws.dart';
@@ -408,26 +409,14 @@ class _LawGuide extends StatelessWidget {
                         ),
                     ],
                     _heading('Normal liberal victory requirements'),
-                    Text(
-                      'Laws at Elite Liberal: ${game.laws.values.where((a) => a == DeepAlignment.eliteLiberal).length}/${Law.values.length}.',
-                      style: JournalPalette.body,
-                    ),
-                    for (final (name, body) in [
-                      ('Supreme Court', politics.court),
-                      ('House', politics.house),
-                      ('Senate', politics.senate),
-                    ])
+                    for (final requirement in campaignVictoryRequirements())
                       Text(
-                        '$name: ${body.where((a) => a == DeepAlignment.eliteLiberal).length}/${body.length} Elite Liberal; needs strictly more than half.',
+                        '${requirement.title}: ${requirement.detail}.',
                         style: JournalPalette.body,
                       ),
-                    Text(
-                      'Executive offices: ${politics.exec.values.where((a) => a == DeepAlignment.eliteLiberal).length}/${politics.exec.length} Elite Liberal; every office must qualify.\nCCS active: ${game.ccsActive ? 'yes · must be defeated' : 'no'}.',
-                      style: JournalPalette.body,
-                    ),
                     const SizedBox(height: 8),
                     const Text(
-                      'All of these conditions must be met together at the monthly victory check. Getting every law to Elite Liberal alone does not finish the campaign.',
+                      'All of these conditions must be met together at a victory check. Getting every law to Elite Liberal alone does not finish the campaign.',
                       style: JournalPalette.small,
                     ),
                   ],

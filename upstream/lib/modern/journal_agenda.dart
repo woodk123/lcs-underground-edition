@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lcs_new_age/engine/agenda_context.dart';
 import 'package:lcs_new_age/engine/console.dart';
+import 'package:lcs_new_age/modern/campaign_progress.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/law_help.dart';
@@ -52,6 +53,10 @@ class JournalAgendaView extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Text(note, style: JournalPalette.body),
                         ),
+                      if (frame.page == 0) ...[
+                        _campaignObjective(bounds.maxWidth),
+                        const SizedBox(height: 16),
+                      ],
                       if (frame.offices.isNotEmpty) ...[
                         _government(frame, bounds.maxWidth),
                         const SizedBox(height: 16),
@@ -123,6 +128,74 @@ class JournalAgendaView extends StatelessWidget {
       );
     },
   );
+
+  Widget _campaignObjective(double width) {
+    final requirements = campaignVictoryRequirements();
+    final columns = width >= 700 ? 2 : 1;
+    final itemWidth = (width - 20 - 12 * (columns - 1)) / columns;
+    return JournalSurface(
+      key: const ValueKey('journal-campaign-objective'),
+      inset: true,
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Campaign objective', style: JournalPalette.heading),
+          const Text(
+            'Bring the country to Elite Liberal. All six conditions must hold together for victory.',
+            style: JournalPalette.small,
+          ),
+          const SizedBox(height: 9),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              for (final requirement in requirements)
+                SizedBox(
+                  width: itemWidth,
+                  child: Row(
+                    key: ValueKey('campaign-requirement:${requirement.id}'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        requirement.met
+                            ? Icons.check_circle_outline
+                            : Icons.radio_button_unchecked,
+                        size: 18,
+                        color: requirement.met
+                            ? JournalPalette.olive
+                            : JournalPalette.muted,
+                        semanticLabel: requirement.met
+                            ? 'Condition met'
+                            : 'Condition remaining',
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(requirement.title, style: JournalPalette.body),
+                            Text(
+                              requirement.detail,
+                              style: JournalPalette.small,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 9),
+          const Text(
+            'Activism, news and sleeper work influence public opinion. Congress, courts and elections change laws and institutions; opinion alone does not complete these objectives.',
+            style: JournalPalette.small,
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _government(AgendaOverviewFrame frame, double width) {
     final columns = width >= 1100

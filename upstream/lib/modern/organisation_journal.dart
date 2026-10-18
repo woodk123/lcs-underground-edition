@@ -118,16 +118,45 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       console.actions.contains(_pendingOrder) &&
       activityFrame;
 
+  bool get _hasUnconfirmedDraft =>
+      hasPreparedOrder ||
+      (planning && _selectedDestination != null) ||
+      (_networkKey.currentState?.hasPreparedOrder ?? false) ||
+      (_basesKey.currentState?.hasPreparedPurchase ?? false);
+
+  void _draftChanged(bool _) {
+    if (mounted) setState(() {});
+  }
+
   Console get console => widget.console;
   OrganisationController get controller => widget.controller;
   Squad? get squad => controller.selectedSquad ?? game.activeSquad;
   bool get undercover =>
       confirmation?.entityType == 'sleeper-activity-confirm' ||
       !allocating && controller.selectedPerson?.sleeperAgent == true;
+  Creature? get _requiredEducationActor {
+    if (!console.awaitingInput ||
+        console.textInput ||
+        console.eventMessage != null) {
+      return null;
+    }
+    final actorIds = console.actions
+        .where((action) => action.entityType == 'education-skill')
+        .map((action) => action.entityCategory)
+        .toSet();
+    if (actorIds.length != 1) return null;
+    final actorId = int.tryParse(actorIds.single ?? '');
+    return game.pool.where((p) => p.id == actorId).firstOrNull;
+  }
+
   Creature? get _individualOrderActor {
-    if (!activityFrame || undercover || allocating) return null;
+    final requiredActor = _requiredEducationActor;
+    if ((!activityFrame && requiredActor == null) || undercover || allocating) {
+      return null;
+    }
     final actorId = int.tryParse(confirmation?.entityCategory ?? '');
-    final actor = game.pool.where((p) => p.id == actorId).firstOrNull;
+    final actor =
+        requiredActor ?? game.pool.where((p) => p.id == actorId).firstOrNull;
     return actor != null &&
             !(squad?.members.any((p) => p.id == actor.id) ?? false)
         ? actor
@@ -144,6 +173,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   Creature? get person {
     final profile = console.journalProfile;
     if (profile != null) return profile.person;
+    final requiredActor = _requiredEducationActor;
+    if (requiredActor != null) return requiredActor;
     final actorId = int.tryParse(confirmation?.entityCategory ?? '');
     if (actorId != null) {
       return game.pool.where((p) => p.id == actorId).firstOrNull;
@@ -373,6 +404,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                               key: _basesKey,
                               console: console,
                               controller: controller,
+                              onDraftChanged: _draftChanged,
                               onInspect: (person) => unawaited(
                                 controller.openPersonnelProfile(person.id),
                               ),
@@ -390,6 +422,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                             onCloseInspection:
                                 widget.onCloseInspection ?? () {},
                             inspectedPerson: widget.inspectedPerson,
+                            onDraftChanged: _draftChanged,
                           )
                         : (widget.section != 0 &&
                                       widget.section != peopleJournalSection ||
@@ -686,7 +719,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       key: const PageStorageKey('people-changes-review'),
       initiallyExpanded: notices.length <= 2,
       title: Text(
-        '${notices.length} changes to review',
+        '${notices.length} ${notices.length == 1 ? 'change' : 'changes'} to review',
         style: JournalPalette.heading,
       ),
       leading: const Icon(
@@ -697,6 +730,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         SizedBox(
           height: (notices.length * 115.0).clamp(100, 200),
           child: ListView(
+            // The tile stores a bool in its PageStorage entry. The nested
+            // scroll position needs its own identifier for a double offset.
+            key: const PageStorageKey('people-changes-review-list'),
             children: [
               for (final notice in notices)
                 if (game.pool.where((p) => p.id == notice.personId).firstOrNull
@@ -1790,6 +1826,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ),
       );
     }
+    if (_requiredEducationActor case final actor?) {
+      return _educationChoiceCard(actor);
+    }
     final actor = person;
     final prepared = hasPreparedOrder;
     final actual = squad?.activity.type == ActivityType.visit
@@ -1818,12 +1857,21 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ? const <String>[]
         : travelNotices(travel, squad);
     final estimatedIncome = help.calculation?.quantities['estimatedIncome'];
+    final hospitalVisit =
+        recoveryContext(console)?.scene == RecoveryScene.hospital;
+    final atVisitDestination =
+        actual?.location != null &&
+        actor?.activity.type == ActivityType.visit &&
+        actor?.location == actual?.location &&
+        console.awaitingInput &&
+        console.screen != 'headquarters' &&
+        console.screen != 'planning';
     final visitInProgress =
         !prepared &&
         !planning &&
         actual?.type == ActivityType.visit &&
         squad?.id == game.activeSquad?.id &&
-        recoveryContext(console)?.scene == RecoveryScene.hospital;
+        (hospitalVisit || atVisitDestination);
     return JournalSurface(
       key: const ValueKey('journal-job-card'),
       lined: true,
@@ -1906,7 +1954,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 children: [
                   Text(
                     visitInProgress
-                        ? 'Choose care or return to headquarters.'
+                        ? hospitalVisit
+                              ? 'Choose care or return to headquarters.'
+                              : 'Use the location’s services or leave to finish this visit.'
                         : help.timing,
                     style: JournalPalette.small,
                   ),
@@ -2054,6 +2104,52 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _educationChoiceCard(Creature actor) {
+    final back = console.actions
+        .where((action) => action.key == 'Enter')
+        .firstOrNull;
+    return JournalSurface(
+      key: const ValueKey('journal-job-card'),
+      lined: true,
+      padding: const EdgeInsets.all(9),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            actor.name,
+            key: const ValueKey('journal-required-order-actor'),
+            style: JournalPalette.heading.copyWith(fontSize: 11),
+          ),
+          const SizedBox(height: 5),
+          const Text('Choose a skill', style: JournalPalette.heading),
+          const Text(
+            'Awaiting skill choice',
+            key: ValueKey('journal-order-state'),
+            style: JournalPalette.small,
+          ),
+          const SizedBox(height: 7),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Text(
+                'The skill list is for ${actor.name}. Selecting a skill assigns the order. Cancel keeps ${actor.activity.description}. No time passes while choosing.',
+                style: JournalPalette.small,
+              ),
+            ),
+          ),
+          if (back != null)
+            TextButton.icon(
+              key: const ValueKey('journal-cancel-skill-choice'),
+              onPressed: !controller.busy && back.enabled
+                  ? () => _dispatch(back)
+                  : null,
+              icon: const Icon(Icons.close, size: 16),
+              label: const Text('Cancel skill choice'),
+            ),
         ],
       ),
     );
@@ -3079,6 +3175,14 @@ class OrganisationJournalState extends State<OrganisationJournal> {
 
   Widget _destinationCard() {
     final target = _selectedDestination!;
+    final cityMapVisit = widget.section == 6 && !planning;
+    final canPrepareVisit =
+        controller.canNavigate &&
+        !_visitRouting &&
+        !undercover &&
+        squad?.members.isNotEmpty == true &&
+        controller.headquarters?.siege == null &&
+        controller.headquartersAction('f')?.enabled == true;
     final queued =
         squad?.activity.type == ActivityType.visit &&
         squad?.activity.idString == target.idString;
@@ -3087,7 +3191,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: _compactMapText || MediaQuery.sizeOf(context).height < 700
-              ? 110
+              ? cityMapVisit
+                    ? 150
+                    : 110
+              : cityMapVisit
+              ? 260
               : 220,
         ),
         child: SingleChildScrollView(
@@ -3119,6 +3227,28 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                     ),
                   ],
                 ),
+                if (cityMapVisit) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Squad: ${squad?.name ?? 'No squad selected'}',
+                          key: const ValueKey('journal-city-map-squad'),
+                          style: JournalPalette.small,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        key: const ValueKey('journal-city-map-prepare-visit'),
+                        onPressed: canPrepareVisit ? _prepareMapVisit : null,
+                        icon: const Icon(Icons.place_outlined, size: 17),
+                        label: const Text('Prepare visit'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                ],
                 MechanicsTooltip(
                   message:
                       '${locationPurpose(target.type)}\n\n${locationAccess(target)}',
@@ -3164,9 +3294,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   }
 
   Future<void> _headquartersCommands() async {
+    if (_hasUnconfirmedDraft) return;
     if (!await controller.returnToHeadquarters() || !mounted) return;
     await WidgetsBinding.instance.endOfFrame;
-    if (!mounted) return;
+    if (!mounted || _hasUnconfirmedDraft) return;
     final revision = console.revision.value;
     final choices = List<ConsoleAction>.of(console.actions);
     final action = await showMenu<ConsoleAction>(
@@ -3181,12 +3312,13 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           ),
       ],
     );
-    if (action != null && mounted) {
+    if (action != null && mounted && !_hasUnconfirmedDraft) {
       await controller.sendAction(action, revision: revision);
     }
   }
 
   Widget _footer(bool narrow) {
+    final unconfirmedDraft = _hasUnconfirmedDraft;
     final revision = console.revision.value;
     final ledger = ledgerReportFrame(console);
     final detailOwnsContinue =
@@ -3222,7 +3354,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     final wait =
         controller.headquartersAction('w') ?? (directHQ ? current('w') : null);
     final known = controller.headquarters != null || directHQ;
-    final label = continuing
+    final label = unconfirmedDraft
+        ? 'Confirm or cancel draft'
+        : continuing
         ? console.screen == 'full_map'
               ? 'Back to operation'
               : 'Continue'
@@ -3240,7 +3374,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           IconButton(
             tooltip: 'More headquarters commands',
             key: const ValueKey('journal-more-commands'),
-            onPressed: controller.canNavigate ? _headquartersCommands : null,
+            onPressed: controller.canNavigate && !unconfirmedDraft
+                ? _headquartersCommands
+                : null,
             icon: const Icon(
               Icons.menu_book,
               color: JournalPalette.brassLight,
@@ -3313,7 +3449,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 message: label,
                 child: FilledButton.icon(
                   key: const ValueKey('journal-advance-day'),
-                  onPressed: continuing
+                  onPressed: unconfirmedDraft
+                      ? null
+                      : continuing
                       ? canContinue
                             ? () {
                                 // A retained callback must not advance a later
@@ -3321,7 +3459,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                                 if (console.revision.value != revision ||
                                     !console.awaitingInput ||
                                     console.textInput ||
-                                    controller.busy) {
+                                    controller.busy ||
+                                    _hasUnconfirmedDraft) {
                                   return;
                                 }
                                 widget.onAction(continueAction?.key ?? 'Enter');
@@ -3331,9 +3470,14 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                       : !controller.canNavigate
                       ? null
                       : !known
-                      ? controller.returnToHeadquarters
+                      ? () {
+                          if (!_hasUnconfirmedDraft) {
+                            unawaited(controller.returnToHeadquarters());
+                          }
+                        }
                       : wait?.enabled == true
                       ? () async {
+                          if (_hasUnconfirmedDraft) return;
                           await controller.openSection(wait!.key);
                           _restoreInputFocus();
                         }

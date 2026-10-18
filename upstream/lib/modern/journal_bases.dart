@@ -9,6 +9,7 @@ import 'package:lcs_new_age/location/compound_upgrades.dart';
 import 'package:lcs_new_age/location/siege.dart' as siege;
 import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/modern/base_management_controller.dart';
+import 'package:lcs_new_age/modern/base_rent_summary.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 
@@ -20,10 +21,12 @@ class JournalBasesView extends StatefulWidget {
     required this.console,
     required this.controller,
     this.onInspect,
+    this.onDraftChanged,
   });
   final Console console;
   final OrganisationController controller;
   final ValueChanged<Creature>? onInspect;
+  final ValueChanged<bool>? onDraftChanged;
 
   @override
   State<JournalBasesView> createState() => JournalBasesViewState();
@@ -34,7 +37,11 @@ class JournalBasesViewState extends State<JournalBasesView> {
   int? _selectedId;
   ConsoleAction? _purchase;
   int? _purchaseRevision;
+  int _purchaseVersion = 0;
   String? _notice;
+  bool _reportedPreparedPurchase = false;
+
+  bool get hasPreparedPurchase => _validPurchase;
 
   Console get console => widget.console;
   bool get _busy => _routes.busy;
@@ -94,10 +101,19 @@ class JournalBasesViewState extends State<JournalBasesView> {
   }
 
   void _changed() {
-    if (mounted) setState(() {});
+    if (mounted) _updateState(() {});
   }
 
-  void _select(Site site) => setState(() {
+  void _updateState(VoidCallback change) {
+    setState(change);
+    final prepared = hasPreparedPurchase;
+    if (prepared != _reportedPreparedPurchase) {
+      _reportedPreparedPurchase = prepared;
+      widget.onDraftChanged?.call(prepared);
+    }
+  }
+
+  void _select(Site site) => _updateState(() {
     _selectedId = site.id;
     _purchase = null;
     _notice = null;
@@ -105,28 +121,45 @@ class JournalBasesViewState extends State<JournalBasesView> {
 
   Future<void> _route(Future<bool> Function() route) async {
     if (_busy) return;
-    setState(() {
+    _updateState(() {
       _purchase = null;
       _notice = null;
     });
     await route();
-    if (mounted) setState(() {});
+    if (mounted) _updateState(() {});
   }
 
   Future<void> _send(ConsoleAction action, {String? notice}) async {
     final revision = console.revision.value;
     if (_busy || !action.enabled || !console.actions.contains(action)) return;
-    setState(() => _purchase = null);
+    _updateState(() => _purchase = null);
     final success = await _routes.sendAction(action, revision: revision);
-    if (mounted) setState(() => _notice = success ? notice : null);
+    if (mounted) _updateState(() => _notice = success ? notice : null);
   }
 
   bool get _validPurchase =>
       _purchase != null &&
       _purchaseRevision == console.revision.value &&
+      console.awaitingInput &&
+      !console.textInput &&
+      console.eventMessage == null &&
       console.actions.contains(_purchase) &&
       _purchase!.entityCategory == _site?.idString &&
       console.screen == 'base-investment';
+
+  Future<void> _confirmPurchase(
+    ConsoleAction purchase,
+    int revision,
+    int version,
+  ) async {
+    if (!_validPurchase ||
+        !identical(_purchase, purchase) ||
+        _purchaseRevision != revision ||
+        _purchaseVersion != version) {
+      return;
+    }
+    await _send(purchase, notice: 'Purchase completed.');
+  }
 
   /// Lets the enclosing journal preserve staged purchase confirmation for
   /// keyboard users. Required messages and text prompts keep their own reader.
@@ -140,9 +173,11 @@ class JournalBasesViewState extends State<JournalBasesView> {
     final normalized = normalizeConsoleKey(key);
     if (_validPurchase) {
       if (normalized == 'Enter') {
-        unawaited(_send(_purchase!, notice: 'Purchase completed.'));
+        unawaited(
+          _confirmPurchase(_purchase!, _purchaseRevision!, _purchaseVersion),
+        );
       } else if (const {'Escape', 'Backspace'}.contains(normalized)) {
-        setState(() => _purchase = null);
+        _updateState(() => _purchase = null);
       }
       return true;
     }
@@ -163,10 +198,11 @@ class JournalBasesViewState extends State<JournalBasesView> {
             .where((site) => site.idString == action.entityCategory)
             .firstOrNull;
         if (site != null) {
-          setState(() {
+          _updateState(() {
             _selectedId = site.id;
             _purchase = action;
             _purchaseRevision = console.revision.value;
+            _purchaseVersion++;
           });
         }
       }
@@ -428,11 +464,41 @@ class JournalBasesViewState extends State<JournalBasesView> {
     if (site.siege.underSiege && site.compound.cameras && site.siege.camerasOff)
       _note('Security cameras are off during the siege.', danger: true),
     const SizedBox(height: 5),
-    Text(
-      'Heat ${site.heat} · Rent \$${site.rent}/month',
-      style: JournalPalette.small,
-    ),
+    Text('Heat ${site.heat}', style: JournalPalette.small),
+    const SizedBox(height: 6),
+    _rent(site),
   ]);
+
+  Widget _rent(Site site) {
+    final rent = baseRentSummary(site);
+    return Column(
+      key: ValueKey('base-rent:${site.id}'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          rent.title,
+          style: JournalPalette.body.copyWith(
+            color: rent.forcedEviction
+                ? JournalPalette.danger
+                : JournalPalette.ink,
+          ),
+        ),
+        Text(rent.detail, style: JournalPalette.small),
+        if (rent.warning != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              rent.warning!,
+              style: JournalPalette.small.copyWith(
+                color: rent.forcedEviction || game.ledger.funds < site.rent
+                    ? JournalPalette.danger
+                    : JournalPalette.muted,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 
   Widget _residents(Site site) {
     final residents = baseResidents(site);
@@ -493,6 +559,9 @@ class JournalBasesViewState extends State<JournalBasesView> {
   );
 
   Widget _investmentPanel(Site site) {
+    final purchase = _validPurchase ? _purchase : null;
+    final purchaseRevision = _purchaseRevision;
+    final purchaseVersion = _purchaseVersion;
     final actions = console.actions
         .where(
           (action) =>
@@ -520,9 +589,10 @@ class JournalBasesViewState extends State<JournalBasesView> {
             child: OutlinedButton(
               onPressed: _busy || !action.enabled
                   ? null
-                  : () => setState(() {
+                  : () => _updateState(() {
                       _purchase = action;
                       _purchaseRevision = console.revision.value;
+                      _purchaseVersion++;
                     }),
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -532,9 +602,9 @@ class JournalBasesViewState extends State<JournalBasesView> {
               ),
             ),
           ),
-        if (_validPurchase) ...[
+        if (purchase != null && purchaseRevision != null) ...[
           const SizedBox(height: 10),
-          _note('Purchase: ${_label(_purchase!)}'),
+          _note('Purchase: ${_label(purchase)}'),
           Wrap(
             spacing: 8,
             children: [
@@ -542,7 +612,11 @@ class JournalBasesViewState extends State<JournalBasesView> {
                 onPressed: _busy
                     ? null
                     : () => unawaited(
-                        _send(_purchase!, notice: 'Purchase completed.'),
+                        _confirmPurchase(
+                          purchase,
+                          purchaseRevision,
+                          purchaseVersion,
+                        ),
                       ),
                 icon: const Icon(Icons.check),
                 label: const Text('Confirm purchase'),
@@ -550,7 +624,13 @@ class JournalBasesViewState extends State<JournalBasesView> {
               TextButton(
                 onPressed: _busy
                     ? null
-                    : () => setState(() => _purchase = null),
+                    : () {
+                        if (identical(_purchase, purchase) &&
+                            _purchaseRevision == purchaseRevision &&
+                            _purchaseVersion == purchaseVersion) {
+                          _updateState(() => _purchase = null);
+                        }
+                      },
                 child: const Text('Cancel'),
               ),
             ],

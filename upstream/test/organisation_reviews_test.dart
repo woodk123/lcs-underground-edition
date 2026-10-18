@@ -69,9 +69,229 @@ void main() {
       await review.observe(101, [person], tomorrow);
       await review.observe(101, [person], DateTime(2023, 2, 1));
       expect(review.notices, isEmpty);
+    },
+  );
 
-      final other = game.pool[1]..squadId = null;
-      await review.observe(101, [person, other], DateTime(2023, 2, 2));
+  test(
+    'new squadless idle crew stay reviewable until an explicit choice',
+    () async {
+      final review = store();
+      await review.observe(101, [], day);
+      await review.observe(101, [person], tomorrow);
+      final notice = review.notices.single;
+      expect(notice.kind, OrganisationReviewKind.newRecruit);
+      expect(notice.title, 'New crew member');
+      expect(
+        notice.detail,
+        contains('Daily orders and squad membership are separate'),
+      );
+
+      final reopened = store();
+      await reopened.observe(101, [person], DateTime(2023, 1, 6));
+      expect(reopened.notices.single.id, notice.id);
+      await reopened.acknowledge(notice.id);
+      await reopened.observe(101, [person], DateTime(2023, 1, 7));
+      expect(reopened.notices, isEmpty);
+      final acknowledged = store();
+      await acknowledged.observe(101, [person], DateTime(2023, 1, 8));
+      expect(acknowledged.notices, isEmpty);
+    },
+  );
+
+  test(
+    'new arrivals with work, a squad, or no availability are not idle recruits',
+    () async {
+      final review = store();
+      await review.observe(101, [], day);
+      person.activity = Activity(ActivityType.donations);
+      await review.observe(101, [person], tomorrow);
+      expect(review.notices, isEmpty);
+      person.activity = Activity.none();
+      await review.observe(101, [person], tomorrow);
+      expect(review.notices, isEmpty);
+
+      await review.observe(102, [], day);
+      person.squad = game.squads.first;
+      await review.observe(102, [person], tomorrow);
+      expect(review.notices, isEmpty);
+
+      await review.observe(103, [], day);
+      person.squad = null;
+      person.sleeperAgent = true;
+      await review.observe(103, [person], tomorrow);
+      expect(review.notices, isEmpty);
+      person.sleeperAgent = false;
+      await review.observe(103, [person], DateTime(2023, 1, 6));
+      expect(review.notices.single.kind, OrganisationReviewKind.returned);
+    },
+  );
+
+  test(
+    'joining a squad or assigning work resolves a new recruit notice',
+    () async {
+      final review = store();
+      await review.observe(101, [], day);
+      await review.observe(101, [person], tomorrow);
+      expect(review.notices.single.kind, OrganisationReviewKind.newRecruit);
+      person.squad = game.squads.first;
+      await review.observe(101, [person], tomorrow);
+      expect(review.notices, isEmpty);
+
+      person.squad = null;
+      await review.observe(102, [], day);
+      await review.observe(102, [person], tomorrow);
+      person.activity = Activity(ActivityType.donations);
+      await review.observe(102, [person], tomorrow);
+      expect(review.notices, isEmpty);
+    },
+  );
+
+  test(
+    'released crew get a custody follow-up without inferring a release date',
+    () async {
+      final home = person.locationId;
+      person.location = game.sites.firstWhere(
+        (site) => site.isPartOfTheJusticeSystem,
+      );
+      final review = store();
+      await review.observe(101, [person], day);
+      await review.observe(101, [person], tomorrow);
+      expect(review.notices, isEmpty);
+      person.locationId = home;
+      await review.observe(101, [person], tomorrow);
+      expect(review.notices.single.kind, OrganisationReviewKind.returned);
+      expect(review.notices.single.title, 'Returned from custody');
+      final reopened = store();
+      await reopened.observe(101, [person], DateTime(2023, 1, 6));
+      expect(reopened.notices.single.title, 'Returned from custody');
+    },
+  );
+
+  test(
+    'an observed queued squad visit becomes a persistent return follow-up',
+    () async {
+      final squad = game.squads.first;
+      person.squad = squad;
+      final destination = game.sites.firstWhere(
+        (site) => site.type == SiteType.publicPark,
+      );
+      squad.activity = Activity(
+        ActivityType.visit,
+        idString: destination.idString,
+      );
+      final review = store();
+      await review.observe(101, [person], day);
+      expect(review.notices, isEmpty);
+
+      // The original day processor clears the squad visit before the next safe
+      // headquarters snapshot; the person's own idle order never changes.
+      // Failed departures produce the same HQ history, so the notice names the
+      // ended order and destination without claiming a successful trip.
+      squad.activity = Activity.none();
+      final reopened = store();
+      await reopened.observe(101, [person], tomorrow);
+      final notice = reopened.notices.single;
+      expect(notice.kind, OrganisationReviewKind.visitFinished);
+      expect(notice.title, 'Visit order ended');
+      expect(notice.detail, contains(destination.getName()));
+      expect(notice.detail, contains('prepare another visit'));
+      await reopened.observe(101, [person], DateTime(2023, 1, 6));
+      expect(reopened.notices.single.id, notice.id);
+      final returned = store();
+      await returned.observe(101, [person], DateTime(2023, 1, 7));
+      expect(returned.notices.single.id, notice.id);
+      await returned.acknowledge(notice.id);
+      await returned.observe(101, [person], DateTime(2023, 1, 8));
+      expect(returned.notices, isEmpty);
+    },
+  );
+
+  test(
+    'canceling a visit on the same day never becomes a completion',
+    () async {
+      final squad = game.squads.first;
+      person.squad = squad;
+      final destination = game.sites.firstWhere(
+        (site) => site.type == SiteType.publicPark,
+      );
+      squad.activity = Activity(
+        ActivityType.visit,
+        idString: destination.idString,
+      );
+      final review = store();
+      await review.observe(101, [person], day);
+      squad.activity = Activity.none();
+      await review.observe(101, [person], day);
+      await review.observe(101, [person], tomorrow);
+      expect(review.notices, isEmpty);
+    },
+  );
+
+  test(
+    'ongoing visits and unavailable or working crew do not get visit reminders',
+    () async {
+      final squad = game.squads.first;
+      person.squad = squad;
+      final destination = game.sites.firstWhere(
+        (site) => site.type == SiteType.publicPark,
+      );
+      squad.activity = Activity(
+        ActivityType.visit,
+        idString: destination.idString,
+      );
+      final review = store();
+      await review.observe(101, [person], day);
+      await review.observe(101, [person], tomorrow);
+      expect(review.notices, isEmpty);
+      squad.activity = Activity.none();
+      person.activity = Activity(ActivityType.donations);
+      await review.observe(101, [person], DateTime(2023, 1, 6));
+      expect(review.notices, isEmpty);
+
+      person.activity = Activity.none();
+      squad.activity = Activity(
+        ActivityType.visit,
+        idString: destination.idString,
+      );
+      await review.observe(101, [person], DateTime(2023, 1, 6));
+      squad.activity = Activity.none();
+      person.hidingDaysLeft = 2;
+      await review.observe(101, [person], DateTime(2023, 1, 7));
+      expect(review.notices, isEmpty);
+      person.alive = false;
+      await review.observe(101, [person], DateTime(2023, 1, 8));
+      expect(review.notices, isEmpty);
+    },
+  );
+
+  test(
+    'a new visit clears follow-ups and useful work clears a finished visit',
+    () async {
+      final squad = game.squads.first;
+      person.squad = squad;
+      final destination = game.sites.firstWhere(
+        (site) => site.type == SiteType.publicPark,
+      );
+      squad.activity = Activity(
+        ActivityType.visit,
+        idString: destination.idString,
+      );
+      final review = store();
+      await review.observe(101, [person], day);
+      squad.activity = Activity.none();
+      await review.observe(101, [person], tomorrow);
+      expect(review.notices.single.kind, OrganisationReviewKind.visitFinished);
+      squad.activity = Activity(
+        ActivityType.visit,
+        idString: destination.idString,
+      );
+      await review.observe(101, [person], tomorrow);
+      expect(review.notices, isEmpty);
+      squad.activity = Activity.none();
+      await review.observe(101, [person], DateTime(2023, 1, 6));
+      expect(review.notices.single.kind, OrganisationReviewKind.visitFinished);
+      person.activity = Activity(ActivityType.donations);
+      await review.observe(101, [person], DateTime(2023, 1, 6));
       expect(review.notices, isEmpty);
     },
   );

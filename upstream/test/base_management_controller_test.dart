@@ -382,6 +382,7 @@ void main() {
       expect(await routes.openInvestment(base.id), isTrue);
     });
     final key = GlobalKey<JournalBasesViewState>();
+    final drafts = <bool>[];
     await tester.pumpWidget(
       MaterialApp(
         theme: buildJournalTheme(),
@@ -390,6 +391,7 @@ void main() {
             key: key,
             console: engine.console,
             controller: organisation!,
+            onDraftChanged: drafts.add,
           ),
         ),
       ),
@@ -399,11 +401,15 @@ void main() {
     expect(key.currentState!.handleGameShortcut('r'), isTrue);
     await tester.pump();
     expect(find.text('Confirm purchase'), findsOneWidget);
+    expect(key.currentState!.hasPreparedPurchase, isTrue);
+    expect(drafts, [true]);
     expect(base.compound.rations, rations);
     expect(game.ledger.funds, funds);
     expect(key.currentState!.handleGameShortcut('Escape'), isTrue);
     await tester.pump();
     expect(find.text('Confirm purchase'), findsNothing);
+    expect(key.currentState!.hasPreparedPurchase, isFalse);
+    expect(drafts, [true, false]);
     expect(base.compound.rations, rations);
     key.currentState!.handleGameShortcut('r');
     await tester.runAsync(() async {
@@ -415,6 +421,17 @@ void main() {
     await tester.pump();
     expect(base.compound.rations, rations + 20);
     expect(game.ledger.funds, funds - 150);
+    expect(key.currentState!.hasPreparedPurchase, isFalse);
+    expect(drafts, [true, false, true, false]);
+    key.currentState!.handleGameShortcut('r');
+    expect(key.currentState!.hasPreparedPurchase, isTrue);
+    engine.console.revision.value++;
+    await tester.pump();
+    expect(key.currentState!.hasPreparedPurchase, isFalse);
+    expect(drafts, [true, false, true, false, true, false]);
+    expect(find.text('Confirm purchase'), findsNothing);
+    expect(base.compound.rations, rations + 20);
+    expect(game.ledger.funds, funds - 150);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.runAsync(() async {
@@ -422,6 +439,86 @@ void main() {
     });
     harness = null;
   });
+
+  testWidgets(
+    'retained purchase confirmations cannot buy canceled, replaced or stale drafts',
+    (tester) async {
+      final base = newBase('Retained confirmation warehouse');
+      game.ledger.forceSetFunds(5000);
+      await tester.runAsync(() async {
+        final routes = start();
+        expect(await routes.openInvestment(base.id), isTrue);
+      });
+      final key = GlobalKey<JournalBasesViewState>();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildJournalTheme(),
+          home: Scaffold(
+            body: JournalBasesView(
+              key: key,
+              console: engine.console,
+              controller: organisation!,
+            ),
+          ),
+        ),
+      );
+      final rations = base.compound.rations;
+      final diesel = base.compound.diesel;
+      final funds = game.ledger.funds;
+      VoidCallback currentConfirmation() => tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Confirm purchase'),
+          )
+          .onPressed!;
+
+      key.currentState!.handleGameShortcut('r');
+      await tester.pump();
+      final canceledConfirmation = currentConfirmation();
+      key.currentState!.handleGameShortcut('Escape');
+      canceledConfirmation();
+      await tester.pump();
+      expect(base.compound.rations, rations);
+      expect(game.ledger.funds, funds);
+      expect(key.currentState!.hasPreparedPurchase, isFalse);
+
+      // Re-preparing the same source action is a new draft even though the
+      // original reader, action identity and revision have not changed.
+      key.currentState!.handleGameShortcut('r');
+      canceledConfirmation();
+      await tester.pump();
+      expect(key.currentState!.hasPreparedPurchase, isTrue);
+      expect(base.compound.rations, rations);
+      expect(game.ledger.funds, funds);
+      final replacedConfirmation = currentConfirmation();
+      key.currentState!.handleGameShortcut('Escape');
+      final upgrade = engine.console.actions.firstWhere(
+        (action) => action.entityType == 'compound-upgrade' && action.enabled,
+      );
+      key.currentState!.handleGameShortcut(upgrade.key);
+      replacedConfirmation();
+      await tester.pump();
+      expect(key.currentState!.hasPreparedPurchase, isTrue);
+      expect(base.compound.rations, rations);
+      expect(base.compound.diesel, diesel);
+      expect(game.ledger.funds, funds);
+
+      final staleConfirmation = currentConfirmation();
+      engine.console.revision.value++;
+      staleConfirmation();
+      await tester.pump();
+      expect(key.currentState!.hasPreparedPurchase, isFalse);
+      expect(base.compound.rations, rations);
+      expect(base.compound.diesel, diesel);
+      expect(game.ledger.funds, funds);
+      expect(engine.console.lastKey, isNull);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.runAsync(() async {
+        await harness!.stop();
+      });
+      harness = null;
+    },
+  );
 
   testWidgets(
     'base directory fits a narrow page and shows stores without mutation',

@@ -375,8 +375,17 @@ void main() {
     );
     expect(
       activityMechanics(ActivityType.sellArt).timing,
-      'Runs when you advance the day.',
+      'Runs each day until changed, completed or interrupted.',
     );
+    final visit = activityMechanics(ActivityType.visit);
+    expect(visit.timing, contains('Reassign afterward'));
+    expect(visit.details, contains('do not resume automatically'));
+    final recruiting = activityMechanics(ActivityType.recruiting);
+    expect(
+      recruiting.timing,
+      contains('Choose a profession when the day runs'),
+    );
+    expect(recruiting.details, contains('pending meetings in People'));
     expect(
       featureMechanics(FeatureMechanic.heat),
       contains('not a percentage'),

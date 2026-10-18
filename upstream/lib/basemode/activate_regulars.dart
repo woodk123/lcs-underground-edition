@@ -874,6 +874,16 @@ Future<void> _selectSkillForEducation(
     headerKey: {4: "SKILL", 21: "NOW", 27: "MAX", 34: "DESCRIPTION"},
     footerPrompt: "Press a Letter to select a Skill",
     count: skills.length,
+    onAwait: (page, pageCount) {
+      for (var i = 0; i < 20 && page * 20 + i < skills.length; i++) {
+        console.annotateActionEntity(
+          letterAPlus(i),
+          type: 'education-skill',
+          id: skills[page * 20 + i].name,
+          category: cr.id.toString(),
+        );
+      }
+    },
     lineBuilder: (y, key, index) {
       Skill skill = skills[index];
       addOptionText(y, 0, key, "$key - ${skill.displayName}");

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
+import 'package:lcs_new_age/modern/journal_recruitment.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/personnel_directory.dart';
 import 'package:lcs_new_age/politics/alignment.dart' as politics;
@@ -149,6 +150,8 @@ class JournalPeopleViewState extends State<JournalPeopleView> {
           ],
         ),
         const SizedBox(height: 10),
+        JournalRecruitmentOverview(),
+        const SizedBox(height: 8),
         if (widget.reviewPanel case final panel?) ...[
           panel,
           const SizedBox(height: 8),

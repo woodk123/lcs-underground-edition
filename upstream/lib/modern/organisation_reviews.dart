@@ -5,7 +5,12 @@ import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum OrganisationReviewKind { returned, assignmentFinished }
+enum OrganisationReviewKind {
+  returned,
+  assignmentFinished,
+  newRecruit,
+  visitFinished,
+}
 
 /// A follow-up to an observed change, rather than a demand to stop resting.
 @immutable
@@ -46,9 +51,10 @@ class OrganisationReviewNotice {
 ///
 /// Call [observe] at safe headquarters snapshots. The first observation only
 /// establishes a baseline: it does not invent historical returns or completions.
-/// A training order changing to Lay Low counts as finished only after the date
-/// advances. Observing a deliberate same-day cancellation updates the baseline
-/// without producing a notice. Resting is always a valid acknowledged choice.
+/// Newly observed squadless crew and observed returns stay reviewable. A
+/// training order or queued squad visit ending counts as finished only after
+/// the date advances. Observing a deliberate same-day cancellation updates the
+/// baseline without producing a notice. Resting is always a valid choice.
 class OrganisationReviewStore extends ChangeNotifier {
   OrganisationReviewStore({Future<SharedPreferences> Function()? preferences})
     : _preferencesLoader = preferences ?? SharedPreferences.getInstance;
@@ -156,7 +162,11 @@ class OrganisationReviewStore extends ChangeNotifier {
       return person == null ||
           !person.available ||
           person.activity != ActivityType.none ||
-          (notice.kind == OrganisationReviewKind.returned &&
+          person.queuedSquadVisit ||
+          (const {
+                OrganisationReviewKind.returned,
+                OrganisationReviewKind.newRecruit,
+              }.contains(notice.kind) &&
               person.squadId != null);
     });
     noticesChanged |= before != _notices.length;
@@ -164,19 +174,31 @@ class OrganisationReviewStore extends ChangeNotifier {
     if (_previousDay != null) {
       for (final person in observation.people.values) {
         final previous = _previous[person.id];
-        if (previous == null ||
-            !person.available ||
-            person.activity != ActivityType.none) {
+        if (!person.available ||
+            person.activity != ActivityType.none ||
+            person.queuedSquadVisit) {
           continue;
         }
         OrganisationReviewNotice? notice;
-        if (previous.returnable && person.squadId == null) {
+        if (previous == null && person.squadId == null) {
+          notice = OrganisationReviewNotice(
+            id: '${person.id}.newRecruit.${observation.day}',
+            personId: person.id,
+            title: 'New crew member',
+            detail:
+                '${person.name} joined the organisation. Daily orders and '
+                'squad membership are separate: choose an order or a squad, '
+                'or keep laying low.',
+            kind: OrganisationReviewKind.newRecruit,
+          );
+        } else if (previous?.returnable == true && person.squadId == null) {
           notice = OrganisationReviewNotice(
             id: '${person.id}.returned.${observation.day}',
             personId: person.id,
-            title: switch (previous.availability) {
+            title: switch (previous!.availability) {
               'hospital' => 'Returned from hospital',
               'sleeper' => 'Sleeper recalled',
+              'custody' => 'Returned from custody',
               _ => 'Returned to the organisation',
             },
             detail:
@@ -184,8 +206,24 @@ class OrganisationReviewStore extends ChangeNotifier {
                 'or keep laying low.',
             kind: OrganisationReviewKind.returned,
           );
-        } else if (previous.available &&
-            previous.training &&
+        } else if (previous?.available == true &&
+            previous!.queuedSquadVisit &&
+            observation.day > _previousDay!) {
+          // Safe HQ history proves the order ended, not that travel succeeded:
+          // a closed destination or failed departure clears the same order.
+          notice = OrganisationReviewNotice(
+            id: '${person.id}.visitFinished.${observation.day}',
+            personId: person.id,
+            title: 'Visit order ended',
+            detail:
+                'The squad order to visit '
+                '${previous.squadVisitDestination ?? 'a location'} has ended. '
+                '${person.name} is available for daily work. '
+                'Choose another order, prepare another visit, or keep laying low.',
+            kind: OrganisationReviewKind.visitFinished,
+          );
+        } else if (previous?.available == true &&
+            previous!.training &&
             observation.day > _previousDay!) {
           notice = OrganisationReviewNotice(
             id: '${person.id}.assignmentFinished.${observation.day}',
@@ -288,7 +326,11 @@ class _PersonSnapshot {
       },
       activity = person.activity.type,
       activityDescription = person.activity.description,
-      squadId = person.squadId;
+      squadId = person.squadId,
+      queuedSquadVisit = person.squad?.activity.type == ActivityType.visit,
+      squadVisitDestination = person.squad?.activity.type == ActivityType.visit
+          ? person.squad?.activity.location?.getName()
+          : null;
 
   _PersonSnapshot.fromJson(Map<String, dynamic> json)
     : id = json['id'] as int,
@@ -296,7 +338,9 @@ class _PersonSnapshot {
       availability = json['availability'] as String,
       activity = ActivityType.values.byName(json['activity'] as String),
       activityDescription = json['activityDescription'] as String,
-      squadId = json['squadId'] as int?;
+      squadId = json['squadId'] as int?,
+      queuedSquadVisit = json['queuedSquadVisit'] as bool? ?? false,
+      squadVisitDestination = json['squadVisitDestination'] as String?;
 
   final int id;
   final String name;
@@ -304,10 +348,12 @@ class _PersonSnapshot {
   final ActivityType activity;
   final String activityDescription;
   final int? squadId;
+  final bool queuedSquadVisit;
+  final String? squadVisitDestination;
 
   bool get available => availability == 'active';
   bool get returnable =>
-      const {'hospital', 'sleeper', 'away'}.contains(availability);
+      const {'hospital', 'sleeper', 'away', 'custody'}.contains(availability);
   bool get training => const {
     ActivityType.study,
     ActivityType.takeClass,
@@ -323,6 +369,8 @@ class _PersonSnapshot {
     'activity': activity.name,
     'activityDescription': activityDescription,
     'squadId': squadId,
+    'queuedSquadVisit': queuedSquadVisit,
+    'squadVisitDestination': squadVisitDestination,
   };
 
   @override
@@ -333,7 +381,9 @@ class _PersonSnapshot {
       availability == other.availability &&
       activity == other.activity &&
       activityDescription == other.activityDescription &&
-      squadId == other.squadId;
+      squadId == other.squadId &&
+      queuedSquadVisit == other.queuedSquadVisit &&
+      squadVisitDestination == other.squadVisitDestination;
 
   @override
   int get hashCode => Object.hash(
@@ -343,5 +393,7 @@ class _PersonSnapshot {
     activity,
     activityDescription,
     squadId,
+    queuedSquadVisit,
+    squadVisitDestination,
   );
 }
