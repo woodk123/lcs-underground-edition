@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lcs_new_age/creature/attributes.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
+import 'package:lcs_new_age/modern/age_help.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 
 String attributeDescription(Attribute attribute) => switch (attribute) {
@@ -35,6 +36,9 @@ String attributeHelp(Attribute attribute, {Creature? actor}) {
     'Ordinary checks: 2d6 (two six-sided dice) + attribute − 5, passing at the task difficulty. Some tasks use different formulas.',
   ];
   if (actor != null) {
+    lines.add(
+      'Age ${actor.age}: ${ageAttributeEffect(actor, attribute)}. Already included in the displayed value, before other modifiers.',
+    );
     final value = actor.attribute(attribute);
     final modifier = value - 5;
     lines.add(

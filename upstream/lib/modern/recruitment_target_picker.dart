@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lcs_new_age/creature/creature_type.dart';
 import 'package:lcs_new_age/engine/recruitment_context.dart';
+import 'package:lcs_new_age/modern/age_help.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 
 String _range((int, int) range) =>
@@ -13,6 +14,7 @@ String recruitmentProfessionHelp(CreatureType type) {
       'Base attribute ranges: ${type.attributePoints.entries.map((a) => '${a.key.name[0].toUpperCase()}${a.key.name.substring(1)} ${_range(a.value)}').join(', ')}.\n'
       'Profession skills: ${skills.isEmpty ? 'No guaranteed trained skills' : skills.map((s) => '${s.key.displayName} ${_range(s.value)}').join(', ')}.\n'
       'Age: ${_range(type.age)}. Alignment: ${type.alignment.name == 'any' ? 'varies with the political climate' : type.alignment.name}.\n'
+      '${type.tank ? 'No age attribute modifiers for tanks.' : ageRangeHelp(type.age)}\n'
       'These are generation ranges, not promised final stats. Attribute totals are rebalanced; alignment changes Heart and Wisdom. Skills are capped by attributes and may gain random background training.';
 }
 

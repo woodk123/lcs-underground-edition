@@ -110,6 +110,57 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final layout in [
+    (1280.0, 800.0, 1.0),
+    (800.0, 600.0, 1.5),
+    (360.0, 640.0, 2.0),
+  ]) {
+    testWidgets('age details survive dossier tab journeys at $layout', (
+      tester,
+    ) async {
+      final person = game.pool.first
+        ..body = HumanoidBody()
+        ..birthDate = DateTime(game.gameState.date.year - 55);
+      final before = jsonEncode(game.gameState);
+      reseedRNG(seed: 51751);
+      final rolls = List.generate(10, (_) => lcsRandom(100000));
+      reseedRNG(seed: 51751);
+      await mountInspector(
+        tester,
+        person,
+        size: Size(layout.$1, layout.$2),
+        textScale: layout.$3,
+      );
+      expect(find.textContaining('Age modifiers: Strength -3'), findsOneWidget);
+      final details = find.text('How age affects this character');
+      await tester.ensureVisible(details);
+      await tester.tap(details);
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Next attribute age band at 70'),
+        findsOneWidget,
+      );
+      await chooseTab(tester, 1);
+      await chooseTab(tester, 0);
+      expect(find.textContaining('Age modifiers: Strength -3'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('crew-dossier')), findsNothing);
+      await tester.tap(find.text('Open dossier'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(details);
+      await tester.tap(details);
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Next attribute age band at 70'),
+        findsOneWidget,
+      );
+      expect(jsonEncode(game.gameState), before);
+      expect(List.generate(10, (_) => lcsRandom(100000)), rolls);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   test(
     'portrait choice survives save reload and renaming without campaign rolls',
     () {

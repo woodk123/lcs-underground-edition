@@ -128,6 +128,17 @@ void main() {
         find.text('Lawyer · Age ${p.age} · $label', findRichText: true),
         findsOneWidget,
       );
+      final ageDetails = find.text('How age affects this character');
+      await tester.ensureVisible(ageDetails);
+      await tester.tap(ageDetails);
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('birthdays do not award skill points'),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(ageDetails);
+      await tester.tap(ageDetails);
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Inspect ${p.name}'));
       await tester.tap(find.text('Inspect ${p.name}'));
       expect(inspected, isTrue);

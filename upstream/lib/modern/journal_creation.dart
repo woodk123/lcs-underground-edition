@@ -4,6 +4,7 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/creation_context.dart';
+import 'package:lcs_new_age/modern/age_help.dart';
 import 'package:lcs_new_age/modern/attribute_help.dart';
 import 'package:lcs_new_age/modern/creation_bonus_help.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
@@ -623,6 +624,10 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
               const SizedBox(height: 14),
               const Text('Attributes', style: JournalPalette.heading),
               const Divider(height: 12),
+              if (showAge) ...[
+                AgeEffects(person: founder),
+                const SizedBox(height: 12),
+              ],
               _statTable([
                 for (final attribute in Attribute.values)
                   AttributeTooltip(

@@ -5,6 +5,7 @@ import 'package:lcs_new_age/creature/attributes.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/dice.dart';
 import 'package:lcs_new_age/creature/skills.dart';
+import 'package:lcs_new_age/modern/age_help.dart';
 
 /// Gameplay uses shared by current-stat help and background-choice previews.
 String skillUses(Skill skill) => switch (skill) {
@@ -97,6 +98,9 @@ String skillHelp(Skill skill, {Creature? actor}) {
       );
     }
     final cap = actor.skillCap(skill);
+    lines.add(
+      'Age ${actor.age}: ${ageAttributeEffect(actor, skill.attribute)}. Already included in the attribute used for this training cap; age does not directly add to the current skill level.',
+    );
     final needed = skillXpNeeded(level);
     lines.add(
       'Training cap: $capLabel $cap. XP: ${actor.skillXP(skill)}/$needed (100 + 10 × $level). Levels update during daily processing.',

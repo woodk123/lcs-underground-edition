@@ -5,6 +5,7 @@ import 'package:lcs_new_age/creature/attributes.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/console.dart';
+import 'package:lcs_new_age/modern/age_help.dart';
 import 'package:lcs_new_age/modern/attribute_help.dart';
 import 'package:lcs_new_age/modern/catalogue_art.dart';
 import 'package:lcs_new_age/modern/crew_injury_panel.dart';
@@ -166,6 +167,9 @@ class CrewInspector extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         JuiceProgress(person: person),
+                        const SizedBox(height: 12),
+                        _inlineFact('Age', '${person.age}'),
+                        AgeEffects(person: person),
                         const SizedBox(height: 12),
                         _inlineFact(
                           'Personal assignment',
@@ -664,7 +668,10 @@ class _CrewDossierState extends State<CrewDossier> {
                           children: [
                             _tag(_capitalize(person.align.name)),
                             _tag(person.type.name),
-                            _tag('Age ${person.age}'),
+                            MechanicsTooltip(
+                              message: ageHelp(person),
+                              child: _tag('Age ${person.age}'),
+                            ),
                             if (!person.alive) _tag('Deceased', warning: true),
                             if (person.sleeperAgent) _tag('Sleeper agent'),
                             if (person.kidnapped)
@@ -707,6 +714,8 @@ class _CrewDossierState extends State<CrewDossier> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        AgeEffects(person: person),
+        const SizedBox(height: 18),
         _section('Condition', Icons.favorite_border, [
           CrewInjuryPanel(person: person),
           const SizedBox(height: 10),
@@ -853,7 +862,7 @@ class _CrewDossierState extends State<CrewDossier> {
               actor: person,
               child: _fact(
                 _capitalize(attribute.name),
-                '${person.attribute(attribute)}',
+                '${person.attribute(attribute)} · Age: ${ageAttributeEffect(person, attribute)}',
               ),
             ),
         ]),

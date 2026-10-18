@@ -5,6 +5,7 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/creation_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
+import 'package:lcs_new_age/modern/age_help.dart';
 import 'package:lcs_new_age/modern/attribute_help.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
@@ -74,6 +75,7 @@ class CreationBonusPreview {
     return [
       'Choosing this: ${_capitalized(attribute.name)} $old → $next effective.',
       'Base score: ${before.rawAttributes[attribute]} → ${after.rawAttributes[attribute]}. Age, blood and Juice affect the effective score.',
+      'Age ${after.age}: ${ageAttributeEffect(after, attribute)}. Already included in these effective values.',
       attributeDescription(attribute),
       for (final cap in caps.entries)
         'Training caps ${cap.key}: ${cap.value.join(', ')}.',

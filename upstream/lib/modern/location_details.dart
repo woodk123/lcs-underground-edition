@@ -3,6 +3,7 @@ import 'package:lcs_new_age/creature/creature_type.dart';
 import 'package:lcs_new_age/items/item_type.dart';
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/location/site.dart';
+import 'package:lcs_new_age/modern/age_help.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/equipment_help.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
@@ -320,6 +321,7 @@ class _LocationDetailsState extends State<_LocationDetails> {
               [
                 'Typical alignment: ${type?.alignment.name == 'any' ? 'varies' : type?.alignment.name ?? 'unknown'}.',
                 if (type != null) 'Age range: ${type.age.$1}–${type.age.$2}.',
+                if (type != null && !type.tank) ageRangeHelp(type.age),
                 if (skills.isNotEmpty)
                   'Base skills: ${skills.map((e) => '${e.key.displayName} ${e.value.$1}–${e.value.$2}').join(' · ')}.',
                 'Individual skills and alignment can be modified when the person is generated.',
