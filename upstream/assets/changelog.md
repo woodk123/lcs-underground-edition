@@ -16,6 +16,7 @@ The existing fork now has its own 0.1.0 development baseline. These notes will b
 
 ### Changed
 
+* Base storage now explains how to sell loot at the Pawn Shop directly from the visiting squad leader’s home-base supplies.
 * The left-hand Crew list now flags injuries, active bleeding and blood loss, with wound details available on hover.
 * The left-hand Crew list now shows each person's clothing, including bloodstained or damaged outfits and missing clothing.
 * Location guides now explain actual skill checks, rewards, attempt limits, evidence publication, sleeper benefits and retaliation across all locations, including clearer hospital billing, prison rescues and bank access requirements. Short hover hints keep the full explanations readable in expandable sections.

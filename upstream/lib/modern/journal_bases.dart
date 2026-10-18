@@ -556,31 +556,33 @@ class JournalBasesViewState extends State<JournalBasesView> {
     );
   }
 
-  Widget _stores(Site site) => _card(
-    'Stored here · ${site.loot.length} stacks',
-    Icons.inventory_2_outlined,
-    [
-      const Text(
-        'These items belong to this location. Equip a squad at the same location, or use Move equipment between bases.',
-        style: JournalPalette.small,
+  Widget _stores(
+    Site site,
+  ) => _card('Stored here · ${site.loot.length} stacks', Icons.inventory_2_outlined, [
+    const Text(
+      'These items belong to this location. Equip a squad at the same location, or use Move equipment between bases.',
+      style: JournalPalette.small,
+    ),
+    const SizedBox(height: 8),
+    const Text(
+      'To sell loot, send a squad whose leader is based here to visit the Pawn Shop. Choose Sell something, then Pawn all Loot or Pawn Selectively. The shop sells directly from the leader’s home-base storage; you do not need to equip or carry the items.',
+      style: JournalPalette.small,
+    ),
+    if (site.siege.underSiege)
+      _note(
+        'Stored equipment at this base cannot be transferred during a siege.',
+        danger: true,
       ),
-      if (site.siege.underSiege)
-        _note(
-          'Stored equipment at this base cannot be transferred during a siege.',
-          danger: true,
+    const SizedBox(height: 8),
+    if (site.loot.isEmpty) const Text('No equipment is stored here.'),
+    for (final item in site.loot)
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Text(
+          '${item.equipTitle()}${item.stackSize > 1 ? ' ×${item.stackSize}' : ''}',
         ),
-      const SizedBox(height: 8),
-      if (site.loot.isEmpty) const Text('No equipment is stored here.'),
-      for (final item in site.loot)
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Text(
-            '${item.equipTitle()}${item.stackSize > 1 ? ' ×${item.stackSize}' : ''}',
-          ),
-        ),
-    ],
-    illustration: JournalIcon.stores,
-  );
+      ),
+  ], illustration: JournalIcon.stores);
 
   Widget _investmentPanel(Site site) {
     final purchase = _validPurchase ? _purchase : null;
