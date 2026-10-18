@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Alignment;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
@@ -15,6 +15,7 @@ import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/direct_content.dart';
 import 'package:lcs_new_age/modern/modern_app.dart';
 import 'package:lcs_new_age/modern/recruitment_card.dart';
+import 'package:lcs_new_age/politics/alignment.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
 
 import 'test_support.dart';
@@ -100,7 +101,13 @@ void main() {
     testWidgets('card is readable at $width with large text and long names', (
       tester,
     ) async {
-      final p = prospect()..name = 'Alexandria Montgomery-Worthington';
+      final alignment = Alignment.values[[320.0, 800.0, 1600.0].indexOf(width)];
+      final label =
+          alignment.name[0].toUpperCase() + alignment.name.substring(1);
+      final p = prospect()
+        ..name = 'Alexandria Montgomery-Worthington'
+        ..align = alignment;
+      final personBefore = jsonEncode(p);
       final before = jsonEncode(game.gameState);
       var inspected = false;
       await mount(
@@ -117,10 +124,15 @@ void main() {
       expect(find.text('Business 4'), findsOneWidget);
       expect(find.text('Persuasion 4'), findsOneWidget);
       expect(find.text('Art 1'), findsNothing);
+      expect(
+        find.text('Lawyer · Age ${p.age} · $label', findRichText: true),
+        findsOneWidget,
+      );
       await tester.ensureVisible(find.text('Inspect ${p.name}'));
       await tester.tap(find.text('Inspect ${p.name}'));
       expect(inspected, isTrue);
       expect(jsonEncode(game.gameState), before);
+      expect(jsonEncode(p), personBefore);
       expect(tester.takeException(), isNull);
     });
   }

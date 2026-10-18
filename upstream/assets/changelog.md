@@ -12,6 +12,7 @@ The existing fork now has its own 0.1.0 development baseline. These notes will b
 
 ### Changed
 
+* Recruitment prospect cards now show political alignment alongside profession and age.
 * The title now identifies the Underground Edition version and build channel, alongside the New Age base and exact source build for bug reports.
 * Underground release numbering starts at 0.1.0 and is independent of save compatibility. Existing campaigns retain their current save format and migration behavior.
 

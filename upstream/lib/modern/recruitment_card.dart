@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Alignment;
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
+import 'package:lcs_new_age/politics/alignment.dart';
 
 /// A read-only summary of this person's actual skill levels, with stable ties.
 List<Skill> recruitmentStrengths(Creature person) {
@@ -90,8 +91,28 @@ class RecruitmentCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 5),
-                    Text(
-                      '${person.type.name}${person.human ? ' · Age ${person.age}' : ''}',
+                    Text.rich(
+                      TextSpan(
+                        text:
+                            '${person.type.name}${person.human ? ' · Age ${person.age}' : ''} · ',
+                        children: [
+                          TextSpan(
+                            text: switch (person.align) {
+                              Alignment.liberal => 'Liberal',
+                              Alignment.moderate => 'Moderate',
+                              Alignment.conservative => 'Conservative',
+                            },
+                            style: TextStyle(
+                              color: switch (person.align) {
+                                Alignment.liberal => JournalPalette.olive,
+                                Alignment.moderate => JournalPalette.brassDark,
+                                Alignment.conservative => JournalPalette.danger,
+                              },
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     JuiceBadge(person: person, compact: true),
                   ],
