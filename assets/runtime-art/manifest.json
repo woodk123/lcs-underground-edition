@@ -359,6 +359,19 @@
       "runtime_sha256": "309b4ed3f7590f64bee77f5095a6fefffb712d960c96f509c65f8cdc8c950422",
       "original_bytes": 2188171,
       "runtime_bytes": 292596
+    },
+    {
+      "original_path": "assets/runtime-art/source/tactical_objects_extra_v1.png",
+      "runtime_path": "upstream/assets/modern/tactical_objects_extra_v1.webp",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "lossless": false,
+      "has_alpha": true,
+      "original_sha256": "27a692b37f70d9f0c8ebb2cb780fbfc7ac2aa4d120245433a8298d36861c9a71",
+      "runtime_sha256": "7fae7f63f12a7199dcbda708358694a2a08aae9364c6a9527652aa5e57906854",
+      "original_bytes": 1762552,
+      "runtime_bytes": 402188
     }
   ]
 }

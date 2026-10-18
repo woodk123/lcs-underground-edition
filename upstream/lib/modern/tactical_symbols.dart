@@ -6,6 +6,8 @@ import 'package:lcs_new_age/modern/journal_theme.dart';
 /// Shape as well as colour identifies units on the field plan.
 enum TacticalUnitSymbol { squad, enemy, wounded, armored }
 
+enum TacticalGraffiti { lcs, ccs, other }
+
 /// Resolution-independent marks for a journal field plan.
 ///
 /// These painters only receive presentation state. They never inspect the map,
@@ -349,6 +351,109 @@ abstract final class TacticalSymbols {
         _stroke(JournalPalette.card, 2.5),
       );
       canvas.drawCircle(const Offset(12, 18), 1.3, _fill(JournalPalette.card));
+    });
+  }
+
+  /// Runtime lettering stays sharp at every map zoom and never changes art.
+  static void drawGraffiti(Canvas canvas, Rect rect, TacticalGraffiti kind) {
+    _local(canvas, rect, () {
+      final colour = switch (kind) {
+        TacticalGraffiti.lcs => JournalPalette.olive,
+        TacticalGraffiti.ccs => JournalPalette.danger,
+        TacticalGraffiti.other => JournalPalette.ink,
+      };
+      canvas.save();
+      canvas.translate(12, 12);
+      canvas.rotate(-.12);
+      if (kind == TacticalGraffiti.other) {
+        final tag = Path()
+          ..moveTo(-9, 4)
+          ..lineTo(-5, -5)
+          ..lineTo(-6, 4)
+          ..lineTo(1, -4)
+          ..lineTo(-1, 4)
+          ..lineTo(7, -5)
+          ..lineTo(5, 4);
+        canvas.drawPath(tag, _stroke(colour, 1.8));
+      } else {
+        final text = TextPainter(
+          text: TextSpan(
+            text: kind == TacticalGraffiti.lcs ? 'LCS' : 'CCS',
+            style: TextStyle(
+              fontFamily: 'ModernSans',
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              color: colour,
+              shadows: const [
+                Shadow(color: JournalPalette.card, blurRadius: 2),
+              ],
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        text.paint(canvas, Offset(-text.width / 2, -text.height / 2));
+        text.dispose();
+      }
+      canvas.drawLine(
+        const Offset(-8, 6),
+        const Offset(8, 5),
+        _stroke(colour, 1),
+      );
+      canvas.restore();
+    });
+  }
+
+  /// The sign's actual wording remains in the original read-sign interaction.
+  static void drawSignLettering(Canvas canvas, Rect rect) {
+    _local(canvas, rect, () {
+      const paper = Rect.fromLTWH(7, 6, 10, 8);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(paper, const Radius.circular(.8)),
+        _fill(JournalPalette.card),
+      );
+      final text = TextPainter(
+        text: const TextSpan(
+          text: '?',
+          style: TextStyle(
+            fontFamily: 'ModernSans',
+            fontSize: 8,
+            height: 1,
+            fontWeight: FontWeight.w900,
+            color: JournalPalette.ink,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      text.paint(
+        canvas,
+        paper.center - Offset(text.width / 2, text.height / 2),
+      );
+      text.dispose();
+    });
+  }
+
+  static void drawVisitedMarker(
+    Canvas canvas,
+    Rect rect, {
+    bool alongsideTrap = false,
+  }) {
+    final side = rect.width * .36;
+    final badge = alongsideTrap
+        ? Rect.fromLTWH(
+            rect.left,
+            rect.top + rect.height * .4,
+            side * .8,
+            side * .8,
+          )
+        : Rect.fromLTWH(rect.right - side, rect.top, side, side);
+    _local(canvas, badge, () {
+      canvas.drawCircle(const Offset(12, 12), 11, _fill(JournalPalette.card));
+      canvas.drawCircle(const Offset(12, 12), 9, _fill(JournalPalette.olive));
+      final check = Path()
+        ..moveTo(6, 12)
+        ..lineTo(10, 16)
+        ..lineTo(18, 8);
+      canvas.drawPath(check, _stroke(JournalPalette.card, 2.5));
     });
   }
 

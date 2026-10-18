@@ -11,16 +11,29 @@ class TacticalAtlas {
     required this.columns,
     required this.rows,
     this.cropInset = 1.5,
+    this.normalizedCrops,
   });
 
   final String asset;
   final int columns, rows;
   final double cropInset;
 
+  /// Optional inspected sprite crops, in fractions of the unchanged master.
+  final List<Rect>? normalizedCrops;
+
   int get cellCount => columns * rows;
 
   Rect sourceRect(ui.Image image, int index) {
     RangeError.checkValueInInterval(index, 0, cellCount - 1, 'index');
+    if (normalizedCrops case final crops?) {
+      final crop = crops[index];
+      return Rect.fromLTWH(
+        crop.left * image.width,
+        crop.top * image.height,
+        crop.width * image.width,
+        crop.height * image.height,
+      ).deflate(cropInset);
+    }
     final width = image.width / columns;
     final height = image.height / rows;
     return Rect.fromLTWH(
@@ -41,6 +54,31 @@ const tacticalObjectAtlas = TacticalAtlas(
   asset: 'assets/modern/tactical_objects_v1.webp',
   columns: 4,
   rows: 4,
+);
+const tacticalExtraObjectAtlas = TacticalAtlas(
+  asset: 'assets/modern/tactical_objects_extra_v1.webp',
+  columns: 4,
+  rows: 4,
+  // Inspected square crops from assets/tactical/supplemental-prompts.json.
+  // The generated master is retained unchanged; its grid is slightly offset.
+  normalizedCrops: [
+    Rect.fromLTWH(0.004784689, 0.035885167, 0.248803828, 0.248803828),
+    Rect.fromLTWH(0.244816587, 0.034290271, 0.259968102, 0.259968102),
+    Rect.fromLTWH(0.490430622, 0.051834131, 0.258373206, 0.258373206),
+    Rect.fromLTWH(0.737639553, 0.038277512, 0.259170654, 0.259170654),
+    Rect.fromLTWH(0.015151515, 0.274322169, 0.244816587, 0.244816587),
+    Rect.fromLTWH(0.255183413, 0.267942584, 0.242424242, 0.242424242),
+    Rect.fromLTWH(0.489633174, 0.272727273, 0.272727273, 0.272727273),
+    Rect.fromLTWH(0.763157895, 0.272727273, 0.236842105, 0.236842105),
+    Rect.fromLTWH(0.016746411, 0.507177033, 0.241626794, 0.241626794),
+    Rect.fromLTWH(0.263157895, 0.507974482, 0.236044657, 0.236044657),
+    Rect.fromLTWH(0.504784689, 0.513556619, 0.244816587, 0.244816587),
+    Rect.fromLTWH(0.738437002, 0.484848485, 0.261562998, 0.261562998),
+    Rect.fromLTWH(0.009569378, 0.729665072, 0.245614035, 0.245614035),
+    Rect.fromLTWH(0.226475279, 0.728070175, 0.271929825, 0.271929825),
+    Rect.fromLTWH(0.500797448, 0.732057416, 0.267942584, 0.267942584),
+    Rect.fromLTWH(0.745614035, 0.724082935, 0.254385965, 0.254385965),
+  ],
 );
 const tacticalHazardAtlas = TacticalAtlas(
   asset: 'assets/modern/tactical_hazards_v1.webp',
@@ -84,6 +122,24 @@ abstract final class TacticalObjectCell {
   static const int tent = 13;
   static const int displayCase = 14;
   static const int checkpoint = 15;
+
+  // Appended IDs preserve the original sheet's cell mapping.
+  static const int detentionCell = 16;
+  static const int nursingBed = 17;
+  static const int executiveDesk = 18;
+  static const int presidentialDesk = 19;
+  static const int tellerCounter = 20;
+  static const int bankVault = 21;
+  static const int juryTable = 22;
+  static const int signboard = 23;
+  static const int tvCamera = 24;
+  static const int serverRack = 25;
+  static const int sewingMachine = 26;
+  static const int reactorConsole = 27;
+  static const int weaponRack = 28;
+  static const int prisonConsole = 29;
+  static const int officeDesk = 30;
+  static const int claimsTerminal = 31;
 }
 
 abstract final class TacticalHazardCell {
@@ -230,10 +286,11 @@ class TacticalArt {
   const TacticalArt({
     required this.terrain,
     required this.objects,
+    required this.extraObjects,
     required this.hazards,
   });
 
-  final ui.Image terrain, objects, hazards;
+  final ui.Image terrain, objects, extraObjects, hazards;
 
   void drawTerrain(
     Canvas canvas,
@@ -244,8 +301,34 @@ class TacticalArt {
     _draw(canvas, rect, terrain, tacticalTerrainAtlas, index, opacity);
   }
 
-  void drawObject(Canvas canvas, Rect rect, int index, {double opacity = 1}) {
-    _draw(canvas, rect, objects, tacticalObjectAtlas, index, opacity);
+  void drawObject(
+    Canvas canvas,
+    Rect rect,
+    int index, {
+    double opacity = 1,
+    int? quadrant,
+  }) {
+    if (index >= tacticalObjectAtlas.cellCount) {
+      _draw(
+        canvas,
+        rect,
+        extraObjects,
+        tacticalExtraObjectAtlas,
+        index - tacticalObjectAtlas.cellCount,
+        opacity,
+        quadrant: quadrant,
+      );
+    } else {
+      _draw(
+        canvas,
+        rect,
+        objects,
+        tacticalObjectAtlas,
+        index,
+        opacity,
+        quadrant: quadrant,
+      );
+    }
   }
 
   void drawHazard(Canvas canvas, Rect rect, int index, {double opacity = .9}) {
@@ -258,14 +341,25 @@ class TacticalArt {
     ui.Image image,
     TacticalAtlas atlas,
     int index,
-    double opacity,
-  ) {
+    double opacity, {
+    int? quadrant,
+  }) {
     if (rect.isEmpty || index < 0 || index >= atlas.cellCount || opacity <= 0) {
       return;
     }
+    var source = atlas.sourceRect(image, index);
+    if (quadrant != null) {
+      RangeError.checkValueInInterval(quadrant, 0, 3, 'quadrant');
+      source = Rect.fromLTWH(
+        source.left + (quadrant % 2) * source.width / 2,
+        source.top + (quadrant ~/ 2) * source.height / 2,
+        source.width / 2,
+        source.height / 2,
+      );
+    }
     canvas.drawImageRect(
       image,
-      atlas.sourceRect(image, index),
+      source,
       rect,
       Paint()
         ..color = Colors.white.withValues(alpha: opacity.clamp(0.0, 1.0))
@@ -278,7 +372,7 @@ typedef TacticalArtworkBuilder =
     Widget Function(BuildContext context, TacticalArt? art);
 
 /// Shares Flutter's image cache between the tactical and full-site maps. Until
-/// all three atlases are available, the builder receives null and can retain
+/// all four atlases are available, the builder receives null and can retain
 /// the vector field plan. Missing artwork therefore never blocks play.
 class TacticalArtwork extends StatefulWidget {
   const TacticalArtwork({super.key, required this.builder});
@@ -294,6 +388,7 @@ class _TacticalArtworkState extends State<TacticalArtwork> {
     _AtlasImage(tacticalTerrainAtlas.asset),
     _AtlasImage(tacticalObjectAtlas.asset),
     _AtlasImage(tacticalHazardAtlas.asset),
+    _AtlasImage(tacticalExtraObjectAtlas.asset),
   ];
   ImageConfiguration? _configuration;
   TacticalArt? _art;
@@ -342,11 +437,17 @@ class _TacticalArtworkState extends State<TacticalArtwork> {
       final terrain = _images[0].info;
       final objects = _images[1].info;
       final hazards = _images[2].info;
-      _art = terrain == null || objects == null || hazards == null
+      final extraObjects = _images[3].info;
+      _art =
+          terrain == null ||
+              objects == null ||
+              hazards == null ||
+              extraObjects == null
           ? null
           : TacticalArt(
               terrain: terrain.image,
               objects: objects.image,
+              extraObjects: extraObjects.image,
               hazards: hazards.image,
             );
     }

@@ -1,0 +1,956 @@
+{
+  "generator": "Built-in image_gen.imagegen",
+  "created": "2026-10-18",
+  "name": "tactical_objects_extra_v1",
+  "columns": 4,
+  "rows": 4,
+  "useCase": "stylized-concept",
+  "use": "Supplemental tactical object sprites for audit categories rated at least 5/10. Artwork is presentation only.",
+  "selectedGeneratedPath": "C:/Users/KevinWood/.codex/generated_images/01a1504d-6fc6-7332-b047-eaad349ead0d/exec-643c715e-d63a-4963-b562-b82356a492f3.png",
+  "originalPath": "assets/runtime-art/source/tactical_objects_extra_v1.png",
+  "width": 1254,
+  "height": 1254,
+  "originalSha256": "27a692b37f70d9f0c8ebb2cb780fbfc7ac2aa4d120245433a8298d36861c9a71",
+  "transparentBackground": true,
+  "sourcePreservation": "Generated PNG copied unchanged. No painting, resizing, background removal, alpha cleanup, recolouring or atlas repacking.",
+  "cropPolicy": "Use each object's explicit normalized square sourceRect, not nominal uniform grid cells. Geometry is measured from all alpha>32 using inspected clear row separators at y=345,645,922; this includes complete silhouettes extending beyond nominal quarter rows. Crop windows preserve entire subjects, exclude every neighboring alpha>32 pixel, stay within the image, use 78–84% long-axis occupancy, and reserve at least 6% transparent margin on every side. Small crop-center offsets avoid neighboring objects while keeping subjects balanced. Alpha<=32 is excluded only when measuring geometry; original PNG alpha remains unchanged. sourceRect arrays are [x,y,width,height] as fractions of whole image.",
+  "visualGeometry": {
+    "mode": "RGBA",
+    "alphaExtrema": [
+      0,
+      255
+    ],
+    "visibleAlphaThreshold": 32,
+    "inspectionRegionRowBreaksPixels": [
+      0,
+      345,
+      645,
+      922,
+      1254
+    ],
+    "inspectionBoundaryAlpha": [
+      {
+        "axis": "x",
+        "position": 313,
+        "maximumAlpha": 1
+      },
+      {
+        "axis": "x",
+        "position": 314,
+        "maximumAlpha": 1
+      },
+      {
+        "axis": "x",
+        "position": 626,
+        "maximumAlpha": 1
+      },
+      {
+        "axis": "x",
+        "position": 627,
+        "maximumAlpha": 0
+      },
+      {
+        "axis": "x",
+        "position": 940,
+        "maximumAlpha": 0
+      },
+      {
+        "axis": "x",
+        "position": 941,
+        "maximumAlpha": 1
+      },
+      {
+        "axis": "y",
+        "position": 344,
+        "maximumAlpha": 0
+      },
+      {
+        "axis": "y",
+        "position": 345,
+        "maximumAlpha": 1
+      },
+      {
+        "axis": "y",
+        "position": 644,
+        "maximumAlpha": 1
+      },
+      {
+        "axis": "y",
+        "position": 645,
+        "maximumAlpha": 1
+      },
+      {
+        "axis": "y",
+        "position": 921,
+        "maximumAlpha": 1
+      },
+      {
+        "axis": "y",
+        "position": 922,
+        "maximumAlpha": 0
+      }
+    ],
+    "totalVisiblePixelCount": 586312,
+    "allVisiblePixelsCoveredExactlyOnce": true,
+    "allSourceRectsInsideImage": true,
+    "allSourceRectsSquare": true,
+    "neighboringVisiblePixelsInAllCrops": 0,
+    "longAxisCropOccupancyRange": [
+      0.780405,
+      0.84
+    ],
+    "minimumTransparentMarginFraction": 0.06,
+    "maximumAbsoluteCenterOffsetPixels": 18.5
+  },
+  "cells": [
+    {
+      "index": 0,
+      "uniformCellBoundsPixels": [
+        0,
+        0,
+        314,
+        314
+      ],
+      "inspectionRegionBoundsPixels": [
+        0,
+        0,
+        314,
+        345
+      ],
+      "visibleAlphaBoundsPixels": [
+        50,
+        79,
+        275,
+        323
+      ],
+      "visiblePixelCount": 38502,
+      "inspectionRegionOccupiedFraction": 0.355414,
+      "sourceRectPixels": [
+        6,
+        45,
+        312,
+        312
+      ],
+      "sourceRectNormalized": [
+        0.004784689,
+        0.035885167,
+        0.248803828,
+        0.248803828
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.782051,
+      "cropToSubjectCenterOffsetPixels": [
+        -0.5,
+        0
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        44,
+        34,
+        43,
+        34
+      ],
+      "key": "detention_cell",
+      "description": "Barred human detention cell with gate"
+    },
+    {
+      "index": 1,
+      "uniformCellBoundsPixels": [
+        314,
+        0,
+        627,
+        314
+      ],
+      "inspectionRegionBoundsPixels": [
+        314,
+        0,
+        627,
+        345
+      ],
+      "visibleAlphaBoundsPixels": [
+        339,
+        90,
+        601,
+        329
+      ],
+      "visiblePixelCount": 36910,
+      "inspectionRegionOccupiedFraction": 0.341807,
+      "sourceRectPixels": [
+        307,
+        43,
+        326,
+        326
+      ],
+      "sourceRectNormalized": [
+        0.244816587,
+        0.034290271,
+        0.259968102,
+        0.259968102
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.803681,
+      "cropToSubjectCenterOffsetPixels": [
+        0,
+        -3.5
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        32,
+        47,
+        32,
+        40
+      ],
+      "key": "patient_bed",
+      "description": "Nursing-home patient bed and bedside cabinet"
+    },
+    {
+      "index": 2,
+      "uniformCellBoundsPixels": [
+        627,
+        0,
+        940,
+        314
+      ],
+      "inspectionRegionBoundsPixels": [
+        627,
+        0,
+        940,
+        345
+      ],
+      "visibleAlphaBoundsPixels": [
+        650,
+        137,
+        904,
+        317
+      ],
+      "visiblePixelCount": 31498,
+      "inspectionRegionOccupiedFraction": 0.291689,
+      "sourceRectPixels": [
+        615,
+        65,
+        324,
+        324
+      ],
+      "sourceRectNormalized": [
+        0.490430622,
+        0.051834131,
+        0.258373206,
+        0.258373206
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.783951,
+      "cropToSubjectCenterOffsetPixels": [
+        0,
+        0
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        35,
+        72,
+        35,
+        72
+      ],
+      "key": "executive_desk",
+      "description": "Ornate CEO executive desk"
+    },
+    {
+      "index": 3,
+      "uniformCellBoundsPixels": [
+        940,
+        0,
+        1254,
+        314
+      ],
+      "inspectionRegionBoundsPixels": [
+        940,
+        0,
+        1254,
+        345
+      ],
+      "visibleAlphaBoundsPixels": [
+        951,
+        124,
+        1224,
+        319
+      ],
+      "visiblePixelCount": 40044,
+      "inspectionRegionOccupiedFraction": 0.369648,
+      "sourceRectPixels": [
+        925,
+        48,
+        325,
+        325
+      ],
+      "sourceRectNormalized": [
+        0.737639553,
+        0.038277512,
+        0.259170654,
+        0.259170654
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.84,
+      "cropToSubjectCenterOffsetPixels": [
+        0,
+        -11
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        26,
+        76,
+        26,
+        54
+      ],
+      "key": "presidential_desk",
+      "description": "Carved presidential desk with central medallion"
+    },
+    {
+      "index": 4,
+      "uniformCellBoundsPixels": [
+        0,
+        314,
+        314,
+        627
+      ],
+      "inspectionRegionBoundsPixels": [
+        0,
+        345,
+        314,
+        645
+      ],
+      "visibleAlphaBoundsPixels": [
+        63,
+        377,
+        282,
+        618
+      ],
+      "visiblePixelCount": 33341,
+      "inspectionRegionOccupiedFraction": 0.353938,
+      "sourceRectPixels": [
+        19,
+        344,
+        307,
+        307
+      ],
+      "sourceRectNormalized": [
+        0.015151515,
+        0.274322169,
+        0.244816587,
+        0.244816587
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.785016,
+      "cropToSubjectCenterOffsetPixels": [
+        0,
+        0
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        44,
+        33,
+        44,
+        33
+      ],
+      "key": "bank_teller_counter",
+      "description": "Bank teller counter and brass-framed security glass"
+    },
+    {
+      "index": 5,
+      "uniformCellBoundsPixels": [
+        314,
+        314,
+        627,
+        627
+      ],
+      "inspectionRegionBoundsPixels": [
+        314,
+        345,
+        627,
+        645
+      ],
+      "visibleAlphaBoundsPixels": [
+        359,
+        369,
+        585,
+        607
+      ],
+      "visiblePixelCount": 46840,
+      "inspectionRegionOccupiedFraction": 0.498829,
+      "sourceRectPixels": [
+        320,
+        336,
+        304,
+        304
+      ],
+      "sourceRectNormalized": [
+        0.255183413,
+        0.267942584,
+        0.242424242,
+        0.242424242
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.782895,
+      "cropToSubjectCenterOffsetPixels": [
+        0,
+        0
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        39,
+        33,
+        39,
+        33
+      ],
+      "key": "bank_vault_door",
+      "description": "Architectural circular bank vault door"
+    },
+    {
+      "index": 6,
+      "uniformCellBoundsPixels": [
+        627,
+        314,
+        940,
+        627
+      ],
+      "inspectionRegionBoundsPixels": [
+        627,
+        345,
+        940,
+        645
+      ],
+      "visibleAlphaBoundsPixels": [
+        649,
+        409,
+        922,
+        622
+      ],
+      "visiblePixelCount": 36115,
+      "inspectionRegionOccupiedFraction": 0.384611,
+      "sourceRectPixels": [
+        614,
+        342,
+        342,
+        342
+      ],
+      "sourceRectNormalized": [
+        0.489633174,
+        0.272727273,
+        0.272727273,
+        0.272727273
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.798246,
+      "cropToSubjectCenterOffsetPixels": [
+        -0.5,
+        -2.5
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        35,
+        67,
+        34,
+        62
+      ],
+      "key": "jury_table",
+      "description": "Jury-room long table with six chairs"
+    },
+    {
+      "index": 7,
+      "uniformCellBoundsPixels": [
+        940,
+        314,
+        1254,
+        627
+      ],
+      "inspectionRegionBoundsPixels": [
+        940,
+        345,
+        1254,
+        645
+      ],
+      "visibleAlphaBoundsPixels": [
+        1014,
+        373,
+        1199,
+        608
+      ],
+      "visiblePixelCount": 25527,
+      "inspectionRegionOccupiedFraction": 0.270987,
+      "sourceRectPixels": [
+        957,
+        342,
+        297,
+        297
+      ],
+      "sourceRectNormalized": [
+        0.763157895,
+        0.272727273,
+        0.236842105,
+        0.236842105
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.791246,
+      "cropToSubjectCenterOffsetPixels": [
+        -1,
+        0
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        57,
+        31,
+        55,
+        31
+      ],
+      "key": "blank_signboard",
+      "description": "Blank signboard on wooden post; lettering supplied at runtime"
+    },
+    {
+      "index": 8,
+      "uniformCellBoundsPixels": [
+        0,
+        627,
+        314,
+        940
+      ],
+      "inspectionRegionBoundsPixels": [
+        0,
+        645,
+        314,
+        922
+      ],
+      "visibleAlphaBoundsPixels": [
+        64,
+        669,
+        281,
+        906
+      ],
+      "visiblePixelCount": 24708,
+      "inspectionRegionOccupiedFraction": 0.284072,
+      "sourceRectPixels": [
+        21,
+        636,
+        303,
+        303
+      ],
+      "sourceRectNormalized": [
+        0.016746411,
+        0.507177033,
+        0.241626794,
+        0.241626794
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.782178,
+      "cropToSubjectCenterOffsetPixels": [
+        0,
+        0
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        43,
+        33,
+        43,
+        33
+      ],
+      "key": "tv_camera",
+      "description": "Television broadcast camera rig"
+    },
+    {
+      "index": 9,
+      "uniformCellBoundsPixels": [
+        314,
+        627,
+        627,
+        940
+      ],
+      "inspectionRegionBoundsPixels": [
+        314,
+        645,
+        627,
+        922
+      ],
+      "visibleAlphaBoundsPixels": [
+        394,
+        670,
+        562,
+        901
+      ],
+      "visiblePixelCount": 34868,
+      "inspectionRegionOccupiedFraction": 0.402164,
+      "sourceRectPixels": [
+        330,
+        637,
+        296,
+        296
+      ],
+      "sourceRectNormalized": [
+        0.263157895,
+        0.507974482,
+        0.236044657,
+        0.236044657
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.780405,
+      "cropToSubjectCenterOffsetPixels": [
+        0,
+        -0.5
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        64,
+        33,
+        64,
+        32
+      ],
+      "key": "server_rack",
+      "description": "Supercomputer server rack"
+    },
+    {
+      "index": 10,
+      "uniformCellBoundsPixels": [
+        627,
+        627,
+        940,
+        940
+      ],
+      "inspectionRegionBoundsPixels": [
+        627,
+        645,
+        940,
+        922
+      ],
+      "visibleAlphaBoundsPixels": [
+        666,
+        684,
+        907,
+        911
+      ],
+      "visiblePixelCount": 34257,
+      "inspectionRegionOccupiedFraction": 0.395117,
+      "sourceRectPixels": [
+        633,
+        644,
+        307,
+        307
+      ],
+      "sourceRectNormalized": [
+        0.504784689,
+        0.513556619,
+        0.244816587,
+        0.244816587
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.785016,
+      "cropToSubjectCenterOffsetPixels": [
+        0,
+        0
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        33,
+        40,
+        33,
+        40
+      ],
+      "key": "textile_workbench",
+      "description": "Textile sewing-machine workbench"
+    },
+    {
+      "index": 11,
+      "uniformCellBoundsPixels": [
+        940,
+        627,
+        1254,
+        940
+      ],
+      "inspectionRegionBoundsPixels": [
+        940,
+        645,
+        1254,
+        922
+      ],
+      "visibleAlphaBoundsPixels": [
+        953,
+        691,
+        1228,
+        890
+      ],
+      "visiblePixelCount": 44156,
+      "inspectionRegionOccupiedFraction": 0.507669,
+      "sourceRectPixels": [
+        926,
+        608,
+        328,
+        328
+      ],
+      "sourceRectNormalized": [
+        0.738437002,
+        0.484848485,
+        0.261562998,
+        0.261562998
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.838415,
+      "cropToSubjectCenterOffsetPixels": [
+        -0.5,
+        -18.5
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        27,
+        83,
+        26,
+        46
+      ],
+      "key": "reactor_console",
+      "description": "Nuclear reactor analog control console"
+    },
+    {
+      "index": 12,
+      "uniformCellBoundsPixels": [
+        0,
+        940,
+        314,
+        1254
+      ],
+      "inspectionRegionBoundsPixels": [
+        0,
+        922,
+        314,
+        1254
+      ],
+      "visibleAlphaBoundsPixels": [
+        69,
+        940,
+        280,
+        1198
+      ],
+      "visiblePixelCount": 39548,
+      "inspectionRegionOccupiedFraction": 0.379365,
+      "sourceRectPixels": [
+        12,
+        915,
+        308,
+        308
+      ],
+      "sourceRectNormalized": [
+        0.009569378,
+        0.729665072,
+        0.245614035,
+        0.245614035
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.837662,
+      "cropToSubjectCenterOffsetPixels": [
+        -8.5,
+        0
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        57,
+        25,
+        40,
+        25
+      ],
+      "key": "armory_rack",
+      "description": "Armory rack with three long guns"
+    },
+    {
+      "index": 13,
+      "uniformCellBoundsPixels": [
+        314,
+        940,
+        627,
+        1254
+      ],
+      "inspectionRegionBoundsPixels": [
+        314,
+        922,
+        627,
+        1254
+      ],
+      "visibleAlphaBoundsPixels": [
+        320,
+        974,
+        589,
+        1195
+      ],
+      "visiblePixelCount": 43090,
+      "inspectionRegionOccupiedFraction": 0.414662,
+      "sourceRectPixels": [
+        284,
+        913,
+        341,
+        341
+      ],
+      "sourceRectNormalized": [
+        0.226475279,
+        0.728070175,
+        0.271929825,
+        0.271929825
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.788856,
+      "cropToSubjectCenterOffsetPixels": [
+        0,
+        -1
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        36,
+        61,
+        36,
+        59
+      ],
+      "key": "security_console",
+      "description": "Prison CCTV security console"
+    },
+    {
+      "index": 14,
+      "uniformCellBoundsPixels": [
+        627,
+        940,
+        940,
+        1254
+      ],
+      "inspectionRegionBoundsPixels": [
+        627,
+        922,
+        940,
+        1254
+      ],
+      "visibleAlphaBoundsPixels": [
+        657,
+        984,
+        935,
+        1203
+      ],
+      "visiblePixelCount": 41944,
+      "inspectionRegionOccupiedFraction": 0.403634,
+      "sourceRectPixels": [
+        628,
+        918,
+        336,
+        336
+      ],
+      "sourceRectNormalized": [
+        0.500797448,
+        0.732057416,
+        0.267942584,
+        0.267942584
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.827381,
+      "cropToSubjectCenterOffsetPixels": [
+        0,
+        -7.5
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        29,
+        66,
+        29,
+        51
+      ],
+      "key": "manager_desk",
+      "description": "Modest manager/landlord desk with ledger and telephone"
+    },
+    {
+      "index": 15,
+      "uniformCellBoundsPixels": [
+        940,
+        940,
+        1254,
+        1254
+      ],
+      "inspectionRegionBoundsPixels": [
+        940,
+        922,
+        1254,
+        1254
+      ],
+      "visibleAlphaBoundsPixels": [
+        1000,
+        936,
+        1177,
+        1199
+      ],
+      "visiblePixelCount": 34964,
+      "inspectionRegionOccupiedFraction": 0.335393,
+      "sourceRectPixels": [
+        935,
+        908,
+        319,
+        319
+      ],
+      "sourceRectNormalized": [
+        0.745614035,
+        0.724082935,
+        0.254385965,
+        0.254385965
+      ],
+      "neighborPixelsAboveAlphaThresholdInCrop": 0,
+      "objectLongAxisCropOccupancy": 0.824451,
+      "cropToSubjectCenterOffsetPixels": [
+        6,
+        0
+      ],
+      "transparentMarginsPixelsLeftTopRightBottom": [
+        65,
+        28,
+        77,
+        28
+      ],
+      "key": "claims_terminal",
+      "description": "Insurance claims self-service kiosk"
+    }
+  ],
+  "attempts": [
+    {
+      "number": 1,
+      "mode": "generate",
+      "prompt": "Use case: stylized-concept. Asset type: ONE production transparent object sprite atlas for the tactical view of a vintage crime strategy game. Generate a square image arranged in an EXACT uniform 4-column by 4-row grid: sixteen equal cells, four sprites in every row. No visible grid. Every sprite centered at its cell center, fits entirely in the middle 76 percent of its cell, with at least 12 percent truly transparent padding on ALL four sides. No object crosses a cell boundary. Consistent overhead three-quarter orthographic view showing mostly top surface and a little front edge, matching engraved ink outlines and gently textured watercolor game props. Bold readable silhouettes at 32x32 pixels; simplify tiny components. Muted honey brown wood, warm ivory, olive green, dark slate steel and aged brass. Hand-painted, lightly weathered, coherent restrained highlights, minimal contact shadows and absolutely no floor slabs. The EXACT row-major content is: Row 1: (1) barred human detention cell enclosure with stout slate bars and a barred gate, empty, no animal bowl; (2) narrow nursing-home patient bed with ivory mattress, olive blanket, raised metal side rails and attached bedside cabinet; (3) ornate CEO executive desk, warm dark wood, wide rectangular silhouette with inset green writing pad; (4) distinctive presidential Resolute-style desk, grand carved front with central round decorative medallion, curved or chamfered corners and rich walnut, visibly different from the CEO desk. Row 2: (5) bank teller counter with brass-framed glass security screen, small lower transaction opening and ivory counter; (6) LARGE circular bank vault door mounted in a thick square steel doorway, massive round rim and central wheel, visibly an architectural bank vault rather than a small box safe; (7) long jury-room meeting table surrounded by six wooden chairs, entire composition one compact isolated sprite; (8) blank rectangular wooden signboard on a sturdy post, pale empty face, absolutely no lettering. Row 3: (9) television broadcast studio camera rig with large lens, grey body, side viewfinder and short tripod; (10) tall supercomputer server rack with six clearly separated horizontal bays and muted green status lights; (11) textile sewing-machine workbench with a traditional sewing machine, ivory fabric and one thread spool; (12) nuclear reactor control console, wide curved olive and slate control desk with two large analog meters, colored switches and a small radiation trefoil emblem. Row 4: (13) armory weapon rack with three clearly silhouetted long guns secured upright and one olive storage shelf, no people; (14) prison security monitoring console with three compact CCTV screens and keyboard, visibly different from reactor controls; (15) modest landlord/manager office desk, small simple rectangular brown desk, paper ledger and plain office telephone; (16) insurance claims self-service terminal, freestanding kiosk with slate upright body, sloped touch screen, ivory paperwork tray and small blank panel. Background: actual transparent alpha, isolated cutout objects. Avoid opaque background, checkerboard texture, paper backdrop, floor tiles, background tint, surrounding vignettes, people, living creatures, any text, letters, numbers, labels, watermarks, grid lines, borders or artwork touching cell edges. All sixteen objects distinct, complete, centered, visually substantial and padded. Do not omit or duplicate any cell.",
+      "transparentBackground": true,
+      "generatedPath": "C:/Users/KevinWood/.codex/generated_images/01a1504d-6fc6-7332-b047-eaad349ead0d/exec-a6d72db2-ed00-4316-b486-cc84bf81b478.png",
+      "disposition": "Rejected: several visible objects touched or crossed uniform cell boundaries."
+    },
+    {
+      "number": 2,
+      "mode": "precise-object-edit",
+      "prompt": "Use case: precise-object-edit. Edit this transparent production game sprite sheet. Preserve the exact sixteen object designs, linework, colors, materials and row-major order. ONLY repair sprite-sheet positioning and generous transparent gutters: this must be an exact UNIFORM 4 columns × 4 rows grid, every cell exactly one quarter of full canvas width and height. Each isolated sprite fits inside its own cell's central 70% width and 70% height, leaving at least 15% empty transparent padding on EVERY side. Uniformly shrink each object or composite as needed without clipping. Center the objects precisely at these normalized canvas positions: first row centers (12.5%,12.5%), (37.5%,12.5%), (62.5%,12.5%), (87.5%,12.5%); second row centers at x 12.5%,37.5%,62.5%,87.5% and y37.5%; third row same x at y62.5%; fourth row same x at y87.5%. Nothing may occupy the transparent gutters around each cell boundary at x25%,50%,75% and y25%,50%,75%. Row-major order stays: barred detention cell; nursing bed plus bedside cabinet; ornate CEO desk; presidential carved desk; teller counter; massive round bank vault door; jury table with chairs; blank signpost; TV camera; server rack; sewing workbench; reactor analog controls; armory rack; CCTV security console; modest manager desk; insurance kiosk. Keep all existing sprites complete and recognizable. No text, no grid lines, no new objects or background; preserve actual transparency. Artwork must be smaller on the sheet than in the reference to provide safe per-cell margins.",
+      "referencePath": "C:/Users/KevinWood/.codex/generated_images/01a1504d-6fc6-7332-b047-eaad349ead0d/exec-a6d72db2-ed00-4316-b486-cc84bf81b478.png",
+      "transparentBackground": true,
+      "generatedPath": "C:/Users/KevinWood/.codex/generated_images/01a1504d-6fc6-7332-b047-eaad349ead0d/exec-87d94c5c-ab42-4cef-a16b-5bfddc5da8fb.png",
+      "disposition": "Rejected: bottom-row armory barrels and kiosk still crossed the y=75% boundary."
+    },
+    {
+      "number": 3,
+      "mode": "precise-object-edit",
+      "prompt": "Use case: precise-object-edit. This image is a transparent 4 by 4 game sprite atlas. Preserve every object's exact design, style, colors, row-major order and actual transparent background. Change ONLY scale and positioning. ALL 16 sprites need to be 20 percent smaller than they are now. Important correction: the bottom row is too high; move the entire fourth row DOWN by approximately 5 percent of the full canvas height, then shrink those four sprites as needed to remain padded. Each full object must fit within the CENTRAL 60 PERCENT of its exact equal-sized grid cell. Think of 16 invisible little square frames; none of the artwork may extend near their edges. There must be wide clear transparent horizontal gutters centered at one quarter, one half and three quarters of image height, and wide clear transparent vertical gutters centered at one quarter, one half and three quarters of image width. Make these gutters at least 5 percent of full canvas width or height. In particular ALL of the weapon barrels, the security console, the manager desk and the kiosk must be completely BELOW the transparent horizontal gutter at 75 percent image height and ABOVE a generous transparent bottom margin. Recenter the executive desk and presidential desk in their equal first-row cells. Do not redesign anything. Do not add a visible grid, background, borders, text, lettering, extra objects or shadows outside the isolated sprites. Keep the signboard face empty. Final image must have all sixteen complete isolated sprites centered on mathematically uniform 4x4 grid.",
+      "referencePath": "C:/Users/KevinWood/.codex/generated_images/01a1504d-6fc6-7332-b047-eaad349ead0d/exec-87d94c5c-ab42-4cef-a16b-5bfddc5da8fb.png",
+      "transparentBackground": true,
+      "generatedPath": "C:/Users/KevinWood/.codex/generated_images/01a1504d-6fc6-7332-b047-eaad349ead0d/exec-efd07184-3ef3-4cc6-9ee7-ad91cc0c3825.png",
+      "disposition": "Rejected for direct uniform-cell use: clean visible gutters, but first-row subjects were vertically low within their cells."
+    },
+    {
+      "number": 4,
+      "mode": "precise-object-edit",
+      "prompt": "Use case: precise-object-edit. Correct ONLY the vertical placement of this existing 4x4 transparent sprite atlas. Preserve all sixteen exact designs, every sprite's current size, row-major order, colors and transparency. The first row has too much empty space above it and currently sits too low: move the FIRST ROW of four objects UP by 60 pixels (about 5% of full canvas height). Move the SECOND ROW of four objects UP by 30 pixels (about2.5% of canvas height). Move the THIRD ROW of four objects UP by 30 pixels. Leave the FOURTH ROW objects at their current vertical locations. Do not resize anything; do not alter horizontal locations. Each sprite should be vertically centered within its exact uniform cell; ideal center y values are 12.5%,37.5%,62.5%,87.5% of the image. Keep the existing wide transparent gutters and no cell-boundary crossing. Background is real transparent alpha. Preserve blank signboard and all details, no new objects, text, labels, grid lines or backdrop. This is a precise layout repair only.",
+      "referencePath": "C:/Users/KevinWood/.codex/generated_images/01a1504d-6fc6-7332-b047-eaad349ead0d/exec-efd07184-3ef3-4cc6-9ee7-ad91cc0c3825.png",
+      "transparentBackground": true,
+      "generatedPath": "C:/Users/KevinWood/.codex/generated_images/01a1504d-6fc6-7332-b047-eaad349ead0d/exec-dc1d27a4-f0e5-42c0-9c43-c92280f0ba38.png",
+      "disposition": "Rejected by independent native-render QA for style coherence: vivid orange varnish, sharp golden outlines and cleaner deeper isometric rendering than the muted weathered legacy atlas. Geometry was safe through inspected sourceRect overrides."
+    },
+    {
+      "number": 5,
+      "mode": "style-transfer",
+      "prompt": "Use case: style-transfer. Image 1 is the EDIT TARGET: a transparent four-column by four-row supplemental game sprite atlas with sixteen objects. Image 2 is a STYLE REFERENCE ONLY: the existing legacy object atlas from the same game. Return only a corrected version of Image 1; do not modify Image 2 or borrow its subjects. Preserve all sixteen Image1 object identities, row-major order, approximate positions, sizes, complete silhouettes and generous transparent separation. Make their visual rendering match Image2 closely: subdued weathered engraved ink linework, diffuse dry watercolor texture, matte scuffed surfaces, muted aged umber/honey-brown wood, dull slate steel, faded olive, warm ivory and tarnished brass. Specifically replace the Image1 desks/table/sewing bench/signpost/teller counter's vivid orange varnish and sharp golden outlines with the same aged matte wood and worn uneven ink texture as Image2's plain wooden table and radio console. Remove glossy bevels, bright amber rim lighting and clean cartoon sheen across all props. Reduce the deep diagonal isometric front/side faces slightly toward Image2's mostly overhead orthographic field-journal view, showing more top surface and less tall shaded front, while keeping each subject recognizable. Keep the executive desk ornate, the presidential desk distinctive with its central medallion, the jury table and chairs complete, the sewing machine legible, the bank vault architectural, the nuclear analog controls distinct from the CCTV security console. Maintain the same exact row-major subjects: detention cell, patient bed with cabinet, CEO desk, presidential desk; teller counter, large vault door, jury table, blank signboard; TV camera, server rack, sewing workbench, reactor console; armory rack, CCTV console, manager desk with ledger/phone, claims kiosk. No people, no text, no lettering, no labels, no grid, no backdrop or floor slabs. Signboard remains empty. Preserve actual transparent alpha, no checkerboard texture. This is a restrained style coherence correction; preserve subject detail and native game readability at 32 pixels.",
+      "referencePaths": [
+        {
+          "role": "edit target",
+          "path": "C:/Personal/lcs/assets/runtime-art/source/tactical_objects_extra_v1.png",
+          "sha256": "b509b53cc2d422037bd5c7b0118dda20dc12f2755bdf5a68d9818fec01b0050c",
+          "unchangedGeneratedOriginal": "C:/Users/KevinWood/.codex/generated_images/01a1504d-6fc6-7332-b047-eaad349ead0d/exec-dc1d27a4-f0e5-42c0-9c43-c92280f0ba38.png"
+        },
+        {
+          "role": "style reference only",
+          "path": "C:/Personal/lcs/assets/runtime-art/source/tactical_objects_v1.png",
+          "sha256": "e548e023375f7904ef788603f033cfcf429267396116be01562533839e3db53b"
+        }
+      ],
+      "transparentBackground": true,
+      "generatedPath": "C:/Users/KevinWood/.codex/generated_images/01a1504d-6fc6-7332-b047-eaad349ead0d/exec-643c715e-d63a-4963-b562-b82356a492f3.png",
+      "disposition": "Selected unchanged corrected master. Matte aged wood, worn ink/watercolor texture and subdued metal/olive palette match the legacy atlas more closely. Every subject preserved. Geometry fully remeasured, including beyond nominal row boundaries, and collision-free square sourceRect overrides supplied."
+    }
+  ],
+  "qualityAssessment": {
+    "artistReview": "All sixteen requested subjects remain complete, distinct and recognizable. Targeted style correction visibly removes vivid orange varnish and glossy golden rim emphasis, replacing it with matte aged umber wood, scuffed slate/olive surfaces and diffuse worn ink/watercolor texture guided by the legacy atlas. Signboard remains blank. All 586312 pixels with alpha>32 are assigned to exactly one subject inspection region and retained in the sixteen explicit square sourceRects; no visible neighboring alpha is included.",
+    "geometryReview": "All safe crops use 78–84% long-axis occupancy, at least 6% transparent margin on every side, and slight center offsets up to18.5 source pixels (about1.8px at32px render) where required to avoid neighbors. Nominal uniform cell crops remain disallowed because the style edit changed geometry.",
+    "caveat": "Runtime integration must use the newly recomputed sourceRect overrides, not the previous crop values.",
+    "independentQAStatus": "Accepted 10/10 by the separate QA agent for final artwork and reviewed native-rendered integration after the style correction; 76 focused tests and asset validation passed. Browser/native interactive gameplay is outside this review scope.",
+    "qaReviewedSourceSha256": "27a692b37f70d9f0c8ebb2cb780fbfc7ac2aa4d120245433a8298d36861c9a71"
+  }
+}

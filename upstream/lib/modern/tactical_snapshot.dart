@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/tactical_art.dart';
+import 'package:lcs_new_age/modern/tactical_symbols.dart';
 import 'package:lcs_new_age/sitemode/sitemap.dart';
 
 const _wall = Color(0xFF8E8774);
@@ -46,6 +47,7 @@ class TacticalMapCell {
     this.restricted = false,
     this.burning = false,
     this.objectSprite,
+    this.objectQuadrant,
     this.hazardSprite,
     this.groundSprite,
     this.underlyingKind,
@@ -54,6 +56,8 @@ class TacticalMapCell {
     this.actionHint = '',
     this.pointOfInterest = false,
     this.lootAvailable = false,
+    this.graffiti,
+    this.visited = false,
   });
 
   final int x, y;
@@ -63,11 +67,16 @@ class TacticalMapCell {
   final Color color;
   final bool visible, horizontalDoor, restricted, burning;
   final int? objectSprite, hazardSprite, groundSprite;
+
+  /// A known quadrant of the original two-by-two presidential desk.
+  final int? objectQuadrant;
   final TacticalTileKind? underlyingKind;
   final String? underlyingLabel, hazardLabel;
   final String actionHint;
   final bool pointOfInterest;
   final bool lootAvailable;
+  final TacticalGraffiti? graffiti;
+  final bool visited;
 
   /// A unit marker never replaces the known room, fixture or terrain beneath it.
   String get featureLabel => underlyingLabel ?? label;
@@ -245,9 +254,23 @@ TacticalMapCell _describeTile(SiteTile? tile, int x, int y, bool cameras) {
     pointOfInterest: tile.special != TileSpecial.none,
     lootAvailable: tile.loot || droppedLoot,
     actionHint: _actionHint(tile, droppedLoot: droppedLoot),
+    graffiti: switch (base.label) {
+      'LCS graffiti' => TacticalGraffiti.lcs,
+      'CCS graffiti' => TacticalGraffiti.ccs,
+      'Graffiti' => TacticalGraffiti.other,
+      _ => null,
+    },
+    visited: tile.special == TileSpecial.nursingHomePatientDone,
     objectSprite:
         _objectSprite(tile.special) ??
         (tile.loot || droppedLoot ? TacticalObjectCell.crate : null),
+    objectQuadrant: switch (tile.special) {
+      TileSpecial.ovalOfficeNW => 0,
+      TileSpecial.ovalOfficeNE => 1,
+      TileSpecial.ovalOfficeSW => 2,
+      TileSpecial.ovalOfficeSE => 3,
+      _ => null,
+    },
     hazardSprite: tile.burning
         ? tile.firePeak
               ? TacticalHazardCell.intenseFire
@@ -665,30 +688,44 @@ String _actionHint(SiteTile tile, {bool droppedLoot = false}) {
 // Only called after the tile has passed the engine's known-tile gate.
 int? _objectSprite(TileSpecial special) => switch (special) {
   TileSpecial.radioBroadcastStudio => TacticalObjectCell.radioConsole,
-  TileSpecial.computer ||
-  TileSpecial.intelSupercomputer ||
-  TileSpecial.insuranceClaimsTerminal ||
-  TileSpecial.cableBroadcastStudio => TacticalObjectCell.workstation,
-  TileSpecial.ceoSafe || TileSpecial.bankVault => TacticalObjectCell.safe,
+  TileSpecial.computer => TacticalObjectCell.workstation,
+  TileSpecial.intelSupercomputer => TacticalObjectCell.serverRack,
+  TileSpecial.insuranceClaimsTerminal => TacticalObjectCell.claimsTerminal,
+  TileSpecial.cableBroadcastStudio => TacticalObjectCell.tvCamera,
+  TileSpecial.ceoSafe => TacticalObjectCell.safe,
+  TileSpecial.bankVault => TacticalObjectCell.bankVault,
   TileSpecial.corporateFiles ||
   TileSpecial.insuranceFiles ||
   TileSpecial.nursingHomeFiles => TacticalObjectCell.files,
-  TileSpecial.sweatshopEquipment ||
+  TileSpecial.sweatshopEquipment => TacticalObjectCell.sewingMachine,
   TileSpecial.polluterEquipment => TacticalObjectCell.machinery,
   TileSpecial.labEquipment => TacticalObjectCell.labBench,
   TileSpecial.prisonControl ||
   TileSpecial.prisonControlLow ||
   TileSpecial.prisonControlMedium ||
-  TileSpecial.prisonControlHigh ||
-  TileSpecial.nuclearControlRoom => TacticalObjectCell.controlConsole,
+  TileSpecial.prisonControlHigh => TacticalObjectCell.prisonConsole,
+  TileSpecial.nuclearControlRoom => TacticalObjectCell.reactorConsole,
   TileSpecial.cagedRabbits ||
   TileSpecial.cagedMonsters => TacticalObjectCell.cage,
-  TileSpecial.table ||
+  TileSpecial.table => TacticalObjectCell.table,
   TileSpecial.ceoOffice ||
+  TileSpecial.insuranceCEO => TacticalObjectCell.executiveDesk,
   TileSpecial.apartmentLandlord ||
-  TileSpecial.insuranceCEO ||
-  TileSpecial.nursingHomeManager => TacticalObjectCell.table,
-  TileSpecial.armory => TacticalObjectCell.crate,
+  TileSpecial.nursingHomeManager => TacticalObjectCell.officeDesk,
+  TileSpecial.armory => TacticalObjectCell.weaponRack,
+  TileSpecial.policeStationLockup ||
+  TileSpecial.courthouseLockup => TacticalObjectCell.detentionCell,
+  TileSpecial.courthouseJuryRoom => TacticalObjectCell.juryTable,
+  TileSpecial.nursingHomePatient ||
+  TileSpecial.nursingHomePatientDone => TacticalObjectCell.nursingBed,
+  TileSpecial.ovalOfficeNW ||
+  TileSpecial.ovalOfficeNE ||
+  TileSpecial.ovalOfficeSW ||
+  TileSpecial.ovalOfficeSE => TacticalObjectCell.presidentialDesk,
+  TileSpecial.bankTeller => TacticalObjectCell.tellerCounter,
+  TileSpecial.signOne ||
+  TileSpecial.signTwo ||
+  TileSpecial.signThree => TacticalObjectCell.signboard,
   TileSpecial.bankMoney => TacticalObjectCell.cash,
   TileSpecial.parkBench => TacticalObjectCell.bench,
   TileSpecial.tent => TacticalObjectCell.tent,

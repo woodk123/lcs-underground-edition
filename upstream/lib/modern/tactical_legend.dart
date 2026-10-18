@@ -239,6 +239,104 @@ const _visibility = [
   ),
 ];
 
+const _rooms = [
+  _Entry(
+    'Detention room',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.detentionCell,
+  ),
+  _Entry(
+    'Patient’s room',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.nursingBed,
+  ),
+  _Entry(
+    'Patient’s room · visited',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.nursingBed,
+    visited: true,
+    detail: 'The green check records a patient room already visited.',
+  ),
+  _Entry(
+    'Executive office',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.executiveDesk,
+  ),
+  _Entry(
+    'President’s office',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.presidentialDesk,
+  ),
+  _Entry(
+    'Bank teller',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.tellerCounter,
+  ),
+  _Entry(
+    'Bank vault',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.bankVault,
+  ),
+  _Entry(
+    'Jury room',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.juryTable,
+  ),
+  _Entry(
+    'Sign',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.signboard,
+    detail: 'Stand on the sign tile and use / interact to read its wording.',
+  ),
+  _Entry(
+    'News studio',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.tvCamera,
+  ),
+  _Entry(
+    'Supercomputer',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.serverRack,
+  ),
+  _Entry(
+    'Textile equipment',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.sewingMachine,
+  ),
+  _Entry(
+    'Reactor control room',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.reactorConsole,
+  ),
+  _Entry(
+    'Armory',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.weaponRack,
+  ),
+  _Entry(
+    'Prison control room',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.prisonConsole,
+  ),
+  _Entry(
+    'Manager / landlord office',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.officeDesk,
+  ),
+  _Entry(
+    'Claims terminal',
+    TacticalTileKind.special,
+    objectSprite: TacticalObjectCell.claimsTerminal,
+  ),
+  _Entry('LCS graffiti', TacticalTileKind.wall, graffiti: TacticalGraffiti.lcs),
+  _Entry('CCS graffiti', TacticalTileKind.wall, graffiti: TacticalGraffiti.ccs),
+  _Entry(
+    'Other graffiti',
+    TacticalTileKind.wall,
+    graffiti: TacticalGraffiti.other,
+  ),
+];
+
 class _Entry {
   const _Entry(
     this.title,
@@ -250,11 +348,17 @@ class _Entry {
     this.burning = false,
     this.restricted = false,
     this.remembered = false,
+    this.objectSprite,
+    this.graffiti,
+    this.visited = false,
   });
   final String title;
   final TacticalTileKind kind;
   final String? detail;
   final bool locked, blocked, metal, burning, restricted, remembered;
+  final int? objectSprite;
+  final TacticalGraffiti? graffiti;
+  final bool visited;
 }
 
 class _FullKey extends StatelessWidget {
@@ -326,6 +430,7 @@ class _FullKey extends StatelessWidget {
       _section('Your squad and navigation', _navigation),
       _section('Siege threats', _threats),
       _section('Objects and hazards', _objects),
+      _section('Rooms and equipment', _rooms),
       _section('Visibility', _visibility),
     ],
   );
@@ -349,8 +454,10 @@ class _MarkPainter extends CustomPainter {
     art?.drawTerrain(
       canvas,
       rect,
-      TacticalTerrainCell.studioCarpet,
-      opacity: .52,
+      entry.graffiti != null
+          ? TacticalTerrainCell.brickWall
+          : TacticalTerrainCell.studioCarpet,
+      opacity: entry.graffiti != null ? .72 : .52,
     );
     switch (entry.kind) {
       case TacticalTileKind.squad:
@@ -401,13 +508,18 @@ class _MarkPainter extends CustomPainter {
         art?.drawObject(
           canvas,
           rect.deflate(rect.width * .04),
-          TacticalObjectCell.radioConsole,
+          entry.objectSprite ?? TacticalObjectCell.radioConsole,
         );
-        canvas.drawCircle(
-          rect.topRight + Offset(-rect.width * .13, rect.height * .13),
-          rect.width * .07,
-          Paint()..color = JournalPalette.brassDark,
-        );
+        if (art != null && entry.objectSprite == TacticalObjectCell.signboard) {
+          TacticalSymbols.drawSignLettering(canvas, rect);
+        }
+        if (!entry.visited) {
+          canvas.drawCircle(
+            rect.topRight + Offset(-rect.width * .13, rect.height * .13),
+            rect.width * .07,
+            Paint()..color = JournalPalette.brassDark,
+          );
+        }
       case TacticalTileKind.fire:
         if (art != null) {
           art!.drawHazard(
@@ -445,6 +557,12 @@ class _MarkPainter extends CustomPainter {
         }
       default:
         break;
+    }
+    if (entry.graffiti != null) {
+      TacticalSymbols.drawGraffiti(canvas, rect, entry.graffiti!);
+    }
+    if (entry.visited) {
+      TacticalSymbols.drawVisitedMarker(canvas, rect);
     }
     if (entry.restricted) {
       final hatch = Paint()

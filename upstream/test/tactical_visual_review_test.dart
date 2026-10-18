@@ -321,6 +321,7 @@ void main() {
           for (final asset in [
             tacticalTerrainAtlas.asset,
             tacticalObjectAtlas.asset,
+            tacticalExtraObjectAtlas.asset,
             tacticalHazardAtlas.asset,
             JournalPalette.paperAsset,
           ])

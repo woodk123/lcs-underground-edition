@@ -143,6 +143,7 @@ Future<void> _settleArtwork(WidgetTester tester) async {
     for (final atlas in [
       tacticalTerrainAtlas,
       tacticalObjectAtlas,
+      tacticalExtraObjectAtlas,
       tacticalHazardAtlas,
     ])
       AssetImage(atlas.asset),

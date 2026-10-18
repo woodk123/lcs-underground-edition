@@ -1020,6 +1020,9 @@ class TacticalMapPainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(rect);
     _terrain(canvas, rect, cell);
+    if (cell.graffiti != null) {
+      TacticalSymbols.drawGraffiti(canvas, rect, cell.graffiti!);
+    }
     if (cell.restricted) {
       final hatch = Paint()
         ..color = JournalPalette.brassDark.withValues(alpha: .28)
@@ -1042,9 +1045,13 @@ class TacticalMapPainter extends CustomPainter {
       // Art does not decide whether a feature is manually usable.
       art!.drawObject(
         canvas,
-        rect.deflate(rect.width * .04),
+        cell.objectQuadrant == null ? rect.deflate(rect.width * .04) : rect,
         cell.objectSprite!,
+        quadrant: cell.objectQuadrant,
       );
+      if (cell.objectSprite == TacticalObjectCell.signboard) {
+        TacticalSymbols.drawSignLettering(canvas, rect);
+      }
     }
     if (hasHazard) {
       art!.drawHazard(
@@ -1053,7 +1060,7 @@ class TacticalMapPainter extends CustomPainter {
         cell.hazardSprite!,
       );
     }
-    if (cell.pointOfInterest) {
+    if (cell.pointOfInterest && !cell.visited) {
       canvas.drawCircle(
         rect.topRight + Offset(-rect.width * .13, rect.height * .13),
         rect.width * .07,
@@ -1153,6 +1160,7 @@ class TacticalMapPainter extends CustomPainter {
       default:
         if (!hasObject &&
             !hasHazard &&
+            cell.graffiti == null &&
             cell.icon != null &&
             !(cell.kind == TacticalTileKind.wall && cell.burning)) {
           _drawIcon(
@@ -1189,6 +1197,14 @@ class TacticalMapPainter extends CustomPainter {
         cell.kind == TacticalTileKind.wall &&
         !hasHazard) {
       TacticalSymbols.drawFire(canvas, rect);
+    }
+    if (cell.visited) {
+      TacticalSymbols.drawVisitedMarker(
+        canvas,
+        rect,
+        alongsideTrap:
+            cell.hazardLabel?.contains('Defensive boobytrap') == true,
+      );
     }
     // Remembered terrain keeps its shape but loses saturation and contrast.
     if (!cell.visible && cell.kind != TacticalTileKind.squad) {

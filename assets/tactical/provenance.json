@@ -87,6 +87,38 @@
       "original_sha256": "cbf7e9a9f7ba8639465ea0102324b69d15a1044a52463cd46f283accec463478",
       "runtime_sha256": "0a56acb07cc79226f16cd66ab6555cd9372ba430342f6fd374b45c63fb47b6c5",
       "crop_inset_pixels": 1.5
+    },
+    {
+      "name": "tactical_objects_extra_v1",
+      "columns": 4,
+      "rows": 4,
+      "prompt_manifest": "assets/tactical/supplemental-prompts.json",
+      "cells": [
+        "Barred human detention cell with gate",
+        "Nursing-home patient bed and bedside cabinet",
+        "Ornate CEO executive desk",
+        "Carved presidential desk with central medallion",
+        "Bank teller counter and brass-framed security glass",
+        "Architectural circular bank vault door",
+        "Jury-room long table with six chairs",
+        "Blank signboard on wooden post; lettering supplied at runtime",
+        "Television broadcast camera rig",
+        "Supercomputer server rack",
+        "Textile sewing-machine workbench",
+        "Nuclear reactor analog control console",
+        "Armory rack with three long guns",
+        "Prison CCTV security console",
+        "Modest manager/landlord desk with ledger and telephone",
+        "Insurance claims self-service kiosk"
+      ],
+      "original_path": "assets/runtime-art/source/tactical_objects_extra_v1.png",
+      "runtime_path": "upstream/assets/modern/tactical_objects_extra_v1.webp",
+      "width": 1254,
+      "height": 1254,
+      "original_sha256": "27a692b37f70d9f0c8ebb2cb780fbfc7ac2aa4d120245433a8298d36861c9a71",
+      "runtime_sha256": "7fae7f63f12a7199dcbda708358694a2a08aae9364c6a9527652aa5e57906854",
+      "crop_inset_pixels": 1.5,
+      "crop_geometry": "Source rectangles are recorded in prompt_manifest cells[].sourceRectNormalized and mirrored in tactical_art.dart."
     }
   ],
   "postprocessing": "Copied generated PNG masters unchanged into assets/runtime-art/source. Encoded runtime WebP through scripts/runtime_images.py at quality 90, preserving original geometry and exact alpha. No painting, resizing, background removal or recolouring."
