@@ -115,6 +115,100 @@ void main() {
     (800.0, 600.0, 1.5),
     (360.0, 640.0, 2.0),
   ]) {
+    testWidgets('command chain stays accurate and read-only at $layout', (
+      tester,
+    ) async {
+      final person = game.pool.first
+        ..hireId = null
+        ..align = politics.Alignment.liberal
+        ..brainwashed = false
+        ..juice = 0;
+      Creature report(int id, String name) =>
+          Creature.fromJson(
+              jsonDecode(jsonEncode(person)) as Map<String, dynamic>,
+            )
+            ..id = id
+            ..name = name
+            ..hireId = person.id
+            ..seduced = false
+            ..brainwashed = false;
+      final regular = report(90001, 'Regular recruit');
+      final seduced = report(90002, 'Seduced recruit')..seduced = true;
+      final brainwashed = report(90003, 'Brainwashed recruit')
+        ..brainwashed = true;
+      final deceased = report(90004, 'Former recruit')..alive = false;
+      final indirect = report(90005, 'Indirect recruit')..hireId = regular.id;
+      game.pool
+        ..clear()
+        ..addAll([person, regular, seduced, brainwashed, deceased, indirect]);
+      final before = jsonEncode(game.gameState);
+      reseedRNG(seed: 51751);
+      final rolls = List.generate(10, (_) => lcsRandom(100000));
+      reseedRNG(seed: 51751);
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = Size(layout.$1, layout.$2);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      Future<void> inspect(Creature actor) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(layout.$3)),
+              child: child!,
+            ),
+            home: Scaffold(
+              body: CrewInspector(person: actor, onClose: () {}),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      await inspect(person);
+      expect(
+        find.text('Command capacity: 2/6 slots used · 4 free'),
+        findsOneWidget,
+      );
+      expect(find.text('Direct reports (4):'), findsOneWidget);
+      expect(find.text('Regular recruit'), findsOneWidget);
+      expect(find.text('Former recruit · deceased'), findsOneWidget);
+      expect(
+        find.text('Seduced recruit · seduced · no command slot'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Brainwashed recruit · brainwashed · no command slot'),
+        findsOneWidget,
+      );
+      expect(find.text('Indirect recruit'), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('crew-inspector-full')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Command capacity: 2/6 slots used · 4 free'),
+        findsWidgets,
+      );
+      await chooseTab(tester, 1);
+      await chooseTab(tester, 0);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      await inspect(regular);
+      expect(find.text('Reports to: ${person.name}'), findsOneWidget);
+      expect(
+        find.text('Command capacity: 1/0 slots used · 0 free'),
+        findsOneWidget,
+      );
+      expect(find.text('Indirect recruit'), findsOneWidget);
+      await inspect(person);
+      expect(find.text('Direct reports (4):'), findsOneWidget);
+      expect(jsonEncode(game.gameState), before);
+      expect(List.generate(10, (_) => lcsRandom(100000)), rolls);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('age details survive dossier tab journeys at $layout', (
       tester,
     ) async {

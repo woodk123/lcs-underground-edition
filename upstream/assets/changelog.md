@@ -6,6 +6,7 @@ The existing fork now has its own 0.1.0 development baseline. These notes will b
 
 ### Added
 
+* Crew inspectors and dossiers now show command capacity, free recruitment slots, who each person reports to and their direct reports.
 * Character dossiers, founder creation and recruitment now explain age bonuses and penalties, with current stat modifiers and details about starting skills and old-age Health risks.
 * An illustrated paper-and-leather journal with crew dossiers, persistent portraits, city plans, order cards and tactical maps.
 * People, Bases, Network, newspaper production and account views make campaign management and its consequences easier to follow.
