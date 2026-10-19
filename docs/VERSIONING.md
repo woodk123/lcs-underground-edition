@@ -35,6 +35,18 @@ A substantial new People or Bases chapter is a minor change; fixing a clipped bu
 
 Unreleased notes appear in the in-game changelog of development/nightly builds. Preserve the original entries below **New Age history**. `docs/ORIGINAL_CODE_CHANGES.md` remains the broader description of how this fork differs from New Age.
 
+## Before committing or pushing
+
+Versioning is a required review step for every requested commit or push, even when the correct decision is to leave the version unchanged.
+
+1. **Identify the requested outcome.** An ordinary commit/push or a nightly keeps the current release version. A named preview/release applies the bump rules above to the complete unreleased batch. A request to commit and push does not by itself request a numbered release.
+2. **Check the player-facing notes.** Fixes and features need an Unreleased entry. Internal tests, documentation and build maintenance without a player-visible effect need neither a changelog entry nor a bump.
+3. **Apply any required release changes before committing.** Choose patch/minor bumps autonomously; major bumps still require explicit direction. Synchronize both version fields, date the released notes and run the release/version/save checks. Keep save compatibility separate.
+4. **Verify and commit the intended work.** Run checks appropriate to the changes, inspect the staged diff and use an explicit task-owned path allowlist. Preserve unrelated work. Verify the remote commit after pushing.
+5. **Report the version decision.** State the commit, push status, current release version and the reason for changing or retaining it. For example: “Pushed `<commit>`; version remains 0.1.0 because this is a nightly, with changes recorded under Unreleased.” For a numbered release, explain the selected bump instead.
+
+If publication was requested, also report its actual outcome and URL. Verify that the published nightly/release references the intended commit; do not call a queued or running workflow published. Before saying the browser game is updated, check its hosted `BUILD_INFO.json` against that commit. Report failures or pending deployment honestly.
+
 ## Preparing a named release
 
 1. Review the unreleased batch and choose the highest applicable bump. For the first numbered Underground preview/release, finalize the existing 0.1.0 baseline. No bump is necessary to repackage identical release source.

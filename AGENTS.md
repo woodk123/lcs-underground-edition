@@ -26,3 +26,12 @@ Apply [the versioning policy](docs/VERSIONING.md) whenever changing player-visib
 - Preserve the inherited New Age changelog. Keep the source revision visible for bug reports and use the appropriate Development, Preview, Nightly or Release channel.
 
 Run checks appropriate to the changed behavior before committing. Changes to version/save handling must include the version, save migration/recovery and title layout checks described in the policy.
+
+## Commit and push checklist
+
+Follow [the commit/push versioning checklist](docs/VERSIONING.md#before-committing-or-pushing) for every requested commit or push, including documentation-only work.
+
+- Review the requested outcome before committing: an ordinary push, a nightly, or a named preview/release. Apply the versioning policy explicitly; do not silently skip that decision or assume every push requires a bump.
+- Confirm the changelog and any required version changes are complete, run the applicable checks, and stage only the task-owned path allowlist. Choose routine patch/minor release bumps without asking again.
+- In the completion report, state the commit and push status, the release version, and why it changed or stayed unchanged.
+- When a nightly or release is requested, verify publication for the intended commit before reporting it as published. If reporting the hosted game as updated, verify its build metadata matches that commit. A dispatched workflow alone is not a completed build or deployment.
