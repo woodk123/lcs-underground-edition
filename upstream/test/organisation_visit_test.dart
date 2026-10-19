@@ -151,6 +151,14 @@ void main() {
     expect(_key('journal-prepare-map-visit').hitTestable(), findsOneWidget);
   }
 
+  Future<void> reviewVisit(WidgetTester tester, Site site) async {
+    await _tap(tester, 'journal-orders');
+    await _tap(tester, 'journal-order-group:3');
+    await _tap(tester, 'journal-plan-visit');
+    await _tap(tester, 'journal-map-place:${site.district.idString}');
+    await _tap(tester, 'journal-map-place:${site.idString}');
+  }
+
   test('travel notes apply only to the route and preserve state and RNG', () {
     final team = game.activeSquad!;
     for (final member in team.members) {
@@ -208,8 +216,7 @@ void main() {
       site.district.area = game.activeSquad!.site!.area;
       await mount(tester);
       final before = _snapshot();
-      await inspectFromBusiness(tester, site);
-      await _tap(tester, 'journal-prepare-map-visit');
+      await reviewVisit(tester, site);
       final card = _key('journal-job-card');
       final text = tester
           .widgetList<Text>(
@@ -533,7 +540,7 @@ void main() {
   );
 
   testWidgets(
-    'Business map inspection is read-only, then exact source Confirm only queues',
+    'Business map inspection is read-only, then one action queues the exact destination',
     (tester) async {
       final harness = await mount(tester);
       final site = target();
@@ -545,13 +552,6 @@ void main() {
       expect(_snapshot(), before);
       expect(engine.console.screen, 'activity-orders');
       await _tap(tester, 'journal-prepare-map-visit');
-      expect(engine.console.screen, 'planning');
-      final source = engine.console.actions.singleWhere(
-        (a) => a.entityType == 'site' && a.entityId == site.idString,
-      );
-      expect(source.enabled, isTrue);
-      expect(_snapshot(), before);
-      await _tap(tester, 'journal-confirm-order');
       expect(engine.console.screen, 'headquarters');
       expect(game.activeSquad!.activity.type, ActivityType.visit);
       expect(game.activeSquad!.activity.idString, site.idString);
@@ -585,9 +585,7 @@ void main() {
       game.pool.first.activity = Activity(ActivityType.donations);
       await mount(tester);
       final before = _snapshot();
-      await _tap(tester, 'journal-map-place:${site.district.idString}');
-      await _tap(tester, 'journal-map-place:${site.idString}');
-      await _tap(tester, 'journal-prepare-map-visit');
+      await reviewVisit(tester, site);
       expect(squad.activity, same(old));
       await _tap(tester, 'journal-cancel-order');
       expect(engine.console.screen, 'headquarters');
@@ -599,6 +597,48 @@ void main() {
         findsOneWidget,
         reason: 'The same inspected target remains available after cancelling.',
       );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'retained map queue callbacks cannot target a different selection',
+    (tester) async {
+      await mount(tester);
+      final site = target();
+      await _tap(tester, 'journal-map-place:${site.district.idString}');
+      await _tap(tester, 'journal-map-place:${site.idString}');
+      final retained = tester
+          .widget<TextButton>(_key('journal-prepare-map-visit'))
+          .onPressed!;
+      final next = site.district.sites.firstWhere(
+        (s) => s.id != site.id && !s.hidden,
+      );
+      await _tap(tester, 'journal-map-place:${next.idString}');
+      final before = _snapshot();
+      retained();
+      await _settle(tester);
+      expect(_snapshot(), before);
+      expect(engine.console.screen, 'headquarters');
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Enter queues the inspected headquarters destination without advancing a day',
+    (tester) async {
+      final harness = await mount(tester);
+      final site = target();
+      await _tap(tester, 'journal-map-place:${site.district.idString}');
+      await _tap(tester, 'journal-map-place:${site.idString}');
+      final date = game.date;
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await _settle(tester);
+      expect(game.activeSquad!.activity.idString, site.idString);
+      expect(engine.console.screen, 'headquarters');
+      expect(game.date, date);
+      expect(harness.commands, isNot(contains(engine.Key.w)));
+      expect(_key('journal-confirm-order'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
@@ -647,18 +687,9 @@ void main() {
       await tester.tap(_key('journal-map-index:${site.idString}'));
       await _settle(tester);
       await _tap(tester, 'journal-prepare-map-visit');
-      expect(
-        engine.console.actions.any(
-          (a) =>
-              a.entityType == 'site' &&
-              a.entityId == site.idString &&
-              a.enabled,
-        ),
-        isTrue,
-      );
-      expect(_snapshot(), before);
-      await _tap(tester, 'journal-confirm-order');
+      expect(engine.console.screen, 'headquarters');
       expect(game.activeSquad!.activity.idString, site.idString);
+      expect(game.date.toIso8601String(), jsonDecode(before)['date']);
     },
   );
 
@@ -683,8 +714,8 @@ void main() {
         findsNothing,
       );
       await _tap(tester, 'journal-prepare-map-visit');
-      expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
-      await _tap(tester, 'journal-cancel-order');
+      expect(_key('journal-confirm-order'), findsNothing);
+      expect(game.activeSquad!.activity.idString, target().idString);
       final focus = tester
           .widgetList<Focus>(find.byType(Focus))
           .singleWhere((item) => item.focusNode?.debugLabel == 'Game keyboard')

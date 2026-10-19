@@ -1,10 +1,12 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/daily/recruitment.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
+import 'package:lcs_new_age/modern/skill_help.dart';
 
 /// A snapshot of an existing follow-up. Reading it never starts a meeting,
 /// generates a prospect, changes eagerness or spends a recruitment slot.
@@ -53,6 +55,29 @@ List<PendingRecruitmentMeeting> pendingRecruitmentMeetings() => [
   for (final session in game.recruitmentSessions)
     PendingRecruitmentMeeting(session),
 ];
+
+/// Follow-ups belong to the recruiter, independently of their daily order.
+class CharacterRecruitmentMeetings extends StatelessWidget {
+  const CharacterRecruitmentMeetings({super.key, required this.person});
+  final Creature person;
+
+  @override
+  Widget build(BuildContext context) {
+    final meetings = pendingRecruitmentMeetings()
+        .where((meeting) => meeting.recruiterId == person.id)
+        .toList();
+    return MechanicsTooltip(
+      message: meetings.isEmpty
+          ? 'No recruitment follow-ups scheduled for this character.'
+          : '${meetings.map((meeting) => '${meeting.prospectName}: ${meeting.readiness}').join('\n')}\n\nFollow-ups run after daily work when you advance the day. See People → Recruitment meetings for venues and capacity.',
+      child: Text(
+        'Scheduled meetings: ${meetings.length}${game.disbanding && meetings.isNotEmpty ? ' · paused while disbanding' : ''}',
+        key: ValueKey('character-meetings:${person.id}'),
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
 
 /// A compact entry keeps the personnel directory usable. Full follow-ups open
 /// in a bounded reader, so long lists do not push its order controls offscreen.

@@ -573,7 +573,18 @@ void main() {
           expect(tester.state(find.byType(CrewDossier)), same(dossier));
           expect(
             tester.state<ScrollableState>(scroller).position.pixels,
-            closeTo(offset, .01),
+            closeTo(
+              offset.clamp(
+                0,
+                tester
+                    .state<ScrollableState>(scroller)
+                    .position
+                    .maxScrollExtent,
+              ),
+              .01,
+            ),
+            reason:
+                'Retain the offset up to the shorter profile’s scroll limit.',
           );
           final ids = engine.console.journalProfile!.personIds;
           final afterFooter = ids[(ids.indexOf(next.id) + 1) % ids.length];
@@ -790,7 +801,7 @@ void main() {
 
   for (final size in [const Size(1280, 720), const Size(800, 600)]) {
     testWidgets(
-      'City maps prepares the selected squad visit before source confirmation at $size',
+      'City maps queues the selected squad visit with one source-routed action at $size',
       (tester) async {
         final team = game.activeSquad!..name = 'Map travellers';
         final other = Squad()..name = 'Stays at home';
@@ -806,7 +817,6 @@ void main() {
         );
         final before = _snapshot();
         final originalDate = game.date;
-        final originalOrder = team.activity;
         final harness = await mount(tester, size: size);
         if (size.width == 800) {
           await tester.tap(find.byTooltip('Reading size'));
@@ -838,55 +848,27 @@ void main() {
           'Prepare the selected squad visit',
         );
         await _tap(tester, 'journal-city-map-prepare-visit');
-        expect(engine.console.screen, 'planning');
-        expect(
-          engine.console.actions.any(
-            (action) =>
-                action.entityType == 'site' &&
-                action.entityId == destination.idString &&
-                action.enabled,
-          ),
-          isTrue,
-        );
-        expect(_key('journal-confirm-order'), findsOneWidget);
-        expect(find.text('Confirm or cancel draft'), findsOneWidget);
-        expect(
-          tester.widget<FilledButton>(_key('journal-advance-day')).onPressed,
-          isNull,
-        );
-        expect(_snapshot(), before);
-        await _tap(tester, 'journal-cancel-order');
         expect(engine.console.screen, 'headquarters');
-        expect(
-          tester
-              .widget<OrganisationJournal>(find.byType(OrganisationJournal))
-              .section,
-          6,
-          reason: 'Cancelling the draft must retain its City maps origin.',
-        );
-        expect(_snapshot(), before);
+        expect(_key('journal-confirm-order'), findsNothing);
         expect(find.text('Confirm or cancel draft'), findsNothing);
-        await _tap(tester, 'journal-city-map-prepare-visit');
-        expect(_snapshot(), before);
-        team.activity = Activity(
-          ActivityType.visit,
-          idString: destination.idString,
-        );
-        final queued = _snapshot();
-        team.activity = originalOrder;
-        await _tap(tester, 'journal-confirm-order');
         expect(team.activity.type, ActivityType.visit);
         expect(
           tester
               .widget<OrganisationJournal>(find.byType(OrganisationJournal))
               .section,
           6,
-          reason: 'Confirming a map visit must retain the City maps context.',
+          reason: 'Queuing a map visit must retain the City maps context.',
         );
         expect(team.activity.idString, destination.idString);
         expect(other.activity.type, ActivityType.none);
         expect(game.activeSquad, same(team));
-        expect(_snapshot(), queued);
+        final expected = jsonDecode(before) as Map<String, dynamic>;
+        final expectedSquads =
+            (expected['lcs'] as Map<String, dynamic>)['squads'] as List;
+        (expectedSquads.firstWhere((s) => s['id'] == team.id)
+            as Map<String, dynamic>)['activity'] = team.activity
+            .toJson();
+        expect(jsonDecode(_snapshot()), expected);
         expect(game.date, originalDate);
         expect(harness.dispatched, isNot(contains(engine.Key.w)));
         expect(List.generate(8, (_) => lcsRandom(100000)), rolls);

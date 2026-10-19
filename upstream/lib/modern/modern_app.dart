@@ -448,7 +448,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const Text(
-                  'Click people, tasks and places directly. Tab moves between controls; Enter or Space activates the focused control. In Orders, letter shortcuts browse groups and prepare tasks; Enter confirms a prepared job card and Esc cancels it. Enter continues messages and arrows move during operations. Required names use the text field. F1 opens this guide. Classic view retains the original menu shortcuts.',
+                  'Keyboard works in graphical view. At headquarters: F opens squad visits, N selects the next squad, A opens assignments, and W carries out plans or waits a day. In the visit planner, letter keys select districts and buildings; Enter queues the selected building and Esc cancels browsing. You can also browse the city map and choose Queue visit in one action. Visits replace earlier daily assignments; travel runs when you advance the day. In Orders, letter shortcuts browse groups and prepare tasks; Enter confirms a prepared job card and Esc cancels it. Tab moves between controls; Enter or Space activates the focused control. Enter continues messages and arrows move during operations. Required names use the text field. F1 opens this guide. Classic view retains the original menu shortcuts.',
                 ),
                 const SizedBox(height: 14),
                 const Text(

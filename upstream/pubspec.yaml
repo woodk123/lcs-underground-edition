@@ -65,6 +65,17 @@ flutter:
         weight: 700
       - asset: fonts/modern/roboto-black.ttf
         weight: 900
+   # Flutter web otherwise downloads its default family before the first frame.
+   # These are the same bundled files used by ModernSans above.
+   - family: Roboto
+     fonts:
+      - asset: fonts/modern/roboto-regular.ttf
+      - asset: fonts/modern/roboto-medium.ttf
+        weight: 500
+      - asset: fonts/modern/roboto-bold.ttf
+        weight: 700
+      - asset: fonts/modern/roboto-black.ttf
+        weight: 900
    - family: SourceCodePro
      fonts:
       - asset: fonts/SourceCodePro-Regular.ttf

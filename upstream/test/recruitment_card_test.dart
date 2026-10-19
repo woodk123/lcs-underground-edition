@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart' hide Alignment;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/creature/creature.dart';
+import 'package:lcs_new_age/creature/attributes.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/daily/recruitment.dart';
 import 'package:lcs_new_age/engine/console.dart';
@@ -128,17 +129,17 @@ void main() {
         find.text('Lawyer · Age ${p.age} · $label', findRichText: true),
         findsOneWidget,
       );
-      final ageDetails = find.text('How age affects this character');
-      await tester.ensureVisible(ageDetails);
-      await tester.tap(ageDetails);
-      await tester.pumpAndSettle();
-      expect(
-        find.textContaining('birthdays do not award skill points'),
-        findsOneWidget,
-      );
-      await tester.ensureVisible(ageDetails);
-      await tester.tap(ageDetails);
-      await tester.pumpAndSettle();
+      for (final attribute in Attribute.values) {
+        expect(
+          tester
+              .widget<Text>(
+                find.byKey(ValueKey('character-attribute:${attribute.name}')),
+              )
+              .data,
+          '${p.attribute(attribute)}',
+        );
+      }
+      expect(find.textContaining('Age modifiers:'), findsNothing);
       await tester.ensureVisible(find.text('Inspect ${p.name}'));
       await tester.tap(find.text('Inspect ${p.name}'));
       expect(inspected, isTrue);

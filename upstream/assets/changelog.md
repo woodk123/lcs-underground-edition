@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Queue a squad visit directly from a browsed destination, with one action instead of separate preparation and confirmation. Keyboard help and visit map letter shortcuts are visible in graphical view.
+* See effective attributes and scheduled recruitment meeting counts near the top of character screens. Recruitment cards show attributes, and wide dossiers arrange skills in multiple columns.
+* Start the web player with its bundled default font, avoiding a stalled launch when Google's font server cannot be reached.
+
 * Explain successful stealth checks without implying that suspicion or a raised alarm has cleared.
 * Review squad weapons, loaded and spare ammunition, injuries and available First Aid before confirming a visit.
 * Explain hospital admission, treatment costs, discharge and how to rejoin a squad; show current medical debt.

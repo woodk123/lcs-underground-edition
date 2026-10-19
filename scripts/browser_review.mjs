@@ -148,7 +148,7 @@ try {
   await click(/^Full dossier/);
   let dossier = page.getByRole('dialog');
   await dossier.waitFor();
-  assert.equal(await dossier.getByText(/^Age 22(?:$|:)/).count(), 1);
+  assert.equal(await dossier.getByText(/Age 22$/).count(), 1);
   await capture('01-age22-corrected-portrait');
   await click(/^Skills(?:$|\s)/, dossier);
   await writeFile(resolve(output, 'skill-semantics.html'), await dossier.innerHTML());

@@ -7,10 +7,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/basemode/activate_regulars.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/creature/body.dart';
+import 'package:lcs_new_age/creature/attributes.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/gender.dart';
 import 'package:lcs_new_age/creature/portrait.dart';
 import 'package:lcs_new_age/creature/skills.dart';
+import 'package:lcs_new_age/daily/recruitment.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
@@ -109,6 +111,100 @@ void main() {
     expect(find.textContaining('Stay out of public activity'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  for (final layout in [
+    (1280.0, 800.0, 1.0),
+    (800.0, 600.0, 1.5),
+    (390.0, 844.0, 2.0),
+  ]) {
+    testWidgets(
+      'attributes, meetings and responsive skills preserve the reader at $layout',
+      (tester) async {
+        final person = game.pool.first;
+        final prospect = Creature.fromJson(
+          jsonDecode(jsonEncode(game.pool.last)) as Map<String, dynamic>,
+        )..id = 91234;
+        game.recruitmentSessions
+          ..clear()
+          ..add(RecruitmentSession(prospect, person));
+        final before = jsonEncode(game.gameState);
+        reseedRNG(seed: 19567);
+        final rolls = List.generate(12, (_) => lcsRandom(100000));
+        reseedRNG(seed: 19567);
+        await mountInspector(
+          tester,
+          person,
+          size: Size(layout.$1, layout.$2),
+          textScale: layout.$3,
+        );
+        for (final attribute in Attribute.values) {
+          expect(
+            tester
+                .widget<Text>(
+                  find.byKey(ValueKey('character-attribute:${attribute.name}')),
+                )
+                .data,
+            '${person.attribute(attribute)}',
+          );
+        }
+        expect(find.text('Scheduled meetings: 1'), findsOneWidget);
+        expect(
+          find.text('Scheduled meetings: 1').hitTestable(),
+          findsOneWidget,
+        );
+        if (layout.$1 >= 800) {
+          for (final attribute in Attribute.values) {
+            expect(
+              find
+                  .byKey(ValueKey('character-attribute:${attribute.name}'))
+                  .hitTestable(),
+              findsOneWidget,
+              reason:
+                  'All effective scores must be readable on entry at $layout.',
+            );
+          }
+        }
+        final attributes = find.byKey(
+          ValueKey('character-attributes:${person.id}'),
+        );
+        expect(
+          tester.getTopLeft(attributes).dy,
+          lessThan(tester.getTopLeft(find.text('Condition')).dy),
+        );
+        await chooseTab(tester, 1);
+        final headings = find.byKey(
+          ValueKey('crew-dossier-skill-heading:${Skill.values.first.name}'),
+        );
+        expect(headings, findsOneWidget);
+        final tiles = find.byWidgetPredicate(
+          (widget) =>
+              widget is Padding &&
+              widget.key is ValueKey<String> &&
+              (widget.key as ValueKey<String>).value.startsWith(
+                'crew-dossier-skill:',
+              ),
+        );
+        final first = tester.getRect(tiles.at(0));
+        final second = tester.getRect(tiles.at(1));
+        if (layout.$1 > 1000) {
+          expect(first.top, second.top);
+          expect(second.left, greaterThan(first.right));
+        } else {
+          expect(second.top, greaterThan(first.top));
+        }
+        await tester.drag(
+          find.byKey(const ValueKey('crew-dossier-scroll')),
+          const Offset(0, -350),
+        );
+        await tester.pumpAndSettle();
+        await chooseTab(tester, 0);
+        expect(find.text('Scheduled meetings: 1'), findsOneWidget);
+        expect(jsonEncode(game.gameState), before);
+        expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   for (final layout in [
     (1280.0, 800.0, 1.0),

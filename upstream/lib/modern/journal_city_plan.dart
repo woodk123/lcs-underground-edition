@@ -21,13 +21,14 @@ class JournalMapPlace {
     required this.kind,
     required this.enabled,
     this.siteType,
+    this.shortcut,
     this.current = false,
     this.queued = false,
     this.details = const [],
   }) : assert(kind == 'city' || kind == 'district' || kind == 'site');
 
   final String id, name, kind;
-  final String? siteType;
+  final String? siteType, shortcut;
   final bool enabled, current, queued;
   final List<String> details;
 }
@@ -251,6 +252,7 @@ class _JournalCityPlanState extends State<JournalCityPlan> {
 
   String _description(JournalMapPlace place) => [
     place.name,
+    if (place.shortcut != null) 'Key ${place.shortcut!.toUpperCase()}',
     place.kind,
     if (place.current) 'Current location',
     if (place.queued) 'Queued destination',
@@ -325,6 +327,25 @@ class _JournalCityPlanState extends State<JournalCityPlan> {
                       : _DistrictArtwork(place: place),
                 ),
               ),
+              if (place.shortcut != null)
+                Positioned(
+                  top: 3,
+                  left: 3,
+                  child: Container(
+                    color: _paper,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
+                    child: Text(
+                      place.shortcut!.toUpperCase(),
+                      style: const TextStyle(
+                        color: _ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
               if (place.current || place.queued)
                 Positioned(
                   top: 7,
@@ -392,6 +413,9 @@ class _JournalCityPlanState extends State<JournalCityPlan> {
               dense: true,
               contentPadding: const EdgeInsets.symmetric(horizontal: 12),
               title: Text(place.name),
+              trailing: place.shortcut == null
+                  ? null
+                  : Text(place.shortcut!.toUpperCase()),
               subtitle: Text(
                 [
                   place.kind,

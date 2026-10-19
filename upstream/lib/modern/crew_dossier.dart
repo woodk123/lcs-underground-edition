@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
-import 'package:lcs_new_age/creature/attributes.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/modern/age_help.dart';
-import 'package:lcs_new_age/modern/attribute_help.dart';
 import 'package:lcs_new_age/modern/catalogue_art.dart';
+import 'package:lcs_new_age/modern/character_attributes.dart';
 import 'package:lcs_new_age/modern/crew_command_panel.dart';
 import 'package:lcs_new_age/modern/crew_injury_panel.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/equipment_help.dart';
+import 'package:lcs_new_age/modern/journal_recruitment.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/legal_status.dart';
@@ -170,13 +170,16 @@ class CrewInspector extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         LegalStatusSummary(person: person),
+                        const SizedBox(height: 10),
+                        CharacterRecruitmentMeetings(person: person),
+                        const SizedBox(height: 10),
+                        CharacterAttributes(person: person),
                         const SizedBox(height: 12),
                         JuiceProgress(person: person),
                         const SizedBox(height: 9),
                         CrewCommandPanel(person: person),
                         const SizedBox(height: 12),
                         _inlineFact('Age', '${person.age}'),
-                        AgeEffects(person: person),
                         const SizedBox(height: 12),
                         _inlineFact(
                           'Personal assignment',
@@ -297,6 +300,7 @@ class CrewInspector extends StatelessWidget {
                             ],
                           ),
                         ),
+                        AgeEffects(person: person),
                       ],
                     ),
                   ),
@@ -598,6 +602,68 @@ class _CrewDossierState extends State<CrewDossier> {
 
   Widget _header() {
     final person = widget.person;
+    final short = !widget.embedded && MediaQuery.sizeOf(context).height < 700;
+    final textScale = MediaQuery.textScalerOf(context).scale(15) / 15;
+    if (!widget.embedded &&
+        (short || MediaQuery.sizeOf(context).width / textScale < 500)) {
+      return Padding(
+        key: const ValueKey('crew-dossier-compact-header'),
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CrewPortrait(person: person, size: 64, borderRadius: 3),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    person.name.isEmpty ? 'Unnamed person' : person.name,
+                    key: const ValueKey('crew-dossier-name'),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      height: 1.12,
+                    ),
+                  ),
+                  if (person.properName.isNotEmpty &&
+                      person.properName != person.name)
+                    Text(person.properName, style: JournalPalette.small),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      MechanicsTooltip(
+                        message: ageHelp(person),
+                        child: Text(
+                          '${person.title} · Age ${person.age}',
+                          style: JournalPalette.small.copyWith(color: _teal),
+                        ),
+                      ),
+                      JuiceBadge(person: person, compact: true),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    [
+                      _capitalize(person.align.name),
+                      person.type.name,
+                      if (!person.alive) 'Deceased',
+                      if (person.sleeperAgent) 'Sleeper agent',
+                      if (person.kidnapped) 'Captive',
+                    ].join(' · '),
+                    style: JournalPalette.small,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: widget.embedded
           ? const EdgeInsets.fromLTRB(12, 8, 12, 12)
@@ -716,7 +782,9 @@ class _CrewDossierState extends State<CrewDossier> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AgeEffects(person: person),
+        CharacterRecruitmentMeetings(person: person),
+        const SizedBox(height: 12),
+        CharacterAttributes(person: person),
         const SizedBox(height: 12),
         CrewCommandPanel(person: person),
         const SizedBox(height: 18),
@@ -859,17 +927,7 @@ class _CrewDossierState extends State<CrewDossier> {
           ]),
         ),
         const SizedBox(height: 22),
-        _section('Attributes', Icons.tune, [
-          for (final attribute in Attribute.values)
-            AttributeTooltip(
-              attribute: attribute,
-              actor: person,
-              child: _fact(
-                _capitalize(attribute.name),
-                '${person.attribute(attribute)} · Age: ${ageAttributeEffect(person, attribute)}',
-              ),
-            ),
-        ]),
+        AgeEffects(person: person),
       ],
     );
   }
@@ -890,86 +948,104 @@ class _CrewDossierState extends State<CrewDossier> {
           style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 14),
-        for (final skill in skills)
-          Padding(
-            key: ValueKey('crew-dossier-skill:${skill.name}'),
-            padding: const EdgeInsets.only(bottom: 20),
-            child: SkillTooltip(
-              skill: skill,
-              actor: person,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Semantics(
-                    key: ValueKey('crew-dossier-skill-heading:${skill.name}'),
-                    container: true,
-                    label: '${skill.displayName}: level ${person.skill(skill)}',
-                    child: ExcludeSemantics(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              skill.displayName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${person.skill(skill)}',
-                            key: ValueKey(
-                              'crew-dossier-skill-level:${skill.name}',
-                            ),
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: _ink,
-                            ),
-                          ),
-                        ],
+        LayoutBuilder(
+          builder: (context, bounds) {
+            final scale = MediaQuery.textScalerOf(context).scale(13) / 13;
+            final columns = (bounds.maxWidth / (240 * scale)).floor().clamp(
+              1,
+              3,
+            );
+            final width = (bounds.maxWidth - (columns - 1) * 22) / columns;
+            return Wrap(
+              spacing: 22,
+              children: [
+                for (final skill in skills)
+                  SizedBox(width: width, child: _skillCard(skill)),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _skillCard(Skill skill) {
+    final person = widget.person;
+    return Padding(
+      key: ValueKey('crew-dossier-skill:${skill.name}'),
+      padding: const EdgeInsets.only(bottom: 20),
+      child: SkillTooltip(
+        skill: skill,
+        actor: person,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Semantics(
+              key: ValueKey('crew-dossier-skill-heading:${skill.name}'),
+              container: true,
+              label: '${skill.displayName}: level ${person.skill(skill)}',
+              child: ExcludeSemantics(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        skill.displayName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    skill.description,
-                    style: const TextStyle(color: _muted, fontSize: 13),
-                  ),
-                  const SizedBox(height: 7),
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 72,
-                        child: ExcludeSemantics(
-                          child: LinearProgressIndicator(
-                            value:
-                                (person.skillXP(skill) /
-                                        skillXpNeeded(person.skill(skill)))
-                                    .clamp(0, 1),
-                            minHeight: 2,
-                            color: _muted.withValues(alpha: .5),
-                            backgroundColor: _rule.withValues(alpha: .5),
-                            semanticsLabel: '${skill.displayName} experience',
-                          ),
-                        ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${person.skill(skill)}',
+                      key: ValueKey('crew-dossier-skill-level:${skill.name}'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: _ink,
                       ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          '${person.skillXP(skill)} / ${skillXpNeeded(person.skill(skill))} XP · Attribute cap ${person.skillCap(skill)}',
-                          style: const TextStyle(color: _muted, fontSize: 11),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-      ],
+            const SizedBox(height: 2),
+            Text(
+              skill.description,
+              style: const TextStyle(color: _muted, fontSize: 13),
+            ),
+            const SizedBox(height: 7),
+            Row(
+              children: [
+                SizedBox(
+                  width: 72,
+                  child: ExcludeSemantics(
+                    child: LinearProgressIndicator(
+                      value:
+                          (person.skillXP(skill) /
+                                  skillXpNeeded(person.skill(skill)))
+                              .clamp(0, 1),
+                      minHeight: 2,
+                      color: _muted.withValues(alpha: .5),
+                      backgroundColor: _rule.withValues(alpha: .5),
+                      semanticsLabel: '${skill.displayName} experience',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '${person.skillXP(skill)} / ${skillXpNeeded(person.skill(skill))} XP · Attribute cap ${person.skillCap(skill)}',
+                    style: const TextStyle(color: _muted, fontSize: 11),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 

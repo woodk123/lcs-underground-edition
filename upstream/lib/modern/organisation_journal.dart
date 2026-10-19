@@ -274,6 +274,15 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       unawaited(controller.returnToHeadquarters());
       return true;
     }
+    if (!planning &&
+        controller.canNavigate &&
+        (console.screen == 'headquarters' ||
+            widget.section == 6 && widget.detail == null) &&
+        _selectedDestination != null &&
+        normalizeConsoleKey(key) == 'Enter') {
+      _queueSelectedVisit?.call();
+      return true;
+    }
     if (planning) {
       final normalized = normalizeConsoleKey(key);
       if (const {'Escape', 'x', 'Space'}.contains(normalized)) {
@@ -637,12 +646,20 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                     ),
             ),
           ),
-          IconButton(
-            tooltip: 'Field guide',
-            onPressed: widget.onHelp,
-            icon: const Icon(
-              Icons.help_outline,
-              color: JournalPalette.brassLight,
+          Tooltip(
+            message: 'Field guide',
+            child: TextButton.icon(
+              onPressed: widget.onHelp,
+              icon: const Icon(
+                Icons.keyboard_outlined,
+                color: JournalPalette.brassLight,
+              ),
+              label: Text(
+                'Keys · F1',
+                style: JournalPalette.small.copyWith(
+                  color: JournalPalette.brassLight,
+                ),
+              ),
             ),
           ),
         ],
@@ -2293,10 +2310,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                     key: const ValueKey('journal-prepare-map-visit'),
                     onPressed:
                         controller.canNavigate && !undercover && !_visitRouting
-                        ? _prepareMapVisit
+                        ? _queueSelectedVisit
                         : null,
                     icon: const Icon(Icons.place, size: 16),
-                    label: const Text('Prepare visit'),
+                    label: const Text('Queue visit'),
                   ),
                 ),
               if (prepared)
@@ -3108,6 +3125,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           .firstOrNull;
       return JournalMapPlace(
         id: location.idString,
+        shortcut: planning ? action?.key : null,
         name:
             '${location.getName()}${travelSuffix(travelNotices(location, squad))}',
         // SiteType.name is a display title; EnumName is the stable enum key.
@@ -3155,6 +3173,12 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (planning)
+          const Text(
+            'Letters browse · Enter queues visit · Esc cancels',
+            key: ValueKey('journal-visit-keys'),
+            style: JournalPalette.small,
+          ),
         Expanded(
           child: JournalCityPlan(
             places: places,
@@ -3224,6 +3248,42 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           ),
       ],
     );
+  }
+
+  VoidCallback? get _queueSelectedVisit {
+    final targetId = _selectedDestination?.idString;
+    final squadId = squad?.id;
+    final revision = console.revision.value;
+    return targetId == null || squadId == null
+        ? null
+        : () {
+            if (console.revision.value == revision &&
+                _selectedDestination?.idString == targetId &&
+                squad?.id == squadId) {
+              unawaited(_queueMapVisit());
+            }
+          };
+  }
+
+  Future<void> _queueMapVisit() async {
+    final targetId = _selectedDestination?.idString;
+    final squadId = squad?.id;
+    if (targetId == null ||
+        squadId == null ||
+        _visitRouting ||
+        !controller.canNavigate) {
+      return;
+    }
+    final request = _visitRequest + 1;
+    await _prepareMapVisit();
+    if (!mounted ||
+        request != _visitRequest ||
+        squad?.id != squadId ||
+        _selectedDestination?.idString != targetId) {
+      return;
+    }
+    final action = _visitAction;
+    if (action?.enabled == true) await _confirmVisit(action!);
   }
 
   Future<void> _prepareMapVisit() async {
@@ -3458,9 +3518,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                       const SizedBox(width: 8),
                       FilledButton.icon(
                         key: const ValueKey('journal-city-map-prepare-visit'),
-                        onPressed: canPrepareVisit ? _prepareMapVisit : null,
+                        onPressed: canPrepareVisit ? _queueSelectedVisit : null,
                         icon: const Icon(Icons.place_outlined, size: 17),
-                        label: const Text('Prepare visit'),
+                        label: const Text('Queue visit · Enter'),
                       ),
                     ],
                   ),

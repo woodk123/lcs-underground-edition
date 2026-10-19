@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart' hide Alignment;
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
-import 'package:lcs_new_age/modern/age_help.dart';
+import 'package:lcs_new_age/modern/character_attributes.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
@@ -126,10 +126,8 @@ class RecruitmentCard extends StatelessWidget {
             recruitmentBackground(person),
             style: const TextStyle(height: 1.5),
           ),
-          if (person.human) ...[
-            const SizedBox(height: 12),
-            AgeEffects(person: person),
-          ],
+          const SizedBox(height: 12),
+          CharacterAttributes(person: person),
           if (strengths.isNotEmpty) ...[
             const SizedBox(height: 12),
             const Text(
