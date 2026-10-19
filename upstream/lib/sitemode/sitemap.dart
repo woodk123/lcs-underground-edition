@@ -42,6 +42,13 @@ Iterable<SiteTile> adjacentTiles(
 
 SiteTile get currentTile => levelMap[locx][locy][locz];
 
+/// The engine targets the door while its reader runs; the squad stays outside.
+/// Transient presentation metadata, never part of campaign saves or gameplay.
+({int x, int y, int z})? doorInteractionOrigin;
+
+({int x, int y, int z}) get displayedSquadPosition =>
+    doorInteractionOrigin ?? (x: locx, y: locy, z: locz);
+
 extension LevelMap on List<List<List<SiteTile>>> {
   Iterable<SiteTile> get all sync* {
     for (int x = 0; x < MAPX; x++) {

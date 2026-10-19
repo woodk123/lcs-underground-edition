@@ -51,6 +51,8 @@ Portraits use a separate deterministic identity calculation. Casting and renderi
 
 Field movement, escape directions, speaker and conversation choices belong to their individual source readers. The source publishes the same availability used by its handler, including ordinary movement past frightened occupants. Retrying a prompt republishes its own actions; it never restores actions from an earlier reader. Field callbacks retain the action object and console revision. Read-only field dossiers keep the map in place and block both pointer and keyboard commands beneath them.
 
+While a door reader targets the attempted tile, `doorInteractionOrigin` retains the standing position for tactical presentation. It is cleared together with restoring engine coordinates in `finally`, is not saved, and makes no gameplay rolls. Failed safe attempts retain their fixture and original notice checks; rewards and fixture removal require a successful opening. Bulk pawn confirmations publish only their current Yes/No source actions.
+
 The browser clips the outer Flutter view without making it a scroll container. Accessible focus navigation can scroll the game's inner readers, but must not move the canvas or cut off the journal tabs.
 
 Hospital admission, discharge and court defense publish `RecoveryContext` snapshots in `engine/recovery_context.dart`. The journal reuses those people, text, costs, skill values and exact action objects; healing, billing, custody and verdicts remain in their original handlers. Full charges and medical mechanics are available on demand. Discharged patients return to their base without automatically rejoining a squad, and leaving a bill unpaid retains the debt.

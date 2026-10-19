@@ -123,11 +123,12 @@ class TacticalMapSnapshot {
   });
 
   factory TacticalMapSnapshot.capture({bool fullMap = false}) {
+    final position = displayedSquadPosition;
     final columnCount = fullMap ? MAPX : columns;
     final rowCount = fullMap ? MAPY : rows;
-    final xStart = fullMap ? 0 : (game.locx - 11).clamp(0, MAPX - columns);
-    final yStart = fullMap ? 0 : (game.locy - 4).clamp(0, MAPY - rows);
-    final floor = game.locz;
+    final xStart = fullMap ? 0 : (position.x - 11).clamp(0, MAPX - columns);
+    final yStart = fullMap ? 0 : (position.y - 4).clamp(0, MAPY - rows);
+    final floor = position.z;
     final site = game.activeSite;
     final cameras =
         site != null && site.compound.cameras && !site.siege.camerasOff;
@@ -139,7 +140,7 @@ class TacticalMapSnapshot {
         cells.add(_describeTile(tile, x, y, cameras));
       }
     }
-    final current = levelMapTileOrNull(game.locx, game.locy, floor);
+    final current = levelMapTileOrNull(position.x, position.y, floor);
     final currentDescription = _currentDescription(current);
     return TacticalMapSnapshot(
       xStart: xStart,
@@ -186,14 +187,15 @@ TacticalMapCell _describeTile(SiteTile? tile, int x, int y, bool cameras) {
     );
   }
   final visible = tile.inLOS || cameras;
+  final position = displayedSquadPosition;
   final droppedLoot =
-      tile.x == game.locx &&
-      tile.y == game.locy &&
-      tile.z == game.locz &&
+      tile.x == position.x &&
+      tile.y == position.y &&
+      tile.z == position.z &&
       game.groundLoot.isNotEmpty;
   final base = _baseFeature(tile);
   var foreground = base;
-  if (tile.x == game.locx && tile.y == game.locy && tile.z == game.locz) {
+  if (tile.x == position.x && tile.y == position.y && tile.z == position.z) {
     foreground = (
       kind: TacticalTileKind.squad,
       label: 'Squad',

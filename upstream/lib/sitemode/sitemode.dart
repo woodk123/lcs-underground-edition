@@ -52,6 +52,7 @@ Future<void> siteMode(Site loc) async {
 }
 
 Future<void> _runSiteMode(Site loc) async {
+  doorInteractionOrigin = null;
   activeSite = loc;
   siteAlarm = false;
   siteAlarmTimer = -1;
@@ -1283,12 +1284,17 @@ Future<void> _siteModeAux() async {
 
         //DO DOORS
         if (currentTile.door) {
-          await _openDoor(
-            levelMap[olocx][olocy][olocz].flag & SITEBLOCK_RESTRICTED > 0,
-          );
-          locx = olocx;
-          locy = olocy;
-          locz = olocz;
+          doorInteractionOrigin = (x: olocx, y: olocy, z: olocz);
+          try {
+            await _openDoor(
+              levelMap[olocx][olocy][olocz].flag & SITEBLOCK_RESTRICTED > 0,
+            );
+          } finally {
+            locx = olocx;
+            locy = olocy;
+            locz = olocz;
+            doorInteractionOrigin = null;
+          }
           if (encsize > 0) newenc = false;
         }
 

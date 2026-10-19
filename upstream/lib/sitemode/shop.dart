@@ -601,16 +601,22 @@ class Shop extends ShopOption {
       }
 
       if (c == Key.w || c == Key.a || c == Key.c) {
-        move(18, 1);
-        setColor(white);
+        erase();
+        locHeader();
+        printParty();
         String items = switch (c) {
           Key.w => "weapons",
           Key.a => "ammo",
           _ => "clothes",
         };
-        addstr("Really sell all $items? (Y)es to confirm.           ");
+        mvaddstrc(10, 1, white, "Really sell all $items? (Yes or No)");
 
-        if (await getKey() != Key.y) c = 0; //no sale
+        if (await getKey(
+              choices: {'y': 'Yes, sell all $items', 'n': 'No, keep $items'},
+            ) !=
+            Key.y) {
+          c = 0;
+        }
       }
 
       if ((c == Key.w ||

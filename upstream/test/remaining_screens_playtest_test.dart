@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -17,11 +18,14 @@ import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
+import 'package:lcs_new_age/items/ammo.dart';
+import 'package:lcs_new_age/items/ammo_type.dart';
 import 'package:lcs_new_age/items/clothing.dart';
 import 'package:lcs_new_age/items/flag.dart';
 import 'package:lcs_new_age/items/flag_type.dart';
 import 'package:lcs_new_age/items/loot.dart';
 import 'package:lcs_new_age/items/loot_type.dart';
+import 'package:lcs_new_age/items/weapon.dart';
 import 'package:lcs_new_age/location/compound_upgrades.dart';
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/location/siege.dart';
@@ -458,6 +462,57 @@ void main() {
         });
       },
     );
+
+    for (final key in ['w', 'c', 'a']) {
+      testWidgets('bulk pawn $key confirms and cancels at $variant', (
+        tester,
+      ) async {
+        final base = game.squad.first.base!;
+        final goods = switch (key) {
+          'w' => Weapon('WEAPON_BASEBALLBAT'),
+          'c' => Clothing('CLOTHING_BLACKDRESS'),
+          _ => Ammo(
+            ammoTypes.values.firstWhere((type) => type.fenceValue > 0).idName,
+            stackSize: 200,
+          ),
+        };
+        base.loot
+          ..clear()
+          ..add(goods);
+        game.ledger.forceSetFunds(100);
+        final proceeds = goods.stackFenceValue.round();
+        await play(
+          tester,
+          size,
+          scale,
+          () => shopTypes['PAWNSHOP']!.sellLoot(game.activeSquad!),
+          () async {
+            final before = jsonEncode(game.gameState.toJson());
+            await action(tester, key);
+            expect(engine.console.actions.map((a) => a.key).toSet(), {
+              'y',
+              'n',
+            });
+            expect(jsonEncode(game.gameState.toJson()), before);
+            await capture(tester);
+            await action(tester, 'n');
+            expect(jsonEncode(game.gameState.toJson()), before);
+            // Revisit and cancel with the original Escape keyboard equivalent.
+            await action(tester, key);
+            await keyboardExit(tester);
+            expect(jsonEncode(game.gameState.toJson()), before);
+            await action(tester, key);
+            await action(tester, 'y');
+            expect(engine.console.eventTitle, 'Shopping report');
+            await tester.tap(find.text('Continue'));
+            await tester.pumpAndSettle();
+            expect(base.loot, isEmpty);
+            expect(game.ledger.funds, 100 + proceeds);
+            await action(tester, 'Enter');
+          },
+        );
+      });
+    }
 
     testWidgets('selective pawn quantity and sale at $variant', (tester) async {
       final base = game.squad.first.base!;

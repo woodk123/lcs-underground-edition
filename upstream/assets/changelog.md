@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Confirm bulk pawn sales with clickable Yes and No controls.
+* Keep the squad marker outside doors while choosing how to open them.
+* Failed safecracking attempts leave the safe available to try again; only opening a safe consumes its contents.
+
 * Brownie sellers no longer earn money after their working day is interrupted by police.
 * See pursuit threats and dealership choices before the detailed crew roster, with clearer warnings about raid escapes.
 * After a visit, prepare a previous daily job again from Organisation or People, then confirm it normally.

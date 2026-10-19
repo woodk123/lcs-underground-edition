@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/gamestate/game_mode.dart';
@@ -96,7 +97,10 @@ Future<void> _clickSourceAction(WidgetTester tester, String key) async {
   final direct = find.byKey(
     ValueKey('direct-action:${action.y}:${action.x}:${action.key}'),
   );
-  final finder = direct.evaluate().isNotEmpty
+  final movement = find.byTooltip('Move ${key.toLowerCase()}');
+  final finder = movement.evaluate().isNotEmpty
+      ? movement
+      : direct.evaluate().isNotEmpty
       ? direct
       : find.text(action.label, findRichText: true).first;
   expect(finder, findsOneWidget);
@@ -224,6 +228,46 @@ void main() {
     expect(tester.takeException(), isNull);
     return flow;
   }
+
+  testWidgets('door prompts retain standing marker through cancel and unlock', (
+    tester,
+  ) async {
+    final flow = await mount(tester, () {
+      for (final person in game.activeSquad!.livingMembers) {
+        person.rawSkill[Skill.security] =
+            50; // Declared guaranteed unlock fixture.
+      }
+      levelMap[36][11][0]
+        ..door = true
+        ..locked = true;
+    });
+    await _clickSourceAction(tester, 'Right');
+    expect(game.locx, 36, reason: 'Original engine targets the door.');
+    expect((_currentCell().x, _currentCell().y), (35, 11));
+    expect(TacticalMapSnapshot.capture().currentDescription, 'Open floor');
+    final before = jsonEncode(game.gameState.toJson());
+    TacticalMapSnapshot.capture(fullMap: true);
+    expect(jsonEncode(game.gameState.toJson()), before);
+    await _clickSourceAction(tester, 'n');
+    await _waitForField(tester, flow);
+    expect((game.locx, game.locy), (35, 11));
+    expect(doorInteractionOrigin, isNull);
+    expect(levelMap[36][11][0].locked, isTrue);
+    await _clickSourceAction(tester, 'Right');
+    await _clickSourceAction(tester, 'y');
+    expect((_currentCell().x, _currentCell().y), (35, 11));
+    await _waitForField(tester, flow);
+    expect(levelMap[36][11][0].locked, isFalse);
+    expect((game.locx, game.locy), (35, 11));
+    expect(doorInteractionOrigin, isNull);
+    await _clickSourceAction(tester, 'Right'); // Opens without entering.
+    await _waitForField(tester, flow);
+    expect((game.locx, game.locy), (35, 11));
+    await _clickSourceAction(tester, 'Right');
+    await _waitForField(tester, flow);
+    expect((game.locx, game.locy), (36, 11));
+    expect((_currentCell().x, _currentCell().y), (36, 11));
+  });
 
   testWidgets('original U uses stairs and the next field view shows level 2', (
     tester,

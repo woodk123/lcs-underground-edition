@@ -1073,7 +1073,9 @@ Future<void> specialCEOSafe() async {
   }
 
   await noticeCheck();
-  levelMap[locx][locy][locz].special = TileSpecial.none;
+  if (result == UnlockResult.unlocked) {
+    levelMap[locx][locy][locz].special = TileSpecial.none;
+  }
 }
 
 Future<void> specialNursingHomeSafe() async {
@@ -1098,7 +1100,9 @@ Future<void> specialNursingHomeSafe() async {
   }
 
   await noticeCheck();
-  levelMap[locx][locy][locz].special = TileSpecial.none;
+  if (result == UnlockResult.unlocked) {
+    levelMap[locx][locy][locz].special = TileSpecial.none;
+  }
 }
 
 enum PatientPersonality { lonely, angry, cheerful, depressed, withdrawn, basic }
@@ -1446,7 +1450,9 @@ Future<void> specialInsuranceSafe() async {
   }
 
   await noticeCheck();
-  levelMap[locx][locy][locz].special = TileSpecial.none;
+  if (result == UnlockResult.unlocked) {
+    levelMap[locx][locy][locz].special = TileSpecial.none;
+  }
 }
 
 Future<void> specialInsuranceClaimsTerminal() async {
@@ -1687,10 +1693,12 @@ Future<void> specialCorporateSafe() async {
 
   if (result != UnlockResult.noAttempt) {
     await noticeCheck();
-    levelMap[locx][locy][locz].special = TileSpecial.none;
-    siteCrime += 3;
-    addDramaToSiteStory(Drama.stoleCorpFiles);
-    addPotentialCrime(squad, Crime.theft);
+    if (result == UnlockResult.unlocked) {
+      levelMap[locx][locy][locz].special = TileSpecial.none;
+      siteCrime += 3;
+      addDramaToSiteStory(Drama.stoleCorpFiles);
+      addPotentialCrime(squad, Crime.theft);
+    }
   }
 }
 
