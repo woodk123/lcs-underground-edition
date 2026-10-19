@@ -15,6 +15,7 @@ import 'package:lcs_new_age/engine/recovery_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/gamestate/ledger.dart';
 import 'package:lcs_new_age/gamestate/squad.dart';
+import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/sitemode/shop.dart';
 import 'package:lcs_new_age/utils/colors.dart';
@@ -79,6 +80,18 @@ Future<void> hospital(Site loc) async {
       note:
           '${needingCare.length} squad member${needingCare.length == 1 ? ' needs' : 's need'} care. '
           'Admitted members leave the squad until reassigned.',
+      details: [
+        for (final person in squad)
+          '${person.name}: current medical debt \$${person.medicalBills}.',
+        'Admission: injured members stay here and stop ordinary squad work.',
+        'Treatment: care continues until treatable injuries heal, or a maximum stay of 60 days. Missing eyes and limbs can remain after discharge.',
+        if (loc.type == SiteType.clinic)
+          'Cost: the Free Clinic adds no new treatment charges; existing medical debt remains.'
+        else
+          'Cost: hospital charges accumulate as treatment is given under the current healthcare law; there is no fixed admission price. Current debt appears with each patient.',
+        'Discharge: return to their base, with a homeless-camp fallback if the base is unavailable. Squad membership is not restored automatically.',
+        'Reassignment: open People, find the discharged person and use Join squad.',
+      ],
       people: [
         ...console.journalPeople.where(
           (p) => needingCare.contains(p.person.id),
@@ -363,11 +376,20 @@ Future<int> chooseBuyerIndex(int buyer) async {
   if (partysize <= 1) return buyer;
 
   while (true) {
-    printParty();
+    erase();
+    locHeader();
 
-    move(8, 20);
-    setColor(white);
-    addstr("Choose a Liberal squad member to SPEND.");
+    mvaddstrc(8, 1, white, "Choose who will make purchases.");
+    console.screen = 'shop_buyer';
+    for (var index = 0; index < partysize; index++) {
+      addOptionText(
+        10 + index,
+        1,
+        '${index + 1}',
+        '${index + 1} - ${squad[index].name}',
+      );
+    }
+    addOptionText(17, 1, 'Enter', 'Enter - Keep current buyer');
 
     int c = await getKey();
 

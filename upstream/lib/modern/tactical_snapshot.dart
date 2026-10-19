@@ -155,6 +155,8 @@ class TacticalMapSnapshot {
           ? 'Alarm raised'
           : game.siteAlarmTimer == 0
           ? 'Suspicion raised'
+          : game.siteAlarmTimer > 0
+          ? 'Suspicion building'
           : 'No alarm',
       cameras: cameras,
       response: game.postAlarmTimer > 80

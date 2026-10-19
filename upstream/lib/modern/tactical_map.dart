@@ -589,16 +589,30 @@ class _TacticalMapViewState extends State<TacticalMapView> {
     ),
   );
 
-  Widget _status(IconData icon, String label, Color color) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Icon(icon, color: color, size: 15),
-      const SizedBox(width: 5),
-      Text(
-        label,
-        style: JournalPalette.small.copyWith(color: color, fontSize: 11),
-      ),
-    ],
+  Widget _status(IconData icon, String label, Color color) => Tooltip(
+    triggerMode: TooltipTriggerMode.tap,
+    message: switch (label) {
+      'Alarm raised' =>
+        'The site alarm is active. Passing a stealth check does not switch it off or remove the encounter. Resolve the encounter or use Flee to withdraw.',
+      'Suspicion raised' =>
+        'Observers are suspicious. Further stealth and disguise checks are harder. Passing one check does not reset suspicion.',
+      'Suspicion building' =>
+        'Observers are becoming suspicious. Further actions can advance the alarm countdown. Passing a stealth check does not reset it.',
+      'No alarm' =>
+        'No site alarm is currently raised. This is not a guarantee of concealment: moving, waiting and other actions can trigger detection checks.',
+      _ => label,
+    },
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 15),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: JournalPalette.small.copyWith(color: color, fontSize: 11),
+        ),
+      ],
+    ),
   );
 }
 

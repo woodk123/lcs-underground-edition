@@ -33,11 +33,10 @@ Future<void> kidnapattempt() async {
   }
 
   do {
-    printParty();
-
-    move(8, 20);
-    setColor(white);
-    addstr("Choose a Liberal squad member to do the job.");
+    printSquadMemberChoices(
+      "Choose a Liberal squad member to do the job.",
+      enabledWhen: (person) => person.prisoner == null,
+    );
 
     int c = await getKey();
 
@@ -69,30 +68,27 @@ Future<void> kidnapattempt() async {
     Creature target = viableTargets[0];
 
     if (viableTargets.length > 1) {
-      clearSceneAreas();
-
-      setColor(white);
-      move(9, 1);
-      addstr("Kidnap whom?");
-
-      int x = 1, y = 11;
-      for (int t2 = 0; t2 < viableTargets.length; t2++) {
-        String letter = letterAPlus(t2);
-        addOptionText(y++, x, letter, "$letter - ${viableTargets[t2].name}");
-
-        if (y == 17) {
-          y = 11;
-          x += 30;
+      while (true) {
+        erase();
+        console.screen = 'kidnap_target';
+        mvaddstrc(0, 1, white, "Kidnap whom?");
+        int x = 1, y = 11;
+        for (int t2 = 0; t2 < viableTargets.length; t2++) {
+          String letter = letterAPlus(t2);
+          addOptionText(y++, x, letter, "$letter - ${viableTargets[t2].name}");
+          if (y == 17) {
+            y = 11;
+            x += 30;
+          }
         }
-      }
-
-      int c = await getKey();
-      int index = c - Key.a;
-
-      if (index >= 0 && index < viableTargets.length) {
+        addOptionText(18, 1, 'Enter', 'Cancel');
+        int c = await getKey();
+        if (isBackKey(c)) return;
+        int index = c - Key.a;
+        if (index < 0 || index >= viableTargets.length) continue;
         target = viableTargets[index];
+        break;
       }
-      if (isBackKey(c)) return;
     }
 
     // Bodyguards!
@@ -295,11 +291,12 @@ Future<void> releasehostage() async {
   }
 
   do {
-    printParty();
-
-    move(8, 20);
-    setColor(white);
-    addstr("Choose a Liberal squad member to release their hostage.");
+    printSquadMemberChoices(
+      "Choose a Liberal squad member to release their hostage.",
+      enabledWhen: (person) =>
+          person.prisoner != null &&
+          person.prisoner!.align != Alignment.liberal,
+    );
 
     int c = await getKey();
 

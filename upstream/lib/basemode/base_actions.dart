@@ -170,34 +170,17 @@ Future<void> orderparty() async {
   if (partysize <= 1) return;
 
   while (true) {
-    printParty();
-    mvaddstrc(8, 26, white, "Choose squad member to move");
-
-    int oldPos = await getKey(
-      choices: {
-        for (var i = 0; i < squad.length; i++) '${i + 1}': squad[i].name,
-        'Enter': 'Cancel',
-      },
-    );
+    printSquadMemberChoices("Choose squad member to move");
+    int oldPos = await getKey();
 
     if (oldPos < Key.num1 || oldPos > partysize + Key.num1 - 1) {
       return; // User chose index out of range, exit
     }
-    makeDelimiter();
-    setColor(white);
     String str = "Choose squad member to replace ";
     str += squad[oldPos - Key.num1].name;
     str += " in Spot ${oldPos - Key.num1 + 1}";
-    int x = 39 - ((str.length - 1) >> 1);
-    if (x < 0) x = 0;
-    mvaddstr(8, x, str);
-
-    int newPos = await getKey(
-      choices: {
-        for (var i = 0; i < squad.length; i++) '${i + 1}': squad[i].name,
-        'Enter': 'Cancel',
-      },
-    );
+    printSquadMemberChoices(str);
+    int newPos = await getKey();
 
     if (newPos < Key.num1 || newPos > partysize + Key.num1 - 1) {
       return; // User chose index out of range, exit

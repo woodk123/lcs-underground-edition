@@ -33,6 +33,7 @@ import 'package:lcs_new_age/modern/organisation_reviews.dart';
 import 'package:lcs_new_age/modern/personnel_directory.dart';
 import 'package:lcs_new_age/modern/recruitment_target_picker.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
+import 'package:lcs_new_age/modern/squad_readiness.dart';
 import 'package:lcs_new_age/modern/travel_help.dart';
 
 // Existing section IDs remain stable for retained journal routes and shortcuts.
@@ -1962,6 +1963,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   ],
                   if (help.type == ActivityType.visit) ...[
                     const SizedBox(height: 8),
+                    SquadReadinessView(readiness: SquadReadiness(members)),
+                    const SizedBox(height: 8),
                     Text(
                       'Members: ${members.map((member) => member.name).join(', ')}',
                       key: const ValueKey('journal-visit-members'),
@@ -2170,6 +2173,20 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                       key: const ValueKey('journal-travel-notices'),
                       style: JournalPalette.small,
                     ),
+                  if (type == ActivityType.visit) ...[
+                    Text(
+                      'Readiness: ${SquadReadiness(members).summary}',
+                      key: const ValueKey('journal-readiness-summary'),
+                      style: JournalPalette.small,
+                    ),
+                    TextButton(
+                      key: const ValueKey('journal-review-readiness'),
+                      onPressed: () => _showOrderMechanics(help),
+                      child: const Text(
+                        'Review weapons, ammunition and medical support',
+                      ),
+                    ),
+                  ],
                   if (help.calculation case final calculation?
                       when type != ActivityType.visit)
                     Text(

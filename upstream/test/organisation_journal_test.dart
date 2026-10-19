@@ -1771,6 +1771,46 @@ void main() {
     },
   );
 
+  testWidgets('HQ reorder keeps both decisions visible at 150 percent', (
+    tester,
+  ) async {
+    const size = Size(800, 600);
+    await mount(tester, size: size);
+    await tester.tap(find.byTooltip('Reading size'));
+    await _settle(tester);
+    await tester.tap(find.text('150%'));
+    await _settle(tester);
+    final before = _snapshot();
+    await _tap(tester, 'journal-more-commands');
+    await tester.ensureVisible(find.text('Reorder'));
+    await tester.tap(find.text('Reorder'));
+    await _settle(tester);
+    for (var step = 0; step < 2; step++) {
+      expect(engine.console.screen, 'squad_choice');
+      for (final action in engine.console.actions) {
+        final button = _key(
+          'direct-action:${action.y}:${action.x}:${action.key}',
+        );
+        _insideViewport(
+          tester,
+          button,
+          size,
+          'Reorder step $step / ${action.key}',
+        );
+        expect(button.hitTestable(), findsOneWidget);
+      }
+      if (step == 0) {
+        final first = engine.console.actions.first;
+        await _tap(tester, 'direct-action:${first.y}:${first.x}:${first.key}');
+      }
+    }
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await _settle(tester);
+    expect(engine.console.screen, 'headquarters');
+    expect(_snapshot(), before);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'uncommon HQ commands remain reachable and invoke the actual original reader',
     (tester) async {
@@ -1794,7 +1834,9 @@ void main() {
       expect(engine.console.awaitingInput, isTrue);
       expect(
         engine.console.actions.any(
-          (action) => action.label == game.squad.first.name,
+          (action) =>
+              action.key == '1' &&
+              action.label == '1 - ${game.squad.first.name}',
         ),
         isTrue,
       );

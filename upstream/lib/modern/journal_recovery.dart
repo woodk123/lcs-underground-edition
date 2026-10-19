@@ -116,12 +116,21 @@ class JournalRecoveryView extends StatelessWidget {
                           );
                         },
                       ),
+                    if (frame.scene != RecoveryScene.defense)
+                      const Text(
+                        'Admission → treatment → discharge → squad reassignment',
+                        style: JournalPalette.small,
+                      ),
                     if (frame.details.isNotEmpty)
                       ExpansionTile(
                         key: const PageStorageKey(
                           'journal-recovery-case-details',
                         ),
-                        title: const Text('Case details'),
+                        title: Text(
+                          frame.scene == RecoveryScene.defense
+                              ? 'Case details'
+                              : 'Care and next steps',
+                        ),
                         children: [
                           for (final line in frame.details)
                             Padding(

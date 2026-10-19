@@ -8,10 +8,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/basemode/activate_sleepers.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
+import 'package:lcs_new_age/basemode/base_actions.dart';
 import 'package:lcs_new_age/basemode/disbanding.dart';
 import 'package:lcs_new_age/basemode/flag.dart';
 import 'package:lcs_new_age/basemode/invest_in_location.dart';
 import 'package:lcs_new_age/basemode/review_mode.dart';
+import 'package:lcs_new_age/common_actions/equipment.dart';
+import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/sort_creatures.dart';
 import 'package:lcs_new_age/daily/shopsnstuff.dart';
 import 'package:lcs_new_age/engine/console.dart';
@@ -35,6 +38,7 @@ import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/monthly/lcs_monthly.dart';
 import 'package:lcs_new_age/politics/alignment.dart' show Alignment;
 import 'package:lcs_new_age/saveload/save_load.dart';
+import 'package:lcs_new_age/sitemode/haul_kidnap.dart';
 import 'package:lcs_new_age/sitemode/shop.dart' show shopTypes, ShopUI;
 import 'package:lcs_new_age/talk/talk_outside_combat.dart';
 
@@ -188,6 +192,138 @@ void main() {
     (const Size(800, 600), 1.5),
   ]) {
     final variant = '${size.width.toInt()}x${size.height.toInt()} / $scale';
+    for (final reader in ['equipment', 'reorder', 'kidnap', 'release']) {
+      testWidgets('nested $reader choices are visible and cancel at $variant', (
+        tester,
+      ) async {
+        if (reader == 'release') {
+          game.squad[1].prisoner = Creature();
+          game.squad[1].prisoner!.align = Alignment.conservative;
+        }
+        Future<void> run() async {
+          engine.addOptionText(19, 1, 'x', 'X - Stale command');
+          if (reader == 'kidnap' || reader == 'release') {
+            game.mode = GameMode.site;
+          }
+          if (reader == 'equipment') {
+            await equip([Clothing('CLOTHING_TOGA')]);
+          } else if (reader == 'reorder') {
+            await orderparty();
+          } else if (reader == 'kidnap') {
+            await kidnapattempt();
+          } else {
+            await releasehostage();
+          }
+        }
+
+        await play(tester, size, scale, run, () async {
+          if (reader == 'equipment') await action(tester, 'a');
+          final before = jsonEncode(game.gameState.toJson());
+          expect(engine.console.actions.any((a) => a.key == 'x'), isFalse);
+          for (final choice in engine.console.actions) {
+            final finder = find.byKey(
+              ValueKey('direct-action:${choice.y}:${choice.x}:${choice.key}'),
+            );
+            expect(
+              finder.hitTestable(),
+              findsOneWidget,
+              reason:
+                  'Nested $reader choice ${choice.key} must be visible on entry.',
+            );
+          }
+          if (reader == 'reorder') {
+            await action(tester, '1');
+            for (final choice in engine.console.actions) {
+              expect(
+                find
+                    .byKey(
+                      ValueKey(
+                        'direct-action:${choice.y}:${choice.x}:${choice.key}',
+                      ),
+                    )
+                    .hitTestable(),
+                findsOneWidget,
+              );
+            }
+          }
+          await action(tester, 'Enter');
+          expect(jsonEncode(game.gameState.toJson()), before);
+          if (reader == 'equipment') await action(tester, 'Enter');
+        });
+      });
+    }
+    testWidgets(
+      'kidnap target rejects invalid keys and cancels without changes at $variant',
+      (tester) async {
+        game.mode = GameMode.site;
+        game.encounter.clear();
+        for (final name in ['First target', 'Second target']) {
+          game.encounter.add(
+            Creature()
+              ..name = name
+              ..type = game.squad.first.type
+              ..align = Alignment.conservative
+              ..nonCombatant = true,
+          );
+        }
+        final before = jsonEncode(game.gameState.toJson());
+        await play(tester, size, scale, kidnapattempt, () async {
+          await action(tester, '2');
+          expect(engine.console.screen, 'kidnap_target');
+          expect(engine.console.actions.map((a) => a.key), ['a', 'b', 'Enter']);
+          engine.console.sendInput('z');
+          await tester.pumpAndSettle();
+          expect(engine.console.screen, 'kidnap_target');
+          expect(jsonEncode(game.gameState.toJson()), before);
+          for (final choice in engine.console.actions) {
+            expect(
+              find
+                  .byKey(
+                    ValueKey(
+                      'direct-action:${choice.y}:${choice.x}:${choice.key}',
+                    ),
+                  )
+                  .hitTestable(),
+              findsOneWidget,
+            );
+          }
+          await action(tester, 'Enter');
+          expect(jsonEncode(game.gameState.toJson()), before);
+        });
+        await play(tester, size, scale, kidnapattempt, () async {
+          await action(tester, '2');
+          await keyboardExit(tester);
+          expect(jsonEncode(game.gameState.toJson()), before);
+        });
+      },
+    );
+
+    testWidgets(
+      'release choices disable empty hands and free only selected hostage at $variant',
+      (tester) async {
+        game.mode = GameMode.site;
+        game.siteAlarm =
+            true; // Isolate the release from the separate alarm response.
+        final first = Creature()..align = Alignment.conservative;
+        final second = Creature()..align = Alignment.conservative;
+        game.squad[0].prisoner = first;
+        game.squad[1].prisoner = second;
+        for (final person in game.squad.skip(2)) {
+          person.prisoner = null;
+        }
+        await play(tester, size, scale, releasehostage, () async {
+          expect(
+            engine.console.actions.singleWhere((a) => a.key == '3').enabled,
+            isFalse,
+          );
+          await action(tester, '2');
+          expect(game.squad[0].prisoner, same(first));
+          expect(game.squad[1].prisoner, isNull);
+          expect(game.encounter, contains(second));
+          expect(game.encounter, isNot(contains(first)));
+        });
+      },
+    );
     testWidgets('safehouse investment buys rations and exits at $variant', (
       tester,
     ) async {
@@ -405,6 +541,70 @@ void main() {
       });
     }
 
+    testWidgets('shop buyer cancel, revisit and purchase target at $variant', (
+      tester,
+    ) async {
+      final site = game.activeSquad!.site!;
+      game.ledger.forceSetFunds(10000);
+      final first = game.squad[0];
+      final second = game.squad[1];
+      final firstClothes = first.equippedClothing;
+      await play(
+        tester,
+        size,
+        scale,
+        () => shopVisit(site, 'OUBLIETTE'),
+        () async {
+          final before = jsonEncode(game.gameState.toJson());
+          await action(tester, 'b');
+          expect(engine.console.screen, 'shop_buyer');
+          expect(engine.console.actions.map((a) => a.key).toSet(), {
+            for (var i = 0; i < game.squad.length; i++) '${i + 1}',
+            'Enter',
+          });
+          expect(engine.console.actions.any((a) => a.key == 'a'), isFalse);
+          for (final choice in engine.console.actions) {
+            final finder = find.byKey(
+              ValueKey('direct-action:${choice.y}:${choice.x}:${choice.key}'),
+            );
+            expect(
+              finder.hitTestable(),
+              findsOneWidget,
+              reason:
+                  'Every buyer choice and cancellation must be visible on entry.',
+            );
+          }
+          await capture(tester);
+          await action(tester, 'Enter');
+          expect(jsonEncode(game.gameState.toJson()), before);
+          await action(tester, 'b');
+          await keyboardExit(tester);
+          expect(jsonEncode(game.gameState.toJson()), before);
+          await action(tester, 'b');
+          await action(tester, '2');
+          expect(jsonEncode(game.gameState.toJson()), before);
+          await action(tester, 'c'); // Halloween costumes.
+          await action(tester, 'a'); // Purchase the actual source Toga option.
+          expect(second.clothing.type.idName, 'CLOTHING_TOGA');
+          expect(first.equippedClothing, same(firstClothes));
+          expect(game.ledger.funds, 9975);
+          await action(tester, 'Enter');
+          await action(tester, 'b');
+          await action(tester, 'Enter'); // Cancelling keeps the second buyer.
+          await action(tester, 'c');
+          await action(
+            tester,
+            'b',
+          ); // Judicial robes must go to the same person.
+          expect(second.clothing.type.idName, 'CLOTHING_BLACKROBE');
+          expect(first.equippedClothing, same(firstClothes));
+          expect(game.ledger.funds, 9925);
+          await action(tester, 'Enter');
+          await action(tester, 'Enter');
+        },
+      );
+    });
+
     testWidgets('dealership entrance and leave at $variant', (tester) async {
       final site = game.activeSquad!.site!;
       await play(
@@ -504,6 +704,18 @@ void main() {
             await action(tester, key);
             await action(tester, 'y');
             expect(engine.console.eventTitle, 'Shopping report');
+            expect(
+              engine.console.eventMessage,
+              contains('Sale proceeds: \$$proceeds'),
+            );
+            expect(
+              engine.console.eventMessage,
+              contains('Sold: ${goods.type.name} ×${goods.stackSize}'),
+            );
+            expect(
+              engine.console.eventMessage,
+              contains('medical expenses are recorded separately'),
+            );
             await tester.tap(find.text('Continue'));
             await tester.pumpAndSettle();
             expect(base.loot, isEmpty);

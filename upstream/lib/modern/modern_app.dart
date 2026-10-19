@@ -1246,6 +1246,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
           : _journalSection,
       fullSpreadDetail:
           console.eventMessage != null ||
+          recoveryContext(console) != null ||
+          console.screen == 'squad_choice' ||
+          console.screen == 'kidnap_target' ||
           isLegislativeVoteScreen(console) ||
           ledgerReportFrame(console) != null ||
           agendaOverviewFrame(console) != null ||

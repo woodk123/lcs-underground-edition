@@ -68,7 +68,11 @@ async function newContext() {
   page.on('pageerror', error => report.pageErrors.push(String(error)));
   page.on('console', message => { if (message.type() === 'error') report.consoleErrors.push(message.text()); });
   page.on('requestfailed', request => report.failedRequests.push(request.url()));
-  await page.goto(url, { waitUntil: 'networkidle' });
+  // Offline asset caching can continue after the game is usable. Wait for the
+  // actual title controls rather than making profile transfer depend on idle
+  // background downloads finishing inside Playwright's action timeout.
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  await wait(/Start a New Game/);
 }
 async function uiText() {
   if (!await page.locator('flt-semantics-host').count()) return '';

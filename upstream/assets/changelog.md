@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+* Explain successful stealth checks without implying that suspicion or a raised alarm has cleared.
+* Review squad weapons, loaded and spare ammunition, injuries and available First Aid before confirming a visit.
+* Explain hospital admission, treatment costs, discharge and how to rejoin a squad; show current medical debt.
+* Show operation return summaries with carried loot, cash, expenses and injuries, plus itemized pawn receipts. Later sales and medical bills remain separate from site-operation cash.
+* Keep squad reordering, kidnapping and hostage-release choices visible, with clear cancellation and unavailable carriers disabled.
+* Ignore invalid kidnapping target keys instead of acting on the first target.
+* Choose a shop buyer with clickable crew choices, or cancel to keep the current buyer.
+* Local players detect updated builds even when extracted files have older timestamps, while retaining saves and offline play.
+
 * Confirm bulk pawn sales with clickable Yes and No controls.
 * Keep the squad marker outside doors while choosing how to open them.
 * Failed safecracking attempts leave the safe available to try again; only opening a safe consumes its contents.

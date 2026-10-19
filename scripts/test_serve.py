@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from http.client import HTTPConnection, HTTPResponse
 import json
+import os
 from pathlib import Path
 import socket
 import tempfile
@@ -52,10 +53,10 @@ class GameServerTests(unittest.TestCase):
 
         self.addCleanup(stop)
 
-    def request(self, server, path):
+    def request(self, server, path, headers=None, method="GET"):
         connection = HTTPConnection(*server.server_address, timeout=1)
         try:
-            connection.request("GET", path)
+            connection.request(method, path, headers=headers or {})
             response = connection.getresponse()
             return response.status, response.headers, response.read()
         finally:
@@ -145,18 +146,78 @@ class GameServerTests(unittest.TestCase):
                 self.assertEqual(status, 404)
                 self.assertNotIn(b"outside-root secret", body)
 
+    def test_date_only_cache_from_another_build_cannot_hide_new_bytes(self):
+        server = self.server()
+        self.start(server)
+        for name, url in [("index.html", "/"), ("sw.js", "/sw.js"),
+                          ("main.dart.js", "/main.dart.js?version=next")]:
+            with self.subTest(name=name):
+                path = self.root / name
+                path.write_bytes(b"old-build")
+                os.utime(path, (2_000_000_000, 2_000_000_000))
+                _, original, _ = self.request(server, url)
+                path.write_bytes(b"new-build")  # Same size; older archive mtime.
+                os.utime(path, (315_532_800, 315_532_800))
+                status, headers, body = self.request(server, url, {
+                    "If-Modified-Since": original["Last-Modified"],
+                })
+                self.assertEqual(status, 200)
+                self.assertEqual(body, b"new-build")
+                self.assertTrue(headers["ETag"].startswith('"'))
+
+    def test_content_etags_revalidate_even_with_identical_size_and_mtime(self):
+        path = self.root / "main.dart.js"
+        path.write_bytes(b"first-build")
+        os.utime(path, (315_532_800, 315_532_800))
+        server = self.server()
+        self.start(server)
+        _, original, _ = self.request(server, "/main.dart.js")
+        self.assertIsNotNone(original["ETag"])
+        status, headers, body = self.request(server, "/main.dart.js", {
+            "If-None-Match": original["ETag"],
+        })
+        self.assertEqual((status, body), (304, b""))
+        self.assertEqual(headers["ETag"], original["ETag"])
+        self.assertEqual(headers["Cache-Control"], "no-cache")
+        self.assertEqual(headers["X-Content-Type-Options"], "nosniff")
+        path.write_bytes(b"other-build")
+        os.utime(path, (315_532_800, 315_532_800))
+        status, changed, body = self.request(server, "/main.dart.js", {
+            "If-None-Match": original["ETag"],
+            "If-Modified-Since": "Wed, 18 May 2033 03:33:20 GMT",
+        })
+        self.assertEqual((status, body), (200, b"other-build"))
+        self.assertNotEqual(changed["ETag"], original["ETag"])
+        status, _, body = self.request(server, "/main.dart.js", {
+            "If-None-Match": f'"unrelated", W/{changed["ETag"]}',
+        })
+        self.assertEqual((status, body), (304, b""))
+        status, head, body = self.request(server, "/main.dart.js", method="HEAD")
+        self.assertEqual((status, body), (200, b""))
+        self.assertEqual(head["ETag"], changed["ETag"])
+        self.assertEqual(int(head["Content-Length"]), len(b"other-build"))
+        status, _, body = self.request(server, "/main.dart.js", {
+            "If-None-Match": changed["ETag"],
+        }, method="HEAD")
+        self.assertEqual((status, body), (304, b""))
+
     def test_symlink_cannot_escape_the_served_build(self):
         secret = Path(self.temporary.name) / "secret.txt"
         secret.write_bytes(b"outside-root secret")
         try:
             (self.root / "external.txt").symlink_to(secret)
+            indexed = self.root / "indexed"
+            indexed.mkdir()
+            (indexed / "index.html").symlink_to(secret)
         except OSError as error:
             self.skipTest(f"Host does not permit test symlinks: {error}")
         server = self.server()
         self.start(server)
-        status, headers, body = self.request(server, "/external.txt")
-        self.assertEqual(status, 404)
-        self.assertNotIn(b"outside-root secret", body)
+        for path in ("/external.txt", "/indexed/"):
+            with self.subTest(path=path):
+                status, headers, body = self.request(server, path)
+                self.assertEqual(status, 404)
+                self.assertNotIn(b"outside-root secret", body)
 
 
 if __name__ == "__main__":

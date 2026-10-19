@@ -8,6 +8,30 @@ import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/utils/colors.dart';
 
+/// A nested decision owns its whole frame, rather than inheriting roster or
+/// field commands from the reader that opened it.
+void printSquadMemberChoices(
+  String prompt, {
+  bool Function(Creature)? enabledWhen,
+}) {
+  erase();
+  console.screen = 'squad_choice';
+  mvaddstrc(0, 1, white, prompt);
+  for (var index = 0; index < squad.length; index++) {
+    final person = squad[index];
+    final key = '${index + 1}';
+    addOptionText(
+      10 + index,
+      1,
+      key,
+      '$key - ${person.name}',
+      enabledWhen: enabledWhen?.call(person) ?? true,
+    );
+    console.annotateActionEntity(key, type: 'person', id: person.id.toString());
+  }
+  addOptionText(10 + squad.length, 1, 'Enter', 'Enter - Cancel');
+}
+
 void printParty({
   bool fullParty = false,
   ShowCarPrefs? showCarPrefs,

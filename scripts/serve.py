@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -24,6 +26,49 @@ class GameHandler(SimpleHTTPRequestHandler):
         ".bin": "application/octet-stream",
         ".webp": "image/webp",
     }
+
+    def send_head(self):
+        path = Path(self.translate_path(self.path))
+        if path.is_dir():
+            if not urlsplit(self.path).path.endswith("/"):
+                return super().send_head()  # Preserve the directory redirect.
+            for name in ("index.html", "index.htm"):
+                if (path / name).is_file():
+                    path /= name
+                    break
+            else:
+                return super().send_head()
+        if not path.resolve().is_relative_to(Path(self.directory).resolve()):
+            self.send_error(404, "File not found")
+            return None
+        try:
+            source = path.open("rb")
+        except OSError:
+            return super().send_head()
+        try:
+            info = os.fstat(source.fileno())
+            etag = '"' + hashlib.file_digest(source, "sha256").hexdigest() + '"'
+            source.seek(0)
+            matches = [value.strip().removeprefix("W/") for value in
+                       self.headers.get("If-None-Match", "").split(",")]
+            if etag in matches or "*" in matches:
+                source.close()
+                self.send_response(304)
+                self.send_header("ETag", etag)
+                self.end_headers()
+                return None
+            # Reproducible archives can have older or identical mtimes for new
+            # bytes. Legacy date-only validators must receive a fresh response.
+            self.send_response(200)
+            self.send_header("Content-Type", self.guess_type(str(path)))
+            self.send_header("Content-Length", str(info.st_size))
+            self.send_header("Last-Modified", self.date_time_string(info.st_mtime))
+            self.send_header("ETag", etag)
+            self.end_headers()
+            return source
+        except OSError:
+            source.close()
+            raise
 
     def do_GET(self):
         if urlsplit(self.path).path == "/__lcs_launcher_health":

@@ -981,7 +981,13 @@ Future<void> dischargeHospitalPatient(Creature patient) async {
       console.recovery = RecoveryContext(
         scene: RecoveryScene.discharge,
         title: 'Hospital discharge',
-        note: '${patient.name} can return to base. Unpaid charges remain owed.',
+        note:
+            '${patient.name} returns to base outside all squads. '
+            'Use People → Join squad. Unpaid charges remain owed.',
+        details: const [
+          'Discharge ends inpatient care; missing eyes or limbs may remain permanently.',
+          'An unavailable base uses the existing homeless-camp fallback. Check the person’s location in People.',
+        ],
         people: [recoveryPersonSummary(patient)],
         bodyRows: const [8, 9],
         actions: console.actions,
@@ -997,7 +1003,9 @@ Future<void> dischargeHospitalPatient(Creature patient) async {
     }
   } else {
     await showMessage(
-      "${patient.name} has been discharged from ${patient.site!.name}.",
+      "${patient.name} has been discharged from ${patient.site!.name}. "
+      'They return to base outside all squads. Open People, find ${patient.name} and choose Join squad when ready. '
+      'Permanent injuries can remain after treatment.',
       title: 'Hospital discharge',
     );
   }

@@ -62,7 +62,12 @@ Future<ModalRun<T>> choose<T>(
 
 void expectMembersOnly(List<ConsoleAction> actions, List<String> names) {
   expect(actions.map((action) => action.key), ['1', '2', 'Enter']);
-  expect(actions.map((action) => action.label), [...names, 'Cancel']);
+  expect(
+    actions.map(
+      (action) => action.label.replaceFirst(RegExp(r'^(\d|Enter) - '), ''),
+    ),
+    [...names, 'Cancel'],
+  );
   expect(actions.every((action) => action.enabled), isTrue);
 }
 

@@ -470,6 +470,8 @@ void main() {
       expect(_key('journal-visit-members'), findsNothing);
       await _tap(tester, 'journal-order-details');
       expect(_key('journal-visit-members'), findsOneWidget);
+      expect(find.text('Combat readiness'), findsOneWidget);
+      expect(find.textContaining('compatible spare rounds'), findsWidgets);
       expect(_snapshot(), before);
       await tester.tap(find.text('Close'));
       await _settle(tester);

@@ -49,6 +49,9 @@ Future<void> siteMode(Site loc) async {
   final history = OperationHistoryCapture(loc);
   await _runSiteMode(loc);
   history.finish();
+  if (history.returnReport case final report?) {
+    await showMessage(report, title: 'Operation return');
+  }
 }
 
 Future<void> _runSiteMode(Site loc) async {

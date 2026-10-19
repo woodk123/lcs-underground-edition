@@ -626,6 +626,14 @@ class Shop extends ShopOption {
               c == Key.f) &&
           lootAvailable) {
         int fenceamount = 0;
+        final beforeStock = <String, int>{};
+        for (final item in base.loot) {
+          beforeStock.update(
+            item.type.name,
+            (n) => n + item.stackSize,
+            ifAbsent: () => item.stackSize,
+          );
+        }
 
         if (c == Key.f) {
           fenceamount = await fenceselect(customers);
@@ -650,8 +658,23 @@ class Shop extends ShopOption {
         }
 
         if (fenceamount > 0) {
+          final afterStock = <String, int>{};
+          for (final item in base.loot) {
+            afterStock.update(
+              item.type.name,
+              (n) => n + item.stackSize,
+              ifAbsent: () => item.stackSize,
+            );
+          }
           await showMessage(
-            'You add \$$fenceamount to Liberal Funds.',
+            [
+              'Sale proceeds: \$$fenceamount. You add \$$fenceamount to Liberal Funds.',
+              for (final entry in beforeStock.entries)
+                if (entry.value > (afterStock[entry.key] ?? 0))
+                  'Sold: ${entry.key} ×${entry.value - (afterStock[entry.key] ?? 0)}.',
+              'Funds after this sale: \$${ledger.funds + fenceamount}.',
+              'This receipt covers the items just sold. They may come from several operations; travel and medical expenses are recorded separately in Ledger.',
+            ].join('\n'),
             color: white,
             title: 'Shopping report',
           );

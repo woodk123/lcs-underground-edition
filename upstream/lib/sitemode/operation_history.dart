@@ -2,6 +2,7 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/operation_record.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
+import 'package:lcs_new_age/gamestate/ledger.dart';
 import 'package:lcs_new_age/gamestate/squad.dart';
 import 'package:lcs_new_age/items/item.dart';
 import 'package:lcs_new_age/justice/crimes.dart';
@@ -26,6 +27,9 @@ class OperationHistoryCapture {
       _siteHeat = site.heat,
       _poolIds = pool.map((p) => p.id).toSet(),
       _opinion = Map.of(politics.publicOpinion),
+      _income = ledger.totalIncome,
+      _expense = ledger.totalExpense,
+      _pawnIncome = ledger.income[Income.pawn] ?? 0,
       _loot = _countItems(activeSquad?.loot ?? []),
       _poolBefore = {
         for (final person in pool)
@@ -47,10 +51,12 @@ class OperationHistoryCapture {
   final SiteController _controller;
   final Set<int> _poolIds;
   final Map<View, double> _opinion;
+  final int _income, _expense, _pawnIncome;
   final Map<String, int> _loot;
   final Map<Creature, _PersonBefore> _poolBefore;
   late final Map<Creature, _PersonBefore> _people;
   bool _finished = false;
+  String? returnReport;
 
   void finish() {
     if (_finished || !identical(gameState, _game)) return;
@@ -86,6 +92,17 @@ class OperationHistoryCapture {
       if (_site.controller != _controller)
         'Site control: ${_controlLabel(_controller)} → ${_controlLabel(_site.controller)}.',
     ];
+    final financialResults = [
+      'Cash received during operation: \$${ledger.totalIncome - _income} '
+          '(pawn sales: \$${(ledger.income[Income.pawn] ?? 0) - _pawnIncome}).',
+      'Expenses during operation: \$${ledger.totalExpense - _expense}.',
+      'Net cash during operation: ${ledger.totalIncome - _income - (ledger.totalExpense - _expense) < 0 ? '-' : '+'}'
+          '\$${(ledger.totalIncome - _income - (ledger.totalExpense - _expense)).abs()}.',
+    ];
+    if (ledger.totalIncome != _income || ledger.totalExpense != _expense) {
+      results.addAll(financialResults);
+    }
+    final haul = <String>[];
     // Captured/killed squads may still retain a loot list awaiting cleanup.
     // It is not a successful haul unless someone actually returned with it.
     if (_squad?.members.any((p) => _outcome(p) == OperationOutcome.returned) ??
@@ -93,9 +110,10 @@ class OperationHistoryCapture {
       final carried = _countItems(_squad!.loot);
       for (final entry in carried.entries) {
         final gained = entry.value - (_loot[entry.key] ?? 0);
-        if (gained > 0) results.add('Carried out: ${entry.key} ×$gained.');
+        if (gained > 0) haul.add('Carried out: ${entry.key} ×$gained.');
       }
     }
+    results.addAll(haul);
     final opinion = <View, double>{
       for (final entry in politics.publicOpinion.entries)
         if ((entry.value - (_opinion[entry.key] ?? entry.value)).abs() > 1e-9)
@@ -147,6 +165,21 @@ class OperationHistoryCapture {
         squadResults: List.of(results),
         opinionChanges: Map.of(opinion),
       );
+    }
+    if (records.isNotEmpty) {
+      returnReport = [
+        _siteName,
+        if (haul.isEmpty)
+          'No newly collected loot returned with the squad.'
+        else
+          ...haul,
+        ...financialResults,
+        'These cash figures cover the site operation only. Travel, later sales and later medical bills are separate. Carried loot is inventory, not cash received.',
+        for (final entry in records.entries)
+          '${entry.key.name}: ${entry.value.outcome.name}'
+              '${entry.value.bloodChange == 0 ? '' : ' · blood change ${entry.value.bloodChange}'}'
+              '${entry.value.injuries.isEmpty ? ' · no new recorded injuries' : ' · ${entry.value.injuries.join('; ')}'}',
+      ].join('\n');
     }
     if (!significant) return;
     for (final entry in records.entries) {

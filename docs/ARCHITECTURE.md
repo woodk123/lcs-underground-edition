@@ -4,6 +4,8 @@ The Flutter project is in `upstream/`. Its layout stays close to [New Age](https
 
 ## Engine and interface
 
+Completed operations show a source-owned return acknowledgement with newly carried loot, cash received, expenses and injury deltas. Cash is scoped to entry/return; travel, later pawn sales and treatment are not attributed to a raid. Nonzero operation cash is retained in existing squad-result prose, without new save fields. Pawn receipts list actual stock removed and actual sale proceeds separately. Visit readiness reads current weapons, ammunition and per-patient First Aid eligibility without simulating combat or changing orders.
+
 - `upstream/lib/main.dart` starts the original sequential game loop.
 - `upstream/lib/engine/` supplies the console, awaited input and structured screen/action metadata.
 - `upstream/lib/modern/` contains the journal, dossiers, maps, creation screens and read-only help/calculation views.

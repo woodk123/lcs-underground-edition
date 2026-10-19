@@ -291,6 +291,17 @@ Future<void> disguisecheck(int timer) async {
           addstr(squad[0].name);
         }
         addstr(" fades into the shadows.");
+        addparagraph(
+          10,
+          1,
+          'The squad passed this stealth check. This does not remove anyone from the encounter or reset suspicion. '
+          '${siteAlarm
+              ? 'The site alarm is still raised.'
+              : siteAlarmTimer >= 0
+              ? 'Suspicion remains active; the alarm has not been cleared by hiding.'
+              : 'No site alarm is currently raised.'} '
+          'Moving, waiting and other actions can trigger further checks.',
+        );
 
         await acknowledge(title: 'Operation report');
       }

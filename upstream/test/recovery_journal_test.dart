@@ -186,6 +186,8 @@ void main() {
       var decisions = 0;
       await _drive(() => dischargeHospitalPatient(patient), (frame, _) {
         expect(frame!.scene, RecoveryScene.discharge);
+        expect(frame.note, contains('outside all squads'));
+        expect(frame.note, contains('Join squad'));
         expect(frame.people.single.person, same(patient));
         expect(frame.actions.map((action) => action.key), ['a', 'b']);
         final payment = frame.actions.first;
