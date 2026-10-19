@@ -247,6 +247,7 @@ Future<void> dealership(Site loc) async {
       enabledWhen: partysize >= 2,
     );
     addOptionText(16, 40, "Enter", "Enter - Leave");
+    console.screen = 'dealership';
 
     if (partysize > 0 && (activeSquadMemberIndex == -1 || partysize > 1)) {
       setColor(lightGray);

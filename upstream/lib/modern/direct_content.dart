@@ -163,11 +163,12 @@ class DirectContent extends StatelessWidget {
       }
     }
     final content = <Widget>[];
+    final personCards = <Widget>[];
     for (final summary in people) {
       final action = console.actions
           .where((a) => a.key == summary.choiceKey && a.entityType == 'person')
           .firstOrNull;
-      content.add(
+      personCards.add(
         JournalPersonCard(
           summary: summary,
           onSelect: action?.enabled == true
@@ -179,6 +180,7 @@ class DirectContent extends StatelessWidget {
         ),
       );
     }
+    if (console.screen != 'dealership') content.addAll(personCards);
     final guideActor =
         actor ?? game.activeSquadMember ?? game.squad.firstOrNull;
     final guideTopics = <DecisionTopic>{
@@ -477,6 +479,18 @@ class DirectContent extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      );
+    }
+    if (console.screen == 'dealership' && personCards.isNotEmpty) {
+      content.add(
+        Material(
+          type: MaterialType.transparency,
+          child: ExpansionTile(
+            key: const PageStorageKey('dealership-crew-expanded'),
+            title: Text('Squad (${people.length}) · equipment and condition'),
+            children: personCards,
           ),
         ),
       );

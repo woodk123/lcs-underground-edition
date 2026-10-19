@@ -441,6 +441,16 @@ void main() {
         game.squad.first.carId = car.id;
         final afterPurchase = game.ledger.funds;
         await play(tester, size, scale, () => dealership(site), () async {
+          final sale = engine.console.actions.singleWhere((a) => a.key == 's');
+          final saleButton = find.byKey(
+            ValueKey('direct-action:${sale.y}:${sale.x}:${sale.key}'),
+          );
+          expect(
+            saleButton.hitTestable(),
+            findsOneWidget,
+            reason:
+                'Sell must be visible before expanding or scrolling the roster.',
+          );
           await action(tester, 's');
           expect(game.vehiclePool, isEmpty);
           expect(game.ledger.funds, greaterThan(afterPurchase));

@@ -56,6 +56,9 @@ Future<void> doActivitySellBrownies(List<Creature> brownies) async {
         sitestory = NewsStory.prepare(NewsStories.arrestGoneWrong);
         criminalize(baker, Crime.drugDistribution);
         await attemptArrest(baker, "selling brownies");
+        // An interrupted working day earns nothing, including after escape.
+        // The pursuit may also have captured or killed the seller.
+        continue;
       }
     }
 

@@ -4,9 +4,13 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
+import 'package:lcs_new_age/creature/attributes.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/creature_type.dart';
+import 'package:lcs_new_age/creature/difficulty.dart';
+import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/daily/activities/arrest.dart';
+import 'package:lcs_new_age/daily/activities/fundraising.dart';
 import 'package:lcs_new_age/daily/recruitment.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
@@ -17,6 +21,7 @@ import 'package:lcs_new_age/justice/prison.dart';
 import 'package:lcs_new_age/justice/trial.dart';
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/politics/alignment.dart';
+import 'package:lcs_new_age/politics/laws.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/sitemode/fight.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
@@ -89,6 +94,63 @@ void main() {
     reseedRNG(seed: 20261013);
     game.mode = GameMode.base;
     game.activeSite = game.squad.first.site;
+  });
+
+  for (final surrender in [true, false]) {
+    test(
+      'police-interrupted brownies do not pay after ${surrender ? 'capture' : 'escape'}',
+      () async {
+        final seller = game.squad.first;
+        seller.activity = Activity(ActivityType.sellDrugs);
+        seller.income = 0;
+        seller.rawSkill[Skill.streetSmarts] = 0;
+        seller.rawAttributes[Attribute.agility] = 30;
+        game.laws[Law.drugs] = DeepAlignment.moderate;
+        final seed = Iterable.generate(10000).firstWhere((seed) {
+          reseedRNG(seed: seed);
+          return oneIn(45) &&
+              !seller.skillCheck(Skill.streetSmarts, Difficulty.average);
+        });
+        reseedRNG(seed: seed);
+        final funds = game.ledger.funds;
+        final earned = game.ledger.totalIncome;
+        final businessXp = seller.rawSkillXP[Skill.business];
+        await playChoices(() => doActivitySellBrownies([seller]), (
+          frame,
+          actions,
+          prompt,
+        ) {
+          final choice = actions
+              .where((a) => a.key == (surrender ? 'g' : 'd') && a.enabled)
+              .firstOrNull;
+          return choice?.key ?? 'Enter';
+        });
+        expect(seller.alive, isTrue);
+        expect(seller.imprisoned, surrender);
+        expect(seller.income, 0);
+        expect(game.ledger.funds, funds);
+        expect(game.ledger.totalIncome, earned);
+        expect(seller.rawSkillXP[Skill.business], businessXp);
+        roundTripLiveCampaign();
+      },
+    );
+  }
+
+  test('uninterrupted brownie work still pays and trains normally', () async {
+    final seller = game.squad.first;
+    seller.income = 0;
+    game.laws[Law.drugs] = DeepAlignment.moderate;
+    final seed = Iterable.generate(10000).firstWhere((seed) {
+      reseedRNG(seed: seed);
+      return !oneIn(45);
+    });
+    reseedRNG(seed: seed);
+    final funds = game.ledger.funds;
+    final xp = seller.rawSkillXP[Skill.business]!;
+    await doActivitySellBrownies([seller]);
+    expect(seller.income, greaterThan(0));
+    expect(game.ledger.funds, funds + seller.income);
+    expect(seller.rawSkillXP[Skill.business], xp + 5);
   });
 
   test(

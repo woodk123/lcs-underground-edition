@@ -131,7 +131,9 @@ ActivityMechanics activityMechanics(
         details:
             'A squad visit replaces individual daily tasks. '
             'After the visit, crew return to Lay Low; their earlier daily '
-            'orders do not resume automatically. '
+            'orders do not resume automatically. After an observed visit, '
+            'Prepare previous order offers supported daily jobs again for '
+            'confirmation in Organisation or People. '
             'Inspecting a building does not move the squad; issuing its order '
             'queues the visit for the next day.',
       );
@@ -270,10 +272,14 @@ ActivityMechanics activityMechanics(
       return help(
         'Sell weed brownies for income affected by drug laws.',
         skills: const [Skill.persuasion, Skill.business, Skill.streetSmarts],
-        risk: 'Police searches and drug-distribution charges',
+        risk:
+            'Police searches and drug-distribution charges; heat can expose your base to raids',
         details:
             'Stricter drug laws increase income and expose sellers to '
-            'police-search checks. Street Smarts helps avoid being caught.',
+            'police-search checks. Street Smarts helps avoid being caught. '
+            'A police interruption ends the working day without income, '
+            'even if the seller escapes. Wanted crew bring heat home; '
+            'an exposed base can be raided.',
       );
     case ActivityType.prostitution:
       return help(

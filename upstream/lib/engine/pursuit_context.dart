@@ -10,6 +10,7 @@ class PursuitContext {
     this.title = 'On-foot pursuit',
     required this.location,
     required this.note,
+    this.threatSummary,
     Iterable<String> statusLines = const [],
     required Iterable<JournalPersonSummary> people,
     required Iterable<String> encounterLines,
@@ -20,6 +21,7 @@ class PursuitContext {
        actions = List.unmodifiable(actions);
 
   final String title, location, note;
+  final String? threatSummary;
   final List<String> statusLines;
   final List<JournalPersonSummary> people;
   final List<String> encounterLines;

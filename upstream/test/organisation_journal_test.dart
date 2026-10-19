@@ -295,6 +295,67 @@ void main() {
     expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
   }
 
+  testWidgets('previous visit job is a cancellable draft bound to its actor', (
+    tester,
+  ) async {
+    await mount(tester);
+    final journal = tester.widget<OrganisationJournal>(
+      find.byType(OrganisationJournal),
+    );
+    final review = journal.controller.organisationReviews;
+    final actor = game.squad.first;
+    actor.activity = Activity(ActivityType.stealCars);
+    game.activeSquad!.activity = Activity(
+      ActivityType.visit,
+      idString: actor.base!.idString,
+    );
+    await review.observe(game.gameState.uniqueGameId, game.pool, game.date);
+    game.activeSquad!.activity = Activity.none();
+    actor.activity = Activity.none();
+    game.gameState.date = game.date.add(const Duration(days: 1));
+    await review.observe(game.gameState.uniqueGameId, game.pool, game.date);
+    expect(
+      review.notices
+          .where((n) => n.personId == actor.id)
+          .single
+          .previousActivity,
+      ActivityType.stealCars,
+    );
+    // Republish the source HQ reader for the explicitly prepared next date.
+    engine.console.sendInput('Enter');
+    await _settle(tester);
+    final button = _key('journal-previous-order:${actor.id}');
+    expect(button, findsOneWidget);
+    expect(button.hitTestable(), findsOneWidget);
+    final retained = tester.widget<TextButton>(button).onPressed!;
+    final before = _snapshot();
+    reseedRNG(seed: 23011);
+    final roll = lcsRandom(100000);
+    reseedRNG(seed: 23011);
+    await tester.tap(button);
+    await _settle(tester);
+    expect(activityOrderFrame(engine.console)?.actorId, actor.id);
+    expect(_key('journal-confirm-order'), findsOneWidget);
+    expect(_snapshot(), before);
+    await _tap(tester, 'journal-cancel-order');
+    expect(_snapshot(), before);
+    expect(lcsRandom(100000), roll);
+    await _tap(tester, 'journal-finish-orders');
+    expect(button.hitTestable(), findsOneWidget);
+    await tester.tap(button);
+    await _settle(tester);
+    await _tap(tester, 'journal-confirm-order');
+    expect(actor.activity.type, ActivityType.stealCars);
+    for (final other in game.squad.where((p) => p != actor)) {
+      expect(other.activity.type, ActivityType.sellArt);
+    }
+    final confirmed = _snapshot();
+    retained();
+    await _settle(tester);
+    expect(_snapshot(), confirmed);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('crew reports has a distinct tooltip and accessible name', (
     tester,
   ) async {

@@ -29,6 +29,7 @@ import 'package:lcs_new_age/modern/location_details.dart';
 import 'package:lcs_new_age/modern/location_help.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
+import 'package:lcs_new_age/modern/organisation_reviews.dart';
 import 'package:lcs_new_age/modern/personnel_directory.dart';
 import 'package:lcs_new_age/modern/recruitment_target_picker.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
@@ -767,6 +768,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                           spacing: 6,
                           runSpacing: 3,
                           children: [
+                            if (notice.previousActivity != null)
+                              _previousOrderButton(p, notice),
                             TextButton(
                               onPressed:
                                   controller.canNavigate &&
@@ -799,6 +802,38 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _previousOrderButton(Creature actor, OrganisationReviewNotice notice) {
+    final activity = notice.previousActivity;
+    final category = previousOrderCategory(activity);
+    return TextButton(
+      key: ValueKey('journal-previous-order:${actor.id}'),
+      onPressed:
+          category != null &&
+              controller.canNavigate &&
+              !controller.busy &&
+              personnelAvailableForOrders(actor)
+          ? () {
+              // Revalidate a retained callback against the live follow-up.
+              if (!controller.canNavigate ||
+                  !personnelAvailableForOrders(actor) ||
+                  actor.activity.type != ActivityType.none ||
+                  actor.squad?.activity.type == ActivityType.visit ||
+                  !controller.organisationReviews.notices.contains(notice)) {
+                return;
+              }
+              unawaited(
+                preparePersonOrder(
+                  actor,
+                  categoryId: category,
+                  activity: activity,
+                ),
+              );
+            }
+          : null,
+      child: Text('Prepare previous order: ${activity?.label ?? ''}'),
     );
   }
 
@@ -989,7 +1024,13 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       activityFrame ||
       planning ||
       squad?.activity.type == ActivityType.visit ||
-      person != null && person!.activity.type != ActivityType.none;
+      person != null &&
+          (person!.activity.type != ActivityType.none ||
+              controller.organisationReviews.notices.any(
+                (notice) =>
+                    notice.personId == person!.id &&
+                    notice.previousActivity != null,
+              ));
 
   Widget _teamPage(bool narrow) => JournalSurface(
     padding: const EdgeInsets.all(8),
@@ -1969,6 +2010,15 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     }
     final actor = person;
     final prepared = hasPreparedOrder;
+    final previousOrder = actor == null
+        ? null
+        : controller.organisationReviews.notices
+              .where(
+                (notice) =>
+                    notice.personId == actor.id &&
+                    notice.previousActivity != null,
+              )
+              .firstOrNull;
     final actual = squad?.activity.type == ActivityType.visit
         ? squad!.activity
         : actor?.activity;
@@ -2090,6 +2140,13 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (!prepared &&
+                      !activityFrame &&
+                      !planning &&
+                      actual?.type == ActivityType.none &&
+                      actor != null &&
+                      previousOrder != null)
+                    _previousOrderButton(actor, previousOrder),
                   Text(
                     visitInProgress
                         ? hospitalVisit
@@ -2098,6 +2155,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                         : help.timing,
                     style: JournalPalette.small,
                   ),
+                  if (activityFrame && !prepared)
+                    const Text(
+                      'This describes the assigned order. Prepare a choice to review it.',
+                      style: JournalPalette.small,
+                    ),
                   if (actor != null)
                     JuiceActivityHint(person: actor, activity: type),
                   if (!visitInProgress &&

@@ -12,6 +12,25 @@ enum OrganisationReviewKind {
   visitFinished,
 }
 
+/// Jobs that can be prepared again without replaying saved target selections.
+/// The real order reader still checks eligibility and requires confirmation.
+String? previousOrderCategory(ActivityType? type) => switch (type) {
+  ActivityType.donations ||
+  ActivityType.sellTshirts ||
+  ActivityType.sellArt ||
+  ActivityType.sellMusic => 'legal',
+  ActivityType.sellDrugs ||
+  ActivityType.prostitution ||
+  ActivityType.ccfraud => 'illegal',
+  ActivityType.stealCars || ActivityType.recruiting => 'acquisition',
+  ActivityType.communityService ||
+  ActivityType.trouble ||
+  ActivityType.graffiti ||
+  ActivityType.hacking ||
+  ActivityType.writeGuardian => 'activism',
+  _ => null,
+};
+
 /// A follow-up to an observed change, rather than a demand to stop resting.
 @immutable
 class OrganisationReviewNotice {
@@ -21,6 +40,7 @@ class OrganisationReviewNotice {
     required this.title,
     required this.detail,
     required this.kind,
+    this.previousActivity,
   });
 
   factory OrganisationReviewNotice._fromJson(Map<String, dynamic> json) =>
@@ -30,6 +50,9 @@ class OrganisationReviewNotice {
         title: json['title'] as String,
         detail: json['detail'] as String,
         kind: OrganisationReviewKind.values.byName(json['kind'] as String),
+        previousActivity: ActivityType.values
+            .where((type) => type.name == json['previousActivity'])
+            .firstOrNull,
       );
 
   final String id;
@@ -37,6 +60,7 @@ class OrganisationReviewNotice {
   final String title;
   final String detail;
   final OrganisationReviewKind kind;
+  final ActivityType? previousActivity;
 
   Map<String, dynamic> _toJson() => {
     'id': id,
@@ -44,6 +68,7 @@ class OrganisationReviewNotice {
     'title': title,
     'detail': detail,
     'kind': kind.name,
+    if (previousActivity != null) 'previousActivity': previousActivity!.name,
   };
 }
 
@@ -221,6 +246,9 @@ class OrganisationReviewStore extends ChangeNotifier {
                 '${person.name} is available for daily work. '
                 'Choose another order, prepare another visit, or keep laying low.',
             kind: OrganisationReviewKind.visitFinished,
+            previousActivity: previousOrderCategory(previous.activity) == null
+                ? null
+                : previous.activity,
           );
         } else if (previous?.available == true &&
             previous!.training &&

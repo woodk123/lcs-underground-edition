@@ -59,6 +59,49 @@ void main() {
   });
 
   test(
+    'previous daily job survives queued visit, restart and acknowledgement',
+    () async {
+      final squad = game.squads.first;
+      person.squad = squad;
+      person.activity = Activity(ActivityType.stealCars);
+      squad.activity = Activity(
+        ActivityType.visit,
+        idString: person.base!.idString,
+      );
+      final review = store();
+      final before = jsonEncode(game.gameState.toJson());
+      reseedRNG(seed: 40);
+      final expected = lcsRandom(100000);
+      reseedRNG(seed: 40);
+      await review.observe(101, [person], day);
+      expect(jsonEncode(game.gameState.toJson()), before);
+      expect(lcsRandom(100000), expected);
+      squad.activity = Activity.none();
+      person.activity = Activity.none();
+      final returned = store();
+      await returned.observe(101, [person], tomorrow);
+      expect(returned.notices.single.previousActivity, ActivityType.stealCars);
+      expect(
+        previousOrderCategory(returned.notices.single.previousActivity),
+        'acquisition',
+      );
+      final reopened = store();
+      await reopened.observe(101, [person], tomorrow);
+      expect(reopened.notices.single.previousActivity, ActivityType.stealCars);
+      await reopened.acknowledgePerson(person.id);
+      expect(reopened.notices, isEmpty);
+    },
+  );
+
+  test('previous job never replays parameterised or completed work', () async {
+    expect(previousOrderCategory(ActivityType.study), isNull);
+    expect(previousOrderCategory(ActivityType.makeClothing), isNull);
+    expect(previousOrderCategory(ActivityType.interrogation), isNull);
+    expect(previousOrderCategory(ActivityType.visit), isNull);
+    expect(previousOrderCategory(ActivityType.none), isNull);
+  });
+
+  test(
     'first observation is a baseline, including available squadless crew',
     () async {
       final review = store();

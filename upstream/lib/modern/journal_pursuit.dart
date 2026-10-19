@@ -66,13 +66,27 @@ class _JournalPursuitViewState extends State<JournalPursuitView> {
             children: [
               Text(frame.title, style: JournalPalette.heading),
               Text(frame.location, style: JournalPalette.small),
+              if (frame.threatSummary case final summary?)
+                Text(
+                  summary,
+                  key: const ValueKey('journal-pursuit-threat-summary'),
+                  style: JournalPalette.body,
+                ),
               const SizedBox(height: 6),
-              Text(frame.note, style: JournalPalette.body),
               const Divider(height: 18),
               Expanded(
                 child: ListView(
                   key: const ValueKey('journal-pursuit-scroll'),
                   children: [
+                    if (frame.encounterLines.isNotEmpty) ...[
+                      const Text('Pursuers', style: JournalPalette.heading),
+                      const SizedBox(height: 6),
+                      for (final line in frame.encounterLines)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Text(line, style: JournalPalette.body),
+                        ),
+                    ],
                     if (frame.statusLines.isNotEmpty)
                       Container(
                         key: const ValueKey('journal-pursuit-status'),
@@ -91,49 +105,62 @@ class _JournalPursuitViewState extends State<JournalPursuitView> {
                           ],
                         ),
                       ),
-                    for (final summary in frame.people)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: JournalPersonCard(
-                          summary: summary,
-                          onSelect: personActions[summary] == null
-                              ? null
-                              : _command(
-                                  frame,
-                                  personActions[summary]!,
-                                  revision,
-                                ),
-                          onInspect: () async {
-                            if (_inspecting ||
-                                !identical(
-                                  pursuitContext(widget.console),
-                                  frame,
-                                )) {
-                              return;
-                            }
-                            setState(() => _inspecting = true);
-                            try {
-                              await showCrewDossier(
-                                context,
-                                person: summary.person,
-                              );
-                            } finally {
-                              if (mounted) {
-                                setState(() => _inspecting = false);
-                              }
-                            }
-                          },
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(frame.note, style: JournalPalette.body),
+                    ),
+                    ExpansionTile(
+                      key: const PageStorageKey(
+                        'journal-pursuit-crew-expanded',
                       ),
-                    if (frame.encounterLines.isNotEmpty) ...[
-                      const Text('Pursuers', style: JournalPalette.heading),
-                      const SizedBox(height: 6),
-                      for (final line in frame.encounterLines)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Text(line, style: JournalPalette.body),
-                        ),
-                    ],
+                      title: Text(
+                        'Crew (${frame.people.length})',
+                        style: JournalPalette.heading,
+                      ),
+                      subtitle: Text(
+                        frame.people
+                            .map((p) => '${p.name}: ${p.health}')
+                            .join(' · '),
+                        style: JournalPalette.small,
+                      ),
+                      initiallyExpanded: frame.people.length == 1,
+                      children: [
+                        for (final summary in frame.people)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: JournalPersonCard(
+                              summary: summary,
+                              onSelect: personActions[summary] == null
+                                  ? null
+                                  : _command(
+                                      frame,
+                                      personActions[summary]!,
+                                      revision,
+                                    ),
+                              onInspect: () async {
+                                if (_inspecting ||
+                                    !identical(
+                                      pursuitContext(widget.console),
+                                      frame,
+                                    )) {
+                                  return;
+                                }
+                                setState(() => _inspecting = true);
+                                try {
+                                  await showCrewDossier(
+                                    context,
+                                    person: summary.person,
+                                  );
+                                } finally {
+                                  if (mounted) {
+                                    setState(() => _inspecting = false);
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                      ],
+                    ),
                     if (frame.people.isNotEmpty)
                       Align(
                         alignment: Alignment.centerLeft,

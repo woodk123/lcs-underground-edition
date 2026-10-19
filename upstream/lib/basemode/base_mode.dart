@@ -537,6 +537,8 @@ SiegeBriefing _siegeBriefing(Site loc) {
       '$raiders ${siege.underAttack ? 'are attacking now.' : 'have surrounded the safehouse.'}',
       if (loc.upgradable && numberEating(loc) > 0)
         '${numberEating(loc)} people here · ${loc.compound.rations} rations · ${foodDaysLeft(loc)} days of food',
+      'Trying to escape can lead to armed pursuit, capture or death. '
+          'Slower or injured crew can make a group escape harder.',
       if (loc.compound.fortified) 'Fortifications are in place.',
       if (loc.compound.boobyTraps) 'Booby traps are in place.',
       if (siege.lightsOff) 'Power is cut.',

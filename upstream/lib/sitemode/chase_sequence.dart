@@ -573,6 +573,7 @@ void _publishCarPursuit() {
   console.screen = 'pursuit';
   console.pursuit = PursuitContext(
     title: 'Car pursuit',
+    threatSummary: 'Pursuing vehicles: ${chaseSequence!.enemycar.length}',
     location: chaseSequence!.location.getName(),
     note: chaseSequence!.canpullover
         ? 'Pulling over ends the pursuit in police custody. Bailing out abandons your cars.'
@@ -698,6 +699,7 @@ Future<ChaseOutcome> footChaseSequence({
     console.annotateAction('g', 'Give up and surrender');
     console.screen = 'pursuit';
     console.pursuit = PursuitContext(
+      threatSummary: 'Pursuers: ${encounter.where((e) => e.isEnemy && e.alive).length}',
       location: chaseSequence!.location.getName(),
       note: chaseSequence!.canpullover
           ? 'Giving up ends the pursuit in police custody.'

@@ -30,10 +30,11 @@ String _snapshot() => jsonEncode(game.gameState.toJson());
 /// Authored reader fixtures exercise presentation without deciding car rules.
 /// Engine regressions separately run the real pursuit and obstacle handlers.
 class _PursuitReaders {
-  _PursuitReaders() {
+  _PursuitReaders({this.wholeCrew = false}) {
     unawaited(_run());
   }
 
+  final bool wholeCrew;
   final commands = <int>[];
   bool obstacle = false, finished = false;
 
@@ -96,6 +97,7 @@ class _PursuitReaders {
     engine.console.screen = 'pursuit';
     engine.console.pursuit = PursuitContext(
       title: 'Car pursuit',
+      threatSummary: wholeCrew ? 'Pursuers: 8' : 'Pursuing vehicles: 1',
       location: 'Downtown',
       note: 'Pulling over ends the pursuit in police custody.',
       statusLines: [
@@ -106,16 +108,19 @@ class _PursuitReaders {
           'Headlights flash in your mirrors.',
       ],
       people: [
-        JournalPersonSummary(
-          person: person,
-          name: person.name,
-          role: person.title,
-          health: 'Healthy',
-          equipment: const ['Transport: Red Sportscar (driver)'],
-          details: const ['Driving: 0'],
-        ),
+        for (final person in wholeCrew ? game.squad : [person])
+          JournalPersonSummary(
+            person: person,
+            name: person.name,
+            role: person.title,
+            health: 'Healthy',
+            equipment: const ['Transport: Red Sportscar (driver)'],
+            details: const ['Driving: 0'],
+          ),
       ],
-      encounterLines: const ['Police Officer — Police Cruiser'],
+      encounterLines: wholeCrew
+          ? [for (var i = 1; i <= 8; i++) '$i Police officer — 9mm pistol']
+          : const ['Police Officer — Police Cruiser'],
       actions: actions,
     );
   }
@@ -231,11 +236,12 @@ void main() {
     WidgetTester tester, {
     Size size = const Size(1200, 800),
     double scale = 1,
+    bool wholeCrew = false,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
     journalReadingScale.value = scale;
-    final readers = _PursuitReaders();
+    final readers = _PursuitReaders(wholeCrew: wholeCrew);
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox.shrink());
       await readers.stop(tester);
@@ -246,6 +252,67 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(JournalPursuitView), findsOneWidget);
     return readers;
+  }
+
+  for (final (size, scale) in [
+    (const Size(1280, 800), 1.0),
+    (const Size(800, 600), 1.5),
+    (const Size(390, 844), 2.0),
+  ]) {
+    testWidgets('raid pursuers precede a full crew at $size/$scale', (
+      tester,
+    ) async {
+      await mount(tester, size: size, scale: scale, wholeCrew: true);
+      final before = _snapshot();
+      expect(
+        find
+            .byKey(const ValueKey('journal-pursuit-threat-summary'))
+            .hitTestable(),
+        findsOneWidget,
+      );
+      reseedRNG(seed: 92014);
+      final expected = lcsRandom(100000);
+      reseedRNG(seed: 92014);
+      final list = find
+          .descendant(
+            of: find.byKey(const ValueKey('journal-pursuit-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      if (size.width < 400) {
+        await tester.scrollUntilVisible(
+          find.text('1 Police officer — 9mm pistol'),
+          80,
+          scrollable: list,
+        );
+      }
+      expect(
+        find.text('1 Police officer — 9mm pistol').hitTestable(),
+        findsOneWidget,
+      );
+      expect(_action('d').hitTestable(), findsOneWidget);
+      final crew = find.byKey(
+        const PageStorageKey('journal-pursuit-crew-expanded'),
+      );
+      await tester.scrollUntilVisible(
+        crew,
+        180,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const ValueKey('journal-pursuit-scroll')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.tap(find.text('Crew (${game.squad.length})'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Crew (${game.squad.length})'));
+      await tester.pumpAndSettle();
+      expect(_snapshot(), before);
+      expect(lcsRandom(100000), expected);
+      expect(_action('d').hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   }
 
   testWidgets(

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Brownie sellers no longer earn money after their working day is interrupted by police.
+* See pursuit threats and dealership choices before the detailed crew roster, with clearer warnings about raid escapes.
+* After a visit, prepare a previous daily job again from Organisation or People, then confirm it normally.
+
 ## Underground Edition 0.1.0 — 2026-10-18
 
 First numbered Underground release. Since Preview 2026.10.16:
