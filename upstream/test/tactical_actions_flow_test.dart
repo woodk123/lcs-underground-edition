@@ -20,12 +20,15 @@ import 'package:lcs_new_age/newspaper/news_story.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/sitemode/sitemap.dart';
 import 'package:lcs_new_age/sitemode/sitemode.dart';
+import 'package:lcs_new_age/utils/lcsrandom.dart';
 
 import 'test_support.dart';
 
 /// These tests run the original siteMode input loop, including its U dispatch
 /// to useTileSpecial and its complete G branch (lootGround, item transfer and
-/// tile clearing). The saved campaign's skills, equipment and RNG are intact.
+/// tile clearing). They retain the original gameplay handlers. The door fixture
+/// declares Security 50 and a fixed seed so unrelated encounters do not replace
+/// its door reader; the other fixtures retain the campaign's capabilities.
 /// A declared flat map is installed at a paused input boundary; this is action
 /// acceptance on synthetic geometry, not a normal-navigation playthrough.
 class _StoppedFixture implements Exception {
@@ -240,6 +243,7 @@ void main() {
       levelMap[36][11][0]
         ..door = true
         ..locked = true;
+      reseedRNG(seed: 20261019);
     });
     await _clickSourceAction(tester, 'Right');
     expect(game.locx, 36, reason: 'Original engine targets the door.');
@@ -267,6 +271,12 @@ void main() {
     await _waitForField(tester, flow);
     expect((game.locx, game.locy), (36, 11));
     expect((_currentCell().x, _currentCell().y), (36, 11));
+    expect(
+      game.encounter,
+      isEmpty,
+      reason:
+          'This declared door fixture must remain an encounter-free journey.',
+    );
   });
 
   testWidgets('original U uses stairs and the next field view shows level 2', (
