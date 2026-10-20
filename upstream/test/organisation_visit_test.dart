@@ -132,6 +132,7 @@ void main() {
   Future<void> inspectFromBusiness(WidgetTester tester, Site site) async {
     await _tap(tester, 'journal-orders');
     await _tap(tester, 'journal-order-group:0');
+    await _tap(tester, 'journal-orders-map-toggle');
     await _tap(tester, 'journal-map-place:${site.district.idString}');
     expect(
       _key('journal-selected-destination'),
@@ -680,6 +681,7 @@ void main() {
       final before = _snapshot();
       await _tap(tester, 'journal-orders');
       await _tap(tester, 'journal-order-group:0');
+      await _tap(tester, 'journal-orders-map-toggle');
       await _tap(tester, 'journal-map-place:${district.idString}');
       await tester.tap(find.byTooltip('Show location index'));
       await _settle(tester);

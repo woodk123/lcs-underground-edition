@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Choose daily orders from a full task list with visible shortcuts, relevant skills, costs and current assignments. Switch to the map when needed without losing its position.
+* Choose a compact graphical layout and turn introductory explanations on or off independently of reading size; these preferences persist between launches.
+* Read character attributes in a consistent Heart-first order, compare compact crew and recruitment summaries, and open attribute or skill explanations by keyboard or touch.
+* See named keyboard shortcuts and clearer focus across graphical choices, profiles, reports, treatment and pursuits, including distinct passenger and Shift-key driver controls.
+
 * Queue a squad visit directly from a browsed destination, with one action instead of separate preparation and confirmation. Keyboard help and visit map letter shortcuts are visible in graphical view.
 * See effective attributes and scheduled recruitment meeting counts near the top of character screens. Recruitment cards show attributes, and wide dossiers arrange skills in multiple columns.
 * Start the web player with its bundled default font, avoiding a stalled launch when Google's font server cannot be reached.

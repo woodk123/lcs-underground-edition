@@ -3,6 +3,8 @@ import 'package:lcs_new_age/engine/agenda_context.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/modern/campaign_progress.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/law_help.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
@@ -27,6 +29,7 @@ class JournalAgendaView extends StatelessWidget {
       final frame = agendaOverviewFrame(console);
       if (frame == null) return const SizedBox.shrink();
       final revision = console.revision.value;
+      final preferences = JournalPreferences.of(context);
       return LayoutBuilder(
         builder: (context, bounds) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -50,7 +53,9 @@ class JournalAgendaView extends StatelessWidget {
                     children: [
                       for (final note in frame.notes)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
+                          padding: EdgeInsets.only(
+                            bottom: preferences.compact ? 4 : 8,
+                          ),
                           child: Text(note, style: JournalPalette.body),
                         ),
                       if (frame.page == 0) ...[
@@ -119,7 +124,10 @@ class JournalAgendaView extends StatelessWidget {
                             foregroundColor: JournalPalette.danger,
                           )
                         : null,
-                    child: Text(_controlLabel(action)),
+                    child: JournalCommandLabel(
+                      shortcut: action.key,
+                      label: _controlLabel(action),
+                    ),
                   ),
               ],
             ),

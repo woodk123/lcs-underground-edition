@@ -29,6 +29,12 @@ TESTS = (
     'network_journal_test.dart', 'personnel_directory_test.dart',
     'save_load_test.dart', 'save_round_trip_test.dart', 'save_recovery_test.dart',
     'operation_history_test.dart', 'crew_operation_history_test.dart',
+    'keyboard_orders_workspace_test.dart', 'keyboard_reader_choices_test.dart',
+    'character_presentation_test.dart', 'journal_preferences_test.dart',
+    'keyboard_navigation_test.dart', 'text_prompt_focus_test.dart',
+    'base_management_controller_test.dart', 'journal_ledger_test.dart',
+    'journal_media_test.dart', 'journal_agenda_test.dart',
+    'legislation_presentation_test.dart', 'article_view_test.dart',
 )
 PORTS = (18879, 18882)  # Existing helpers deliberately pin these QA origins.
 
@@ -203,6 +209,7 @@ def run(args) -> Path:
                  ['--campaign', str(output / 'creation/manual-founder.json')]),
                 ('prepared-week', 'first_week_browser_review.mjs', []),
                 ('organisation', 'browser_review.mjs', []),
+                ('keyboard-interface', 'keyboard_interface_browser_review.mjs', []),
                 ('personnel', 'personnel_browser_review.mjs', []),
             ]
             for name, helper, extra in suites:

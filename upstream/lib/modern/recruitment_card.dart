@@ -3,6 +3,7 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/modern/character_attributes.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
@@ -57,10 +58,11 @@ class RecruitmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final preferences = JournalPreferences.of(context);
     final strengths = recruitmentStrengths(person);
     return Container(
       key: ValueKey('recruitment-card:${person.id}'),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(preferences.compact ? 10 : 16),
       decoration: BoxDecoration(
         color: JournalPalette.card,
         border: Border.all(color: JournalPalette.rule),
@@ -72,8 +74,12 @@ class RecruitmentCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CrewPortrait(person: person, size: 80, showStatus: false),
-              const SizedBox(width: 14),
+              CrewPortrait(
+                person: person,
+                size: preferences.compact ? 44 : 80,
+                showStatus: false,
+              ),
+              SizedBox(width: preferences.compact ? 9 : 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,15 +127,17 @@ class RecruitmentCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            recruitmentBackground(person),
-            style: const TextStyle(height: 1.5),
-          ),
-          const SizedBox(height: 12),
+          if (preferences.showGuidance) ...[
+            SizedBox(height: preferences.compact ? 6 : 12),
+            Text(
+              recruitmentBackground(person),
+              style: const TextStyle(height: 1.5),
+            ),
+          ],
+          SizedBox(height: preferences.compact ? 6 : 12),
           CharacterAttributes(person: person),
           if (strengths.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: preferences.compact ? 6 : 12),
             const Text(
               'Strongest skills',
               style: TextStyle(fontWeight: FontWeight.w700),
@@ -142,11 +150,16 @@ class RecruitmentCard extends StatelessWidget {
                 for (final skill in strengths)
                   MechanicsTooltip(
                     message: skillHelp(skill),
-                    child: Chip(
-                      label: Text(
-                        '${skill.displayName} ${person.skill(skill)}',
-                      ),
-                    ),
+                    child: preferences.compact
+                        ? Text(
+                            '${skill.displayName} ${person.skill(skill)}',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          )
+                        : Chip(
+                            label: Text(
+                              '${skill.displayName} ${person.skill(skill)}',
+                            ),
+                          ),
                   ),
               ],
             ),
@@ -156,7 +169,7 @@ class RecruitmentCard extends StatelessWidget {
             '${followUp ? 'Meeting with' : 'Introduced through'} ${recruiter.name}',
             style: const TextStyle(color: JournalPalette.muted, fontSize: 12),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: preferences.compact ? 6 : 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,

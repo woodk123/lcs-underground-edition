@@ -29,8 +29,10 @@ import 'package:lcs_new_age/modern/journal_ledger.dart';
 import 'package:lcs_new_age/modern/journal_legislation.dart';
 import 'package:lcs_new_age/modern/journal_media.dart';
 import 'package:lcs_new_age/modern/journal_media_production.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_pursuit.dart';
 import 'package:lcs_new_age/modern/journal_recovery.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/journal_title.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
@@ -274,12 +276,22 @@ class _ModernGameShellState extends State<ModernGameShell> {
       // Inspection keys must not become field orders or a siege surrender.
       return KeyEventResult.ignored;
     }
+    if (console.textInput &&
+        event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape) {
+      _send('Escape');
+      return KeyEventResult.handled;
+    }
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.f1 &&
+        !_helpOpen &&
+        !_sending &&
+        !_navigating &&
+        !_organisation.busy) {
+      unawaited(_help());
+      return KeyEventResult.handled;
+    }
     if (_entryFocus.hasFocus) {
-      if (event is KeyDownEvent &&
-          event.logicalKey == LogicalKeyboardKey.escape) {
-        _send('Escape');
-        return KeyEventResult.handled;
-      }
       return KeyEventResult.ignored;
     }
     final focusedContext = FocusManager.instance.primaryFocus?.context;
@@ -300,10 +312,6 @@ class _ModernGameShellState extends State<ModernGameShell> {
             event.logicalKey == LogicalKeyboardKey.space)) {
       // Let the focused button's ActivateIntent handle Enter / Space.
       return KeyEventResult.ignored;
-    }
-    if (event.logicalKey == LogicalKeyboardKey.f1) {
-      unawaited(_help());
-      return KeyEventResult.handled;
     }
     if (event.logicalKey == LogicalKeyboardKey.tab ||
         HardwareKeyboard.instance.isControlPressed ||
@@ -348,6 +356,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
       unawaited(_mediaAction(journalKey!));
       return KeyEventResult.handled;
     }
+    // The visible form owns edits. Tabbing to another control must not type
+    // into the hidden source mvgetstr reader behind that form.
+    if (console.textInput) return KeyEventResult.ignored;
     console.keyEvent(event);
     return KeyEventResult.handled;
   }
@@ -373,6 +384,15 @@ class _ModernGameShellState extends State<ModernGameShell> {
       });
       _keyboard.requestFocus();
     }
+  }
+
+  void _restoreTextEntryFocus() {
+    if (!console.textInput) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && console.textInput && !_helpOpen) {
+        _entryFocus.requestFocus();
+      }
+    });
   }
 
   Future<bool> _textKey(String key) async {
@@ -478,7 +498,11 @@ class _ModernGameShellState extends State<ModernGameShell> {
       setState(() {
         _helpOpen = false;
       });
-      _keyboard.requestFocus();
+      if (console.textInput) {
+        _restoreTextEntryFocus();
+      } else {
+        _keyboard.requestFocus();
+      }
     }
   }
 
@@ -578,97 +602,122 @@ class _ModernGameShellState extends State<ModernGameShell> {
     final creation = console.creation;
     final journal =
         _journalSession && !title && !classic && game.mode == GameMode.base;
-    return Focus(
-      focusNode: _keyboard,
-      autofocus: true,
-      onKeyEvent: _onKey,
-      child: MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(_textScale)),
-        child: console.eventMessage != null && !classic
-            ? journal
-                  ? Theme(data: buildJournalTheme(), child: _journalDesktop())
-                  : _journalFallback(compact)
-            : creation != null && !classic
-            ? JournalCreationPage(
-                console: console,
-                context: creation,
-                onAction: _send,
-                inputBar: _inputBar(creation: true),
-                onHelp: _help,
-                readingControl: PopupMenuButton<double>(
-                  tooltip: 'Reading size',
-                  initialValue: _textScale,
-                  onSelected: (value) => setState(() => _textScale = value),
-                  icon: const Icon(
-                    Icons.text_fields,
-                    color: JournalPalette.brassDark,
-                  ),
-                  itemBuilder: (_) => [
-                    for (final scale in [1.0, 1.25, 1.5])
-                      PopupMenuItem(
-                        value: scale,
-                        child: Text('${(scale * 100).round()}%'),
-                      ),
-                  ],
-                ),
-              )
-            : title && !classic
-            ? JournalTitlePage(console: console, onAction: _send, onHelp: _help)
-            : journal
-            ? Theme(data: buildJournalTheme(), child: _journalDesktop())
-            : !classic
-            ? _journalFallback(compact)
-            : Column(
-                children: [
-                  _topbar(compact),
-                  if (!title && width < 900) _sectionStrip(),
-                  Expanded(
-                    child: Row(
+    return NotificationListener<JournalPreferencesClosedNotification>(
+      onNotification: (_) {
+        _restoreTextEntryFocus();
+        return true;
+      },
+      child: FocusTraversalGroup(
+        policy: ReadingOrderTraversalPolicy(),
+        child: Focus(
+          focusNode: _keyboard,
+          autofocus: true,
+          onKeyEvent: _onKey,
+          child: MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(_textScale)),
+            child: console.eventMessage != null && !classic
+                ? journal
+                      ? Theme(
+                          data: buildJournalTheme(),
+                          child: _journalDesktop(),
+                        )
+                      : _journalFallback(compact)
+                : creation != null && !classic
+                ? JournalCreationPage(
+                    console: console,
+                    context: creation,
+                    onAction: _send,
+                    inputBar: _inputBar(creation: true),
+                    onHelp: _help,
+                    readingControl: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (!title && width >= 900) _sidebar(),
-                        Expanded(
-                          child: Stack(
-                            children: [
-                              Positioned.fill(
-                                child: title && !_classic
-                                    ? _titlePage(compact)
-                                    : hq && !classic
-                                    ? _withCrewInspector(_headquarters(compact))
-                                    : _withCrewInspector(
-                                        _workspace(classic, compact),
-                                      ),
-                              ),
-                              Positioned.fill(
-                                child: ExcludeFocus(
-                                  excluding: !classic,
-                                  child: Offstage(
-                                    offstage: !classic,
-                                    child: Padding(
-                                      padding: EdgeInsets.fromLTRB(
-                                        20,
-                                        100,
-                                        compact ? 20 : 340,
-                                        compact ? 300 : 90,
-                                      ),
-                                      child: ConsoleWidget(
-                                        console,
-                                        key: ConsoleWidget.globalKey,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                        const JournalPreferencesButton(),
+                        PopupMenuButton<double>(
+                          tooltip: 'Reading size',
+                          initialValue: _textScale,
+                          onSelected: (value) =>
+                              setState(() => _textScale = value),
+                          icon: const Icon(
+                            Icons.text_fields,
+                            color: JournalPalette.brassDark,
                           ),
+                          itemBuilder: (_) => [
+                            for (final scale in [1.0, 1.25, 1.5])
+                              PopupMenuItem(
+                                value: scale,
+                                child: Text('${(scale * 100).round()}%'),
+                              ),
+                          ],
                         ),
                       ],
                     ),
+                  )
+                : title && !classic
+                ? JournalTitlePage(
+                    console: console,
+                    onAction: _send,
+                    onHelp: _help,
+                  )
+                : journal
+                ? Theme(data: buildJournalTheme(), child: _journalDesktop())
+                : !classic
+                ? _journalFallback(compact)
+                : Column(
+                    children: [
+                      _topbar(compact),
+                      if (!title && width < 900) _sectionStrip(),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            if (!title && width >= 900) _sidebar(),
+                            Expanded(
+                              child: Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child: title && !_classic
+                                        ? _titlePage(compact)
+                                        : hq && !classic
+                                        ? _withCrewInspector(
+                                            _headquarters(compact),
+                                          )
+                                        : _withCrewInspector(
+                                            _workspace(classic, compact),
+                                          ),
+                                  ),
+                                  Positioned.fill(
+                                    child: ExcludeFocus(
+                                      excluding: !classic,
+                                      child: Offstage(
+                                        offstage: !classic,
+                                        child: Padding(
+                                          padding: EdgeInsets.fromLTRB(
+                                            20,
+                                            100,
+                                            compact ? 20 : 340,
+                                            compact ? 300 : 90,
+                                          ),
+                                          child: ConsoleWidget(
+                                            console,
+                                            key: ConsoleWidget.globalKey,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _statusbar(),
+                    ],
                   ),
-                  _statusbar(),
-                ],
-              ),
+          ),
+        ),
       ),
     );
   }
@@ -738,6 +787,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
                   ),
               ],
             ),
+            const JournalPreferencesButton(color: paper),
             IconButton(
               tooltip: 'Switch readable / classic view',
               onPressed: () => setState(() => _classic = !_classic),
@@ -1067,7 +1117,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
     console: console,
     onAction: _send,
     onInspect: _openDossier,
-    showFirstSteps: _guide,
+    showFirstSteps: _guide && JournalPreferences.of(context).showGuidance,
     onDismissFirstSteps: () => setState(() => _guide = false),
   );
 
@@ -1358,6 +1408,8 @@ class _ModernGameShellState extends State<ModernGameShell> {
             ],
           ),
           const SizedBox(height: 14),
+          const JournalPreferencesControls(),
+          const SizedBox(height: 14),
           OutlinedButton.icon(
             onPressed: _help,
             icon: const Icon(Icons.help_outline),
@@ -1477,6 +1529,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
                         ),
                     ],
                   ),
+                  const JournalPreferencesButton(),
                   IconButton(
                     tooltip: 'Switch readable / classic view',
                     onPressed: () => setState(() => _classic = true),
@@ -1557,7 +1610,11 @@ class _ModernGameShellState extends State<ModernGameShell> {
             child: FilledButton.icon(
               onPressed: console.awaitingInput ? () => _send('Enter') : null,
               icon: const Icon(Icons.arrow_forward, size: 18),
-              label: const Text('Continue'),
+              label: const JournalCommandLabel(
+                shortcut: 'Enter',
+                label: 'Continue',
+                primary: true,
+              ),
             ),
           ),
       ],
@@ -1777,10 +1834,8 @@ class _ModernGameShellState extends State<ModernGameShell> {
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              _keycap(
-                                                action.key == 'Enter'
-                                                    ? '↵'
-                                                    : action.key.toUpperCase(),
+                                              JournalShortcutBadge(
+                                                shortcut: action.key,
                                               ),
                                               const SizedBox(width: 10),
                                               Flexible(
@@ -1996,13 +2051,19 @@ class _ModernGameShellState extends State<ModernGameShell> {
                       fullMap ? Icons.arrow_back : Icons.arrow_forward,
                       size: 18,
                     ),
-                    label: Text(fullMap ? 'Back to operation' : 'Continue'),
+                    label: JournalCommandLabel(
+                      shortcut: 'Enter',
+                      label: fullMap ? 'Back to operation' : 'Continue',
+                    ),
                   )
                 else if (_action('Escape') != null)
                   TextButton.icon(
                     onPressed: () => _send('Escape'),
                     icon: const Icon(Icons.arrow_back, size: 18),
-                    label: const Text('Back'),
+                    label: const JournalCommandLabel(
+                      shortcut: 'Escape',
+                      label: 'Back',
+                    ),
                   ),
               ],
             ),
@@ -2157,10 +2218,10 @@ class _ModernGameShellState extends State<ModernGameShell> {
       key: ValueKey('journal-profile-action:${action.key}'),
       onPressed: action.enabled ? () => _send(action.key) : null,
       icon: Icon(icon, size: 16),
-      label: Text(label, style: JournalPalette.small),
+      label: JournalCommandLabel(shortcut: action.key, label: label),
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        minimumSize: const Size(40, 34),
+        minimumSize: const Size(44, 44),
       ),
     );
   }
@@ -2202,7 +2263,10 @@ class _ModernGameShellState extends State<ModernGameShell> {
                   key: const ValueKey('journal-management-back'),
                   onPressed: () => _send(navigation.backKey),
                   icon: const Icon(Icons.arrow_back, size: 16),
-                  label: const Text('Back'),
+                  label: JournalCommandLabel(
+                    shortcut: navigation.backKey,
+                    label: 'Back',
+                  ),
                   style: TextButton.styleFrom(minimumSize: const Size(40, 34)),
                 ),
             ],
@@ -2466,7 +2530,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
         child: Row(
           mainAxisSize: full ? MainAxisSize.max : MainAxisSize.min,
           children: [
-            _keycap(a.key == 'Enter' ? '↵' : a.key.toUpperCase()),
+            JournalShortcutBadge(shortcut: a.key),
             const SizedBox(width: 10),
             if (full)
               Expanded(
@@ -2522,7 +2586,11 @@ class _ModernGameShellState extends State<ModernGameShell> {
         alignment: Alignment.centerRight,
         child: FilledButton(
           onPressed: () => _send('Enter'),
-          child: const Text('Continue'),
+          child: const JournalCommandLabel(
+            shortcut: 'Enter',
+            label: 'Continue',
+            primary: true,
+          ),
         ),
       );
     }
@@ -2543,11 +2611,18 @@ class _ModernGameShellState extends State<ModernGameShell> {
     );
     final submit = FilledButton(
       onPressed: _sending ? null : _submitText,
-      child: Text(creation ? 'Begin campaign' : 'Confirm text'),
+      child: JournalCommandLabel(
+        shortcut: 'Enter',
+        label: creation ? 'Begin campaign' : 'Confirm text',
+        primary: true,
+      ),
     );
     final cancel = TextButton(
       onPressed: _sending ? null : () => _send('Escape'),
-      child: Text(creation ? 'Use original name' : 'Cancel'),
+      child: JournalCommandLabel(
+        shortcut: 'Escape',
+        label: creation ? 'Use original name' : 'Cancel',
+      ),
     );
     if (creation) {
       return Column(
@@ -2559,13 +2634,29 @@ class _ModernGameShellState extends State<ModernGameShell> {
         ],
       );
     }
-    return Row(
-      children: [
-        Expanded(child: field),
-        const SizedBox(width: 8),
-        submit,
-        cancel,
-      ],
+    return LayoutBuilder(
+      builder: (context, bounds) {
+        final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+        if (bounds.maxWidth / scale < 520) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              field,
+              const SizedBox(height: 8),
+              Wrap(spacing: 8, runSpacing: 6, children: [submit, cancel]),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: field),
+            const SizedBox(width: 8),
+            submit,
+            cancel,
+          ],
+        );
+      },
     );
   }
 
@@ -2580,24 +2671,6 @@ class _ModernGameShellState extends State<ModernGameShell> {
       fontSize: 10,
       fontWeight: FontWeight.w700,
       letterSpacing: 1.5,
-    ),
-  );
-  Widget _keycap(String key) => Container(
-    constraints: const BoxConstraints(minWidth: 24),
-    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
-    decoration: BoxDecoration(
-      color: ink.withValues(alpha: .055),
-      borderRadius: BorderRadius.circular(3),
-      border: Border.all(color: ink.withValues(alpha: .12)),
-    ),
-    child: Text(
-      key,
-      textAlign: TextAlign.center,
-      style: const TextStyle(
-        color: muted,
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
-      ),
     ),
   );
   Widget _statusbar() => Container(

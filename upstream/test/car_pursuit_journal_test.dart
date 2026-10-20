@@ -382,7 +382,14 @@ void main() {
     await tester.tap(_action('d'));
     await tester.pumpAndSettle();
     expect(find.text('A truck pulls out!'), findsOneWidget);
-    expect(find.text('F-Slow down'), findsOneWidget);
+    expect(
+      find.descendant(of: _action('f'), matching: find.text('Slow down')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: _action('f'), matching: find.text('F')),
+      findsOneWidget,
+    );
     expect(find.text('Fight'), findsNothing);
     expect(_action('b'), findsNothing);
     expect(_action('p'), findsNothing);

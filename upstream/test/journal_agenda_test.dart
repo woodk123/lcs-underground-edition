@@ -11,6 +11,7 @@ import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/modern/journal_agenda.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/law_help.dart';
 import 'package:lcs_new_age/politics/alignment.dart';
@@ -349,6 +350,23 @@ void main() {
           await tester.pumpAndSettle();
           for (var page = 0; page < 5; page++) {
             expect(agendaOverviewFrame(engine.console)!.page, page);
+            for (final action in agendaOverviewFrame(
+              engine.console,
+            )!.controls) {
+              expect(
+                tester
+                    .widget<JournalShortcutBadge>(
+                      find.descendant(
+                        of: find.byKey(
+                          ValueKey('journal-agenda-action:${action.key}'),
+                        ),
+                        matching: find.byType(JournalShortcutBadge),
+                      ),
+                    )
+                    .shortcut,
+                action.key,
+              );
+            }
             expect(find.textContaining('<——'), findsNothing);
             expect(tester.takeException(), isNull);
             if (page == 0) expect(find.text('Supreme Court'), findsOneWidget);

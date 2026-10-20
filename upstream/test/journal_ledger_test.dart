@@ -13,6 +13,7 @@ import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/gamestate/ledger.dart';
 import 'package:lcs_new_age/items/weapon.dart';
 import 'package:lcs_new_age/modern/journal_ledger.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/monthly_ledger_history.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
@@ -349,6 +350,18 @@ void main() {
       expect(find.textContaining('. . .'), findsNothing);
       expect(_key('journal-ledger-close').hitTestable(), findsOneWidget);
       expect(tester.getRect(_key('journal-ledger-close')).height, lessThan(70));
+      final close = ledgerReportFrame(engine.console)!.closeAction;
+      expect(
+        tester
+            .widget<JournalShortcutBadge>(
+              find.descendant(
+                of: _key('journal-ledger-close'),
+                matching: find.byType(JournalShortcutBadge),
+              ),
+            )
+            .shortcut,
+        close.key,
+      );
       expect(
         find.descendant(
           of: _key('journal-ledger-close'),
@@ -356,7 +369,13 @@ void main() {
         ),
         findsNothing,
       );
-      await tester.tap(_key('journal-ledger-close'));
+      final label = find.descendant(
+        of: _key('journal-ledger-close'),
+        matching: find.text('Back to organisation'),
+      );
+      Focus.of(tester.element(label)).requestFocus();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await _settle(tester);
       expect(harness.returned, isTrue);
       expect(_snapshot(), before);

@@ -20,6 +20,8 @@ import 'package:lcs_new_age/location/siege.dart';
 import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/modern/base_management_controller.dart';
 import 'package:lcs_new_age/modern/journal_bases.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
@@ -539,6 +541,106 @@ void main() {
     });
     harness = null;
   });
+
+  for (final layout in [
+    (const Size(1280, 800), 1.0),
+    (const Size(800, 600), 1.5),
+  ]) {
+    testWidgets(
+      'compact Bases exposes staged source keys without spending at $layout',
+      (tester) async {
+        final base = newBase('Compact keyboard warehouse');
+        game.ledger.forceSetFunds(5000);
+        await tester.runAsync(() async {
+          final routes = start();
+          expect(await routes.openInvestment(base.id), isTrue);
+        });
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = layout.$1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final key = GlobalKey<JournalBasesViewState>();
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: buildJournalTheme(),
+            builder: (context, child) => JournalPreferences(
+              compact: true,
+              showGuidance: false,
+              child: MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(layout.$2)),
+                child: child!,
+              ),
+            ),
+            home: Scaffold(
+              body: JournalBasesView(
+                key: key,
+                console: engine.console,
+                controller: organisation!,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final before = jsonEncode(game.gameState);
+        final source = engine.console.actions.firstWhere(
+          (action) => action.key == 'r',
+        );
+        final revision = engine.console.revision.value;
+        final choices = tester.widgetList<JournalCommandLabel>(
+          find.byType(JournalCommandLabel),
+        );
+        expect(
+          choices.where((label) => label.shortcut == source.key),
+          isNotEmpty,
+        );
+        expect(
+          choices
+              .singleWhere((label) => label.label == 'Done purchasing')
+              .shortcut,
+          'Escape',
+        );
+        reseedRNG(seed: 9205);
+        final expected = lcsRandom(100000);
+        reseedRNG(seed: 9205);
+        key.currentState!.handleGameShortcut(source.key);
+        await tester.pumpAndSettle();
+        final pending = tester.widgetList<JournalCommandLabel>(
+          find.byType(JournalCommandLabel),
+        );
+        expect(
+          pending
+              .singleWhere((label) => label.label == 'Confirm purchase')
+              .shortcut,
+          'Enter',
+        );
+        expect(
+          pending.singleWhere((label) => label.label == 'Cancel').shortcut,
+          'Escape',
+        );
+        // Escape cancels a draft; it does not close the source until no draft remains.
+        expect(
+          pending.where((label) => label.label == 'Done purchasing'),
+          isEmpty,
+        );
+        expect(jsonEncode(game.gameState), before);
+        key.currentState!.handleGameShortcut('Escape');
+        await tester.pumpAndSettle();
+        expect(find.text('Confirm purchase'), findsNothing);
+        expect(engine.console.actions, contains(source));
+        expect(engine.console.revision.value, revision);
+        expect(jsonEncode(game.gameState), before);
+        expect(lcsRandom(100000), expected);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.runAsync(() async {
+          await harness!.stop();
+        });
+        harness = null;
+      },
+    );
+  }
 
   testWidgets(
     'retained purchase confirmations cannot buy canceled, replaced or stale drafts',

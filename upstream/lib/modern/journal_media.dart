@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/media_context.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/utils/colors.dart' as source;
 
@@ -54,6 +56,7 @@ class JournalMediaOverview extends StatelessWidget {
       final frame = mediaOverviewFrame(console);
       if (frame == null) return const SizedBox.shrink();
       final revision = console.revision.value;
+      final preferences = JournalPreferences.of(context);
       return LayoutBuilder(
         builder: (context, bounds) {
           final narrow = bounds.maxWidth < 650;
@@ -63,7 +66,13 @@ class JournalMediaOverview extends StatelessWidget {
           final pages = frame.controls.where((action) => action != back);
           return JournalSurface(
             key: const ValueKey('journal-media'),
-            padding: EdgeInsets.all(narrow ? 12 : 20),
+            padding: EdgeInsets.all(
+              preferences.compact
+                  ? 8
+                  : narrow
+                  ? 12
+                  : 20,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -136,7 +145,7 @@ class JournalMediaOverview extends StatelessWidget {
                           )
                         else
                           for (final entry in frame.entries)
-                            _story(frame, entry, revision, narrow),
+                            _story(context, frame, entry, revision, narrow),
                       ],
                     ),
                   ),
@@ -152,7 +161,10 @@ class JournalMediaOverview extends StatelessWidget {
                         key: const ValueKey('journal-media-back'),
                         onPressed: _command(frame, back, revision),
                         icon: const Icon(Icons.arrow_back, size: 17),
-                        label: const Text('Back'),
+                        label: JournalCommandLabel(
+                          shortcut: back.key,
+                          label: 'Back',
+                        ),
                       ),
                     Text(
                       frame.pageCount == 0
@@ -165,7 +177,10 @@ class JournalMediaOverview extends StatelessWidget {
                       OutlinedButton(
                         key: ValueKey('journal-media-control:${action.key}'),
                         onPressed: _command(frame, action, revision),
-                        child: Text(_label(action.label)),
+                        child: JournalCommandLabel(
+                          shortcut: action.key,
+                          label: _label(action.label),
+                        ),
                       ),
                   ],
                 ),
@@ -251,6 +266,7 @@ class JournalMediaOverview extends StatelessWidget {
   );
 
   Widget _story(
+    BuildContext context,
     MediaOverviewFrame frame,
     MediaArchiveEntry entry,
     int revision,
@@ -272,14 +288,20 @@ class JournalMediaOverview extends StatelessWidget {
           'Editorial line ${entry.publisherAlignment}. '
           'Recorded impact ${entry.impactLabel}.',
       value: 'Exact recorded impact ${entry.impact}%',
+      hint:
+          'Keyboard shortcut: ${journalShortcutSpokenLabel(entry.action.key)}',
       onTap: activate,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           key: ValueKey('journal-media-story:${entry.index}'),
           onTap: activate,
+          focusColor: JournalPalette.selected,
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+            padding: EdgeInsets.symmetric(
+              vertical: JournalPreferences.of(context).compact ? 6 : 12,
+              horizontal: 4,
+            ),
             decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: JournalPalette.rule)),
             ),
@@ -289,6 +311,8 @@ class JournalMediaOverview extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    JournalShortcutBadge(shortcut: entry.action.key),
+                    const SizedBox(width: 8),
                     if (entry.unread) ...[
                       const Padding(
                         padding: EdgeInsets.only(top: 6),

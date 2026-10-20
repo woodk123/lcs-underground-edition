@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lcs_new_age/engine/changelog.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/modern_app.dart';
 import 'package:lcs_new_age/saveload/native_profile.dart';
@@ -29,15 +30,23 @@ class MainApp extends StatelessWidget {
       title: 'Liberal Crime Squad: New Age — The Underground Edition',
       debugShowCheckedModeBanner: false,
       theme: buildModernTheme(),
-      builder: (context, child) => ValueListenableBuilder<double>(
-        valueListenable: journalReadingScale,
-        builder: (context, scale, _) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(scale)),
-          child: child!,
-        ),
-      ),
+      builder: (context, child) =>
+          ValueListenableBuilder<JournalPreferenceValues>(
+            valueListenable: journalPresentation,
+            builder: (context, preferences, _) => JournalPreferences(
+              compact: preferences.compact,
+              showGuidance: preferences.showGuidance,
+              child: ValueListenableBuilder<double>(
+                valueListenable: journalReadingScale,
+                builder: (context, scale, _) => MediaQuery(
+                  data: MediaQuery.of(
+                    context,
+                  ).copyWith(textScaler: TextScaler.linear(scale)),
+                  child: child!,
+                ),
+              ),
+            ),
+          ),
       home: Scaffold(
         body: Stack(
           children: [

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/politics/alignment.dart' as politics;
@@ -378,7 +379,8 @@ class PersonnelDirectory extends StatelessWidget {
             else
               SliverList.builder(
                 itemCount: visible.length,
-                itemBuilder: (context, index) => _person(visible[index]),
+                itemBuilder: (context, index) =>
+                    _person(context, visible[index]),
               ),
           ],
         ),
@@ -386,7 +388,8 @@ class PersonnelDirectory extends StatelessWidget {
     },
   );
 
-  Widget _person(Creature person) {
+  Widget _person(BuildContext context, Creature person) {
+    final compact = JournalPreferences.of(context).compact;
     final status = personnelStatus(person);
     final color = !person.alive
         ? JournalPalette.muted
@@ -410,8 +413,8 @@ class PersonnelDirectory extends StatelessWidget {
         alignment: Alignment.centerLeft,
         foregroundColor: JournalPalette.ink,
         backgroundColor: JournalPalette.card.withValues(alpha: .4),
-        padding: const EdgeInsets.all(11),
-        minimumSize: const Size(44, 72),
+        padding: EdgeInsets.all(compact ? 7 : 11),
+        minimumSize: Size(44, compact ? 48 : 72),
         side: BorderSide(
           color: person.hospitalized && person.alive
               ? JournalPalette.danger.withValues(alpha: .45)
@@ -426,19 +429,34 @@ class PersonnelDirectory extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CrewPortrait(person: person, size: 42),
-            const SizedBox(width: 10),
+            CrewPortrait(person: person, size: compact ? 30 : 42),
+            SizedBox(width: compact ? 7 : 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    person.name,
-                    style: JournalPalette.body.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 2,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        person.name,
+                        style: JournalPalette.body.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (compact)
+                        Text(
+                          status,
+                          style: JournalPalette.small.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: 3),
+                  SizedBox(height: compact ? 1 : 3),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: JuiceBadge(
@@ -447,16 +465,17 @@ class PersonnelDirectory extends StatelessWidget {
                       showHelp: false,
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    status,
-                    style: JournalPalette.small.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w700,
+                  SizedBox(height: compact ? 1 : 3),
+                  if (!compact)
+                    Text(
+                      status,
+                      style: JournalPalette.small.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
                   Text(location, style: JournalPalette.small),
-                  const SizedBox(height: 4),
+                  SizedBox(height: compact ? 1 : 4),
                   Text(condition, style: JournalPalette.small),
                   if (personnelAvailableForOrders(person))
                     Text(

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/modern/article_view.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 
 Future<void> mountArticle(
@@ -10,6 +11,7 @@ Future<void> mountArticle(
   ConsoleArticle article, {
   Size size = const Size(1280, 800),
   double textScale = 1,
+  bool compact = false,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -26,7 +28,10 @@ Future<void> mountArticle(
             size: size,
             textScaler: TextScaler.linear(textScale),
           ),
-          child: ArticleView(article: article),
+          child: JournalPreferences(
+            compact: compact,
+            child: ArticleView(article: article),
+          ),
         ),
       ),
     ),
@@ -147,7 +152,13 @@ void main() {
           byline:
               'By an unusually long newsroom byline that must wrap without clipping',
         );
-        await mountArticle(tester, article, size: size, textScale: 1.5);
+        await mountArticle(
+          tester,
+          article,
+          size: size,
+          textScale: 1.5,
+          compact: true,
+        );
         final selectable = tester.widget<SelectableText>(
           find.byKey(const ValueKey('article-body')),
         );

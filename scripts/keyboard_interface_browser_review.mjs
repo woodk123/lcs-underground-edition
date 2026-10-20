@@ -1,0 +1,163 @@
+// Keyboard-only task sequences in the actual graphical and Classic readers.
+// Fixture import/export and changing display preferences are explicit setup.
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
+const { chromium } = require('playwright');
+const args = process.argv.slice(2);
+const value = (flag, fallback) => args.includes(flag) ? args[args.indexOf(flag) + 1] : fallback;
+const url = assertQaUrl(value('--url', 'http://127.0.0.1:18879/'));
+const output = resolve(root, value('--out', `reports/keyboard-interface-${new Date().toISOString().replaceAll(':', '-')}`));
+await mkdir(output, { recursive: true });
+const digest = bytes => createHash('sha256').update(bytes).digest('hex');
+const decode = save => typeof save.saveData === 'string' ? JSON.parse(save.saveData) : save.saveData;
+const report = {
+  status: 'running', url,
+  scope: 'Unmodified bundled Felix save in disposable profiles. Keyboard-only assignment selection, draft cancellation and confirmation in graphical view at desktop and compact 800x600/150%; the same explicit assignment sequence in Classic. Import/export and preference changes are setup. No day advances, outcomes or skill values are supplied.',
+  checks: [], screenshots: [], sequences: [], pageErrors: [], consoleErrors: [], failedRequests: [],
+};
+const expected = value('--expected-hash', null);
+assert.match(expected ?? '', /^[a-f0-9]{64}$/i, 'An exact compiled build hash is required.');
+report.mainJsSha256 = digest(Buffer.from(await (await fetch(new URL('main.dart.js', url))).arrayBuffer()));
+assert.equal(report.mainJsSha256, expected.toLowerCase());
+const browser = await chromium.launch(chromiumLaunchOptions({ args }));
+
+async function runScenario({ name, viewport, compact, classic }) {
+  const context = await browser.newContext({ viewport, acceptDownloads: true });
+  const page = await context.newPage();
+  const verifyLoaded = observeMainScript(page, report);
+  page.on('pageerror', error => report.pageErrors.push(String(error)));
+  page.on('console', message => { if (message.type() === 'error') report.consoleErrors.push(message.text()); });
+  page.on('requestfailed', request => report.failedRequests.push(request.url()));
+  const text = () => page.locator('flt-semantics-host').evaluate(host => [host.innerText,
+    ...[...host.querySelectorAll('[aria-label]')].map(node => node.getAttribute('aria-label')),
+  ].filter(Boolean).join('\n'));
+  async function wait(pattern) {
+    const deadline = Date.now() + 20000;
+    while (Date.now() < deadline) {
+      if (await page.locator('flt-semantics-host').count() && pattern.test(await text())) return;
+      await page.waitForTimeout(100);
+    }
+    throw new Error(`Missing ${pattern}: ${await text()}`);
+  }
+  async function click(pattern, locator = page) {
+    await locator.getByRole('button', { name: pattern }).first().click();
+    await page.mouse.move(1, 1);
+    await page.waitForTimeout(200);
+  }
+  async function key(key) {
+    await page.keyboard.press(key);
+    await page.waitForTimeout(220);
+  }
+  async function capture(label) {
+    const path = `${name}-${label}.png`;
+    await page.screenshot({ path: resolve(output, path), fullPage: true });
+    report.screenshots.push(path);
+  }
+  async function exportGame(label) {
+    await click(/^Save & exit/);
+    await wait(/Start a New Game/);
+    await click(/^Load & Manage Saves/);
+    await click(/^A(?:\s|$)/);
+    await wait(/Manage .*Saved Game/);
+    const downloading = page.waitForEvent('download');
+    await click(/Export Save File/);
+    const path = resolve(output, `${name}-${label}.json`);
+    await (await downloading).saveAs(path);
+    const data = decode(JSON.parse(await readFile(path, 'utf8')));
+    await click(/^L Load Game/);
+    await wait(/Save & exit/);
+    return data;
+  }
+  try {
+    await page.goto(url, { waitUntil: 'networkidle' });
+    await wait(/Start a New Game/);
+    const choosing = page.waitForEvent('filechooser');
+    await click(/^Import a Save/);
+    await (await choosing).setFiles(resolve(root, 'upstream/test/saves/felix_1_0.json'));
+    await wait(/Save imported/);
+    await key('Enter');
+    await click(/^Load & Manage Saves/);
+    await click(/^A(?:\s|$)/);
+    await click(/^L Load Game/);
+    await wait(/Save & exit/);
+    const before = await exportGame('before');
+
+    if (compact) {
+      await click(/^Reading size/);
+      await page.getByRole('menuitem', { name: '150%' }).click();
+      await click(/^Interface preferences/);
+      await page.getByRole('alertdialog').getByRole('checkbox', { name: 'Compact', exact: true }).click();
+      await page.getByRole('switch', { name: /^Show explanations/ }).click();
+      // Keys that would advance time or open readers must stay inside the dialog.
+      for (const command of ['w', 'a', 'f']) await key(command);
+      await key('Escape');
+      assert.deepEqual(await exportGame('after-preferences'), before);
+      report.checks.push(`${name}: preferences and modal shortcuts preserve campaign`);
+    }
+
+    if (classic) {
+      await click(/^Switch readable \/ classic view/);
+    }
+    const opening = ['a', 'a', 'b', '1'];
+    for (const command of opening) await key(command);
+    if (!classic) {
+      await wait(/Choose a task/);
+      assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 1);
+      await capture('prepared-order');
+      await key('Escape');
+      assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 0);
+      await key('1');
+    }
+    await key('Enter');
+    if (classic) await click(/^Switch readable \/ classic view/);
+    const after = await exportGame('after');
+    const expectedCampaign = structuredClone(before);
+    expectedCampaign.lcs.pool[0].activity = { type: 'donations' };
+    assert.deepEqual(after, expectedCampaign, 'Only the explicitly selected first actor receives the confirmed task.');
+    report.sequences.push({
+      name, viewport, readingScale: compact ? 1.5 : 1,
+      assignment: [...opening, 'Enter'], assignmentKeypresses: opening.length + 1,
+      cancellationProbe: classic ? [] : ['Escape', '1'],
+      mouseInputsDuringTaskSequence: 0,
+    });
+    await capture('confirmed-order');
+    report.checks.push(`${name}: keyboard assignment changes only the selected actor`);
+    if (compact) {
+      await page.reload({ waitUntil: 'networkidle' });
+      await wait(/Start a New Game/);
+      await click(/^Interface preferences/);
+      assert.equal(await page.getByRole('checkbox', { name: 'Compact', exact: true }).getAttribute('aria-checked'), 'true');
+      assert.equal(await page.getByRole('switch', { name: /^Show explanations/ }).getAttribute('aria-checked'), 'false');
+      await key('Escape');
+      report.checks.push(`${name}: display preferences survive reload`);
+    }
+    await verifyLoaded(expected.toLowerCase());
+  } finally {
+    await context.close();
+  }
+}
+
+try {
+  await runScenario({ name: 'graphical-desktop', viewport: { width: 1440, height: 1000 }, compact: false, classic: false });
+  await runScenario({ name: 'graphical-compact', viewport: { width: 800, height: 600 }, compact: true, classic: false });
+  await runScenario({ name: 'classic-reference', viewport: { width: 1440, height: 1000 }, compact: false, classic: true });
+  assert.deepEqual(report.pageErrors, []);
+  assert.deepEqual(report.consoleErrors, []);
+  assert.deepEqual(report.failedRequests, []);
+  report.status = 'passed';
+} catch (error) {
+  report.status = 'failed';
+  report.error = String(error.stack ?? error);
+  throw error;
+} finally {
+  await writeFile(resolve(output, 'report.json'), JSON.stringify(report, null, 2));
+  await browser.close();
+}

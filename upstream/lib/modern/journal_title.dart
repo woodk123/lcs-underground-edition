@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:lcs_new_age/engine/console.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/utils/game_version.dart';
 
@@ -147,11 +149,15 @@ class JournalTitlePage extends StatelessWidget {
               runSpacing: 2,
               children: [
                 const Text('Campaign desk', style: JournalPalette.heading),
+                const JournalPreferencesButton(),
                 TextButton.icon(
                   key: const ValueKey('journal-title-help'),
                   onPressed: onHelp,
                   icon: const Icon(Icons.menu_book_outlined, size: 18),
-                  label: const Text('How to play'),
+                  label: const JournalCommandLabel(
+                    shortcut: 'F1',
+                    label: 'How to play',
+                  ),
                 ),
               ],
             ),

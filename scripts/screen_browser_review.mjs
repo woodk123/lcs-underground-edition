@@ -53,8 +53,37 @@ async function wait(pattern) {
     return host && new RegExp(source, 'i').test([host.innerText, ...[...host.querySelectorAll('[aria-label]')].map(n => n.getAttribute('aria-label'))].join('\n'));
   }, pattern.source, { timeout: 25000 });
 }
+const topTabs = ['Organisation', 'People', 'Network', 'Bases', 'Ledger', 'Justice', 'Agenda', 'Newspaper', 'Reports', 'City maps', 'Options'];
+async function revealTopTab(name) {
+  if (!large || !topTabs.some(label => name instanceof RegExp ? name.test(label) : name === label)) return;
+  const viewport = page.viewportSize();
+  const guide = page.getByRole('button', { name: /^Field guide(?:$|\s)/ }).first();
+  const guideBounds = await guide.count() ? await guide.boundingBox() : null;
+  const stripRight = guideBounds?.x ?? viewport.width - 120;
+  const target = page.getByRole('button', { name }).first();
+  async function visible() {
+    if (!await target.count()) return false;
+    const bounds = await target.boundingBox();
+    return bounds && bounds.y >= 0 && bounds.y < 100 && bounds.x >= 0 && bounds.x + bounds.width <= stripRight + 1;
+  }
+  if (await visible()) return;
+  // Scroll the real horizontal tab strip. Flutter's clipped semantics nodes
+  // cannot be revealed by scrolling the outer browser document.
+  await page.mouse.move(Math.min(320, stripRight / 2), 35);
+  await page.mouse.wheel(-2000, 0);
+  await page.waitForTimeout(180);
+  for (let step = 0; step < 8; step++) {
+    if (await visible()) return;
+    await page.mouse.wheel(360, 0);
+    await page.waitForTimeout(180);
+  }
+  assert.fail(`The top tab ${String(name)} must be reachable through its horizontal strip.`);
+}
 async function click(name) {
-  await page.getByRole('button', { name }).first().click();
+  await revealTopTab(name);
+  const control = page.getByRole('button', { name })
+    .or(page.getByRole('checkbox', { name })).first();
+  await control.click();
   await page.mouse.move(2, 2);
   await page.waitForTimeout(250);
 }

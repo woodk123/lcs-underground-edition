@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lcs_new_age/engine/console.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 
 const _ink = JournalPalette.ink;
@@ -20,12 +21,23 @@ class ArticleView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      final compact = constraints.maxWidth < 700;
-      final inset = compact ? 20.0 : 38.0;
+      final narrow = constraints.maxWidth < 700;
+      final compact = JournalPreferences.of(context).compact;
+      final inset = compact
+          ? 12.0
+          : narrow
+          ? 20.0
+          : 38.0;
       final byline = article.byline;
       return SingleChildScrollView(
         key: const ValueKey('article-scroll'),
-        padding: EdgeInsets.all(compact ? 16 : 28),
+        padding: EdgeInsets.all(
+          compact
+              ? 8
+              : narrow
+              ? 16
+              : 28,
+        ),
         child: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
@@ -47,7 +59,7 @@ class ArticleView extends StatelessWidget {
                           article.publisher,
                           key: const ValueKey('article-publisher'),
                           style: TextStyle(
-                            fontSize: compact ? 24 : 29,
+                            fontSize: narrow ? 24 : 29,
                             fontWeight: FontWeight.w800,
                             height: 1.25,
                             letterSpacing: -.5,
@@ -90,7 +102,7 @@ class ArticleView extends StatelessWidget {
                             article.title,
                             key: const ValueKey('article-headline'),
                             style: TextStyle(
-                              fontSize: compact ? 28 : 36,
+                              fontSize: narrow ? 28 : 36,
                               fontWeight: FontWeight.w700,
                               height: 1.2,
                               letterSpacing: -.8,
@@ -105,7 +117,7 @@ class ArticleView extends StatelessWidget {
                         semanticsLabel: article.body,
                         style: JournalPalette.body.copyWith(
                           fontSize: 17,
-                          height: 1.7,
+                          height: compact ? 1.5 : 1.7,
                         ),
                       ),
                       if (article.effects.isNotEmpty) ...[
@@ -159,7 +171,11 @@ class ArticleView extends StatelessWidget {
           for (final effect in article.effects.entries)
             SizedBox(
               width: width,
-              child: _Effect(label: effect.key, value: effect.value),
+              child: _Effect(
+                label: effect.key,
+                value: effect.value,
+                compact: JournalPreferences.of(context).compact,
+              ),
             ),
         ],
       );
@@ -168,10 +184,15 @@ class ArticleView extends StatelessWidget {
 }
 
 class _Effect extends StatelessWidget {
-  const _Effect({required this.label, required this.value});
+  const _Effect({
+    required this.label,
+    required this.value,
+    this.compact = false,
+  });
 
   final String label;
   final double value;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -191,7 +212,7 @@ class _Effect extends StatelessWidget {
         excludeFromSemantics: true,
         child: ExcludeSemantics(
           child: Container(
-            padding: const EdgeInsets.all(15),
+            padding: EdgeInsets.all(compact ? 8 : 15),
             decoration: BoxDecoration(
               color: color.withValues(alpha: .055),
               border: Border.all(color: color.withValues(alpha: .18)),

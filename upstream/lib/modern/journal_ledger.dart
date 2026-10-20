@@ -4,6 +4,8 @@ import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/ledger_context.dart';
 import 'package:lcs_new_age/gamestate/time.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/monthly_ledger_history.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
@@ -105,6 +107,7 @@ class JournalLedgerOverviewState extends State<JournalLedgerOverview> {
       final frame = ledgerReportFrame(console);
       if (frame == null) return const SizedBox.shrink();
       final revision = console.revision.value;
+      final preferences = JournalPreferences.of(context);
       final snapshot = _snapshot;
       final lines = snapshot?.lines ?? frame.lines;
       final pageCount = snapshot?.pageCount ?? frame.pageCount;
@@ -116,7 +119,13 @@ class JournalLedgerOverviewState extends State<JournalLedgerOverview> {
           return JournalSurface(
             key: const ValueKey('journal-ledger'),
             lined: true,
-            padding: EdgeInsets.all(narrow ? 12 : 20),
+            padding: EdgeInsets.all(
+              preferences.compact
+                  ? 8
+                  : narrow
+                  ? 12
+                  : 20,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -229,7 +238,9 @@ class JournalLedgerOverviewState extends State<JournalLedgerOverview> {
                                 SizedBox(
                                   width: width,
                                   child: Container(
-                                    padding: const EdgeInsets.all(10),
+                                    padding: EdgeInsets.all(
+                                      preferences.compact ? 6 : 10,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: JournalPalette.inset,
                                       border: Border.all(
@@ -331,13 +342,18 @@ class JournalLedgerOverviewState extends State<JournalLedgerOverview> {
                           for (final line in visible.where(
                             (line) => line.kind == group.$2,
                           ))
-                            _row(line, narrow),
+                            _row(line, narrow, compact: preferences.compact),
                           const SizedBox(height: 13),
                         ],
                       for (final line in visible.where(
                         (line) => line.kind == LedgerLineKind.totalAssets,
                       ))
-                        _row(line, narrow, total: true),
+                        _row(
+                          line,
+                          narrow,
+                          total: true,
+                          compact: preferences.compact,
+                        ),
                       if (!lines.any(
                         (line) =>
                             line.kind == LedgerLineKind.income ||
@@ -393,8 +409,10 @@ class JournalLedgerOverviewState extends State<JournalLedgerOverview> {
                           frame.management ? Icons.arrow_back : Icons.check,
                           size: 17,
                         ),
-                        label: Text(
-                          frame.management
+                        label: JournalCommandLabel(
+                          shortcut: frame.closeAction.key,
+                          primary: true,
+                          label: frame.management
                               ? 'Back to organisation'
                               : 'Continue',
                         ),
@@ -418,7 +436,12 @@ class JournalLedgerOverviewState extends State<JournalLedgerOverview> {
                             child: Semantics(
                               excludeSemantics: true,
                               label: _pageHint(frame, action),
-                              child: Text(_label(action)),
+                              hint:
+                                  'Keyboard shortcut: ${journalShortcutSpokenLabel(action.key)}',
+                              child: JournalCommandLabel(
+                                shortcut: action.key,
+                                label: _label(action),
+                              ),
                             ),
                           ),
                         ),
@@ -437,12 +460,13 @@ class JournalLedgerOverviewState extends State<JournalLedgerOverview> {
     LedgerReportLine line,
     bool narrow, {
     bool total = false,
+    bool compact = false,
   }) => MechanicsTooltip(
     message:
         '${line.label}: ${_money(line.amount)}${line.kind == LedgerLineKind.income || line.kind == LedgerLineKind.expense ? ' this ledger period; ${_money(line.dailyAmount)} recorded today. These are recorded totals, not next-day estimates.' : '. Unsold equipment values need a sale before they become cash; recorded cash is already spendable.'}\n\nOpen Money & ledger guide for category totals, recorded crew income, recurring costs and why estimates differ.',
     child: Container(
       key: ValueKey('journal-ledger-row:${line.id}'),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      padding: EdgeInsets.symmetric(vertical: compact ? 4 : 8, horizontal: 4),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(color: JournalPalette.rule.withValues(alpha: .5)),

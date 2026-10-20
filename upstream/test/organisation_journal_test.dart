@@ -1103,7 +1103,7 @@ void main() {
 
   for (final size in [const Size(1280, 720), const Size(800, 600)]) {
     testWidgets(
-      'member changes retain nested category and map state at $size',
+      'member changes retain nested category and optional map state at $size',
       (tester) async {
         await mount(tester, size: size);
         if (size.width == 800) {
@@ -1121,8 +1121,14 @@ void main() {
         final next = game.squad[1];
         final before = _snapshot();
         final districtId = game.activeSquad!.site!.district.idString;
+        await _tap(tester, 'journal-orders-map-toggle');
         await _tap(tester, 'journal-map-place:$districtId');
         final mapState = tester.state(find.byType(JournalCityPlan));
+        final retainedMap = find.byType(JournalCityPlan, skipOffstage: false);
+        final retainedIndex = find.byKey(
+          const ValueKey('journal-location-index'),
+          skipOffstage: false,
+        );
         final viewer = tester.widget<InteractiveViewer>(
           find.byType(InteractiveViewer),
         );
@@ -1130,14 +1136,15 @@ void main() {
           ..scaleByDouble(1.4, 1.4, 1, 1);
         await tester.tap(find.byTooltip('Show location index'));
         await _settle(tester);
+        await _tap(tester, 'journal-orders-map-toggle');
         await _tap(tester, 'journal-activity:teachLiberalArts');
         await _showCrewMember(tester, next.id);
         await _settle(tester);
         await tester.tap(_key('journal-member:${next.id}'));
         for (var frame = 0; frame < 80; frame++) {
           await tester.pump(const Duration(milliseconds: 1));
-          expect(tester.state(find.byType(JournalCityPlan)), same(mapState));
-          expect(_key('journal-location-index'), findsOneWidget);
+          expect(tester.state(retainedMap), same(mapState));
+          expect(retainedIndex, findsOneWidget);
         }
         await _settle(tester);
         expect(activityOrderFrame(engine.console)?.actorId, next.id);
@@ -1147,9 +1154,10 @@ void main() {
           findsOneWidget,
         );
         expect(_key('journal-confirm-order'), findsNothing);
-        expect(tester.state(find.byType(JournalCityPlan)), same(mapState));
-        expect(_key('journal-location-index'), findsOneWidget);
+        expect(tester.state(retainedMap), same(mapState));
+        expect(retainedIndex, findsOneWidget);
         expect(viewer.transformationController!.value.entry(0, 0), 1.4);
+        await _tap(tester, 'journal-orders-map-toggle');
         await tester.tap(find.byTooltip('Show city plan'));
         await _settle(tester);
         final third = game.squad[2];

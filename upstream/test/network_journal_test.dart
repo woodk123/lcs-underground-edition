@@ -18,6 +18,8 @@ import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/journal_network.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/organisation_journal.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
@@ -145,13 +147,17 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     journalReadingScale.value = 1;
+    journalPresentation.value = const JournalPreferenceValues();
     engine.console = Console();
     game.gameState = decodeSaveContents(fixture).gameState!;
     game.mode = GameMode.base;
     game.activeSquadMember = null;
   });
 
-  tearDown(() => journalReadingScale.value = 1);
+  tearDown(() {
+    journalReadingScale.value = 1;
+    journalPresentation.value = const JournalPreferenceValues();
+  });
 
   Future<_NetworkHarness> mount(
     WidgetTester tester, {
@@ -492,6 +498,77 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  for (final layout in [
+    (const Size(1280, 800), 1.0),
+    (const Size(800, 600), 1.5),
+  ]) {
+    testWidgets('compact Network labels follow current role keys at $layout', (
+      tester,
+    ) async {
+      final person = _sleeper('Keyboard role review');
+      journalPresentation.value = const JournalPreferenceValues(
+        compact: true,
+        showGuidance: false,
+      );
+      journalReadingScale.value = layout.$2;
+      await mount(tester, size: layout.$1);
+      final before = _snapshot();
+      reseedRNG(seed: 9204);
+      final expected = lcsRandom(100000);
+      reseedRNG(seed: 9204);
+      expect(
+        find.text('Choose an agent, then a standing order.'),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('network-current-order')),
+        findsOneWidget,
+      );
+      for (final (key, shortcut) in [
+        ('network-advocacy', 'a'),
+        ('network-espionage', 'b'),
+        ('network-recall', 'c'),
+      ]) {
+        final label = tester.widget<JournalCommandLabel>(
+          find.descendant(
+            of: _key(key),
+            matching: find.byType(JournalCommandLabel),
+          ),
+        );
+        expect(label.shortcut, shortcut);
+      }
+      await _keyboard(tester, LogicalKeyboardKey.keyB, character: 'b');
+      final source = engine.console.actions.firstWhere(
+        (action) => action.entityId == ActivityType.sleeperEmbezzle.name,
+      );
+      final choice = _key('network-task:sleeperEmbezzle');
+      final choiceLabel = tester.widget<JournalCommandLabel>(
+        find.descendant(of: choice, matching: find.byType(JournalCommandLabel)),
+      );
+      expect(choiceLabel.shortcut, source.key);
+      await _keyboard(tester, LogicalKeyboardKey.digit2, character: '2');
+      for (final (key, shortcut) in [
+        ('network-confirm-order', 'Enter'),
+        ('network-cancel-order', 'Escape'),
+      ]) {
+        final label = tester.widget<JournalCommandLabel>(
+          find.descendant(
+            of: _key(key),
+            matching: find.byType(JournalCommandLabel),
+          ),
+        );
+        expect(label.shortcut, shortcut);
+      }
+      expect(find.text('Prepared change · not confirmed'), findsOneWidget);
+      expect(person.activity.type, ActivityType.none);
+      await _keyboard(tester, LogicalKeyboardKey.escape);
+      expect(_key('network-confirm-order'), findsNothing);
+      expect(_snapshot(), before);
+      expect(lcsRandom(100000), expected);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('stale source revision cannot confirm a captured draft', (
     tester,

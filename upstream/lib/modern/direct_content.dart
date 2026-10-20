@@ -18,6 +18,8 @@ import 'package:lcs_new_age/modern/crew_dossier.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/journal_person_summary.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/recruitment_card.dart';
@@ -71,6 +73,7 @@ class DirectContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final preferences = JournalPreferences.of(context);
     if (console.recruitmentTarget case final target? when showActions) {
       return RecruitmentTargetPicker(target: target, onAction: onAction);
     }
@@ -318,7 +321,7 @@ class DirectContent extends StatelessWidget {
                   'Equipment, attributes & skills',
                   style: TextStyle(fontSize: 12, color: _muted),
                 ),
-                children: [_report(frame, 1, 9)],
+                children: [_report(context, frame, 1, 9)],
               ),
             ),
           ],
@@ -431,7 +434,7 @@ class DirectContent extends StatelessWidget {
           !_isKeyboardNote(frame.rows[end + 1].trim())) {
         end++;
       }
-      content.add(_report(frame, start, end));
+      content.add(_report(context, frame, start, end));
       y = end + 1;
     }
     final remaining = frame.actions
@@ -495,22 +498,33 @@ class DirectContent extends StatelessWidget {
         ),
       );
     }
-    return DefaultTextStyle.merge(
-      style: TextStyle(
-        fontFamily:
-            Theme.of(context).textTheme.bodyMedium?.fontFamily ?? 'ModernSans',
-        color: Theme.of(context).colorScheme.onSurface,
-        fontSize: 15,
-        height: 1.45,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < content.length; i++) ...[
-            if (i > 0) SizedBox(height: journalPage ? 10 : 14),
-            content[i],
+    return FocusTraversalGroup(
+      policy: ReadingOrderTraversalPolicy(),
+      child: DefaultTextStyle.merge(
+        style: TextStyle(
+          fontFamily:
+              Theme.of(context).textTheme.bodyMedium?.fontFamily ??
+              'ModernSans',
+          color: Theme.of(context).colorScheme.onSurface,
+          fontSize: 15,
+          height: 1.45,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < content.length; i++) ...[
+              if (i > 0)
+                SizedBox(
+                  height: preferences.compact
+                      ? 6
+                      : journalPage
+                      ? 10
+                      : 14,
+                ),
+              content[i],
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -628,6 +642,7 @@ class DirectContent extends StatelessWidget {
     bool compact = false,
     bool intentColumn = false,
   }) {
+    final condensed = JournalPreferences.of(context).compact;
     if (choiceItemDescription(console, y) case final description?) {
       return Padding(
         padding: EdgeInsets.fromLTRB(journalPage ? 12 : 18, 4, 12, 12),
@@ -738,14 +753,22 @@ class DirectContent extends StatelessWidget {
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CatalogueIllustration(art: illustration),
+                      CatalogueIllustration(
+                        art: illustration,
+                        width: condensed ? 40 : 56,
+                        height: condensed ? 28 : 40,
+                      ),
                       const SizedBox(height: 5),
                       identityText,
                     ],
                   )
                 : Row(
                     children: [
-                      CatalogueIllustration(art: illustration),
+                      CatalogueIllustration(
+                        art: illustration,
+                        width: condensed ? 40 : 56,
+                        height: condensed ? 28 : 40,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(child: identityText),
                     ],
@@ -767,7 +790,13 @@ class DirectContent extends StatelessWidget {
                   ),
                 ),
               ],
-              SizedBox(height: journalPage ? 8 : 14),
+              SizedBox(
+                height: condensed
+                    ? 6
+                    : journalPage
+                    ? 8
+                    : 14,
+              ),
               LayoutBuilder(
                 builder: (context, bounds) {
                   final count = bounds.maxWidth >= 250 ? 2 : 1;
@@ -872,7 +901,11 @@ class DirectContent extends StatelessWidget {
             body,
             padding: EdgeInsets.symmetric(
               horizontal: journalPage ? 12 : 18,
-              vertical: journalPage ? 8 : 18,
+              vertical: condensed
+                  ? 5
+                  : journalPage
+                  ? 8
+                  : 18,
             ),
             border: compact && !journalPage,
             selected: selected,
@@ -975,6 +1008,7 @@ class DirectContent extends StatelessWidget {
           children: [
             if (columnActions.first.y > start)
               _report(
+                context,
                 frame,
                 start,
                 columnActions.first.y - 1,
@@ -1125,7 +1159,8 @@ class DirectContent extends StatelessWidget {
     bool compact = false,
     bool dense = false,
   }) {
-    if (journalPage) dense = true;
+    final preferences = JournalPreferences.of(context);
+    if (journalPage || preferences.compact) dense = true;
     final activityType = activityTypeForAction(action);
     final activityActor = _activityActor(action);
     final bulk = action.entityType?.contains('bulk') == true;
@@ -1174,7 +1209,11 @@ class DirectContent extends StatelessWidget {
               _shortcut(action.key, primary: primary),
               SizedBox(width: dense ? 6 : 12),
               if (illustration != null) ...[
-                CatalogueIllustration(art: illustration, width: 56, height: 38),
+                CatalogueIllustration(
+                  art: illustration,
+                  width: preferences.compact ? 40 : 56,
+                  height: preferences.compact ? 28 : 38,
+                ),
                 const SizedBox(width: 8),
               ],
               if (compact)
@@ -1182,11 +1221,7 @@ class DirectContent extends StatelessWidget {
                   child: Text(
                     _title(action),
                     style: TextStyle(
-                      fontSize: journalPage
-                          ? 13
-                          : dense
-                          ? 11
-                          : 14,
+                      fontSize: journalPage ? 13 : 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1233,7 +1268,7 @@ class DirectContent extends StatelessWidget {
                 ),
               ),
             ),
-          if (!compact && explanation != null)
+          if (!compact && preferences.showGuidance && explanation != null)
             Padding(
               padding: const EdgeInsets.only(left: 40, top: 6),
               child: Text(
@@ -1278,13 +1313,15 @@ class DirectContent extends StatelessWidget {
       padding: EdgeInsets.symmetric(
         horizontal: dense ? 10 : 16,
         vertical: dense
-            ? 6
+            ? preferences.compact
+                  ? 5
+                  : 6
             : compact
             ? 12
             : 17,
       ),
       description: [
-        if (explanation != null) explanation,
+        if (preferences.showGuidance && explanation != null) explanation,
         if (disabledReason?.isNotEmpty == true) disabledReason!,
         ...details.map((detail) => detail.text),
       ].join('. '),
@@ -1463,47 +1500,63 @@ class DirectContent extends StatelessWidget {
       enabled: enabled,
       selected: selected,
       label:
-          '${_spokenKey(action.key)} ${_title(action)}${action.intentLabel == null ? '' : ' · ${action.intentLabel}'}',
+          '${journalShortcutSpokenLabel(action.key)} ${_title(action)}${action.intentLabel == null ? '' : ' · ${action.intentLabel}'}',
       value: description.isEmpty ? null : description,
       onTap: enabled ? activate : null,
       child: ExcludeSemantics(
         child: TextButton(
           onPressed: enabled ? activate : null,
-          style: TextButton.styleFrom(
-            alignment: Alignment.centerLeft,
-            minimumSize: Size(44, journalPage || dense ? 36 : 52),
-            padding: padding,
-            foregroundColor: primary ? Colors.white : _ink,
-            disabledForegroundColor: _muted,
-            backgroundColor: journalPage
-                ? primary
-                      ? _teal
-                      : selected
-                      ? JournalPalette.selected
-                      : Colors.transparent
-                : !enabled
-                ? JournalPalette.inset
-                : primary
-                ? _red
-                : selected
-                ? JournalPalette.selected
-                : _card,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(
-                journalPage
-                    ? 2
-                    : border
-                    ? 7
-                    : 0,
+          style:
+              TextButton.styleFrom(
+                alignment: Alignment.centerLeft,
+                minimumSize: Size(48, journalPage || dense ? 48 : 52),
+                padding: padding,
+                foregroundColor: primary ? Colors.white : _ink,
+                disabledForegroundColor: _muted,
+                backgroundColor: journalPage
+                    ? primary
+                          ? _teal
+                          : selected
+                          ? JournalPalette.selected
+                          : Colors.transparent
+                    : !enabled
+                    ? JournalPalette.inset
+                    : primary
+                    ? _red
+                    : selected
+                    ? JournalPalette.selected
+                    : _card,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    journalPage
+                        ? 2
+                        : border
+                        ? 7
+                        : 0,
+                  ),
+                  side: border
+                      ? BorderSide(
+                          color: selected ? _teal : _rule,
+                          width: selected ? 1.5 : 1,
+                        )
+                      : BorderSide.none,
+                ),
+              ).copyWith(
+                side: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.focused)) {
+                    return BorderSide(
+                      color: primary ? Colors.white : JournalPalette.binding,
+                      width: 2,
+                    );
+                  }
+                  return border
+                      ? BorderSide(
+                          color: selected ? _teal : _rule,
+                          width: selected ? 1.5 : 1,
+                        )
+                      : BorderSide.none;
+                }),
               ),
-              side: border
-                  ? BorderSide(
-                      color: selected ? _teal : _rule,
-                      width: selected ? 1.5 : 1,
-                    )
-                  : BorderSide.none,
-            ),
-          ),
           child: child,
         ),
       ),
@@ -1511,6 +1564,7 @@ class DirectContent extends StatelessWidget {
   }
 
   Widget _report(
+    BuildContext context,
     _ContentFrame frame,
     int start,
     int end, {
@@ -1518,6 +1572,7 @@ class DirectContent extends StatelessWidget {
     int? right,
     bool maskActions = false,
   }) {
+    final condensed = JournalPreferences.of(context).compact;
     final lines = <Widget>[];
     for (var y = start; y <= end; y++) {
       final row = frame.rows[y].characters.toList();
@@ -1545,10 +1600,10 @@ class DirectContent extends StatelessWidget {
       if (fragments.isEmpty) continue;
       lines.add(
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
+          padding: EdgeInsets.symmetric(vertical: condensed ? 2 : 4),
           child: Wrap(
             spacing: 22,
-            runSpacing: 8,
+            runSpacing: condensed ? 4 : 8,
             children: [
               for (final fragment in fragments)
                 Text.rich(
@@ -1561,7 +1616,10 @@ class DirectContent extends StatelessWidget {
                       trim: true,
                     ),
                   ),
-                  style: const TextStyle(fontSize: 15, height: 1.5),
+                  style: TextStyle(
+                    fontSize: 15,
+                    height: condensed ? 1.35 : 1.5,
+                  ),
                 ),
             ],
           ),
@@ -1574,30 +1632,8 @@ class DirectContent extends StatelessWidget {
     );
   }
 
-  Widget _shortcut(String key, {bool primary = false}) => Container(
-    constraints: BoxConstraints(minWidth: journalPage ? 20 : 27),
-    padding: EdgeInsets.symmetric(
-      horizontal: journalPage ? 3 : 6,
-      vertical: journalPage ? 2 : 4,
-    ),
-    decoration: BoxDecoration(
-      color: journalPage
-          ? Colors.transparent
-          : primary
-          ? Colors.white.withValues(alpha: .15)
-          : _ink.withValues(alpha: .055),
-      borderRadius: BorderRadius.circular(4),
-    ),
-    child: Text(
-      _visualKey(key),
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        color: primary ? Colors.white : _muted,
-      ),
-    ),
-  );
+  Widget _shortcut(String key, {bool primary = false}) =>
+      JournalShortcutBadge(shortcut: key, primary: primary);
 }
 
 class _ContentFrame {
@@ -1822,18 +1858,6 @@ bool _isActivityCategory(ConsoleAction action) => const {
   'sleeper-category-selected',
 }.contains(action.entityType);
 
-String _spokenKey(String key) => key.length == 1 ? key.toUpperCase() : key;
-String _visualKey(String key) => switch (key) {
-  'Enter' => '↵',
-  'Escape' => 'Esc',
-  'PageUp' => '[',
-  'PageDown' => ']',
-  'Up' => '↑',
-  'Down' => '↓',
-  'Left' => '←',
-  'Right' => '→',
-  _ => _spokenKey(key),
-};
 String _sentenceCase(String text) => text.isEmpty
     ? text
     : text[0].toUpperCase() + text.substring(1).toLowerCase();

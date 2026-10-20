@@ -7,12 +7,16 @@ class GameOptions {
   static const String _fontSizeKey = 'fontSize';
   static const String _lighterToneKey = 'lighterTone';
   static const String _journalScaleKey = 'journalReadingScale';
+  static const String _journalCompactKey = 'journalCompactLayout';
+  static const String _journalGuidanceKey = 'journalShowGuidance';
   bool encounterWarnings = false;
   bool mouseInput = true;
   double fontSize = 16;
   String interfacePgUp = "[";
   bool lighterTone = false;
   double journalScale = 1;
+  bool journalCompact = false;
+  bool journalGuidance = true;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -23,6 +27,14 @@ class GameOptions {
     lighterTone = prefs.getBool(_lighterToneKey) ?? false;
     final scale = prefs.getDouble(_journalScaleKey) ?? 1;
     journalScale = const [1.0, 1.25, 1.5].contains(scale) ? scale : 1;
+    journalCompact = prefs.getBool(_journalCompactKey) ?? false;
+    journalGuidance = prefs.getBool(_journalGuidanceKey) ?? true;
+  }
+
+  Future<void> saveJournalPresentation() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_journalCompactKey, journalCompact);
+    await prefs.setBool(_journalGuidanceKey, journalGuidance);
   }
 
   Future<void> saveJournalScale() async {

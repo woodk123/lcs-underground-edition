@@ -10,6 +10,8 @@ import 'package:lcs_new_age/location/siege.dart' as siege;
 import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/modern/base_management_controller.dart';
 import 'package:lcs_new_age/modern/base_rent_summary.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 
@@ -33,6 +35,8 @@ class JournalBasesView extends StatefulWidget {
 }
 
 class JournalBasesViewState extends State<JournalBasesView> {
+  bool get _compact => JournalPreferences.of(context).compact;
+  bool get _showGuidance => JournalPreferences.of(context).showGuidance;
   late BaseManagementController _routes;
   int? _selectedId;
   ConsoleAction? _purchase;
@@ -227,23 +231,23 @@ class JournalBasesViewState extends State<JournalBasesView> {
           style: JournalPalette.body,
           child: constraints.maxWidth < 720
               ? ListView(
-                  padding: const EdgeInsets.all(14),
+                  padding: EdgeInsets.all(_compact ? 8 : 14),
                   children: [directory, const SizedBox(height: 16), content],
                 )
               : Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SizedBox(
-                      width: 285,
+                      width: _compact ? 245 : 285,
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(_compact ? 9 : 16),
                         child: directory,
                       ),
                     ),
                     const VerticalDivider(width: 1, color: JournalPalette.rule),
                     Expanded(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
+                        padding: EdgeInsets.all(_compact ? 12 : 20),
                         child: content,
                       ),
                     ),
@@ -261,19 +265,23 @@ class JournalBasesViewState extends State<JournalBasesView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Row(
+        Row(
           children: [
-            JournalIllustratedIcon(icon: JournalIcon.bases, size: 42),
-            SizedBox(width: 10),
-            Expanded(
+            JournalIllustratedIcon(
+              icon: JournalIcon.bases,
+              size: _compact ? 28 : 42,
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
               child: Text('Bases & Stores', style: JournalPalette.title),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        const Text(
-          'See who lives where, prepare your safehouses, and move stored equipment.',
-        ),
+        if (_showGuidance)
+          const Text(
+            'See who lives where, prepare your safehouses, and move stored equipment.',
+          ),
         const SizedBox(height: 12),
         _routeButton(
           'Move equipment between bases',
@@ -322,7 +330,7 @@ class JournalBasesViewState extends State<JournalBasesView> {
   }
 
   Widget _directorySite(Site site) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
+    padding: EdgeInsets.only(bottom: _compact ? 4 : 8),
     child: Material(
       color: _site == site ? JournalPalette.selected : JournalPalette.card,
       shape: RoundedRectangleBorder(
@@ -332,7 +340,7 @@ class JournalBasesViewState extends State<JournalBasesView> {
       child: InkWell(
         onTap: _busy ? null : () => _select(site),
         child: Padding(
-          padding: const EdgeInsets.all(11),
+          padding: EdgeInsets.all(_compact ? 7 : 11),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -622,8 +630,10 @@ class JournalBasesViewState extends State<JournalBasesView> {
                     }),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
-                  '${_label(action)}${action.enabled ? '' : ' — insufficient funds'}',
+                child: JournalCommandLabel(
+                  shortcut: action.key,
+                  label:
+                      '${_label(action)}${action.enabled ? '' : ' — insufficient funds'}',
                 ),
               ),
             ),
@@ -645,7 +655,11 @@ class JournalBasesViewState extends State<JournalBasesView> {
                         ),
                       ),
                 icon: const Icon(Icons.check),
-                label: const Text('Confirm purchase'),
+                label: const JournalCommandLabel(
+                  shortcut: 'Enter',
+                  label: 'Confirm purchase',
+                  primary: true,
+                ),
               ),
               TextButton(
                 onPressed: _busy
@@ -657,7 +671,10 @@ class JournalBasesViewState extends State<JournalBasesView> {
                           _updateState(() => _purchase = null);
                         }
                       },
-                child: const Text('Cancel'),
+                child: const JournalCommandLabel(
+                  shortcut: 'Escape',
+                  label: 'Cancel',
+                ),
               ),
             ],
           ),
@@ -666,7 +683,12 @@ class JournalBasesViewState extends State<JournalBasesView> {
           onPressed: _busy
               ? null
               : () => unawaited(_route(_routes.closeSource)),
-          child: const Text('Done purchasing'),
+          child: purchase == null
+              ? const JournalCommandLabel(
+                  shortcut: 'Escape',
+                  label: 'Done purchasing',
+                )
+              : const Text('Done purchasing'),
         ),
       ],
     );
@@ -700,11 +722,17 @@ class JournalBasesViewState extends State<JournalBasesView> {
       ))
         TextButton(
           onPressed: _busy ? null : () => unawaited(_send(action)),
-          child: Text(_label(action)),
+          child: JournalCommandLabel(
+            shortcut: action.key,
+            label: _label(action),
+          ),
         ),
       TextButton(
         onPressed: _busy ? null : () => unawaited(_route(_routes.closeSource)),
-        child: const Text('Done moving equipment'),
+        child: const JournalCommandLabel(
+          shortcut: 'Escape',
+          label: 'Done moving equipment',
+        ),
       ),
     ]);
   }
@@ -714,34 +742,46 @@ class JournalBasesViewState extends State<JournalBasesView> {
         .where((site) => site.idString == action.entityCategory)
         .firstOrNull;
     final alreadyHere = origin != null && origin == destination;
-    return Row(
+    final description = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(_label(action)),
-              Text(
-                'Stored at ${origin?.getName(includeCity: true) ?? 'unknown base'}',
-                style: JournalPalette.small,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 10),
-        OutlinedButton(
-          onPressed:
-              _busy || !action.enabled || alreadyHere || destination == null
-              ? null
-              : () => unawaited(
-                  _send(
-                    action,
-                    notice: 'Equipment moved to ${destination.getName()}.',
-                  ),
-                ),
-          child: Text(alreadyHere ? 'Already here' : 'Move stack'),
+        Text(_label(action)),
+        Text(
+          'Stored at ${origin?.getName(includeCity: true) ?? 'unknown base'}',
+          style: JournalPalette.small,
         ),
       ],
+    );
+    final move = OutlinedButton(
+      onPressed: _busy || !action.enabled || alreadyHere || destination == null
+          ? null
+          : () => unawaited(
+              _send(
+                action,
+                notice: 'Equipment moved to ${destination.getName()}.',
+              ),
+            ),
+      child: JournalCommandLabel(
+        shortcut: action.key,
+        label: alreadyHere ? 'Already here' : 'Move stack',
+      ),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+        return constraints.maxWidth / scale < 440
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [description, const SizedBox(height: 6), move],
+              )
+            : Row(
+                children: [
+                  Expanded(child: description),
+                  const SizedBox(width: 10),
+                  move,
+                ],
+              );
+      },
     );
   }
 
@@ -771,7 +811,10 @@ class JournalBasesViewState extends State<JournalBasesView> {
       _paging(),
       TextButton(
         onPressed: _busy ? null : () => unawaited(_route(_routes.closeSource)),
-        child: const Text('Done assigning bases'),
+        child: const JournalCommandLabel(
+          shortcut: 'Escape',
+          label: 'Done assigning bases',
+        ),
       ),
     ]);
   }
@@ -804,8 +847,9 @@ class JournalBasesViewState extends State<JournalBasesView> {
                 _busy || !action.enabled || alreadyHere || destination == null
                 ? null
                 : () => unawaited(_send(action, notice: 'Home base assigned.')),
-            child: Text(
-              alreadyHere ? 'Already based here' : 'Assign home base',
+            child: JournalCommandLabel(
+              shortcut: action.key,
+              label: alreadyHere ? 'Already based here' : 'Assign home base',
             ),
           ),
         ),
@@ -822,7 +866,10 @@ class JournalBasesViewState extends State<JournalBasesView> {
             action.entityType == type || action.entityType == '$type-selected',
       ))
         ChoiceChip(
-          label: Text(_label(action)),
+          label: JournalCommandLabel(
+            shortcut: action.key,
+            label: _label(action),
+          ),
           selected: action.entityType == '$type-selected',
           onSelected: _busy || !action.enabled
               ? null
@@ -833,7 +880,7 @@ class JournalBasesViewState extends State<JournalBasesView> {
       ))
         OutlinedButton(
           onPressed: _busy ? null : () => unawaited(_send(action)),
-          child: const Text('More bases'),
+          child: JournalCommandLabel(shortcut: action.key, label: 'More bases'),
         ),
     ],
   );
@@ -850,7 +897,10 @@ class JournalBasesViewState extends State<JournalBasesView> {
           onPressed: _busy || !action.enabled
               ? null
               : () => unawaited(_send(action)),
-          child: Text(_label(action)),
+          child: JournalCommandLabel(
+            shortcut: action.key,
+            label: _label(action),
+          ),
         ),
     ],
   );
@@ -884,14 +934,17 @@ class JournalBasesViewState extends State<JournalBasesView> {
       borderRadius: BorderRadius.circular(3),
     ),
     child: Padding(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(_compact ? 9 : 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
               if (illustration != null)
-                JournalIllustratedIcon(icon: illustration, size: 36)
+                JournalIllustratedIcon(
+                  icon: illustration,
+                  size: _compact ? 26 : 36,
+                )
               else
                 Icon(icon, color: JournalPalette.brassDark, size: 23),
               const SizedBox(width: 8),

@@ -4,6 +4,8 @@ import 'package:lcs_new_age/engine/pursuit_context.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/journal_person_summary.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 
 /// The original pursuit reader in the journal. Only source-authored
@@ -45,6 +47,7 @@ class _JournalPursuitViewState extends State<JournalPursuitView> {
       final frame = pursuitContext(widget.console);
       if (frame == null) return const SizedBox.shrink();
       final revision = widget.console.revision.value;
+      final preferences = JournalPreferences.of(context);
       final personActions = {
         for (final summary in frame.people)
           summary: frame.actions
@@ -58,7 +61,7 @@ class _JournalPursuitViewState extends State<JournalPursuitView> {
       return JournalSurface(
         key: const ValueKey('journal-pursuit'),
         lined: true,
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(preferences.compact ? 8 : 12),
         child: Material(
           type: MaterialType.transparency,
           child: Column(
@@ -174,22 +177,30 @@ class _JournalPursuitViewState extends State<JournalPursuitView> {
               ),
               const Divider(height: 16),
               ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 165),
+                constraints: BoxConstraints(
+                  maxHeight: journalCommandPanelMaxHeight(context),
+                ),
                 child: SingleChildScrollView(
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final action in frame.actions)
-                        if (!personActions.containsValue(action))
-                          OutlinedButton(
-                            key: ValueKey(
-                              'journal-pursuit-action:${action.key}',
+                  child: FocusTraversalGroup(
+                    policy: ReadingOrderTraversalPolicy(),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final action in frame.actions)
+                          if (!personActions.containsValue(action))
+                            OutlinedButton(
+                              key: ValueKey(
+                                'journal-pursuit-action:${action.key}',
+                              ),
+                              onPressed: _command(frame, action, revision),
+                              child: JournalCommandLabel(
+                                shortcut: action.key,
+                                label: action.intentLabel ?? action.label,
+                              ),
                             ),
-                            onPressed: _command(frame, action, revision),
-                            child: Text(action.intentLabel ?? action.label),
-                          ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

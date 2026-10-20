@@ -23,6 +23,8 @@ import 'package:lcs_new_age/modern/journal_city_plan.dart';
 import 'package:lcs_new_age/modern/journal_network.dart';
 import 'package:lcs_new_age/modern/journal_order_icon.dart';
 import 'package:lcs_new_age/modern/journal_people.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/location_details.dart';
@@ -102,6 +104,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   }
 
   bool _orders = false, _skills = false, _pool = false;
+  bool _ordersMap = false;
   bool _showReports = false;
   bool _personnelTools = false;
   Skill _poolSort = Skill.firearms;
@@ -228,6 +231,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   bool get overview => console.screen == 'organisation';
   bool get _compactMapText =>
       widget.textScale > 1.1 && MediaQuery.sizeOf(context).width < 1000;
+  bool get _compact => JournalPreferences.of(context).compact;
+  bool get _showGuidance => JournalPreferences.of(context).showGuidance;
   Site? get _selectedDestination => _targetSquadId == squad?.id
       ? game.sites
             .where((site) => site.idString == _targetId && !site.hidden)
@@ -327,6 +332,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     }.contains(action.entityType)) {
       setState(() {
         _orders = true;
+        _ordersMap = false;
         _pendingOrder = null;
         _categoryId = action.entityId;
         _group =
@@ -350,6 +356,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       setState(() {
         _pendingOrder = action;
         _pendingRevision = console.revision.value;
+        _ordersMap = false;
       });
       return true;
     }
@@ -529,6 +536,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     Widget tab((int, String, JournalIcon) item) => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Tooltip(
+        excludeFromSemantics: true,
         message: controller.canNavigate
             ? item.$1 == networkJournalSection
                   ? 'Sleeper agents · monthly standing orders'
@@ -555,6 +563,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                     : item.$1 == networkJournalSection && reviews > 0
                     ? 'Network. $reviews ${reviews == 1 ? 'role' : 'roles'} to review.'
                     : item.$2,
+                hint: item.$1 == networkJournalSection
+                    ? 'Sleeper agents · monthly standing orders'
+                    : null,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 3,
@@ -648,16 +659,24 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           ),
           Tooltip(
             message: 'Field guide',
-            child: TextButton.icon(
-              onPressed: widget.onHelp,
-              icon: const Icon(
-                Icons.keyboard_outlined,
-                color: JournalPalette.brassLight,
-              ),
-              label: Text(
-                'Keys · F1',
-                style: JournalPalette.small.copyWith(
+            excludeFromSemantics: true,
+            child: Semantics(
+              button: true,
+              excludeSemantics: true,
+              label: 'Field guide',
+              hint: 'Keyboard shortcut: F1',
+              onTap: widget.onHelp,
+              child: TextButton.icon(
+                onPressed: widget.onHelp,
+                icon: const Icon(
+                  Icons.keyboard_outlined,
                   color: JournalPalette.brassLight,
+                ),
+                label: Text(
+                  'Keys · F1',
+                  style: JournalPalette.small.copyWith(
+                    color: JournalPalette.brassLight,
+                  ),
                 ),
               ),
             ),
@@ -1174,7 +1193,14 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   child: InkWell(
                     key: ValueKey('hq-portrait:${actor.id}'),
                     onTap: () => widget.onInspect(actor),
-                    child: CrewPortrait(person: actor, size: narrow ? 46 : 58),
+                    child: CrewPortrait(
+                      person: actor,
+                      size: _compact
+                          ? 36
+                          : narrow
+                          ? 46
+                          : 58,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 7),
@@ -1281,7 +1307,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   );
 
   Widget _innerRail(bool narrow) => SizedBox(
-    width: narrow ? 64 : 72,
+    width: _compact && widget.textScale > 1.1
+        ? 88
+        : narrow
+        ? 64
+        : 72,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1448,48 +1478,69 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               selected: selected,
               excludeSemantics: true,
               label: semanticLabel ?? label,
-              child: SizedBox(
-                height: 32 + MediaQuery.textScalerOf(context).scale(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 2,
-                    vertical: 4,
-                  ),
-                  child: Column(
-                    children: [
-                      SizedBox.square(
-                        dimension: 24,
-                        child: Center(
-                          child: key.startsWith('journal-order-group:')
-                              ? JournalIllustratedIcon(
-                                  icon:
-                                      JournalIcon.values[8 +
-                                          int.parse(key.split(':').last)],
-                                  size: 24,
-                                )
-                              : Icon(
-                                  icon,
-                                  size: 24,
-                                  color: onTap == null
-                                      ? JournalPalette.muted
-                                      : JournalPalette.brassDark,
-                                ),
-                        ),
+              child: _compact
+                  ? Container(
+                      alignment: Alignment.center,
+                      constraints: const BoxConstraints(minHeight: 44),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 3,
+                        vertical: 8,
                       ),
-                      Text(
+                      child: Text(
                         label,
-                        maxLines: 1,
                         textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
                         style: JournalPalette.small.copyWith(
                           fontSize: 10,
                           height: 1.15,
+                          color: onTap == null
+                              ? JournalPalette.muted
+                              : JournalPalette.ink,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
+                    )
+                  : SizedBox(
+                      height: 32 + MediaQuery.textScalerOf(context).scale(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 2,
+                          vertical: 4,
+                        ),
+                        child: Column(
+                          children: [
+                            SizedBox.square(
+                              dimension: 24,
+                              child: Center(
+                                child: key.startsWith('journal-order-group:')
+                                    ? JournalIllustratedIcon(
+                                        icon:
+                                            JournalIcon.values[8 +
+                                                int.parse(key.split(':').last)],
+                                        size: 24,
+                                      )
+                                    : Icon(
+                                        icon,
+                                        size: 24,
+                                        color: onTap == null
+                                            ? JournalPalette.muted
+                                            : JournalPalette.brassDark,
+                                      ),
+                              ),
+                            ),
+                            Text(
+                              label,
+                              maxLines: 1,
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                              style: JournalPalette.small.copyWith(
+                                fontSize: 10,
+                                height: 1.15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
             ),
           ),
         ),
@@ -1640,6 +1691,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
 
   Widget _memberRow(Creature member) {
     final injury = crewInjurySummary(member);
+    final location = member.location?.getName(short: true) ?? 'In hiding';
+    final showingOrders = _orders || activityFrame;
+    final stacked = _compact && widget.textScale > 1.1;
     final clothing = member.equippedClothing;
     final clothingSummary = clothing == null
         ? 'No equipped clothing'
@@ -1698,6 +1752,40 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       }
     }
 
+    final nameLabel = Text(
+      member.name,
+      key: ValueKey('journal-member-name:${member.id}'),
+      maxLines: stacked ? 2 : 1,
+      overflow: TextOverflow.ellipsis,
+      style: JournalPalette.body.copyWith(fontSize: 13, height: 1.25),
+    );
+    final contextLabel = Tooltip(
+      message: showingOrders
+          ? 'Current order: ${member.activity.description}\nLocation: $location\nWearing: $clothingSummary'
+          : 'Wearing: $clothingSummary',
+      child: Text(
+        showingOrders
+            ? '${member.activity.description} · $location'
+            : clothingSummary,
+        key: ValueKey(
+          showingOrders
+              ? 'journal-member-order:${member.id}'
+              : 'journal-member-clothing:${member.id}',
+        ),
+        maxLines: stacked ? 2 : 1,
+        overflow: TextOverflow.ellipsis,
+        style: JournalPalette.small.copyWith(
+          fontSize: 11,
+          height: 1.3,
+          color:
+              !showingOrders &&
+                  (clothing == null || clothing.bloody || clothing.damaged)
+              ? JournalPalette.danger
+              : JournalPalette.small.color,
+        ),
+      ),
+    );
+
     final row = Material(
       color: Colors.transparent,
       child: Container(
@@ -1725,52 +1813,22 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 ),
                 child: Semantics(
                   label:
-                      'Select crew ${member.name}\nStrongest skills: $skillSummary\nWearing: $clothingSummary${injury == null ? '' : '\nCondition: ${injury.details}'}',
+                      'Select crew ${member.name}\nCurrent order: ${member.activity.description}\nLocation: $location\nStrongest skills: $skillSummary\nWearing: $clothingSummary${injury == null ? '' : '\nCondition: ${injury.details}'}',
                   excludeSemantics: true,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: Text(
-                              member.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: JournalPalette.body.copyWith(
-                                fontSize: 13,
-                                height: 1.25,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            flex: 6,
-                            child: Tooltip(
-                              message: 'Wearing: $clothingSummary',
-                              child: Text(
-                                clothingSummary,
-                                key: ValueKey(
-                                  'journal-member-clothing:${member.id}',
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: JournalPalette.small.copyWith(
-                                  fontSize: 11,
-                                  height: 1.3,
-                                  color:
-                                      clothing == null ||
-                                          clothing.bloody ||
-                                          clothing.damaged
-                                      ? JournalPalette.danger
-                                      : JournalPalette.small.color,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      if (stacked) ...[
+                        nameLabel,
+                        contextLabel,
+                      ] else
+                        Row(
+                          children: [
+                            Expanded(flex: 5, child: nameLabel),
+                            const SizedBox(width: 8),
+                            Flexible(flex: 6, child: contextLabel),
+                          ],
+                        ),
                       LayoutBuilder(
                         builder: (context, bounds) => Row(
                           children: [
@@ -1831,13 +1889,20 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                           ],
                         ),
                       ),
+                      if (stacked)
+                        JuiceBadge(
+                          person: member,
+                          compact: true,
+                          showHelp: false,
+                        ),
                     ],
                   ),
                 ),
               ),
             ),
-            JuiceBadge(person: member, compact: true, showHelp: false),
-            if (member.activity.type != ActivityType.none)
+            if (!stacked)
+              JuiceBadge(person: member, compact: true, showHelp: false),
+            if (!stacked && member.activity.type != ActivityType.none)
               Tooltip(
                 message: member.activity.description,
                 child: const Icon(
@@ -2175,12 +2240,18 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                         : help.timing,
                     style: JournalPalette.small,
                   ),
-                  if (activityFrame && !prepared)
+                  if (prepared && actor != null)
+                    Text(
+                      'Currently assigned: ${actual?.description ?? ActivityType.none.label}',
+                      key: const ValueKey('journal-assigned-order'),
+                      style: JournalPalette.small,
+                    ),
+                  if (activityFrame && !prepared && _showGuidance)
                     const Text(
                       'This describes the assigned order. Prepare a choice to review it.',
                       style: JournalPalette.small,
                     ),
-                  if (actor != null)
+                  if (actor != null && _showGuidance)
                     JuiceActivityHint(person: actor, activity: type),
                   if (!visitInProgress &&
                       type == ActivityType.visit &&
@@ -2279,7 +2350,15 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                       ),
                     ),
                     icon: const Icon(Icons.check, size: 16),
-                    label: const Text('Confirm order'),
+                    label: const Wrap(
+                      spacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        JournalShortcutBadge(shortcut: 'Enter', primary: true),
+                        Text('Confirm order'),
+                      ],
+                    ),
                   ),
                 )
               else if (confirmation != null)
@@ -2321,7 +2400,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   tooltip: 'Cancel prepared order',
                   key: const ValueKey('journal-cancel-order'),
                   onPressed: () => setState(() => _pendingOrder = null),
-                  icon: const Icon(Icons.close, size: 18),
+                  icon: const JournalShortcutBadge(shortcut: 'Escape'),
                 )
               else if (activityFrame || planning)
                 IconButton(
@@ -2755,6 +2834,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   }
 
   Widget _orderContext(bool narrow) {
+    final showMap = planning || _ordersMap;
     final queued = person?.squad?.activity;
     if (!undercover &&
         !planning &&
@@ -2834,7 +2914,41 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (visibleCategories.length > 1)
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                planning
+                    ? 'Choose a destination'
+                    : _ordersMap
+                    ? 'Browse destinations'
+                    : 'Choose a task',
+                key: const ValueKey('journal-orders-heading'),
+                style: JournalPalette.heading,
+              ),
+            ),
+            if (!planning)
+              TextButton.icon(
+                key: const ValueKey('journal-orders-map-toggle'),
+                onPressed: () => setState(() => _ordersMap = !_ordersMap),
+                icon: Icon(
+                  _ordersMap ? Icons.list : Icons.map_outlined,
+                  size: 17,
+                ),
+                label: Text(_ordersMap ? 'Tasks' : 'Map'),
+              ),
+          ],
+        ),
+        if (!showMap)
+          const Padding(
+            padding: EdgeInsets.only(top: 3, bottom: 6),
+            child: Text(
+              'Task key: prepare · Enter: confirm · Esc: cancel',
+              key: ValueKey('journal-orders-keyboard-help'),
+              style: JournalPalette.small,
+            ),
+          ),
+        if (!showMap && visibleCategories.length > 1)
           Wrap(
             spacing: 4,
             runSpacing: 3,
@@ -2843,8 +2957,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 OutlinedButton(
                   onPressed: category.enabled && !controller.busy
                       ? () {
-                          setState(() => _categoryId = category.entityId);
-                          _pendingOrder = null;
+                          setState(() {
+                            _categoryId = category.entityId;
+                            _pendingOrder = null;
+                            _ordersMap = false;
+                          });
                           unawaited(
                             controller.browseCategory(
                               category,
@@ -2863,82 +2980,98 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                         ? JournalPalette.selected
                         : null,
                   ),
-                  child: Text(
-                    _clean(category.label),
-                    style: JournalPalette.small,
+                  child: Wrap(
+                    spacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      JournalShortcutBadge(shortcut: category.key),
+                      Text(_clean(category.label), style: JournalPalette.small),
+                    ],
                   ),
                 ),
             ],
           ),
-        if (visibleCategories.length > 1) const SizedBox(height: 6),
+        if (!showMap && visibleCategories.length > 1) const SizedBox(height: 6),
         Expanded(
           key: const ValueKey('journal-order-workspace'),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: IndexedStack(
+            index: showMap ? 1 : 0,
+            sizing: StackFit.expand,
             children: [
-              if (!planning && (_group == 3 || tasks.isNotEmpty))
-                SizedBox(
-                  width: narrow ? 96 : 130,
-                  child: ListView(
-                    key: PageStorageKey('journal-tasks:$_group:$_categoryId'),
-                    children: [
-                      if (_group == 3)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 5),
-                          child: DecoratedBox(
-                            decoration: journalTabDecoration(
-                              selected: false,
-                              enabled: controller.canNavigate && !undercover,
-                            ),
-                            child: TextButton(
-                              key: const ValueKey('journal-plan-visit'),
-                              onPressed: controller.canNavigate && !undercover
-                                  ? () {
-                                      setState(() {
-                                        _targetId = null;
-                                        _targetSquadId = null;
-                                      });
-                                      unawaited(_prepareMapVisit());
-                                    }
-                                  : null,
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 5,
-                                  vertical: 7,
-                                ),
-                                minimumSize: const Size(44, 44),
-                                shape: const RoundedRectangleBorder(),
-                              ),
-                              child: Column(
-                                children: [
-                                  const JournalOrderIcon(
-                                    type: ActivityType.visit,
-                                    size: 34,
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    'Visit a location',
-                                    textAlign: TextAlign.center,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: JournalPalette.small.copyWith(
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+              ExcludeFocus(
+                excluding: showMap,
+                child: tasks.isNotEmpty || _group == 3
+                    ? ListView(
+                        key: PageStorageKey(
+                          'journal-tasks:$_group:$_categoryId',
                         ),
-                      for (final task in tasks) _taskButton(task),
-                    ],
-                  ),
+                        padding: EdgeInsets.zero,
+                        children: [
+                          if (_group == 3)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 5),
+                              child: DecoratedBox(
+                                decoration: journalTabDecoration(
+                                  selected: false,
+                                  enabled:
+                                      controller.canNavigate && !undercover,
+                                ),
+                                child: TextButton(
+                                  key: const ValueKey('journal-plan-visit'),
+                                  onPressed:
+                                      controller.canNavigate && !undercover
+                                      ? () {
+                                          setState(() {
+                                            _targetId = null;
+                                            _targetSquadId = null;
+                                          });
+                                          unawaited(_prepareMapVisit());
+                                        }
+                                      : null,
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 5,
+                                      vertical: 7,
+                                    ),
+                                    minimumSize: const Size(44, 44),
+                                    shape: const RoundedRectangleBorder(),
+                                  ),
+                                  child: const Row(
+                                    children: [
+                                      JournalOrderIcon(
+                                        type: ActivityType.visit,
+                                        size: 28,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Visit a location',
+                                          style: JournalPalette.body,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          for (final task in tasks) _taskButton(task),
+                        ],
+                      )
+                    : Center(
+                        child: Text(
+                          controller.busy
+                              ? 'Opening current orders…'
+                              : 'Choose an order group to see its tasks.',
+                          style: JournalPalette.small,
+                        ),
+                      ),
+              ),
+              ExcludeFocus(
+                excluding: !showMap,
+                child: KeyedSubtree(
+                  key: const ValueKey('journal-order-map'),
+                  child: _mapContext(),
                 ),
-              if (!planning && (_group == 3 || tasks.isNotEmpty))
-                const SizedBox(width: 7),
-              Expanded(
-                key: const ValueKey('journal-order-map'),
-                child: _mapContext(),
               ),
             ],
           ),
@@ -2970,53 +3103,84 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 ? () => setState(() {
                     _pendingOrder = action;
                     _pendingRevision = console.revision.value;
+                    _ordersMap = false;
                   })
                 : null,
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 7),
-              minimumSize: const Size(44, 44),
+              padding: EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: _compact ? 6 : 10,
+              ),
+              minimumSize: const Size(48, 48),
               shape: const RoundedRectangleBorder(),
             ),
             child: Semantics(
-              label: 'Prepare ${_clean(action.label)}',
+              label:
+                  'Prepare ${_clean(action.label)} · ${journalShortcutSpokenLabel(action.key)} shortcut${selected
+                      ? hasPreparedOrder
+                            ? ' · Prepared, awaiting confirmation'
+                            : ' · Currently assigned'
+                      : ''}${!action.enabled ? ' · Unavailable${help.unavailableReason == null ? '' : ': ${help.unavailableReason}'}' : ''}',
               selected: selected,
               excludeSemantics: true,
-              child: Column(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  JournalOrderIcon(type: type, size: 34),
-                  const SizedBox(height: 3),
-                  Text(
-                    _clean(action.label),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: JournalPalette.small.copyWith(
-                      fontSize: 11,
-                      color: action.enabled
-                          ? JournalPalette.ink
-                          : JournalPalette.muted,
+                  JournalShortcutBadge(shortcut: action.key),
+                  const SizedBox(width: 8),
+                  if (!_compact) ...[
+                    JournalOrderIcon(type: type, size: 28),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _clean(action.label),
+                          style: JournalPalette.body.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: action.enabled
+                                ? JournalPalette.ink
+                                : JournalPalette.muted,
+                          ),
+                        ),
+                        if (selected)
+                          Text(
+                            hasPreparedOrder
+                                ? 'Prepared'
+                                : 'Currently assigned',
+                            style: JournalPalette.small.copyWith(
+                              color: hasPreparedOrder
+                                  ? JournalPalette.binding
+                                  : JournalPalette.olive,
+                            ),
+                          ),
+                        if (help.factors.isNotEmpty)
+                          Text(
+                            'Uses: ${help.factors}',
+                            style: JournalPalette.small,
+                          ),
+                        if (help.cost.isNotEmpty &&
+                            help.cost != 'No activity fee')
+                          Text(
+                            'Cost: ${help.cost}',
+                            style: JournalPalette.small,
+                          ),
+                        if (_showGuidance && selected)
+                          Text(help.summary, style: JournalPalette.small),
+                        if (!action.enabled)
+                          Text(
+                            help.unavailableReason == null
+                                ? 'Unavailable'
+                                : 'Unavailable: ${help.unavailableReason}',
+                            style: JournalPalette.small.copyWith(
+                              color: JournalPalette.danger,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  if (selected)
-                    Icon(
-                      hasPreparedOrder
-                          ? Icons.hourglass_top
-                          : Icons.check_circle,
-                      size: 14,
-                      color: hasPreparedOrder
-                          ? JournalPalette.binding
-                          : JournalPalette.olive,
-                    ),
-                  if (!action.enabled && help.unavailableReason != null)
-                    Text(
-                      help.unavailableReason!,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: JournalPalette.small.copyWith(
-                        fontSize: 9,
-                        color: JournalPalette.danger,
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -3684,6 +3848,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 ),
             ],
           ),
+          const JournalPreferencesButton(color: JournalPalette.brassLight),
           IconButton(
             tooltip: 'Switch readable / classic view',
             onPressed: widget.onClassic,

@@ -12,6 +12,8 @@ import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/journal_order_icon.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
@@ -58,6 +60,8 @@ class JournalNetworkView extends StatefulWidget {
 }
 
 class JournalNetworkViewState extends State<JournalNetworkView> {
+  bool get _compact => JournalPreferences.of(context).compact;
+  bool get _showGuidance => JournalPreferences.of(context).showGuidance;
   final _detailScroll = ScrollController();
   final _roleCardKey = GlobalKey();
   final _choicesKey = GlobalKey();
@@ -363,8 +367,8 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
           children: [
             Image.asset(
               'assets/modern/journal_network_empty_v1.webp',
-              width: 250,
-              height: 165,
+              width: _compact ? 160 : 250,
+              height: _compact ? 100 : 165,
               excludeFromSemantics: true,
             ),
             const SizedBox(height: 12),
@@ -372,15 +376,16 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
             const SizedBox(height: 9),
             const Text('No sleeper agents yet.', style: JournalPalette.heading),
             const SizedBox(height: 8),
-            const SizedBox(
-              width: 520,
-              child: Text(
-                'When a recruit stays at their workplace as a sleeper, they appear here. '
-                'Choose a monthly standing order or keep them laying low to build infiltration.',
-                textAlign: TextAlign.center,
-                style: JournalPalette.body,
+            if (_showGuidance)
+              const SizedBox(
+                width: 520,
+                child: Text(
+                  'When a recruit stays at their workplace as a sleeper, they appear here. '
+                  'Choose a monthly standing order or keep them laying low to build infiltration.',
+                  textAlign: TextAlign.center,
+                  style: JournalPalette.body,
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -391,15 +396,18 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
     final agents = _agents;
     final reviews = controller.networkReviews.count(agents);
     return JournalSurface(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(_compact ? 8 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Row(
+          Row(
             children: [
-              JournalIllustratedIcon(icon: JournalIcon.network, size: 46),
-              SizedBox(width: 8),
-              Expanded(
+              JournalIllustratedIcon(
+                icon: JournalIcon.network,
+                size: _compact ? 30 : 46,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
                 child: Text('Undercover network', style: JournalPalette.title),
               ),
             ],
@@ -410,10 +418,11 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
             '${reviews > 0 ? ' · $reviews to review' : ''}',
             style: JournalPalette.small,
           ),
-          const Text(
-            'Choose an agent, then a standing order.',
-            style: JournalPalette.body,
-          ),
+          if (_showGuidance)
+            const Text(
+              'Choose an agent, then a standing order.',
+              style: JournalPalette.body,
+            ),
           const SizedBox(height: 10),
           _timing(),
           const SizedBox(height: 10),
@@ -468,7 +477,7 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
     final infiltration = (person.infiltration * 100).round();
     final title = sleeperOrderTitle(person.activity.type);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
+      padding: EdgeInsets.only(bottom: _compact ? 4 : 7),
       child: Material(
         color: Colors.transparent,
         child: Ink(
@@ -486,11 +495,11 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
               key: ValueKey('network-agent:${person.id}'),
               onTap: _busy ? null : () => _select(person),
               child: Padding(
-                padding: const EdgeInsets.all(9),
+                padding: EdgeInsets.all(_compact ? 6 : 9),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CrewPortrait(person: person, size: 46),
+                    CrewPortrait(person: person, size: _compact ? 32 : 46),
                     const SizedBox(width: 9),
                     Expanded(
                       child: Column(
@@ -587,7 +596,7 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CrewPortrait(person: person, size: 70),
+            CrewPortrait(person: person, size: _compact ? 44 : 70),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -638,7 +647,7 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
         JournalSurface(
           key: _roleCardKey,
           inset: true,
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(_compact ? 8 : 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -655,7 +664,7 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
               const SizedBox(height: 7),
               Row(
                 children: [
-                  JournalOrderIcon(type: displayed, size: 34),
+                  JournalOrderIcon(type: displayed, size: _compact ? 24 : 34),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -711,8 +720,10 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
                     backgroundColor: JournalPalette.olive,
                   ),
                   icon: const Icon(Icons.check, size: 18),
-                  label: Text(
-                    pending == ActivityType.sleeperJoinLcs
+                  label: JournalCommandLabel(
+                    shortcut: 'Enter',
+                    primary: true,
+                    label: pending == ActivityType.sleeperJoinLcs
                         ? 'Confirm recall'
                         : 'Confirm standing order',
                   ),
@@ -720,7 +731,10 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
                 TextButton(
                   key: const ValueKey('network-cancel-order'),
                   onPressed: _busy ? null : () => setState(_clearDraft),
-                  child: const Text('Cancel prepared change'),
+                  child: const JournalCommandLabel(
+                    shortcut: 'Escape',
+                    label: 'Cancel prepared change',
+                  ),
                 ),
               ] else
                 FilledButton.icon(
@@ -753,21 +767,27 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
               onPressed: canChoose
                   ? () => unawaited(_browse('sleeper-advocacy', layLow: true))
                   : null,
-              child: const Text('Lay Low'),
+              child: _layLowLabel(person),
             ),
             OutlinedButton(
               key: const ValueKey('network-advocacy'),
               onPressed: canChoose
                   ? () => unawaited(_browse('sleeper-advocacy'))
                   : null,
-              child: const Text('Advocacy'),
+              child: const JournalCommandLabel(
+                shortcut: 'a',
+                label: 'Advocacy',
+              ),
             ),
             OutlinedButton(
               key: const ValueKey('network-espionage'),
               onPressed: canChoose
                   ? () => unawaited(_browse('sleeper-espionage'))
                   : null,
-              child: const Text('Espionage'),
+              child: const JournalCommandLabel(
+                shortcut: 'b',
+                label: 'Espionage',
+              ),
             ),
           ],
         ),
@@ -781,7 +801,10 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
           key: const ValueKey('network-recall'),
           onPressed: canChoose ? () => unawaited(_recall()) : null,
           icon: const Icon(Icons.person_add_alt, size: 18),
-          label: const Text('Recall to active crew'),
+          label: const JournalCommandLabel(
+            shortcut: 'c',
+            label: 'Recall to active crew',
+          ),
         ),
         const Text(
           'Returns on the next eligible day. Requires an LCS safehouse outside siege.',
@@ -801,7 +824,7 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
       ],
     );
     return JournalSurface(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(_compact ? 8 : 12),
       child: scroll
           ? Scrollbar(
               controller: _detailScroll,
@@ -814,6 +837,22 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
             )
           : content,
     );
+  }
+
+  Widget _layLowLabel(Creature person) {
+    final frame = activityOrderFrame(console);
+    final action = frame?.sleeper == true && frame?.actorId == person.id
+        ? console.actions
+              .where(
+                (action) =>
+                    action.entityType == 'sleeper-activity' &&
+                    action.entityId == ActivityType.none.name,
+              )
+              .firstOrNull
+        : null;
+    return action == null
+        ? const Text('Lay Low')
+        : JournalCommandLabel(shortcut: action.key, label: 'Lay Low');
   }
 
   Widget _deadDrop(Creature person, ActivityType order) {
@@ -883,7 +922,7 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
     return [
       for (final action in tasks)
         Padding(
-          padding: const EdgeInsets.only(top: 6),
+          padding: EdgeInsets.only(top: _compact ? 3 : 6),
           child: OutlinedButton.icon(
             key: ValueKey('network-task:${action.entityId}'),
             onPressed:
@@ -895,12 +934,15 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
                 : null,
             icon: JournalOrderIcon(
               type: activityTypeForAction(action)!,
-              size: 27,
+              size: _compact ? 20 : 27,
             ),
             label: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(sleeperOrderTitle(activityTypeForAction(action)!)),
+                JournalCommandLabel(
+                  shortcut: action.key,
+                  label: sleeperOrderTitle(activityTypeForAction(action)!),
+                ),
                 if (!action.enabled)
                   Text(action.label, style: JournalPalette.small),
               ],

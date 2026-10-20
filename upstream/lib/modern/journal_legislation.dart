@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/legislation_context.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_site_art.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/legislation_impact.dart';
@@ -56,90 +58,128 @@ class JournalLegislationView extends StatelessWidget {
   };
 
   @override
-  Widget build(BuildContext context) => JournalSurface(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            key: const ValueKey('legislation-scroll'),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _hero(),
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final step in LegislationStage.values)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: step == stage
-                              ? JournalPalette.olive
-                              : JournalPalette.inset,
-                          border: Border.all(color: JournalPalette.rule),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                        child: Text(
-                          '${step.index + 1}  ${['Agenda', 'Roll call', 'President', 'Outcome'][step.index]}',
-                          style: JournalPalette.small.copyWith(
+  Widget build(BuildContext context) {
+    final preferences = JournalPreferences.of(context);
+    final revision = console.revision.value;
+    final frame = console.legislation;
+    final capturedStage = stage;
+    final continuation = console.actions
+        .where((action) => action.key == 'Enter')
+        .firstOrNull;
+    final awaiting =
+        console.awaitingInput &&
+        !console.textInput &&
+        console.eventMessage == null;
+    final canContinue =
+        awaiting && (continuation?.enabled ?? console.actions.isEmpty);
+    final label = frame == null
+        ? 'Continue'
+        : awaiting
+        ? _action
+        : stage == LegislationStage.president
+        ? 'President deliberating…'
+        : 'Votes unfolding…';
+    return JournalSurface(
+      padding: EdgeInsets.all(preferences.compact ? 8 : 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              key: const ValueKey('legislation-scroll'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _hero(),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final step in LegislationStage.values)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
                             color: step == stage
-                                ? JournalPalette.card
-                                : JournalPalette.muted,
+                                ? JournalPalette.olive
+                                : JournalPalette.inset,
+                            border: Border.all(color: JournalPalette.rule),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                          child: Text(
+                            '${step.index + 1}  ${['Agenda', 'Roll call', 'President', 'Outcome'][step.index]}',
+                            style: JournalPalette.small.copyWith(
+                              color: step == stage
+                                  ? JournalPalette.card
+                                  : JournalPalette.muted,
+                            ),
                           ),
                         ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  for (var row = 2; row < 20; row += 3)
+                    if (_cell(
+                      console,
+                      row,
+                      0,
+                      35,
+                    ).startsWith('Joint Resolution '))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: _bill(row, compact: preferences.compact),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                for (var row = 2; row < 20; row += 3)
-                  if (_cell(
-                    console,
-                    row,
-                    0,
-                    35,
-                  ).startsWith('Joint Resolution '))
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 14),
-                      child: _bill(row),
-                    ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        const Divider(height: 16),
-        Align(
-          alignment: Alignment.centerRight,
-          child: FilledButton.icon(
-            onPressed: console.awaitingInput ? () => onAction('Enter') : null,
-            icon: Icon(
-              console.awaitingInput
-                  ? Icons.arrow_forward
-                  : Icons.how_to_vote_outlined,
-              size: 18,
-            ),
-            label: Text(
-              console.legislation == null
-                  ? 'Continue'
-                  : console.awaitingInput
-                  ? _action
-                  : stage == LegislationStage.president
-                  ? 'President deliberating…'
-                  : 'Votes unfolding…',
+          const Divider(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.icon(
+              key: const ValueKey('journal-legislation-continue'),
+              onPressed: canContinue
+                  ? () {
+                      if (console.revision.value == revision &&
+                          console.awaitingInput &&
+                          !console.textInput &&
+                          console.eventMessage == null &&
+                          console.lastKey == null &&
+                          identical(console.legislation, frame) &&
+                          stage == capturedStage &&
+                          (continuation == null
+                              ? console.actions.isEmpty
+                              : console.actions.contains(continuation))) {
+                        onAction(continuation?.key ?? 'Enter');
+                      }
+                    }
+                  : null,
+              icon: Icon(
+                console.awaitingInput
+                    ? Icons.arrow_forward
+                    : Icons.how_to_vote_outlined,
+                size: 18,
+              ),
+              label: awaiting
+                  ? JournalCommandLabel(
+                      shortcut: continuation?.key ?? 'Enter',
+                      label: label,
+                      primary: true,
+                    )
+                  : Text(label),
             ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 
   Widget _hero() => LayoutBuilder(
     builder: (context, bounds) {
+      final compact = JournalPreferences.of(context).compact;
       final copy = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -165,26 +205,29 @@ class JournalLegislationView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   SizedBox(
-                    height: 140,
+                    height: compact ? 80 : 140,
                     child: JournalSiteArtwork(
                       siteType: stage.index >= 2 ? 'whiteHouse' : 'courthouse',
                     ),
                   ),
-                  Padding(padding: const EdgeInsets.all(16), child: copy),
+                  Padding(
+                    padding: EdgeInsets.all(compact ? 10 : 16),
+                    child: copy,
+                  ),
                 ],
               )
             : Row(
                 children: [
                   SizedBox(
-                    width: 220,
-                    height: 190,
+                    width: compact ? 140 : 220,
+                    height: compact ? 120 : 190,
                     child: JournalSiteArtwork(
                       siteType: stage.index >= 2 ? 'whiteHouse' : 'courthouse',
                     ),
                   ),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.all(20),
+                      padding: EdgeInsets.all(compact ? 10 : 20),
                       child: copy,
                     ),
                   ),
@@ -194,7 +237,7 @@ class JournalLegislationView extends StatelessWidget {
     },
   );
 
-  Widget _bill(int row) {
+  Widget _bill(int row, {bool compact = false}) {
     final index = (row - 2) ~/ 3;
     final reports = console.legislation?.bills;
     final report = reports != null && index < reports.length
@@ -217,7 +260,7 @@ class JournalLegislationView extends StatelessWidget {
           bottom: const BorderSide(color: JournalPalette.rule),
         ),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 10 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

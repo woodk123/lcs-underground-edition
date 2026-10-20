@@ -220,13 +220,29 @@ try {
   await click(/^Orders(?:$|\s)/);
   await click(/^Personnel(?:$|\s)/);
   await click('Teaching Classes');
+  await click(/^Map$/);
   await click(/^Show location index/);
+  await click(/^Tasks$/);
   await click(/^Prepare Teach Liberal Arts(?:$|\s)/);
   await click(new RegExp(`^Select crew ${escape(crew[1].name)}(?:$|\\s)`));
   assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 0);
   assert.equal(await page.getByRole('button', { name: 'Teaching Classes', exact: true }).count(), 1);
+  await click(/^Map$/);
   assert.ok(await page.getByRole('button', { name: /^Show city plan/ }).count(), 'Keep the open location index when switching actors.');
   await capture('07-member-switch-keeps-category-and-map');
+  await click(/^Reading size/);
+  await page.getByRole('menuitem', { name: '150%', exact: true }).click();
+  await page.setViewportSize({ width: 800, height: 600 });
+  assert.ok(await page.getByRole('button', { name: /^Show city plan/ }).count(), 'The optional map keeps its location index at enlarged reading size.');
+  await capture('07-member-switch-map-800x600-at150');
+  await click(/^Tasks$/);
+  assert.equal(await page.getByRole('button', { name: /^Show city plan/ }).count(), 0,
+    'Hidden map controls must leave the accessible task pane.');
+  assert.equal(await page.getByRole('button', { name: 'Teaching Classes', exact: true }).count(), 1);
+  await click(/^Reading size/);
+  await page.getByRole('menuitem', { name: '100%', exact: true }).click();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  report.checks.push('tasks-prioritise-choices-and-optional-map-retains-index-and-category');
   for (const member of crew.slice(0, 2)) {
     await click(new RegExp(`^Select crew ${escape(member.name)}(?:$|\\s)`));
     await click(/^Prepare Teach Liberal Arts(?:$|\s)/);

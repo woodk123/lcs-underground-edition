@@ -12,6 +12,7 @@ import 'package:lcs_new_age/engine/legislation_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/journal_legislation.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/politics/alignment.dart';
 import 'package:lcs_new_age/politics/congress.dart';
@@ -159,6 +160,17 @@ void main() {
       if (size.width == 800) journalReadingScale.value = 1.5;
       await tester.pumpAndSettle();
       expect(find.text('Watch the votes').hitTestable(), findsOneWidget);
+      expect(
+        tester
+            .widget<JournalShortcutBadge>(
+              find.descendant(
+                of: find.byKey(const ValueKey('journal-legislation-continue')),
+                matching: find.byType(JournalShortcutBadge),
+              ),
+            )
+            .shortcut,
+        engine.console.actions.single.key,
+      );
       expect(find.text('Continue'), findsNothing);
       expect(find.byKey(const ValueKey('journal-advance-day')), findsNothing);
       await tester.tap(find.text('Watch the votes'));
@@ -265,4 +277,53 @@ void main() {
       },
     );
   }
+
+  testWidgets(
+    'a legislative continuation cannot reach a replaced source stage',
+    (tester) async {
+      engine.console.legislation = LegislationContext(2023);
+      engine.addOptionText(24, 0, 'Enter', 'Enter - Continue');
+      final first = engine.getKey();
+      final sent = <String>[];
+      Future<void> mount() => tester.pumpWidget(
+        MaterialApp(
+          theme: buildJournalTheme(),
+          home: Scaffold(
+            body: JournalLegislationView(
+              console: engine.console,
+              onAction: sent.add,
+            ),
+          ),
+        ),
+      );
+      await mount();
+      await tester.pumpAndSettle();
+      final control = find.byKey(
+        const ValueKey('journal-legislation-continue'),
+      );
+      final retained = tester.widget<FilledButton>(control).onPressed!;
+      retained();
+      expect(sent, ['Enter']);
+      engine.console.sendInput('Enter');
+      await tester.pump();
+      expect(await first, engine.Key.enter);
+      engine.erase();
+      engine.console.legislation = LegislationContext(2023)
+        ..stage = LegislationStage.results;
+      engine.addOptionText(24, 0, 'Enter', 'Enter - Return');
+      final second = engine.getKey();
+      await mount();
+      await tester.pumpAndSettle();
+      retained();
+      expect(sent, ['Enter']);
+      expect(engine.console.lastKey, isNull);
+      tester.widget<FilledButton>(control).onPressed!();
+      expect(sent, ['Enter', 'Enter']);
+      engine.console.sendInput('Enter');
+      await tester.pump();
+      expect(await second, engine.Key.enter);
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

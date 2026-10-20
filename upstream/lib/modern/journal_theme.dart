@@ -276,6 +276,7 @@ ThemeData buildJournalTheme() {
     scaffoldBackgroundColor: JournalPalette.desk,
     canvasColor: JournalPalette.page,
     dividerColor: JournalPalette.rule,
+    focusColor: JournalPalette.selected,
     disabledColor: JournalPalette.muted,
     textTheme: const TextTheme(
       headlineLarge: JournalPalette.title,
@@ -299,36 +300,96 @@ ThemeData buildJournalTheme() {
     ),
     visualDensity: VisualDensity.standard,
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        minimumSize: const Size(44, 42),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
-        textStyle: JournalPalette.body.copyWith(fontWeight: FontWeight.w700),
-      ),
+      style:
+          FilledButton.styleFrom(
+            minimumSize: const Size(44, 42),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(3),
+            ),
+            textStyle: JournalPalette.body.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ).copyWith(
+            side: WidgetStateProperty.resolveWith(
+              (states) => BorderSide(
+                color: states.contains(WidgetState.focused)
+                    ? JournalPalette.selected
+                    : Colors.transparent,
+                width: 2,
+              ),
+            ),
+          ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(44, 42),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        foregroundColor: JournalPalette.ink,
-        backgroundColor: JournalPalette.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
-        side: const BorderSide(color: JournalPalette.brassDark),
-        textStyle: JournalPalette.body.copyWith(fontWeight: FontWeight.w700),
-      ),
+      style:
+          OutlinedButton.styleFrom(
+            minimumSize: const Size(44, 42),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            foregroundColor: JournalPalette.ink,
+            backgroundColor: JournalPalette.card,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(3),
+            ),
+            side: const BorderSide(color: JournalPalette.brassDark),
+            textStyle: JournalPalette.body.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ).copyWith(
+            side: WidgetStateProperty.resolveWith(
+              (states) => BorderSide(
+                color: states.contains(WidgetState.focused)
+                    ? JournalPalette.ink
+                    : JournalPalette.brassDark,
+                width: states.contains(WidgetState.focused) ? 2 : 1,
+              ),
+            ),
+          ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        minimumSize: const Size(44, 40),
-        foregroundColor: JournalPalette.olive,
-        textStyle: JournalPalette.body.copyWith(fontWeight: FontWeight.w700),
-      ),
+      style:
+          TextButton.styleFrom(
+            minimumSize: const Size(44, 40),
+            foregroundColor: JournalPalette.olive,
+            textStyle: JournalPalette.body.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ).copyWith(
+            backgroundColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.focused)
+                  ? JournalPalette.selected
+                  : null,
+            ),
+            side: WidgetStateProperty.resolveWith(
+              (states) => BorderSide(
+                color: states.contains(WidgetState.focused)
+                    ? JournalPalette.ink
+                    : Colors.transparent,
+                width: 2,
+              ),
+            ),
+          ),
     ),
     iconButtonTheme: IconButtonThemeData(
-      style: IconButton.styleFrom(
-        minimumSize: const Size(42, 42),
-        foregroundColor: JournalPalette.ink,
-      ),
+      style:
+          IconButton.styleFrom(
+            minimumSize: const Size(42, 42),
+            foregroundColor: JournalPalette.ink,
+          ).copyWith(
+            backgroundColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.focused)
+                  ? JournalPalette.selected
+                  : null,
+            ),
+            side: WidgetStateProperty.resolveWith(
+              (states) => BorderSide(
+                color: states.contains(WidgetState.focused)
+                    ? JournalPalette.ink
+                    : Colors.transparent,
+                width: 2,
+              ),
+            ),
+          ),
     ),
     inputDecorationTheme: const InputDecorationTheme(
       filled: true,

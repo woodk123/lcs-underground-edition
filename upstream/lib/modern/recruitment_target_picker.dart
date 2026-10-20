@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:lcs_new_age/creature/creature_type.dart';
 import 'package:lcs_new_age/engine/recruitment_context.dart';
 import 'package:lcs_new_age/modern/age_help.dart';
+import 'package:lcs_new_age/modern/character_attributes.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 
 String _range((int, int) range) =>
@@ -11,7 +14,7 @@ String _range((int, int) range) =>
 String recruitmentProfessionHelp(CreatureType type) {
   final skills = type.skillPoints.entries.where((s) => s.value.$2 > 0);
   return '${type.name}\n'
-      'Base attribute ranges: ${type.attributePoints.entries.map((a) => '${a.key.name[0].toUpperCase()}${a.key.name.substring(1)} ${_range(a.value)}').join(', ')}.\n'
+      'Base attribute ranges: ${characterAttributeDisplayOrder.where(type.attributePoints.containsKey).map((attribute) => '${attribute.name[0].toUpperCase()}${attribute.name.substring(1)} ${_range(type.attributePoints[attribute]!)}').join(', ')}.\n'
       'Profession skills: ${skills.isEmpty ? 'No guaranteed trained skills' : skills.map((s) => '${s.key.displayName} ${_range(s.value)}').join(', ')}.\n'
       'Age: ${_range(type.age)}. Alignment: ${type.alignment.name == 'any' ? 'varies with the political climate' : type.alignment.name}.\n'
       '${type.tank ? 'No age attribute modifiers for tanks.' : ageRangeHelp(type.age)}\n'
@@ -39,11 +42,31 @@ class RecruitmentTargetPreview extends StatelessWidget {
           '${type.name}: ${target.meetings(type)} meetings',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        const Text(
-          'Based on current Street Smarts. Meetings are contacts; convincing someone to join happens in conversation.',
-        ),
+        if (JournalPreferences.of(context).showGuidance)
+          const Text(
+            'Based on current Street Smarts. Meetings are contacts; convincing someone to join happens in conversation.',
+          ),
         const SizedBox(height: 8),
-        Text(recruitmentProfessionHelp(type), style: JournalPalette.small),
+        Material(
+          type: MaterialType.transparency,
+          child: ExpansionTile(
+            key: PageStorageKey(
+              'recruitment-profession-details:${type.id}:${JournalPreferences.of(context).showGuidance}',
+            ),
+            tilePadding: EdgeInsets.zero,
+            initiallyExpanded: JournalPreferences.of(context).showGuidance,
+            title: const Text(
+              'Profession ranges and rules',
+              style: JournalPalette.small,
+            ),
+            children: [
+              Text(
+                recruitmentProfessionHelp(type),
+                style: JournalPalette.small,
+              ),
+            ],
+          ),
+        ),
       ],
     ),
   );
@@ -64,18 +87,23 @@ class RecruitmentTargetPicker extends StatelessWidget {
     final end = (start + 20).clamp(0, target.targets.length);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compact = constraints.maxWidth < 600;
+        final preferences = JournalPreferences.of(context);
+        final narrow =
+            constraints.maxWidth /
+                (MediaQuery.textScalerOf(context).scale(14) / 14) <
+            600;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Select a profession to search today. Meeting difficulty is about finding contacts; persuasion comes afterward.',
-            ),
+            if (preferences.showGuidance)
+              const Text(
+                'Select a profession to search today. Meeting difficulty is about finding contacts; persuasion comes afterward.',
+              ),
             const SizedBox(height: 8),
             Text(
               'Page ${target.page + 1} of ${target.pageCount} · Professions ${start + 1}–$end of ${target.targets.length}',
             ),
-            if (!compact)
+            if (!narrow)
               const Row(
                 children: [
                   Expanded(
@@ -132,11 +160,17 @@ class RecruitmentTargetPicker extends StatelessWidget {
                             child: Tooltip(
                               message: help,
                               child: TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: preferences.compact ? 6 : 12,
+                                    vertical: preferences.compact ? 6 : 10,
+                                  ),
+                                ),
                                 onPressed: () =>
                                     onAction(shortcut.toLowerCase()),
                                 child: Align(
                                   alignment: Alignment.centerLeft,
-                                  child: compact
+                                  child: narrow
                                       ? Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -226,17 +260,26 @@ class RecruitmentTargetPicker extends StatelessWidget {
               children: [
                 OutlinedButton(
                   onPressed: target.page > 0 ? () => onAction('[') : null,
-                  child: const Text('Previous page'),
+                  child: const JournalCommandLabel(
+                    shortcut: '[',
+                    label: 'Previous page',
+                  ),
                 ),
                 OutlinedButton(
                   onPressed: target.page + 1 < target.pageCount
                       ? () => onAction(']')
                       : null,
-                  child: const Text('Next page'),
+                  child: const JournalCommandLabel(
+                    shortcut: ']',
+                    label: 'Next page',
+                  ),
                 ),
                 OutlinedButton(
                   onPressed: () => onAction('Escape'),
-                  child: const Text('Skip recruitment today'),
+                  child: const JournalCommandLabel(
+                    shortcut: 'Escape',
+                    label: 'Skip recruitment today',
+                  ),
                 ),
               ],
             ),

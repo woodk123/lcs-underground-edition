@@ -13,6 +13,7 @@ import 'package:lcs_new_age/engine/media_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/modern/journal_media.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/newspaper/news_story.dart';
 import 'package:lcs_new_age/politics/views.dart';
@@ -332,7 +333,23 @@ void main() {
       );
       final button = _key('journal-media-control:${next.key}');
       expect(button.hitTestable(), findsOneWidget);
-      await tester.tap(button);
+      expect(
+        tester
+            .widget<JournalShortcutBadge>(
+              find.descendant(
+                of: button,
+                matching: find.byType(JournalShortcutBadge),
+              ),
+            )
+            .shortcut,
+        next.key,
+      );
+      final label = find
+          .descendant(of: button, matching: find.byType(Text))
+          .last;
+      Focus.of(tester.element(label)).requestFocus();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.space, character: ' ');
       await _settle(tester);
       expect(mediaOverviewFrame(engine.console)?.page, 1);
       expect(find.text('Page 2 of 2'), findsOneWidget);
@@ -358,6 +375,17 @@ void main() {
     final chosen = game.gameState.newsArchive.single;
     await mount(tester);
     await tester.ensureVisible(_key('journal-media-story:0'));
+    expect(
+      tester
+          .widget<JournalShortcutBadge>(
+            find.descendant(
+              of: _key('journal-media-story:0'),
+              matching: find.byType(JournalShortcutBadge),
+            ),
+          )
+          .shortcut,
+      mediaOverviewFrame(engine.console)!.entries.single.action.key,
+    );
     await tester.tap(_key('journal-media-story:0'));
     await _settle(tester);
     expect(engine.console.article?.title, chosen.headline);

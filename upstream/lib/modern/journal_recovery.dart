@@ -7,6 +7,8 @@ import 'package:lcs_new_age/engine/recovery_context.dart';
 import 'package:lcs_new_age/modern/crew_dossier.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/journal_person_summary.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 
 /// A journal page for the current source-authored care or legal decision.
@@ -52,6 +54,7 @@ class JournalRecoveryView extends StatelessWidget {
       final frame = recoveryContext(console);
       if (frame == null) return const SizedBox.shrink();
       final revision = console.revision.value;
+      final preferences = JournalPreferences.of(context);
       final personActions = {
         for (final summary in frame.people)
           summary: frame.actions
@@ -66,7 +69,7 @@ class JournalRecoveryView extends StatelessWidget {
       return JournalSurface(
         key: const ValueKey('journal-recovery'),
         lined: true,
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(preferences.compact ? 8 : 12),
         child: Material(
           type: MaterialType.transparency,
           child: Column(
@@ -116,7 +119,8 @@ class JournalRecoveryView extends StatelessWidget {
                           );
                         },
                       ),
-                    if (frame.scene != RecoveryScene.defense)
+                    if (preferences.showGuidance &&
+                        frame.scene != RecoveryScene.defense)
                       const Text(
                         'Admission → treatment → discharge → squad reassignment',
                         style: JournalPalette.small,
@@ -151,22 +155,30 @@ class JournalRecoveryView extends StatelessWidget {
               ),
               const Divider(height: 16),
               ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 165),
+                constraints: BoxConstraints(
+                  maxHeight: journalCommandPanelMaxHeight(context),
+                ),
                 child: SingleChildScrollView(
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final action in frame.actions)
-                        if (!personActions.containsValue(action))
-                          OutlinedButton(
-                            key: ValueKey(
-                              'journal-recovery-action:${action.key}',
+                  child: FocusTraversalGroup(
+                    policy: ReadingOrderTraversalPolicy(),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final action in frame.actions)
+                          if (!personActions.containsValue(action))
+                            OutlinedButton(
+                              key: ValueKey(
+                                'journal-recovery-action:${action.key}',
+                              ),
+                              onPressed: _command(frame, action, revision),
+                              child: JournalCommandLabel(
+                                shortcut: action.key,
+                                label: action.intentLabel ?? action.label,
+                              ),
                             ),
-                            onPressed: _command(frame, action, revision),
-                            child: Text(action.intentLabel ?? action.label),
-                          ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

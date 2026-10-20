@@ -12,6 +12,7 @@ import 'package:lcs_new_age/modern/crew_injury_panel.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/equipment_help.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_recruitment.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
@@ -71,6 +72,8 @@ class CrewInspector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final preferences = JournalPreferences.of(context);
+    final compact = this.compact || preferences.compact;
     final skills = Skill.values.toList()
       ..sort((a, b) {
         final level = person.skill(b).compareTo(person.skill(a));
@@ -185,10 +188,11 @@ class CrewInspector extends StatelessWidget {
                           'Personal assignment',
                           person.activity.description,
                         ),
-                        Text(
-                          assignment.summary,
-                          style: const TextStyle(color: _muted, fontSize: 11),
-                        ),
+                        if (preferences.showGuidance)
+                          Text(
+                            assignment.summary,
+                            style: const TextStyle(color: _muted, fontSize: 11),
+                          ),
                         JuiceActivityHint(
                           person: person,
                           activity: person.activity.type,
@@ -300,7 +304,8 @@ class CrewInspector extends StatelessWidget {
                             ],
                           ),
                         ),
-                        AgeEffects(person: person),
+                        if (preferences.showGuidance)
+                          AgeEffects(person: person),
                       ],
                     ),
                   ),
@@ -391,6 +396,8 @@ class CrewDossier extends StatefulWidget {
 }
 
 class _CrewDossierState extends State<CrewDossier> {
+  bool get _compact => JournalPreferences.of(context).compact;
+  bool get _showGuidance => JournalPreferences.of(context).showGuidance;
   int _tab = 0;
   final ScrollController _scroll = ScrollController();
 
@@ -490,7 +497,9 @@ class _CrewDossierState extends State<CrewDossier> {
                                     ),
                                     const Divider(height: 1, color: _rule),
                                     Padding(
-                                      padding: const EdgeInsets.all(24),
+                                      padding: EdgeInsets.all(
+                                        _compact ? 12 : 24,
+                                      ),
                                       child: switch (_tab) {
                                         1 => _skills(),
                                         2 => _record(),
@@ -561,7 +570,7 @@ class _CrewDossierState extends State<CrewDossier> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(_compact ? 10 : 16),
               child: switch (widget.page) {
                 1 => _skills(),
                 2 => _record(),
@@ -604,8 +613,9 @@ class _CrewDossierState extends State<CrewDossier> {
     final person = widget.person;
     final short = !widget.embedded && MediaQuery.sizeOf(context).height < 700;
     final textScale = MediaQuery.textScalerOf(context).scale(15) / 15;
-    if (!widget.embedded &&
-        (short || MediaQuery.sizeOf(context).width / textScale < 500)) {
+    if (_compact ||
+        !widget.embedded &&
+            (short || MediaQuery.sizeOf(context).width / textScale < 500)) {
       return Padding(
         key: const ValueKey('crew-dossier-compact-header'),
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
@@ -786,8 +796,9 @@ class _CrewDossierState extends State<CrewDossier> {
         const SizedBox(height: 12),
         CharacterAttributes(person: person),
         const SizedBox(height: 12),
+        if (_compact) ...[_compactDecisionFacts(), const SizedBox(height: 8)],
         CrewCommandPanel(person: person),
-        const SizedBox(height: 18),
+        SizedBox(height: _compact ? 10 : 18),
         _section('Condition', Icons.favorite_border, [
           CrewInjuryPanel(person: person),
           const SizedBox(height: 10),
@@ -826,19 +837,20 @@ class _CrewDossierState extends State<CrewDossier> {
               const Text('Currently imprisoned', style: TextStyle(color: _red)),
           ]),
           _section('Equipment', Icons.inventory_2_outlined, [
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: [
-                for (final id in [
-                  person.equippedWeapon?.type.idName,
-                  person.equippedClothing?.type.idName,
-                  person.spareAmmo?.type.idName,
-                ])
-                  if (equipmentArtwork(id) case final art?)
-                    CatalogueIllustration(art: art, width: 92, height: 60),
-              ],
-            ),
+            if (!_compact)
+              Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                children: [
+                  for (final id in [
+                    person.equippedWeapon?.type.idName,
+                    person.equippedClothing?.type.idName,
+                    person.spareAmmo?.type.idName,
+                  ])
+                    if (equipmentArtwork(id) case final art?)
+                      CatalogueIllustration(art: art, width: 92, height: 60),
+                ],
+              ),
             Wrap(
               children: [
                 DecisionGuideButton(
@@ -908,7 +920,7 @@ class _CrewDossierState extends State<CrewDossier> {
             ),
             if (person.spareAmmo != null)
               _fact('Ammunition quantity', '${person.spareAmmo!.stackSize}'),
-            if (person.car != null)
+            if (!_compact && person.car != null)
               if (vehicleArtwork(person.car!.typeName) case final art?)
                 Align(
                   alignment: Alignment.centerLeft,
@@ -927,10 +939,74 @@ class _CrewDossierState extends State<CrewDossier> {
           ]),
         ),
         const SizedBox(height: 22),
-        AgeEffects(person: person),
+        if (_showGuidance) AgeEffects(person: person),
       ],
     );
   }
+
+  Widget _compactDecisionFacts() {
+    final person = widget.person;
+    return Container(
+      key: const ValueKey('crew-decision-summary'),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: JournalPalette.inset,
+        border: Border.all(color: _rule),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            '${person.alive ? '${person.blood}/${person.maxBlood} blood' : 'Deceased'} · ${person.location?.getName(includeCity: true) ?? 'Location unknown'}',
+            style: JournalPalette.small,
+          ),
+          Text(
+            'Personal assignment: ${person.activity.description}',
+            style: JournalPalette.small,
+          ),
+          if (person.squad != null)
+            Text(
+              'Squad: ${person.squad!.name} · ${person.squad!.activity.description}',
+              style: JournalPalette.small,
+            ),
+          Text(
+            'Weapon: ${stripConsoleColors(person.weapon.equipTitle(full: true))}'
+            '${person.weapon.type.usesAmmo ? ' · ${person.weapon.ammo} loaded · ${person.weapon.acceptableAmmo.contains(person.spareAmmo?.type) ? person.spareAmmo?.stackSize ?? 0 : 0} compatible spare rounds' : ''}',
+            style: JournalPalette.small,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showSkillReference(List<Skill> skills) => showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Skill descriptions and training rules'),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final skill in skills) ...[
+              Text(
+                '${skill.displayName} ${widget.person.skill(skill)}',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              Text(skillHelp(skill, actor: widget.person)),
+              const SizedBox(height: 16),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    ),
+  );
 
   Widget _skills() {
     final person = widget.person;
@@ -943,21 +1019,33 @@ class _CrewDossierState extends State<CrewDossier> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Skills & training',
-          style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Skills & training',
+                style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
+              ),
+            ),
+            IconButton(
+              key: const ValueKey('crew-dossier-skill-reference'),
+              tooltip: 'Skill descriptions and training rules',
+              onPressed: () => _showSkillReference(skills),
+              icon: const Icon(Icons.info_outline, size: 18),
+            ),
+          ],
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: _compact ? 6 : 14),
         LayoutBuilder(
           builder: (context, bounds) {
             final scale = MediaQuery.textScalerOf(context).scale(13) / 13;
-            final columns = (bounds.maxWidth / (240 * scale)).floor().clamp(
-              1,
-              3,
-            );
-            final width = (bounds.maxWidth - (columns - 1) * 22) / columns;
+            final columns = (bounds.maxWidth / ((_compact ? 200 : 240) * scale))
+                .floor()
+                .clamp(1, 3);
+            final spacing = _compact ? 14.0 : 22.0;
+            final width = (bounds.maxWidth - (columns - 1) * spacing) / columns;
             return Wrap(
-              spacing: 22,
+              spacing: spacing,
               children: [
                 for (final skill in skills)
                   SizedBox(width: width, child: _skillCard(skill)),
@@ -973,7 +1061,7 @@ class _CrewDossierState extends State<CrewDossier> {
     final person = widget.person;
     return Padding(
       key: ValueKey('crew-dossier-skill:${skill.name}'),
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: EdgeInsets.only(bottom: _compact ? 8 : 20),
       child: SkillTooltip(
         skill: skill,
         actor: person,
@@ -989,6 +1077,7 @@ class _CrewDossierState extends State<CrewDossier> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Flexible(
+                      fit: _compact ? FlexFit.tight : FlexFit.loose,
                       child: Text(
                         skill.displayName,
                         style: const TextStyle(
@@ -1011,30 +1100,33 @@ class _CrewDossierState extends State<CrewDossier> {
                 ),
               ),
             ),
-            const SizedBox(height: 2),
-            Text(
-              skill.description,
-              style: const TextStyle(color: _muted, fontSize: 13),
-            ),
-            const SizedBox(height: 7),
+            if (_showGuidance) ...[
+              const SizedBox(height: 2),
+              Text(
+                skill.description,
+                style: const TextStyle(color: _muted, fontSize: 13),
+              ),
+            ],
+            SizedBox(height: _compact ? 3 : 7),
             Row(
               children: [
-                SizedBox(
-                  width: 72,
-                  child: ExcludeSemantics(
-                    child: LinearProgressIndicator(
-                      value:
-                          (person.skillXP(skill) /
-                                  skillXpNeeded(person.skill(skill)))
-                              .clamp(0, 1),
-                      minHeight: 2,
-                      color: _muted.withValues(alpha: .5),
-                      backgroundColor: _rule.withValues(alpha: .5),
-                      semanticsLabel: '${skill.displayName} experience',
+                if (!_compact)
+                  SizedBox(
+                    width: 72,
+                    child: ExcludeSemantics(
+                      child: LinearProgressIndicator(
+                        value:
+                            (person.skillXP(skill) /
+                                    skillXpNeeded(person.skill(skill)))
+                                .clamp(0, 1),
+                        minHeight: 2,
+                        color: _muted.withValues(alpha: .5),
+                        backgroundColor: _rule.withValues(alpha: .5),
+                        semanticsLabel: '${skill.displayName} experience',
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
+                if (!_compact) const SizedBox(width: 8),
                 Flexible(
                   child: Text(
                     '${person.skillXP(skill)} / ${skillXpNeeded(person.skill(skill))} XP · Attribute cap ${person.skillCap(skill)}',
@@ -1175,16 +1267,16 @@ class _CrewDossierState extends State<CrewDossier> {
           ),
         ],
       ),
-      const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Divider(height: 1, color: _rule),
+      Padding(
+        padding: EdgeInsets.symmetric(vertical: _compact ? 6 : 12),
+        child: const Divider(height: 1, color: _rule),
       ),
       ...children,
     ],
   );
 
   Widget _fact(String label, String value) => Padding(
-    padding: const EdgeInsets.only(bottom: 10),
+    padding: EdgeInsets.only(bottom: _compact ? 5 : 10),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

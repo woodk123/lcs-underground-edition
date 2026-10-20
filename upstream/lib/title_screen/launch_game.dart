@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/saveload/load_cpc_images.dart';
 import 'package:lcs_new_age/saveload/load_xml_data.dart';
@@ -19,6 +20,10 @@ Future<void> launchGame() async {
   await loadCpcGraphics();
   await gameOptions.load();
   journalReadingScale.value = gameOptions.journalScale;
+  journalPresentation.value = JournalPreferenceValues(
+    compact: gameOptions.journalCompact,
+    showGuidance: gameOptions.journalGuidance,
+  );
   await initStorage();
   while (true) {
     try {
