@@ -38,6 +38,14 @@ base.loot = [
   { typeName: 'CLOTHING_LABCOAT', stackSize: 1, bloody: false, damaged: false },
   { typeName: 'AMMO_9MM', stackSize: 20 },
   { typeName: 'LOOT_COMPUTER', stackSize: 1 },
+  { typeName: 'WEAPON_M4', stackSize: 1, ammo: 0, loadedAmmoId: null },
+  { typeName: 'AMMO_GASOLINE', stackSize: 1 },
+  { typeName: 'CLOTHING_COMPOSITE_ARMOR', stackSize: 1, bloody: false, damaged: false },
+  { typeName: 'CLOTHING_DONKEYSUIT', stackSize: 1, bloody: false, damaged: false },
+  { typeName: 'CLOTHING_KIMONO', stackSize: 1, bloody: false, damaged: false },
+  { typeName: 'CLOTHING_TIE_DYE', stackSize: 1, bloody: false, damaged: false },
+  { typeName: 'LOOT_CHEMICAL', stackSize: 1 },
+  { typeName: 'LOOT_CEOLOVELETTERS', stackSize: 1 },
 ];
 state.lcs.vehiclePool = ['BUG', 'HMMWV', 'JEEP', 'PICKUP', 'POLICECAR', 'AGENTCAR', 'SPORTSCAR', 'STATIONWAGON', 'SUV', 'TAXICAB', 'VAN']
   .map(typeName => ({ id: state.nextVehicleId++, typeName, color: 'Grey', year: 2020, heat: 0, locationId: base.id }));
@@ -50,7 +58,7 @@ const fixture = resolve(output, 'prepared-catalogue-campaign.json');
 await writeFile(fixture, JSON.stringify(envelope));
 const report = {
   status: 'running', expectedHash,
-  prepared: 'Bundled Felix campaign with charges/heat/orders cleared, seven stored items and eleven vehicles explicitly supplied for visual inspection. Founder is assigned the first vehicle. No earned equipment or vehicle outcomes are claimed. Fresh browser contexts only.',
+  prepared: 'Bundled Felix campaign with charges/heat/orders cleared, fifteen stored items (including one from every supplemental atlas) and eleven vehicles explicitly supplied for visual inspection. Founder is assigned the first vehicle. No earned equipment or vehicle outcomes are claimed. Fresh browser contexts only.',
   screens: [], loadedAtlases: [], loadedMainJsHashes: [], errors: [],
 };
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
@@ -65,7 +73,7 @@ try {
     page.on('console', message => { if (message.type() === 'error') report.errors.push(message.text()); });
     page.on('response', response => {
       if (response.url().endsWith('/main.dart.js')) pendingHashes.push(response.body().then(body => report.loadedMainJsHashes.push(hash(body))));
-      if (/journal_(?:equipment_(?:weapons|gear)|vehicles)_v1\.webp$/.test(response.url())) {
+      if (/journal_(?:equipment_(?:weapons|gear)|vehicles|catalogue_[a-z_]+)_v1\.webp$/.test(response.url())) {
         assert.equal(response.status(), 200);
         report.loadedAtlases.push(response.url().split('/').at(-1));
       }
@@ -122,6 +130,10 @@ try {
       await click(/^Reading size/);
       await page.getByRole('menuitem', { name: '150%', exact: true }).click();
     }
+    // The source equipment reader consolidates/sorts freshly supplied stock.
+    // Let that ordinary setup finish before baselining read-only inspection.
+    await click(/^Weapons(?:$|[.\s])/); await wait(/Equip the Squad|Equipment/);
+    await page.keyboard.press('Escape'); await wait(/Save & exit/);
     const before = await exportGame('before-inspection');
     await click(/^Weapons(?:$|[.\s])/); await wait(/Equip the Squad|Equipment/);
     for (const [guide, id] of [[/^Weapons guide/, 'weapons'], [/^Clothing & armour guide/, 'clothing']]) {
@@ -152,7 +164,7 @@ try {
   await Promise.all(pendingHashes);
   assert.ok(report.loadedMainJsHashes.length >= 2);
   assert.ok(report.loadedMainJsHashes.every(value => value === expectedHash));
-  assert.equal(new Set(report.loadedAtlases).size, 3);
+  assert.equal(new Set(report.loadedAtlases).size, 11, 'All eight supplemental and three original catalogue atlases must load');
   assert.deepEqual(report.errors, []);
   report.status = 'passed';
 } catch (error) {

@@ -1,0 +1,1219 @@
+{
+  "schema_version": 1,
+  "audit_date": "2026-10-21",
+  "scope": "Every authored equipment and vehicle catalogue type, with explicit exclusions. Baseline status records the pre-task audit, not the final runtime mapping.",
+  "baseline": {
+    "required_equipment_types": 145,
+    "illustrated_equipment_types": 32,
+    "missing_required_equipment_types": 113,
+    "vehicle_types": 11,
+    "illustrated_vehicle_types": 11,
+    "excluded_equipment_types": 5
+  },
+  "catalogues": [
+    {
+      "type_id": "WEAPON_NONE",
+      "category": "weapons",
+      "name": "None",
+      "illustration_required": false,
+      "baseline_status": "intentional_exclusion",
+      "reason": "Absence of a held weapon; retain text."
+    },
+    {
+      "type_id": "WEAPON_22_REVOLVER",
+      "category": "weapons",
+      "name": ".22 Revolver",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_22_HANDGUN",
+      "category": "weapons",
+      "name": ".22 Pistol",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_22_SMG",
+      "category": "weapons",
+      "name": ".22 SMG",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_22_RIFLE",
+      "category": "weapons",
+      "name": ".22 Rifle",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_44_REVOLVER",
+      "category": "weapons",
+      "name": ".44 Magnum",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_45_HANDGUN",
+      "category": "weapons",
+      "name": ".45 Pistol",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_TOMMYGUN",
+      "category": "weapons",
+      "name": "Thompson SMG",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_9MM_HANDGUN",
+      "category": "weapons",
+      "name": "9mm Pistol",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_DESERT_EAGLE",
+      "category": "weapons",
+      "name": "Desert Eagle",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_MP5",
+      "category": "weapons",
+      "name": "MP5 SMG",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_PUMP_SHOTGUN",
+      "category": "weapons",
+      "name": "Pump Shotgun",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_AA12",
+      "category": "weapons",
+      "name": "AA-12 Auto Shotgun",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_AK102",
+      "category": "weapons",
+      "name": "AK-102 Rifle",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_AR15",
+      "category": "weapons",
+      "name": "Sport AR-15",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_M4",
+      "category": "weapons",
+      "name": "M4 Carbine",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_M7",
+      "category": "weapons",
+      "name": "M7 Rifle",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_M250_MACHINEGUN",
+      "category": "weapons",
+      "name": "M250 LMG",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_FLAMETHROWER",
+      "category": "weapons",
+      "name": "M2 Flamethrower",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_MOLOTOV",
+      "category": "weapons",
+      "name": "Molotov Bomb",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_AXE",
+      "category": "weapons",
+      "name": "Axe",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_BASEBALLBAT",
+      "category": "weapons",
+      "name": "Baseball Bat",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_CHAIN",
+      "category": "weapons",
+      "name": "Chain",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_COMBATKNIFE",
+      "category": "weapons",
+      "name": "Combat Knife",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_CROSS",
+      "category": "weapons",
+      "name": "Silver Cross",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_CROWBAR",
+      "category": "weapons",
+      "name": "Crowbar",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_DAGGER",
+      "category": "weapons",
+      "name": "Dagger",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_GAVEL",
+      "category": "weapons",
+      "name": "Gavel",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_GUITAR",
+      "category": "weapons",
+      "name": "Guitar",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_BANJO",
+      "category": "weapons",
+      "name": "Banjo",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_HAMMER",
+      "category": "weapons",
+      "name": "Dwarven Hammer",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_MAUL",
+      "category": "weapons",
+      "name": "Maul of Anrin",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_NIGHTSTICK",
+      "category": "weapons",
+      "name": "Steel Baton",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_PITCHFORK",
+      "category": "weapons",
+      "name": "Pitchfork",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_SHANK",
+      "category": "weapons",
+      "name": "Shank",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_SPRAYCAN",
+      "category": "weapons",
+      "name": "Spray Paint",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "WEAPON_STAFF",
+      "category": "weapons",
+      "name": "Wizard's Staff",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_DAISHO",
+      "category": "weapons",
+      "name": "Daisho",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_SWORD",
+      "category": "weapons",
+      "name": "Zweihänder",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_SYRINGE",
+      "category": "weapons",
+      "name": "Syringe",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_TORCH",
+      "category": "weapons",
+      "name": "Torch",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_120MM_CANNON",
+      "category": "weapons",
+      "name": "120mm Gun",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "WEAPON_BITE",
+      "category": "weapons",
+      "name": "Fangs",
+      "illustration_required": false,
+      "baseline_status": "intentional_exclusion",
+      "reason": "Intrinsic creature attack, not a held inventory object."
+    },
+    {
+      "type_id": "WEAPON_PROBOSCIS",
+      "category": "weapons",
+      "name": "Proboscis",
+      "illustration_required": false,
+      "baseline_status": "intentional_exclusion",
+      "reason": "Intrinsic creature attack, not a held inventory object."
+    },
+    {
+      "type_id": "WEAPON_FIRE_BREATH",
+      "category": "weapons",
+      "name": "Fire Breath",
+      "illustration_required": false,
+      "baseline_status": "intentional_exclusion",
+      "reason": "Intrinsic creature attack, not a held inventory object."
+    },
+    {
+      "type_id": "CLOTHING_CLOTHES",
+      "category": "clothing",
+      "name": "Clothes",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "CLOTHING_NONE",
+      "category": "clothing",
+      "name": "Naked",
+      "illustration_required": false,
+      "baseline_status": "intentional_exclusion",
+      "reason": "Absence of clothing; retain text."
+    },
+    {
+      "type_id": "CLOTHING_COMPOSITE_ARMOR",
+      "category": "clothing",
+      "name": "Composite Armor",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_PMC",
+      "category": "clothing",
+      "name": "PMC Loadout",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_TACHARNESS",
+      "category": "clothing",
+      "name": "Tactical Harness",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_CAMOSUIT",
+      "category": "clothing",
+      "name": "Camo Outfit",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "CLOTHING_ARMYARMOR",
+      "category": "clothing",
+      "name": "Army Uniform",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_MILITARY",
+      "category": "clothing",
+      "name": "Army Uniform",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_CATSUIT",
+      "category": "clothing",
+      "name": "Black Catsuit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_BLACKDRESS",
+      "category": "clothing",
+      "name": "Black Dress",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_LEATHER",
+      "category": "clothing",
+      "name": "Motorcycle Leathers",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "CLOTHING_BLACKBLOC",
+      "category": "clothing",
+      "name": "Black Bloc Outfit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_BLACKROBE",
+      "category": "clothing",
+      "name": "Judicial Robes",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "CLOTHING_BLACKSUIT",
+      "category": "clothing",
+      "name": "Black Suit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_BLACKSUIT_AGENT",
+      "category": "clothing",
+      "name": "Black Suit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_BLACKCLOTHES",
+      "category": "clothing",
+      "name": "Black Turtleneck",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_BONDAGEGEAR",
+      "category": "clothing",
+      "name": "Bondage Gear",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_BUNKERGEAR",
+      "category": "clothing",
+      "name": "Firefighter Turnout Gear",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_CHEAPDRESS",
+      "category": "clothing",
+      "name": "Cheap Dress",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_CHEAPSUIT",
+      "category": "clothing",
+      "name": "Cheap Suit",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "CLOTHING_CLOWNSUIT",
+      "category": "clothing",
+      "name": "Clown Suit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_DEATHSQUADUNIFORM",
+      "category": "clothing",
+      "name": "Death Squad Uniform",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_DONKEYSUIT",
+      "category": "clothing",
+      "name": "Donkey Suit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_ELEPHANTSUIT",
+      "category": "clothing",
+      "name": "Elephant Suit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_FURSUIT",
+      "category": "clothing",
+      "name": "Custom Fursuit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_EXPENSIVEDRESS",
+      "category": "clothing",
+      "name": "Expensive Dress",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_EXPENSIVESUIT",
+      "category": "clothing",
+      "name": "Expensive Suit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_PRISONGUARD",
+      "category": "clothing",
+      "name": "Guard Uniform",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_HEAVYARMOR",
+      "category": "clothing",
+      "name": "Human Tank Suit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_LABCOAT",
+      "category": "clothing",
+      "name": "Lab Coat",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "CLOTHING_MITHRIL",
+      "category": "clothing",
+      "name": "Mithril Mail",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_STEELHAUBERK",
+      "category": "clothing",
+      "name": "Chain Hauberk",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_NINJASUIT",
+      "category": "clothing",
+      "name": "Ninja Costume",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_PRISONER",
+      "category": "clothing",
+      "name": "Orange Jumpsuit",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "CLOTHING_OVERALLS",
+      "category": "clothing",
+      "name": "Overalls",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "CLOTHING_POLICEARMOR",
+      "category": "clothing",
+      "name": "Police Uniform",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_POLICEUNIFORM",
+      "category": "clothing",
+      "name": "Police Uniform",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "CLOTHING_SEALSUIT",
+      "category": "clothing",
+      "name": "SEAL Armor",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_SECURITYUNIFORM",
+      "category": "clothing",
+      "name": "Security Uniform",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_SERVANTUNIFORM",
+      "category": "clothing",
+      "name": "Servant Uniform",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_SWATARMOR",
+      "category": "clothing",
+      "name": "Tactical SWAT Armor",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "CLOTHING_TOGA",
+      "category": "clothing",
+      "name": "Toga",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_TRENCHCOAT",
+      "category": "clothing",
+      "name": "Trenchcoat",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_HARDHAT",
+      "category": "clothing",
+      "name": "Safety Vest & Hardhat",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_WIFEBEATER",
+      "category": "clothing",
+      "name": "Tank Top",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_WORKCLOTHES",
+      "category": "clothing",
+      "name": "Work Clothes",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_CHEERLEADER",
+      "category": "clothing",
+      "name": "Cheer Squad Jacket",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_PUNK_JACKET",
+      "category": "clothing",
+      "name": "Punk Jacket",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_DUSTER",
+      "category": "clothing",
+      "name": "Leather Duster",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_JERSEY",
+      "category": "clothing",
+      "name": "Sports Jersey",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_CHEF",
+      "category": "clothing",
+      "name": "Chef's Whites",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_SCRUBS",
+      "category": "clothing",
+      "name": "Medical Scrubs",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_TRACKSUIT",
+      "category": "clothing",
+      "name": "Track Suit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_KIMONO",
+      "category": "clothing",
+      "name": "Kimono",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_STREETWEAR",
+      "category": "clothing",
+      "name": "Streetwear",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_SARONG",
+      "category": "clothing",
+      "name": "Sarong",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_SARI",
+      "category": "clothing",
+      "name": "Sari",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_BOHO",
+      "category": "clothing",
+      "name": "Bohemian Outfit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_CHIC",
+      "category": "clothing",
+      "name": "Chic Outfit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_TIE_DYE",
+      "category": "clothing",
+      "name": "Tie-Dye",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_APRON",
+      "category": "clothing",
+      "name": "Apron",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_HABIT",
+      "category": "clothing",
+      "name": "Religious Habit",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_CASSOCK",
+      "category": "clothing",
+      "name": "Priest's Cassock",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "CLOTHING_BANDTEE",
+      "category": "clothing",
+      "name": "Band Tee",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "AMMO_22",
+      "category": "ammo",
+      "name": ".22 LR Ammo",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "AMMO_44",
+      "category": "ammo",
+      "name": ".44 Magnum Ammo",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "AMMO_45",
+      "category": "ammo",
+      "name": ".45 ACP Ammo",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "AMMO_50AE",
+      "category": "ammo",
+      "name": ".50 AE Ammo",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "AMMO_9MM",
+      "category": "ammo",
+      "name": "9mm Ammo",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "AMMO_556",
+      "category": "ammo",
+      "name": "5.56 NATO Ammo",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "AMMO_68",
+      "category": "ammo",
+      "name": "6.8mm Army Ammo",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "AMMO_BUCKSHOT",
+      "category": "ammo",
+      "name": "12ga 00 Buckshot",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "AMMO_GASOLINE",
+      "category": "ammo",
+      "name": "Gasoline",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_CHEAPJEWELRY",
+      "category": "loot",
+      "name": "Cheap Jewelry",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_DIRTYSOCK",
+      "category": "loot",
+      "name": "Dirty Sock",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_FAMILYPHOTO",
+      "category": "loot",
+      "name": "Family Photos",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_FINECLOTH",
+      "category": "loot",
+      "name": "Fine Cloth",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "LOOT_RECYCLEDCLOTH",
+      "category": "loot",
+      "name": "Recycled Cloth",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_EXPENSIVEJEWELRY",
+      "category": "loot",
+      "name": "Fine Jewelry",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_TRINKET",
+      "category": "loot",
+      "name": "Kitschy Trinket",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_LABEQUIPMENT",
+      "category": "loot",
+      "name": "Lab Equipment",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_COMPUTER",
+      "category": "loot",
+      "name": "Laptop",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "LOOT_KIDART",
+      "category": "loot",
+      "name": "Macaroni Art",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_MICROPHONE",
+      "category": "loot",
+      "name": "Microphone",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "LOOT_SILVERWARE",
+      "category": "loot",
+      "name": "Silverware",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_CELLPHONE",
+      "category": "loot",
+      "name": "Smartphone",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_PDA",
+      "category": "loot",
+      "name": "Tablet",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_WATCH",
+      "category": "loot",
+      "name": "Watch",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_CHEMICAL",
+      "category": "loot",
+      "name": "Weird Chemical",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_AMRADIOFILES",
+      "category": "loot",
+      "name": "AM Radio Memos",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_CABLENEWSFILES",
+      "category": "loot",
+      "name": "Cable News Memos",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_CCS_BACKERLIST",
+      "category": "loot",
+      "name": "CCS Backer List",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_CEOLOVELETTERS",
+      "category": "loot",
+      "name": "CEO Love Letters",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_CEOPHOTOS",
+      "category": "loot",
+      "name": "CEO Photos",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_CEOTAXPAPERS",
+      "category": "loot",
+      "name": "CEO Tax Papers",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_INTHQDISK",
+      "category": "loot",
+      "name": "Intel. HQ Data Disk",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_JUDGEFILES",
+      "category": "loot",
+      "name": "Judge Corrupt. Evidence",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_POLICERECORDS",
+      "category": "loot",
+      "name": "Police Records",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_PRISONFILES",
+      "category": "loot",
+      "name": "Prison Records",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_RESEARCHFILES",
+      "category": "loot",
+      "name": "Research Papers",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_CORPFILES",
+      "category": "loot",
+      "name": "Secret Corporate Files",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_SECRETDOCUMENTS",
+      "category": "loot",
+      "name": "Secret Documents",
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "LOOT_LANDLORD_PAPERS",
+      "category": "loot",
+      "name": "Landlord Papers",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_INSURANCE_DOCUMENTS",
+      "category": "loot",
+      "name": "Healthcare Documents",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "LOOT_RETIREMENT_DOCUMENTS",
+      "category": "loot",
+      "name": "Elder Abuse Evidence",
+      "illustration_required": true,
+      "baseline_status": "missing"
+    },
+    {
+      "type_id": "BUG",
+      "category": "vehicles",
+      "name": null,
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "HMMWV",
+      "category": "vehicles",
+      "name": null,
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "JEEP",
+      "category": "vehicles",
+      "name": null,
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "PICKUP",
+      "category": "vehicles",
+      "name": null,
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "POLICECAR",
+      "category": "vehicles",
+      "name": null,
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "AGENTCAR",
+      "category": "vehicles",
+      "name": null,
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "SPORTSCAR",
+      "category": "vehicles",
+      "name": null,
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "STATIONWAGON",
+      "category": "vehicles",
+      "name": null,
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "SUV",
+      "category": "vehicles",
+      "name": null,
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "TAXICAB",
+      "category": "vehicles",
+      "name": null,
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    },
+    {
+      "type_id": "VAN",
+      "category": "vehicles",
+      "name": null,
+      "illustration_required": true,
+      "baseline_status": "illustrated"
+    }
+  ],
+  "configuration_exclusions": [
+    {
+      "type_id": "ARMOR_NONE",
+      "name": "No Armor",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    },
+    {
+      "type_id": "ARMOR_COSMETIC",
+      "name": "Cosmetic Armor",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    },
+    {
+      "type_id": "ARMOR_HIDDEN",
+      "name": "Soft Armor Vest",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    },
+    {
+      "type_id": "ARMOR_SOFTSYSTEM",
+      "name": "Integrated Soft Armor",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    },
+    {
+      "type_id": "ARMOR_EXTERNALPLATE",
+      "name": "Hard Armor Vest",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    },
+    {
+      "type_id": "ARMOR_MILITARY",
+      "name": "Hard Armor Vest, Helmet",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    },
+    {
+      "type_id": "ARMOR_SWAT",
+      "name": "Hard Armor Vest, Helmet, Extras",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    },
+    {
+      "type_id": "ARMOR_TANKSUIT",
+      "name": "Homemade Tank Suit",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    },
+    {
+      "type_id": "ARMOR_TURNOUTGEAR",
+      "name": "Turnout Gear",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    },
+    {
+      "type_id": "ARMOR_HARDHAT",
+      "name": "Hardhat",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    },
+    {
+      "type_id": "ARMOR_LEATHER",
+      "name": "Leather Armor",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    },
+    {
+      "type_id": "ARMOR_STEELHAUBERK",
+      "name": "Steel Hauberk",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    },
+    {
+      "type_id": "ARMOR_MITHRILHAUBERK",
+      "name": "True Mithril Hauberk",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    },
+    {
+      "type_id": "ARMOR_COMPOSITE",
+      "name": "Composite Armor",
+      "reason": "Clothing configuration rather than independent inventory type. Live armor values and visible-armor portrait overlays remain authoritative."
+    }
+  ]
+}

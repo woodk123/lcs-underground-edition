@@ -2,7 +2,7 @@
   "version": 1,
   "generated_on": "2026-10-18",
   "generation_tool": "built-in image_gen",
-  "equipment_paintings": 32,
+  "equipment_paintings": 145,
   "vehicle_paintings": 11,
   "policy": "Original PNG masters and lossless alpha retained. Each selected image was generated then edited to improve separation. Crops include inspected transparent margins; use full-object rectangles rather than equal grid cuts. Exact stable catalogue IDs only. Paintings do not represent quantities, item condition, installed armour or generated vehicle colour/year. All labels and controls remain live Flutter widgets.",
   "assets": [
@@ -434,6 +434,1145 @@
       ],
       "source_sha256": "d34b793ee865df04b08cbd98b8aad84ba05f2e29aa9b479dc42f0657c616e905",
       "runtime_sha256": "309b4ed3f7590f64bee77f5095a6fefffb712d960c96f509c65f8cdc8c950422"
+    },
+    {
+      "source_path": "assets/runtime-art/source/journal_catalogue_weapons_extra_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_catalogue_weapons_extra_v1.webp",
+      "prompt_path": "assets/catalogue/weapons_extra.prompt.txt",
+      "selected_generation": "exec-334d49a0-3b8b-4a78-a179-5a8f093767c2.png",
+      "width": 1536,
+      "height": 1024,
+      "logical_columns": 4,
+      "logical_rows": 4,
+      "supplemental": true,
+      "entries": [
+        {
+          "type_id": "WEAPON_22_HANDGUN",
+          "source_rect": [
+            83,
+            84,
+            211,
+            129
+          ]
+        },
+        {
+          "type_id": "WEAPON_22_SMG",
+          "source_rect": [
+            419,
+            78,
+            313,
+            110
+          ]
+        },
+        {
+          "type_id": "WEAPON_44_REVOLVER",
+          "source_rect": [
+            807,
+            75,
+            304,
+            140
+          ]
+        },
+        {
+          "type_id": "WEAPON_45_HANDGUN",
+          "source_rect": [
+            1240,
+            75,
+            232,
+            141
+          ]
+        },
+        {
+          "type_id": "WEAPON_AA12",
+          "source_rect": [
+            41,
+            317,
+            311,
+            156
+          ]
+        },
+        {
+          "type_id": "WEAPON_M4",
+          "source_rect": [
+            421,
+            328,
+            318,
+            130
+          ]
+        },
+        {
+          "type_id": "WEAPON_M7",
+          "source_rect": [
+            795,
+            309,
+            328,
+            153
+          ]
+        },
+        {
+          "type_id": "WEAPON_FLAMETHROWER",
+          "source_rect": [
+            1203,
+            287,
+            292,
+            186
+          ]
+        },
+        {
+          "type_id": "WEAPON_MOLOTOV",
+          "source_rect": [
+            106,
+            540,
+            163,
+            179
+          ]
+        },
+        {
+          "type_id": "WEAPON_CHAIN",
+          "source_rect": [
+            444,
+            553,
+            271,
+            159
+          ]
+        },
+        {
+          "type_id": "WEAPON_CROSS",
+          "source_rect": [
+            890,
+            540,
+            149,
+            183
+          ]
+        },
+        {
+          "type_id": "WEAPON_DAGGER",
+          "source_rect": [
+            1223,
+            537,
+            245,
+            179
+          ]
+        },
+        {
+          "type_id": "WEAPON_GAVEL",
+          "source_rect": [
+            71,
+            804,
+            256,
+            121
+          ]
+        },
+        {
+          "type_id": "WEAPON_BANJO",
+          "source_rect": [
+            438,
+            770,
+            281,
+            192
+          ]
+        },
+        {
+          "type_id": "WEAPON_HAMMER",
+          "source_rect": [
+            836,
+            788,
+            231,
+            149
+          ]
+        },
+        {
+          "type_id": "WEAPON_MAUL",
+          "source_rect": [
+            1158,
+            764,
+            341,
+            185
+          ]
+        }
+      ],
+      "source_sha256": "b9b66be43cbff6808dbc8609115682347405fb204fec46eea9c2ccceee573593",
+      "runtime_sha256": "d08f7e6d927e4e5f07d45da9e5cc612c32c52d264ff20b568ddf8963defc3c20"
+    },
+    {
+      "source_path": "assets/runtime-art/source/journal_catalogue_weapons_ammo_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_catalogue_weapons_ammo_v1.webp",
+      "prompt_path": "assets/catalogue/weapons_ammo.prompt.txt",
+      "selected_generation": "exec-0941458e-bb52-4e07-a192-6c71d8f6291d.png",
+      "width": 1536,
+      "height": 1024,
+      "logical_columns": 4,
+      "logical_rows": 4,
+      "supplemental": true,
+      "entries": [
+        {
+          "type_id": "WEAPON_NIGHTSTICK",
+          "source_rect": [
+            51,
+            61,
+            305,
+            182
+          ]
+        },
+        {
+          "type_id": "WEAPON_PITCHFORK",
+          "source_rect": [
+            452,
+            24,
+            263,
+            213
+          ]
+        },
+        {
+          "type_id": "WEAPON_SHANK",
+          "source_rect": [
+            839,
+            54,
+            243,
+            173
+          ]
+        },
+        {
+          "type_id": "WEAPON_STAFF",
+          "source_rect": [
+            1215,
+            22,
+            264,
+            220
+          ]
+        },
+        {
+          "type_id": "WEAPON_DAISHO",
+          "source_rect": [
+            46,
+            305,
+            309,
+            181
+          ]
+        },
+        {
+          "type_id": "WEAPON_SWORD",
+          "source_rect": [
+            421,
+            284,
+            311,
+            205
+          ]
+        },
+        {
+          "type_id": "WEAPON_SYRINGE",
+          "source_rect": [
+            837,
+            308,
+            245,
+            168
+          ]
+        },
+        {
+          "type_id": "WEAPON_TORCH",
+          "source_rect": [
+            1245,
+            269,
+            202,
+            227
+          ]
+        },
+        {
+          "type_id": "WEAPON_120MM_CANNON",
+          "source_rect": [
+            41,
+            541,
+            321,
+            158
+          ]
+        },
+        {
+          "type_id": "AMMO_22",
+          "source_rect": [
+            481,
+            540,
+            237,
+            180
+          ]
+        },
+        {
+          "type_id": "AMMO_44",
+          "source_rect": [
+            852,
+            540,
+            215,
+            182
+          ]
+        },
+        {
+          "type_id": "AMMO_45",
+          "source_rect": [
+            1237,
+            539,
+            221,
+            177
+          ]
+        },
+        {
+          "type_id": "AMMO_50AE",
+          "source_rect": [
+            80,
+            780,
+            242,
+            191
+          ]
+        },
+        {
+          "type_id": "AMMO_556",
+          "source_rect": [
+            466,
+            787,
+            232,
+            175
+          ]
+        },
+        {
+          "type_id": "AMMO_68",
+          "source_rect": [
+            851,
+            785,
+            231,
+            176
+          ]
+        },
+        {
+          "type_id": "AMMO_GASOLINE",
+          "source_rect": [
+            1272,
+            769,
+            167,
+            210
+          ]
+        }
+      ],
+      "source_sha256": "ea90d4d42fbfcc6d943c6c1a6001cb5ba64655bdc47d271b2253d39f2b33a09e",
+      "runtime_sha256": "97f9f865203c9025c3b07d742edac79c74212ffd036d9b3d4881d7d30b58ed42"
+    },
+    {
+      "source_path": "assets/runtime-art/source/journal_catalogue_clothing_a_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_catalogue_clothing_a_v1.webp",
+      "prompt_path": "assets/catalogue/clothing_a.prompt.txt",
+      "selected_generation": "exec-84c0c365-6f37-438c-8bd5-7b03e40944d2.png",
+      "width": 1536,
+      "height": 1024,
+      "logical_columns": 4,
+      "logical_rows": 4,
+      "supplemental": true,
+      "entries": [
+        {
+          "type_id": "CLOTHING_COMPOSITE_ARMOR",
+          "source_rect": [
+            161,
+            6,
+            139,
+            250
+          ]
+        },
+        {
+          "type_id": "CLOTHING_PMC",
+          "source_rect": [
+            518,
+            13,
+            125,
+            235
+          ]
+        },
+        {
+          "type_id": "CLOTHING_TACHARNESS",
+          "source_rect": [
+            864,
+            38,
+            176,
+            188
+          ]
+        },
+        {
+          "type_id": "CLOTHING_ARMYARMOR",
+          "source_rect": [
+            1243,
+            6,
+            135,
+            240
+          ]
+        },
+        {
+          "type_id": "CLOTHING_MILITARY",
+          "source_rect": [
+            157,
+            265,
+            131,
+            238
+          ]
+        },
+        {
+          "type_id": "CLOTHING_CATSUIT",
+          "source_rect": [
+            516,
+            268,
+            130,
+            233
+          ]
+        },
+        {
+          "type_id": "CLOTHING_BLACKDRESS",
+          "source_rect": [
+            877,
+            271,
+            152,
+            232
+          ]
+        },
+        {
+          "type_id": "CLOTHING_BLACKBLOC",
+          "source_rect": [
+            1243,
+            262,
+            135,
+            240
+          ]
+        },
+        {
+          "type_id": "CLOTHING_BLACKSUIT",
+          "source_rect": [
+            144,
+            515,
+            145,
+            228
+          ]
+        },
+        {
+          "type_id": "CLOTHING_BLACKSUIT_AGENT",
+          "source_rect": [
+            508,
+            515,
+            153,
+            228
+          ]
+        },
+        {
+          "type_id": "CLOTHING_BLACKCLOTHES",
+          "source_rect": [
+            841,
+            539,
+            230,
+            190
+          ]
+        },
+        {
+          "type_id": "CLOTHING_BONDAGEGEAR",
+          "source_rect": [
+            1251,
+            521,
+            127,
+            222
+          ]
+        },
+        {
+          "type_id": "CLOTHING_BUNKERGEAR",
+          "source_rect": [
+            149,
+            754,
+            142,
+            257
+          ]
+        },
+        {
+          "type_id": "CLOTHING_CHEAPDRESS",
+          "source_rect": [
+            505,
+            766,
+            169,
+            234
+          ]
+        },
+        {
+          "type_id": "CLOTHING_CLOWNSUIT",
+          "source_rect": [
+            856,
+            760,
+            179,
+            244
+          ]
+        },
+        {
+          "type_id": "CLOTHING_DEATHSQUADUNIFORM",
+          "source_rect": [
+            1241,
+            758,
+            142,
+            256
+          ]
+        }
+      ],
+      "source_sha256": "337c11cc63f10a30410769d5f98fbe5bbd7a22310e4481f7de06872c11f789bf",
+      "runtime_sha256": "e08a0ac33e1eea351520dd58c8dc396b909ef2272b5838e8983dd454988c2ca7"
+    },
+    {
+      "source_path": "assets/runtime-art/source/journal_catalogue_clothing_b_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_catalogue_clothing_b_v1.webp",
+      "prompt_path": "assets/catalogue/clothing_b.prompt.txt",
+      "selected_generation": "exec-e953a130-4183-431a-915c-a2236ad41653.png",
+      "width": 1536,
+      "height": 1024,
+      "logical_columns": 4,
+      "logical_rows": 4,
+      "supplemental": true,
+      "entries": [
+        {
+          "type_id": "CLOTHING_DONKEYSUIT",
+          "source_rect": [
+            142,
+            5,
+            140,
+            245
+          ]
+        },
+        {
+          "type_id": "CLOTHING_ELEPHANTSUIT",
+          "source_rect": [
+            492,
+            16,
+            163,
+            234
+          ]
+        },
+        {
+          "type_id": "CLOTHING_FURSUIT",
+          "source_rect": [
+            880,
+            7,
+            150,
+            244
+          ]
+        },
+        {
+          "type_id": "CLOTHING_EXPENSIVEDRESS",
+          "source_rect": [
+            1231,
+            26,
+            218,
+            221
+          ]
+        },
+        {
+          "type_id": "CLOTHING_EXPENSIVESUIT",
+          "source_rect": [
+            123,
+            267,
+            152,
+            235
+          ]
+        },
+        {
+          "type_id": "CLOTHING_PRISONGUARD",
+          "source_rect": [
+            500,
+            267,
+            151,
+            241
+          ]
+        },
+        {
+          "type_id": "CLOTHING_HEAVYARMOR",
+          "source_rect": [
+            892,
+            258,
+            130,
+            251
+          ]
+        },
+        {
+          "type_id": "CLOTHING_MITHRIL",
+          "source_rect": [
+            1257,
+            274,
+            176,
+            225
+          ]
+        },
+        {
+          "type_id": "CLOTHING_STEELHAUBERK",
+          "source_rect": [
+            120,
+            522,
+            162,
+            233
+          ]
+        },
+        {
+          "type_id": "CLOTHING_NINJASUIT",
+          "source_rect": [
+            510,
+            515,
+            130,
+            246
+          ]
+        },
+        {
+          "type_id": "CLOTHING_POLICEARMOR",
+          "source_rect": [
+            879,
+            523,
+            155,
+            240
+          ]
+        },
+        {
+          "type_id": "CLOTHING_SEALSUIT",
+          "source_rect": [
+            1276,
+            518,
+            144,
+            244
+          ]
+        },
+        {
+          "type_id": "CLOTHING_SECURITYUNIFORM",
+          "source_rect": [
+            124,
+            769,
+            140,
+            244
+          ]
+        },
+        {
+          "type_id": "CLOTHING_SERVANTUNIFORM",
+          "source_rect": [
+            493,
+            773,
+            167,
+            236
+          ]
+        },
+        {
+          "type_id": "CLOTHING_TOGA",
+          "source_rect": [
+            878,
+            772,
+            163,
+            237
+          ]
+        },
+        {
+          "type_id": "CLOTHING_TRENCHCOAT",
+          "source_rect": [
+            1261,
+            768,
+            160,
+            244
+          ]
+        }
+      ],
+      "source_sha256": "1e30b4a0affef0598beef50428d6b453ab43f38bd84def0cf40f5ca59fb8c925",
+      "runtime_sha256": "ffaf06f2d3bcd0a6d39f98fd8bc7c9e3da2ef4bbbb633f78cacaf0f786693d87"
+    },
+    {
+      "source_path": "assets/runtime-art/source/journal_catalogue_clothing_c_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_catalogue_clothing_c_v1.webp",
+      "prompt_path": "assets/catalogue/clothing_c.prompt.txt",
+      "selected_generation": "exec-e8dbf001-f36a-4a53-b8ec-e7d5358f2c5d.png",
+      "width": 1536,
+      "height": 1024,
+      "logical_columns": 4,
+      "logical_rows": 4,
+      "supplemental": true,
+      "entries": [
+        {
+          "type_id": "CLOTHING_HARDHAT",
+          "source_rect": [
+            133,
+            11,
+            136,
+            238
+          ]
+        },
+        {
+          "type_id": "CLOTHING_WIFEBEATER",
+          "source_rect": [
+            533,
+            10,
+            100,
+            238
+          ]
+        },
+        {
+          "type_id": "CLOTHING_WORKCLOTHES",
+          "source_rect": [
+            893,
+            16,
+            134,
+            231
+          ]
+        },
+        {
+          "type_id": "CLOTHING_CHEERLEADER",
+          "source_rect": [
+            1258,
+            30,
+            161,
+            196
+          ]
+        },
+        {
+          "type_id": "CLOTHING_PUNK_JACKET",
+          "source_rect": [
+            102,
+            285,
+            194,
+            199
+          ]
+        },
+        {
+          "type_id": "CLOTHING_DUSTER",
+          "source_rect": [
+            482,
+            258,
+            173,
+            235
+          ]
+        },
+        {
+          "type_id": "CLOTHING_JERSEY",
+          "source_rect": [
+            860,
+            277,
+            199,
+            204
+          ]
+        },
+        {
+          "type_id": "CLOTHING_CHEF",
+          "source_rect": [
+            1253,
+            262,
+            172,
+            228
+          ]
+        },
+        {
+          "type_id": "CLOTHING_SCRUBS",
+          "source_rect": [
+            128,
+            515,
+            142,
+            236
+          ]
+        },
+        {
+          "type_id": "CLOTHING_TRACKSUIT",
+          "source_rect": [
+            504,
+            506,
+            143,
+            242
+          ]
+        },
+        {
+          "type_id": "CLOTHING_KIMONO",
+          "source_rect": [
+            870,
+            513,
+            182,
+            237
+          ]
+        },
+        {
+          "type_id": "CLOTHING_STREETWEAR",
+          "source_rect": [
+            1267,
+            507,
+            145,
+            244
+          ]
+        },
+        {
+          "type_id": "CLOTHING_SARONG",
+          "source_rect": [
+            142,
+            773,
+            144,
+            240
+          ]
+        },
+        {
+          "type_id": "CLOTHING_SARI",
+          "source_rect": [
+            517,
+            757,
+            160,
+            258
+          ]
+        },
+        {
+          "type_id": "CLOTHING_BOHO",
+          "source_rect": [
+            860,
+            761,
+            200,
+            243
+          ]
+        },
+        {
+          "type_id": "CLOTHING_CHIC",
+          "source_rect": [
+            1252,
+            761,
+            175,
+            235
+          ]
+        }
+      ],
+      "source_sha256": "f7f5c636926cee6d12201202f5905cdd4bc7a1db1ae50026df413631f8358fa9",
+      "runtime_sha256": "d96959898a38910cf49b9d34fd0571b25011f65002e0bb4bee06f6372518c16a"
+    },
+    {
+      "source_path": "assets/runtime-art/source/journal_catalogue_clothing_d_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_catalogue_clothing_d_v1.webp",
+      "prompt_path": "assets/catalogue/clothing_d.prompt.txt",
+      "selected_generation": "exec-e522b29b-b07c-4970-86d6-2418851596a2.png",
+      "width": 1536,
+      "height": 1024,
+      "logical_columns": 4,
+      "logical_rows": 4,
+      "supplemental": true,
+      "entries": [
+        {
+          "type_id": "CLOTHING_TIE_DYE",
+          "source_rect": [
+            72,
+            60,
+            243,
+            230
+          ]
+        },
+        {
+          "type_id": "CLOTHING_APRON",
+          "source_rect": [
+            479,
+            27,
+            199,
+            285
+          ]
+        },
+        {
+          "type_id": "CLOTHING_HABIT",
+          "source_rect": [
+            875,
+            22,
+            165,
+            303
+          ]
+        },
+        {
+          "type_id": "CLOTHING_CASSOCK",
+          "source_rect": [
+            1255,
+            23,
+            177,
+            300
+          ]
+        },
+        {
+          "type_id": "CLOTHING_BANDTEE",
+          "source_rect": [
+            65,
+            396,
+            255,
+            244
+          ]
+        }
+      ],
+      "source_sha256": "d3a308e75d8c8c2cb8ff1dee6dfcc12a9e454b02c9e80278f35fde112f1ae3cd",
+      "runtime_sha256": "ed7f03219c23997e9944f1a364a9fd28ec82de28b1d9533a6b727b6598a191a8"
+    },
+    {
+      "source_path": "assets/runtime-art/source/journal_catalogue_loot_a_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_catalogue_loot_a_v1.webp",
+      "prompt_path": "assets/catalogue/loot_a.prompt.txt",
+      "selected_generation": "exec-93066d30-516a-441c-b65f-a29224127cdb.png",
+      "width": 1536,
+      "height": 1024,
+      "logical_columns": 4,
+      "logical_rows": 4,
+      "supplemental": true,
+      "entries": [
+        {
+          "type_id": "LOOT_CHEAPJEWELRY",
+          "source_rect": [
+            83,
+            38,
+            226,
+            207
+          ]
+        },
+        {
+          "type_id": "LOOT_DIRTYSOCK",
+          "source_rect": [
+            460,
+            28,
+            219,
+            219
+          ]
+        },
+        {
+          "type_id": "LOOT_FAMILYPHOTO",
+          "source_rect": [
+            843,
+            43,
+            245,
+            205
+          ]
+        },
+        {
+          "type_id": "LOOT_RECYCLEDCLOTH",
+          "source_rect": [
+            1196,
+            43,
+            293,
+            208
+          ]
+        },
+        {
+          "type_id": "LOOT_EXPENSIVEJEWELRY",
+          "source_rect": [
+            85,
+            267,
+            204,
+            234
+          ]
+        },
+        {
+          "type_id": "LOOT_TRINKET",
+          "source_rect": [
+            483,
+            283,
+            179,
+            210
+          ]
+        },
+        {
+          "type_id": "LOOT_LABEQUIPMENT",
+          "source_rect": [
+            816,
+            280,
+            300,
+            213
+          ]
+        },
+        {
+          "type_id": "LOOT_KIDART",
+          "source_rect": [
+            1207,
+            282,
+            278,
+            214
+          ]
+        },
+        {
+          "type_id": "LOOT_SILVERWARE",
+          "source_rect": [
+            102,
+            513,
+            179,
+            234
+          ]
+        },
+        {
+          "type_id": "LOOT_CELLPHONE",
+          "source_rect": [
+            476,
+            521,
+            187,
+            226
+          ]
+        },
+        {
+          "type_id": "LOOT_PDA",
+          "source_rect": [
+            834,
+            512,
+            264,
+            235
+          ]
+        },
+        {
+          "type_id": "LOOT_WATCH",
+          "source_rect": [
+            1269,
+            521,
+            142,
+            225
+          ]
+        },
+        {
+          "type_id": "LOOT_CHEMICAL",
+          "source_rect": [
+            127,
+            765,
+            133,
+            228
+          ]
+        },
+        {
+          "type_id": "LOOT_AMRADIOFILES",
+          "source_rect": [
+            416,
+            763,
+            323,
+            229
+          ]
+        },
+        {
+          "type_id": "LOOT_CABLENEWSFILES",
+          "source_rect": [
+            808,
+            764,
+            302,
+            226
+          ]
+        },
+        {
+          "type_id": "LOOT_CCS_BACKERLIST",
+          "source_rect": [
+            1197,
+            760,
+            290,
+            224
+          ]
+        }
+      ],
+      "source_sha256": "464ad10e655255a9a6aa9492a35521ead22865e6cde736e72922806883d033de",
+      "runtime_sha256": "2c1784a6d0dbb4db32c4eae920abf47dc45d82ef716938817cef3c1a9b1da1bc"
+    },
+    {
+      "source_path": "assets/runtime-art/source/journal_catalogue_loot_b_v1.png",
+      "runtime_path": "upstream/assets/modern/journal_catalogue_loot_b_v1.webp",
+      "prompt_path": "assets/catalogue/loot_b.prompt.txt",
+      "selected_generation": "exec-3436c15d-7f53-4987-9c4e-d8413fad219c.png",
+      "width": 1536,
+      "height": 1024,
+      "logical_columns": 4,
+      "logical_rows": 4,
+      "supplemental": true,
+      "entries": [
+        {
+          "type_id": "LOOT_CEOLOVELETTERS",
+          "source_rect": [
+            55,
+            39,
+            307,
+            220
+          ]
+        },
+        {
+          "type_id": "LOOT_CEOPHOTOS",
+          "source_rect": [
+            422,
+            26,
+            325,
+            244
+          ]
+        },
+        {
+          "type_id": "LOOT_CEOTAXPAPERS",
+          "source_rect": [
+            811,
+            29,
+            317,
+            229
+          ]
+        },
+        {
+          "type_id": "LOOT_INTHQDISK",
+          "source_rect": [
+            1205,
+            45,
+            278,
+            208
+          ]
+        },
+        {
+          "type_id": "LOOT_JUDGEFILES",
+          "source_rect": [
+            71,
+            280,
+            286,
+            240
+          ]
+        },
+        {
+          "type_id": "LOOT_POLICERECORDS",
+          "source_rect": [
+            440,
+            284,
+            295,
+            237
+          ]
+        },
+        {
+          "type_id": "LOOT_PRISONFILES",
+          "source_rect": [
+            825,
+            283,
+            285,
+            236
+          ]
+        },
+        {
+          "type_id": "LOOT_RESEARCHFILES",
+          "source_rect": [
+            1196,
+            274,
+            294,
+            249
+          ]
+        },
+        {
+          "type_id": "LOOT_CORPFILES",
+          "source_rect": [
+            50,
+            541,
+            315,
+            244
+          ]
+        },
+        {
+          "type_id": "LOOT_LANDLORD_PAPERS",
+          "source_rect": [
+            433,
+            545,
+            317,
+            242
+          ]
+        },
+        {
+          "type_id": "LOOT_INSURANCE_DOCUMENTS",
+          "source_rect": [
+            816,
+            536,
+            313,
+            249
+          ]
+        },
+        {
+          "type_id": "LOOT_RETIREMENT_DOCUMENTS",
+          "source_rect": [
+            1197,
+            544,
+            297,
+            236
+          ]
+        }
+      ],
+      "source_sha256": "a8c1b7a0891a7a3110838f96873568eb4efd022a317c5c3f2fbf66edc1c28e19",
+      "runtime_sha256": "6be7a01416ce4dcd7ed0b0b0d5e87dc545e9514dc71603d1251ddcc37969af57"
     }
-  ]
+  ],
+  "supplement_generated_on": "2026-10-21",
+  "supplement_policy": "113 distinct tangible item paintings. Original generated RGBA masters retained unchanged; inspected full-object crops, including detached parts, use transparent margins. Empty atlas space is not mapped. Absence sentinels and intrinsic body attacks retain text; armor configurations remain live values."
 }
