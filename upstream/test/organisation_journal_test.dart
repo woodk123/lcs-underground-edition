@@ -34,6 +34,8 @@ import 'package:lcs_new_age/modern/injury_status.dart';
 import 'package:lcs_new_age/modern/journal_city_plan.dart';
 import 'package:lcs_new_age/modern/journal_ledger.dart';
 import 'package:lcs_new_age/modern/journal_media.dart';
+import 'package:lcs_new_age/modern/journal_navigation_shortcuts.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/organisation_journal.dart';
@@ -195,6 +197,21 @@ Future<void> _focusGame(WidgetTester tester) async {
   focus.requestFocus();
   await tester.pump();
   expect(focus.hasPrimaryFocus, isTrue);
+}
+
+Future<void> _altShortcut(
+  WidgetTester tester,
+  LogicalKeyboardKey key, {
+  bool focusGame = true,
+}) async {
+  if (focusGame) await _focusGame(tester);
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+  try {
+    await tester.sendKeyEvent(key);
+  } finally {
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+  }
+  await _settle(tester);
 }
 
 Future<void> _showCrewMember(WidgetTester tester, int id) async {
@@ -2011,6 +2028,298 @@ void main() {
     expect(_snapshot(), before);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'Alt journal tabs follow real readers and retain campaign state and RNG',
+    (tester) async {
+      await mount(tester);
+      final before = _snapshot();
+      reseedRNG(seed: 201017);
+      final rolls = List.generate(8, (_) => lcsRandom(100000));
+      reseedRNG(seed: 201017);
+      const routes = <(LogicalKeyboardKey, int, String)>[
+        (LogicalKeyboardKey.digit1, 0, 'Organisation'),
+        (LogicalKeyboardKey.digit2, 9, 'People'),
+        (LogicalKeyboardKey.digit3, 8, 'Network'),
+        (LogicalKeyboardKey.digit4, 10, 'Bases'),
+        (LogicalKeyboardKey.digit5, 1, 'Ledger'),
+        (LogicalKeyboardKey.digit6, 2, 'Justice'),
+        (LogicalKeyboardKey.digit7, 3, 'Agenda'),
+        (LogicalKeyboardKey.digit8, 4, 'Newspaper'),
+        (LogicalKeyboardKey.digit9, 5, 'Reports'),
+        (LogicalKeyboardKey.digit0, 6, 'City maps'),
+        (LogicalKeyboardKey.keyO, 7, 'Options'),
+      ];
+      for (final (key, section, name) in routes) {
+        await _altShortcut(tester, key);
+        expect(
+          tester
+              .widget<OrganisationJournal>(find.byType(OrganisationJournal))
+              .section,
+          section,
+          reason: '$name must use the same route as its pointer control.',
+        );
+        final badge = find.descendant(
+          of: _key('journal-section:$section'),
+          matching: find.byType(JournalShortcutBadge),
+        );
+        expect(badge, findsOneWidget);
+        expect(
+          tester.widget<JournalShortcutBadge>(badge).shortcut,
+          journalSectionShortcuts[section],
+        );
+        expect(
+          tester
+              .getSemantics(_key('journal-section:$section'))
+              .getSemanticsData()
+              .label,
+          startsWith(name),
+        );
+        expect(_snapshot(), before);
+      }
+      await _altShortcut(tester, LogicalKeyboardKey.digit7);
+      expect(engine.console.navigation?.section, 'agenda');
+      await _altShortcut(tester, LogicalKeyboardKey.keyO);
+      expect(find.text('Journal options'), findsOneWidget);
+      expect(engine.console.screen, 'headquarters');
+      await _altShortcut(tester, LogicalKeyboardKey.digit1);
+      expect(_key('journal-member:${game.squad.first.id}'), findsOneWidget);
+      expect(_snapshot(), before);
+      expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'modified footer commands safely leave Agenda before dispatching HQ keys',
+    (tester) async {
+      final harness = await mount(tester);
+      final before = _snapshot();
+      await _altShortcut(tester, LogicalKeyboardKey.digit7);
+      expect(engine.console.navigation?.section, 'agenda');
+      final saveBadge = find.descendant(
+        of: _key('journal-save-exit'),
+        matching: find.byType(JournalShortcutBadge),
+      );
+      expect(
+        find.descendant(
+          of: _key('journal-save-exit'),
+          matching: find.text('Save & exit'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester.widget<JournalShortcutBadge>(saveBadge).shortcut,
+        journalSaveShortcut,
+      );
+      expect(
+        tester.getSemantics(_key('journal-save-exit')).getSemanticsData().label,
+        startsWith('Save & exit'),
+      );
+      await _altShortcut(tester, LogicalKeyboardKey.keyX);
+      expect(harness.dispatched.last, engine.Key.x);
+      expect(engine.console.screen, 'headquarters');
+      expect(_snapshot(), before);
+
+      await _altShortcut(tester, LogicalKeyboardKey.digit7);
+      expect(engine.console.navigation?.section, 'agenda');
+      final dayBadge = find.descendant(
+        of: _key('journal-advance-day'),
+        matching: find.byType(JournalShortcutBadge),
+      );
+      expect(
+        tester.widget<JournalShortcutBadge>(dayBadge).shortcut,
+        journalAdvanceShortcut,
+      );
+      expect(
+        tester
+            .getSemantics(_key('journal-advance-day'))
+            .getSemanticsData()
+            .label,
+        startsWith('Wait a day'),
+      );
+      await _altShortcut(tester, LogicalKeyboardKey.keyW);
+      expect(harness.dispatched.last, engine.Key.w);
+      expect(engine.console.screen, 'headquarters');
+      // This harness records the real HQ command without running a daily turn.
+      expect(_snapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'a prepared order blocks Alt day advance and stale footer callbacks',
+    (tester) async {
+      final harness = await mount(tester);
+      final before = _snapshot();
+      await business(tester);
+      final retained = tester
+          .widget<FilledButton>(_key('journal-advance-day'))
+          .onPressed!;
+      final beforePrepareRevision = engine.console.revision.value;
+      await _tap(tester, 'journal-activity:donations');
+      final revision = engine.console.revision.value;
+      expect(revision, beforePrepareRevision);
+      final dispatched = List<int>.of(harness.dispatched);
+      await _altShortcut(tester, LogicalKeyboardKey.keyW);
+      retained();
+      await _settle(tester);
+      expect(harness.dispatched, dispatched);
+      expect(_key('journal-confirm-order'), findsOneWidget);
+      expect(engine.console.revision.value, revision);
+      expect(_snapshot(), before);
+      await _tap(tester, 'journal-cancel-order');
+      await _altShortcut(tester, LogicalKeyboardKey.keyW);
+      expect(harness.dispatched.last, engine.Key.w);
+      expect(_snapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('global chords cannot acknowledge a required monthly report', (
+    tester,
+  ) async {
+    game.ledger.income[Income.donations] = 345;
+    final harness = await mount(tester, monthlyReport: true);
+    await _altShortcut(tester, LogicalKeyboardKey.keyW);
+    expect(ledgerReportFrame(engine.console)?.management, isFalse);
+    final before = _snapshot();
+    final revision = engine.console.revision.value;
+    final dispatched = List<int>.of(harness.dispatched);
+    for (final key in [
+      LogicalKeyboardKey.keyW,
+      LogicalKeyboardKey.keyX,
+      LogicalKeyboardKey.digit7,
+      LogicalKeyboardKey.keyO,
+    ]) {
+      await _altShortcut(tester, key);
+    }
+    expect(harness.monthReset, isFalse);
+    expect(harness.dispatched, dispatched);
+    expect(ledgerReportFrame(engine.console)?.management, isFalse);
+    expect(engine.console.revision.value, revision);
+    expect(_snapshot(), before);
+    expect(game.ledger.income[Income.donations], 345);
+    expect(_key('journal-ledger-close').hitTestable(), findsOneWidget);
+    await _tap(tester, 'journal-ledger-close');
+    expect(harness.monthReset, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('search, edited names and read-only dialogs keep Alt chords', (
+    tester,
+  ) async {
+    final harness = await mount(tester, size: const Size(1280, 900));
+    final before = _snapshot();
+    await _altShortcut(tester, LogicalKeyboardKey.digit2);
+    await tester.enterText(_key('personnel-search'), 'Felix');
+    await _settle(tester);
+    final searchRevision = engine.console.revision.value;
+    final dispatched = List<int>.of(harness.dispatched);
+    for (final key in [LogicalKeyboardKey.digit7, LogicalKeyboardKey.keyX]) {
+      await _altShortcut(tester, key, focusGame: false);
+    }
+    expect(engine.console.screen, 'personnel-directory');
+    expect(engine.console.revision.value, searchRevision);
+    expect(
+      tester.widget<TextField>(_key('personnel-search')).controller!.text,
+      'Felix',
+    );
+    expect(harness.dispatched, dispatched);
+
+    await _openPersonnel(tester, game.squad.first.id);
+    await _tap(tester, 'journal-profile-action:n');
+    expect(engine.console.textInput, isTrue);
+    final nameField = find.byType(TextField);
+    await tester.enterText(nameField, 'Edited but unconfirmed');
+    final nameRevision = engine.console.revision.value;
+    for (final key in [LogicalKeyboardKey.digit7, LogicalKeyboardKey.keyW]) {
+      await _altShortcut(tester, key, focusGame: false);
+    }
+    expect(engine.console.textInput, isTrue);
+    expect(engine.console.revision.value, nameRevision);
+    expect(
+      tester.widget<TextField>(nameField).controller!.text,
+      'Edited but unconfirmed',
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await _settle(tester);
+    expect(_snapshot(), before);
+
+    await _altShortcut(tester, LogicalKeyboardKey.digit1);
+    await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+    await _settle(tester);
+    expect(find.text('A small movement. A long game.'), findsOneWidget);
+    final dialogRevision = engine.console.revision.value;
+    final dialogCommands = List<int>.of(harness.dispatched);
+    for (final key in [
+      LogicalKeyboardKey.digit7,
+      LogicalKeyboardKey.keyW,
+      LogicalKeyboardKey.keyX,
+    ]) {
+      await _altShortcut(tester, key, focusGame: false);
+    }
+    expect(find.text('A small movement. A long game.'), findsOneWidget);
+    expect(engine.console.revision.value, dialogRevision);
+    expect(harness.dispatched, dialogCommands);
+    expect(_snapshot(), before);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await _settle(tester);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final (size, reading) in [
+    (const Size(1280, 720), 1.0),
+    (const Size(800, 600), 1.5),
+  ]) {
+    testWidgets('labelled journal shortcuts fit Agenda at $size/$reading', (
+      tester,
+    ) async {
+      await mount(tester, size: size);
+      journalReadingScale.value = reading;
+      await _settle(tester);
+      await _altShortcut(tester, LogicalKeyboardKey.digit7);
+      expect(engine.console.navigation?.section, 'agenda');
+      _insideViewport(
+        tester,
+        _key('journal-section:3'),
+        size,
+        'Selected Agenda tab',
+      );
+      _insideViewport(tester, _key('journal-save-exit'), size, 'Save & exit');
+      _insideViewport(tester, _key('journal-advance-day'), size, 'Wait a day');
+      for (final (key, shortcut, caption) in [
+        ('journal-save-exit', journalSaveShortcut, 'Save & exit'),
+        ('journal-advance-day', journalAdvanceShortcut, 'Wait a day'),
+      ]) {
+        final badge = find.descendant(
+          of: _key(key),
+          matching: find.byType(JournalShortcutBadge),
+        );
+        expect(badge, findsOneWidget);
+        expect(tester.widget<JournalShortcutBadge>(badge).shortcut, shortcut);
+        final label = find.descendant(
+          of: _key(key),
+          matching: find.text(caption),
+        );
+        expect(label, findsOneWidget);
+        expect(label.hitTestable(), findsOneWidget);
+        expect(
+          tester.getSemantics(_key(key)).getSemanticsData().label,
+          startsWith(caption),
+        );
+      }
+      await _altShortcut(tester, LogicalKeyboardKey.keyO);
+      expect(find.text('Journal options'), findsOneWidget);
+      _insideViewport(
+        tester,
+        _key('journal-section:7'),
+        size,
+        'Selected Options tab',
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets(
     'phone-width journal retains readable pages and scrolls to day controls',

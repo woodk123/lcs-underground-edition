@@ -20,6 +20,7 @@ import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/injury_status.dart';
 import 'package:lcs_new_age/modern/journal_bases.dart';
 import 'package:lcs_new_age/modern/journal_city_plan.dart';
+import 'package:lcs_new_age/modern/journal_navigation_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_network.dart';
 import 'package:lcs_new_age/modern/journal_order_icon.dart';
 import 'package:lcs_new_age/modern/journal_people.dart';
@@ -42,6 +43,14 @@ import 'package:lcs_new_age/modern/travel_help.dart';
 const networkJournalSection = 8;
 const peopleJournalSection = 9;
 const basesJournalSection = 10;
+
+typedef _JournalFooterCommand = ({
+  String label,
+  String? shortcut,
+  bool continuing,
+  bool detailOwnsContinue,
+  VoidCallback? onPressed,
+});
 
 /// The organiser is one open journal: team and job card on the left, the
 /// selected report, pool, or target map on the right. Changing a portrait or a
@@ -88,6 +97,7 @@ class OrganisationJournal extends StatefulWidget {
 }
 
 class OrganisationJournalState extends State<OrganisationJournal> {
+  final _sectionKeys = <int, GlobalKey>{};
   final _networkKey = GlobalKey<JournalNetworkViewState>();
   final _basesKey = GlobalKey<JournalBasesViewState>();
   JournalPeopleScope _peopleScope = JournalPeopleScope.people;
@@ -363,6 +373,48 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     return false;
   }
 
+  /// Global journal commands use the same live controls as pointer activation.
+  /// They never send an HQ key into whichever source reader is open now.
+  bool handleGlobalCommand(JournalGlobalCommand command) {
+    if (!mounted ||
+        _managementDialog ||
+        !(ModalRoute.of(context)?.isCurrent ?? true) ||
+        console.textInput ||
+        controller.busy) {
+      return false;
+    }
+    final VoidCallback? callback;
+    switch (command) {
+      case JournalGlobalCommand.saveAndExit:
+        callback = _saveExitCommand;
+      case JournalGlobalCommand.advanceDay:
+        final primary = _footerPrimaryCommand();
+        // Required messages retain their own original acknowledgement key.
+        if (primary.continuing || primary.detailOwnsContinue) return false;
+        callback = primary.onPressed;
+    }
+    if (callback == null) return false;
+    callback();
+    return true;
+  }
+
+  /// Reveal a routed tab without taking focus away from the game reader.
+  void revealSection(int section) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final target = _sectionKeys[section]?.currentContext;
+      if (target != null) {
+        unawaited(
+          Scrollable.ensureVisible(
+            target,
+            alignment: .5,
+            duration: Duration.zero,
+          ),
+        );
+      }
+    });
+  }
+
   @override
   void didUpdateWidget(OrganisationJournal oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -534,13 +586,15 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     final reviews = controller.networkReviews.count(game.pool);
     final peopleReviews = controller.organisationReviews.notices.length;
     Widget tab((int, String, JournalIcon) item) => Padding(
+      key: _sectionKeys.putIfAbsent(
+        item.$1,
+        () => GlobalKey(debugLabel: 'Journal section ${item.$1}'),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Tooltip(
         excludeFromSemantics: true,
         message: controller.canNavigate
-            ? item.$1 == networkJournalSection
-                  ? 'Sleeper agents · monthly standing orders'
-                  : item.$2
+            ? '${item.$1 == networkJournalSection ? 'Sleeper agents · monthly standing orders' : item.$2} · ${journalSectionShortcuts[item.$1]}'
             : '${item.$2}: finish the current decision first.',
         child: Material(
           color: Colors.transparent,
@@ -556,6 +610,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   : null,
               child: Semantics(
                 button: true,
+                enabled: controller.canNavigate,
                 excludeSemantics: true,
                 selected: widget.section == item.$1,
                 label: item.$1 == peopleJournalSection && peopleReviews > 0
@@ -563,9 +618,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                     : item.$1 == networkJournalSection && reviews > 0
                     ? 'Network. $reviews ${reviews == 1 ? 'role' : 'roles'} to review.'
                     : item.$2,
-                hint: item.$1 == networkJournalSection
-                    ? 'Sleeper agents · monthly standing orders'
-                    : null,
+                hint:
+                    'Keyboard shortcut: ${journalSectionShortcuts[item.$1]}${item.$1 == networkJournalSection ? '. Sleeper agents · monthly standing orders' : ''}',
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 3,
@@ -574,9 +628,18 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      JournalIllustratedIcon(
-                        icon: item.$3,
-                        size: narrow ? 30 : 40,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          JournalIllustratedIcon(
+                            icon: item.$3,
+                            size: narrow ? 22 : 28,
+                          ),
+                          const SizedBox(width: 4),
+                          JournalShortcutBadge(
+                            shortcut: journalSectionShortcuts[item.$1]!,
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 2),
                       Row(
@@ -635,26 +698,31 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         children: [
           Expanded(
             child: LayoutBuilder(
-              builder: (context, bounds) =>
-                  bounds.maxWidth / tabs.length <
-                      (widget.textScale > 1.1 ? 120 : 78)
-                  ? Scrollbar(
-                      child: SingleChildScrollView(
-                        key: const ValueKey('journal-section-scroll'),
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            for (final item in tabs)
-                              SizedBox(width: 130, child: tab(item)),
-                          ],
-                        ),
-                      ),
-                    )
-                  : Row(
+              builder: (context, bounds) {
+                // Let the complete tab, including borders and the current
+                // font's badge metrics, determine its minimum usable width.
+                final minimumTabWidth = (bounds.maxWidth / tabs.length).clamp(
+                  widget.textScale > 1.1 ? 120.0 : 100.0,
+                  double.infinity,
+                );
+                return Scrollbar(
+                  child: SingleChildScrollView(
+                    key: const ValueKey('journal-section-scroll'),
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
                       children: [
-                        for (final item in tabs) Expanded(child: tab(item)),
+                        for (final item in tabs)
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minWidth: minimumTabWidth,
+                            ),
+                            child: IntrinsicWidth(child: tab(item)),
+                          ),
                       ],
                     ),
+                  ),
+                );
+              },
             ),
           ),
           Tooltip(
@@ -1085,11 +1153,21 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                     );
               final crewDesired =
                   members.length * (widget.textScale > 1.1 ? 56.0 : 44.0) + 56;
-              final jobHeight =
+              final preferredJobHeight =
                   (bounds.maxHeight - headerHeight - crewDesired - 12).clamp(
                     widget.textScale > 1.1 ? (planning ? 260.0 : 230.0) : 140.0,
                     widget.textScale > 1.1 ? (planning ? 280.0 : 260.0) : 240.0,
                   );
+              // Preserve a usable roster when the phone-width footer wraps.
+              // The job's details already have their own scrolling viewport.
+              final availableJobHeight =
+                  (bounds.maxHeight - headerHeight - 12 - 80).clamp(
+                    0.0,
+                    double.infinity,
+                  );
+              final jobHeight = preferredJobHeight > availableJobHeight
+                  ? availableJobHeight
+                  : preferredJobHeight;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -1099,7 +1177,12 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   ),
                   const SizedBox(height: 6),
                   if (_hasJob) ...[
-                    SizedBox(height: jobHeight, child: _jobCard()),
+                    SizedBox(
+                      height: jobHeight,
+                      child: _jobCard(
+                        scrollHeading: jobHeight < preferredJobHeight,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                   ],
                   Expanded(
@@ -2080,7 +2163,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     if (mounted) _restoreInputFocus();
   }
 
-  Widget _jobCard() {
+  Widget _jobCard({bool scrollHeading = false}) {
     if (widget.console.recruitmentTarget case final target?) {
       return JournalSurface(
         lined: true,
@@ -2145,6 +2228,43 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         actual?.type == ActivityType.visit &&
         squad?.id == game.activeSquad?.id &&
         (hospitalVisit || atVisitDestination);
+    final heading = <Widget>[
+      Text(
+        planning
+            ? target == null
+                  ? 'Visit a location'
+                  : 'Visit ${target.getName()}'
+            : !prepared && actual?.type == ActivityType.visit
+            ? 'Visit ${actual?.location?.getName() ?? 'a location'}'
+            : help.title,
+        key: const ValueKey('journal-current-order'),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: JournalPalette.heading.copyWith(fontSize: 14),
+      ),
+      Text(
+        planning && (target == null || visit?.enabled != true)
+            ? target == null
+                  ? 'Choose a building on the map'
+                  : 'Destination unavailable'
+            : prepared || planning
+            ? 'Prepared · awaiting confirmation'
+            : actual?.type == ActivityType.visit
+            ? visitInProgress
+                  ? 'Visit in progress'
+                  : 'Visit queued · advance the day to travel'
+            : 'Assigned order',
+        key: const ValueKey('journal-order-state'),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: JournalPalette.small.copyWith(
+          fontSize: 9.5,
+          height: 1.1,
+          color: prepared ? JournalPalette.binding : JournalPalette.olive,
+        ),
+      ),
+      const SizedBox(height: 2),
+    ];
     return JournalSurface(
       key: const ValueKey('journal-job-card'),
       lined: true,
@@ -2184,47 +2304,14 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             ],
           ),
           const SizedBox(height: 2),
-          Text(
-            planning
-                ? target == null
-                      ? 'Visit a location'
-                      : 'Visit ${target.getName()}'
-                : !prepared && actual?.type == ActivityType.visit
-                ? 'Visit ${actual?.location?.getName() ?? 'a location'}'
-                : help.title,
-            key: const ValueKey('journal-current-order'),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: JournalPalette.heading.copyWith(fontSize: 14),
-          ),
-          Text(
-            planning && (target == null || visit?.enabled != true)
-                ? target == null
-                      ? 'Choose a building on the map'
-                      : 'Destination unavailable'
-                : prepared || planning
-                ? 'Prepared · awaiting confirmation'
-                : actual?.type == ActivityType.visit
-                ? visitInProgress
-                      ? 'Visit in progress'
-                      : 'Visit queued · advance the day to travel'
-                : 'Assigned order',
-            key: const ValueKey('journal-order-state'),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: JournalPalette.small.copyWith(
-              fontSize: 9.5,
-              height: 1.1,
-              color: prepared ? JournalPalette.binding : JournalPalette.olive,
-            ),
-          ),
-          const SizedBox(height: 2),
+          if (!scrollHeading) ...heading,
           Expanded(
             child: SingleChildScrollView(
               key: const ValueKey('journal-order-mechanics'),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (scrollHeading) ...heading,
                   if (!prepared &&
                       !activityFrame &&
                       !planning &&
@@ -3758,7 +3845,19 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     }
   }
 
-  Widget _footer(bool narrow) {
+  VoidCallback? get _saveExitCommand {
+    if (!controller.canNavigate) return null;
+    final revision = console.revision.value;
+    return () {
+      if (mounted &&
+          controller.canNavigate &&
+          console.revision.value == revision) {
+        unawaited(controller.openSection('x'));
+      }
+    };
+  }
+
+  _JournalFooterCommand _footerPrimaryCommand() {
     final unconfirmedDraft = _hasUnconfirmedDraft;
     final revision = console.revision.value;
     final ledger = ledgerReportFrame(console);
@@ -3790,10 +3889,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         !controller.busy &&
         (continueAction?.enabled ?? true);
     final directHQ = console.screen == 'headquarters';
-    ConsoleAction? current(String key) =>
-        console.actions.where((a) => a.key == key).firstOrNull;
     final wait =
-        controller.headquartersAction('w') ?? (directHQ ? current('w') : null);
+        controller.headquartersAction('w') ??
+        (directHQ
+            ? console.actions.where((action) => action.key == 'w').firstOrNull
+            : null);
     final known = controller.headquarters != null || directHQ;
     final label = unconfirmedDraft
         ? 'Confirm or cancel draft'
@@ -3806,145 +3906,304 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               ? 'Day advance unavailable'
               : _clean(wait.label)
         : 'Return to planning';
+    VoidCallback? onPressed;
+    if (!unconfirmedDraft) {
+      if (continuing && canContinue) {
+        onPressed = () {
+          // Retained callbacks must not answer a replacement source reader.
+          if (console.revision.value != revision ||
+              !console.awaitingInput ||
+              console.textInput ||
+              controller.busy ||
+              _hasUnconfirmedDraft ||
+              continueAction != null &&
+                  !console.actions.contains(continueAction)) {
+            return;
+          }
+          widget.onAction(continueAction?.key ?? 'Enter');
+          _restoreInputFocus();
+        };
+      } else if (!continuing && controller.canNavigate) {
+        if (!known) {
+          onPressed = () {
+            if (mounted &&
+                controller.canNavigate &&
+                console.revision.value == revision &&
+                !_hasUnconfirmedDraft) {
+              unawaited(controller.returnToHeadquarters());
+            }
+          };
+        } else if (wait?.enabled == true) {
+          onPressed = () async {
+            if (!mounted ||
+                !controller.canNavigate ||
+                console.revision.value != revision ||
+                _hasUnconfirmedDraft) {
+              return;
+            }
+            await controller.openSection(wait!.key);
+            _restoreInputFocus();
+          };
+        }
+      }
+    }
+    return (
+      label: label,
+      shortcut: unconfirmedDraft
+          ? null
+          : continuing
+          ? continueAction?.key ?? 'Enter'
+          : journalAdvanceShortcut,
+      continuing: continuing,
+      detailOwnsContinue: detailOwnsContinue,
+      onPressed: onPressed,
+    );
+  }
+
+  Widget _footer(bool narrow) {
+    final unconfirmedDraft = _hasUnconfirmedDraft;
+    final primary = _footerPrimaryCommand();
+    final directHQ = console.screen == 'headquarters';
     final cancel =
-        controller.headquartersAction('c') ?? (directHQ ? current('c') : null);
-    return SizedBox(
-      height: narrow ? 41 : 45,
-      child: Row(
-        children: [
-          IconButton(
-            tooltip: 'More headquarters commands',
-            key: const ValueKey('journal-more-commands'),
-            onPressed: controller.canNavigate && !unconfirmedDraft
-                ? _headquartersCommands
-                : null,
-            icon: const Icon(
-              Icons.menu_book,
-              color: JournalPalette.brassLight,
-              size: 21,
-            ),
+        controller.headquartersAction('c') ??
+        (directHQ
+            ? console.actions.where((action) => action.key == 'c').firstOrNull
+            : null);
+    final dateFunds =
+        '${game.day} ${getMonth(game.month).substring(0, 3)} ${game.year}  ·  \$${game.ledger.funds}';
+    final utilities = <Widget>[
+      IconButton(
+        tooltip: 'More headquarters commands',
+        key: const ValueKey('journal-more-commands'),
+        onPressed: controller.canNavigate && !unconfirmedDraft
+            ? _headquartersCommands
+            : null,
+        icon: const Icon(
+          Icons.menu_book,
+          color: JournalPalette.brassLight,
+          size: 21,
+        ),
+      ),
+      Expanded(
+        child: Text(
+          dateFunds,
+          key: const ValueKey('journal-date-funds'),
+          maxLines: 2,
+          style: JournalPalette.small.copyWith(
+            color: JournalPalette.card,
+            height: widget.textScale > 1.1 ? 1 : 1.4,
           ),
-          Expanded(
-            child: Text(
-              '${game.day} ${getMonth(game.month).substring(0, 3)} ${game.year}  ·  \$${game.ledger.funds}',
-              key: const ValueKey('journal-date-funds'),
-              style: JournalPalette.small.copyWith(color: JournalPalette.card),
-            ),
-          ),
-          PopupMenuButton<double>(
-            tooltip: 'Reading size',
-            initialValue: widget.textScale,
-            onSelected: widget.onTextScale,
-            icon: const Icon(
-              Icons.text_fields,
-              color: JournalPalette.brassLight,
-              size: 22,
-            ),
-            itemBuilder: (_) => [
-              for (final scale in [1.0, 1.25, 1.5])
-                PopupMenuItem(
-                  value: scale,
-                  child: Text('${(scale * 100).round()}%'),
-                ),
-            ],
-          ),
-          const JournalPreferencesButton(color: JournalPalette.brassLight),
-          IconButton(
-            tooltip: 'Switch readable / classic view',
-            onPressed: widget.onClassic,
-            icon: const Icon(
-              Icons.terminal,
-              color: JournalPalette.brassLight,
-              size: 21,
-            ),
-          ),
-          OutlinedButton.icon(
-            key: const ValueKey('journal-save-exit'),
-            onPressed: controller.canNavigate
-                ? () => controller.openSection('x')
-                : null,
-            style: OutlinedButton.styleFrom(
-              backgroundColor: JournalPalette.page,
-              minimumSize: const Size(44, 34),
-              padding: const EdgeInsets.symmetric(horizontal: 9),
-            ),
-            icon: const Icon(Icons.save_outlined, size: 17),
-            label: const Text('Save & exit'),
-          ),
-          const SizedBox(width: 9),
-          if (cancel?.enabled == true)
-            IconButton(
-              tooltip: _clean(cancel!.label),
-              key: const ValueKey('journal-cancel-departure'),
-              onPressed: controller.canNavigate
-                  ? () => controller.openSection(cancel.key)
-                  : null,
-              icon: const Icon(
-                Icons.cancel_outlined,
-                color: JournalPalette.brassLight,
-              ),
-            ),
-          if (!detailOwnsContinue)
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: narrow ? 200 : 340),
-              child: Tooltip(
-                message: label,
-                child: FilledButton.icon(
-                  key: const ValueKey('journal-advance-day'),
-                  onPressed: unconfirmedDraft
-                      ? null
-                      : continuing
-                      ? canContinue
-                            ? () {
-                                // A retained callback must not advance a later
-                                // report or answer a newly opened decision.
-                                if (console.revision.value != revision ||
-                                    !console.awaitingInput ||
-                                    console.textInput ||
-                                    controller.busy ||
-                                    _hasUnconfirmedDraft) {
-                                  return;
-                                }
-                                widget.onAction(continueAction?.key ?? 'Enter');
-                                _restoreInputFocus();
-                              }
-                            : null
-                      : !controller.canNavigate
-                      ? null
-                      : !known
-                      ? () {
-                          if (!_hasUnconfirmedDraft) {
-                            unawaited(controller.returnToHeadquarters());
-                          }
-                        }
-                      : wait?.enabled == true
-                      ? () async {
-                          if (_hasUnconfirmedDraft) return;
-                          await controller.openSection(wait!.key);
-                          _restoreInputFocus();
-                        }
-                      : null,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: JournalPalette.binding,
-                    minimumSize: const Size(44, 34),
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                  ),
-                  icon: Icon(
-                    continuing ? Icons.arrow_forward : Icons.play_arrow,
-                    size: 18,
-                  ),
-                  label: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
+        ),
+      ),
+      PopupMenuButton<double>(
+        tooltip: 'Reading size',
+        initialValue: widget.textScale,
+        onSelected: widget.onTextScale,
+        icon: const Icon(
+          Icons.text_fields,
+          color: JournalPalette.brassLight,
+          size: 22,
+        ),
+        itemBuilder: (_) => [
+          for (final scale in [1.0, 1.25, 1.5])
+            PopupMenuItem(
+              value: scale,
+              child: Text('${(scale * 100).round()}%'),
             ),
         ],
       ),
+      const JournalPreferencesButton(color: JournalPalette.brassLight),
+      IconButton(
+        tooltip: 'Switch readable / classic view',
+        onPressed: widget.onClassic,
+        icon: const Icon(
+          Icons.terminal,
+          color: JournalPalette.brassLight,
+          size: 21,
+        ),
+      ),
+    ];
+    final commands = <Widget>[
+      OutlinedButton.icon(
+        key: const ValueKey('journal-save-exit'),
+        onPressed: _saveExitCommand,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: JournalPalette.page,
+          minimumSize: const Size(44, 34),
+          padding: const EdgeInsets.symmetric(horizontal: 9),
+        ),
+        icon: const Icon(Icons.save_outlined, size: 17),
+        label: const JournalCommandLabel(
+          shortcut: journalSaveShortcut,
+          label: 'Save & exit',
+        ),
+      ),
+      if (cancel?.enabled == true)
+        IconButton(
+          tooltip: _clean(cancel!.label),
+          key: const ValueKey('journal-cancel-departure'),
+          onPressed: controller.canNavigate
+              ? () => controller.openSection(cancel.key)
+              : null,
+          icon: const Icon(
+            Icons.cancel_outlined,
+            color: JournalPalette.brassLight,
+          ),
+        ),
+      if (!primary.detailOwnsContinue)
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: narrow ? 230 : 340),
+          child: Tooltip(
+            message: primary.label,
+            child: FilledButton.icon(
+              key: const ValueKey('journal-advance-day'),
+              onPressed: primary.onPressed,
+              style: FilledButton.styleFrom(
+                backgroundColor: JournalPalette.binding,
+                minimumSize: const Size(44, 34),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+              ),
+              icon: Icon(
+                primary.continuing ? Icons.arrow_forward : Icons.play_arrow,
+                size: 18,
+              ),
+              label: primary.shortcut == null
+                  ? Text(
+                      primary.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  : Semantics(
+                      label: primary.label,
+                      hint:
+                          'Keyboard shortcut: ${journalShortcutSpokenLabel(primary.shortcut!)}',
+                      excludeSemantics: true,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          JournalShortcutBadge(
+                            shortcut: primary.shortcut!,
+                            primary: true,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              primary.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ),
+        ),
+    ];
+    return LayoutBuilder(
+      builder: (context, bounds) {
+        final scale = MediaQuery.textScalerOf(context).scale(12) / 12;
+        final theme = Theme.of(context);
+        final saveTextStyle =
+            OutlinedButtonTheme.of(context).style?.textStyle?.resolve({}) ??
+            theme.textTheme.labelLarge!;
+        final advanceTextStyle =
+            FilledButtonTheme.of(context).style?.textStyle?.resolve({}) ??
+            theme.textTheme.labelLarge!;
+        final saveWidth =
+            18 +
+            17 +
+            8 +
+            _shortcutBadgeWidth(context, journalSaveShortcut) +
+            8 +
+            _textWidth(context, 'Save & exit', saveTextStyle);
+        final advanceWidth = primary.detailOwnsContinue
+            ? 0.0
+            : (20 +
+                      18 +
+                      8 +
+                      (primary.shortcut == null
+                          ? 0
+                          : _shortcutBadgeWidth(context, primary.shortcut!) +
+                                8) +
+                      _textWidth(context, primary.label, advanceTextStyle))
+                  .clamp(44.0, narrow ? 230.0 : 340.0);
+        // Four utility buttons plus a readable two-line date/funds label.
+        // Measure the command labels so wider fonts wrap before they overflow.
+        final minimumUtilitiesWidth =
+            4 * kMinInteractiveDimension +
+            _textWidth(context, dateFunds, JournalPalette.small) / 2;
+        final requiredWidth =
+            minimumUtilitiesWidth +
+            saveWidth +
+            advanceWidth +
+            (cancel?.enabled == true ? kMinInteractiveDimension : 0) +
+            commands.length * 9;
+        final stacked =
+            bounds.maxWidth < 760 || bounds.maxWidth < requiredWidth;
+        if (stacked) {
+          final utilitiesHeight = bounds.maxWidth < 550
+              ? (scale * 12 * 2.8).clamp(42.0, 70.0)
+              : 42.0;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: utilitiesHeight,
+                child: Row(children: utilities),
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 6,
+                children: commands,
+              ),
+            ],
+          );
+        }
+        return SizedBox(
+          height: narrow ? 41 : 45,
+          child: Row(
+            children: [
+              ...utilities,
+              for (final command in commands) ...[
+                const SizedBox(width: 9),
+                command,
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
+
+  double _textWidth(BuildContext context, String text, TextStyle style) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: DefaultTextStyle.of(context).style.merge(style),
+      ),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      locale: Localizations.maybeLocaleOf(context),
+      maxLines: 1,
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    return width;
+  }
+
+  double _shortcutBadgeWidth(BuildContext context, String shortcut) =>
+      (_textWidth(
+                context,
+                journalShortcutLabel(shortcut),
+                JournalShortcutBadge.textStyle,
+              ) +
+              12)
+          .clamp(24.0, double.infinity);
 
   String _clean(String label) => stripConsoleColors(
     label,

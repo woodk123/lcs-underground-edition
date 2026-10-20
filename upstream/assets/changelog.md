@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* See direct shortcuts on every journal tab: Alt+1–0 and Alt+O for Options. Labelled Alt+X saves and exits, and Alt+W uses the available day/plans control while preserving required choices and draft guards.
+
 * Choose daily orders from a full task list with visible shortcuts, relevant skills, costs and current assignments. Switch to the map when needed without losing its position.
 * Choose a compact graphical layout and turn introductory explanations on or off independently of reading size; these preferences persist between launches.
 * Read character attributes in a consistent Heart-first order, compare compact crew and recruitment summaries, and open attribute or skill explanations by keyboard or touch.

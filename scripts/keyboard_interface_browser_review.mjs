@@ -20,7 +20,7 @@ const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const decode = save => typeof save.saveData === 'string' ? JSON.parse(save.saveData) : save.saveData;
 const report = {
   status: 'running', url,
-  scope: 'Unmodified bundled Felix save in disposable profiles. Keyboard-only assignment selection, draft cancellation and confirmation in graphical view at desktop and compact 800x600/150%; the same explicit assignment sequence in Classic. Import/export and preference changes are setup. No day advances, outcomes or skill values are supplied.',
+  scope: 'Unmodified bundled Felix save in disposable profiles. Modified journal-tab and Save exit shortcuts, modal and pending-draft isolation, and keyboard-only assignment selection, cancellation and confirmation in graphical view at desktop and compact 800x600/150%; the same explicit assignment sequence in Classic. Import/export and preference changes are setup. No day advances, outcomes or skill values are supplied.',
   checks: [], screenshots: [], sequences: [], pageErrors: [], consoleErrors: [], failedRequests: [],
 };
 const expected = value('--expected-hash', null);
@@ -61,8 +61,9 @@ async function runScenario({ name, viewport, compact, classic }) {
     await page.screenshot({ path: resolve(output, path), fullPage: true });
     report.screenshots.push(path);
   }
-  async function exportGame(label) {
-    await click(/^Save & exit/);
+  async function exportGame(label, { keyboardExit = false } = {}) {
+    if (keyboardExit) await key('Alt+x');
+    else await click(/^Save & exit/);
     await wait(/Start a New Game/);
     await click(/^Load & Manage Saves/);
     await click(/^A(?:\s|$)/);
@@ -97,10 +98,28 @@ async function runScenario({ name, viewport, compact, classic }) {
       await page.getByRole('alertdialog').getByRole('checkbox', { name: 'Compact', exact: true }).click();
       await page.getByRole('switch', { name: /^Show explanations/ }).click();
       // Keys that would advance time or open readers must stay inside the dialog.
-      for (const command of ['w', 'a', 'f']) await key(command);
+      for (const command of ['w', 'a', 'f', 'Alt+7', 'Alt+x', 'Alt+w']) await key(command);
       await key('Escape');
       assert.deepEqual(await exportGame('after-preferences'), before);
       report.checks.push(`${name}: preferences and modal shortcuts preserve campaign`);
+    }
+
+    if (!classic) {
+      for (const [command, heading] of [
+        ['Alt+7', /The Liberal Agenda/],
+        ['Alt+o', /Journal options/],
+        ['Alt+2', /Personnel directory/],
+        ['Alt+7', /The Liberal Agenda/],
+      ]) {
+        await key(command);
+        await wait(heading);
+        assert.equal(page.url(), url, 'Journal shortcuts stay inside the game.');
+      }
+      await capture('header-shortcuts-agenda');
+      assert.deepEqual(await exportGame('after-header-shortcuts', { keyboardExit: true }), before,
+        'Header navigation and keyboard Save & exit preserve the complete campaign.');
+      await key('Alt+1');
+      report.checks.push(`${name}: modified header shortcuts and Save exit follow source routes`);
     }
 
     if (classic) {
@@ -111,6 +130,9 @@ async function runScenario({ name, viewport, compact, classic }) {
     if (!classic) {
       await wait(/Choose a task/);
       assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 1);
+      await key('Alt+w');
+      assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 1,
+        'The global day shortcut must not dismiss or commit a prepared order.');
       await capture('prepared-order');
       await key('Escape');
       assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 0);

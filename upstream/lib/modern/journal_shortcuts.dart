@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 
-/// Display labels for the source's exact command key. These never remap input.
+/// Labels for an exact source key or a registered presentation shortcut.
+/// Rendering a badge never registers or remaps input by itself.
 String journalShortcutLabel(String shortcut) => switch (shortcut) {
   'Escape' => 'Esc',
   'Up' => '↑',
@@ -59,6 +60,13 @@ class JournalShortcutBadge extends StatelessWidget {
   final String shortcut;
   final bool primary;
 
+  static const textStyle = TextStyle(
+    fontFamily: 'ModernSans',
+    fontSize: 11,
+    height: 1.2,
+    fontWeight: FontWeight.w700,
+  );
+
   @override
   Widget build(BuildContext context) => ExcludeSemantics(
     child: Container(
@@ -79,11 +87,7 @@ class JournalShortcutBadge extends StatelessWidget {
       child: Text(
         journalShortcutLabel(shortcut),
         textAlign: TextAlign.center,
-        style: TextStyle(
-          fontFamily: 'ModernSans',
-          fontSize: 11,
-          height: 1.2,
-          fontWeight: FontWeight.w700,
+        style: textStyle.copyWith(
           color: primary ? Colors.white : JournalPalette.ink,
         ),
       ),

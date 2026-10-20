@@ -149,6 +149,7 @@ void main() {
   for (final layout in [
     (const Size(1280, 800), 1.0, false),
     (const Size(800, 600), 1.5, true),
+    (const Size(720, 600), 1.5, true),
   ]) {
     testWidgets(
       'keyboard assignment keeps concise choices and cancellation at ${layout.$1}',

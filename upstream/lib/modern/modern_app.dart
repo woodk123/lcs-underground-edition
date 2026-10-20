@@ -29,6 +29,7 @@ import 'package:lcs_new_age/modern/journal_ledger.dart';
 import 'package:lcs_new_age/modern/journal_legislation.dart';
 import 'package:lcs_new_age/modern/journal_media.dart';
 import 'package:lcs_new_age/modern/journal_media_production.dart';
+import 'package:lcs_new_age/modern/journal_navigation_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_pursuit.dart';
 import 'package:lcs_new_age/modern/journal_recovery.dart';
@@ -307,6 +308,29 @@ class _ModernGameShellState extends State<ModernGameShell> {
         event is! KeyDownEvent) {
       return KeyEventResult.ignored;
     }
+    if (!_classic &&
+        _journalKey.currentState != null &&
+        HardwareKeyboard.instance.isAltPressed &&
+        !HardwareKeyboard.instance.isControlPressed &&
+        !HardwareKeyboard.instance.isMetaPressed &&
+        !HardwareKeyboard.instance.isShiftPressed) {
+      final section = journalSectionForKey(event.logicalKey);
+      if (section != null) {
+        if (_canSwitchSections && _organisation.canNavigate) {
+          unawaited(_openJournalSectionFromShortcut(section));
+        }
+        return KeyEventResult.handled;
+      }
+      final command = switch (event.logicalKey) {
+        LogicalKeyboardKey.keyX => JournalGlobalCommand.saveAndExit,
+        LogicalKeyboardKey.keyW => JournalGlobalCommand.advanceDay,
+        _ => null,
+      };
+      if (command != null) {
+        _journalKey.currentState!.handleGlobalCommand(command);
+        return KeyEventResult.handled;
+      }
+    }
     if (!_keyboard.hasPrimaryFocus &&
         (event.logicalKey == LogicalKeyboardKey.enter ||
             event.logicalKey == LogicalKeyboardKey.space)) {
@@ -468,7 +492,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const Text(
-                  'Keyboard works in graphical view. At headquarters: F opens squad visits, N selects the next squad, A opens assignments, and W carries out plans or waits a day. In the visit planner, letter keys select districts and buildings; Enter queues the selected building and Esc cancels browsing. You can also browse the city map and choose Queue visit in one action. Visits replace earlier daily assignments; travel runs when you advance the day. In Orders, letter shortcuts browse groups and prepare tasks; Enter confirms a prepared job card and Esc cancels it. Tab moves between controls; Enter or Space activates the focused control. Enter continues messages and arrows move during operations. Required names use the text field. F1 opens this guide. Classic view retains the original menu shortcuts.',
+                  '$journalNavigationHelp\n\nKeyboard works in graphical view. At headquarters: F opens squad visits, N selects the next squad, A opens assignments, and W carries out plans or waits a day. In the visit planner, letter keys select districts and buildings; Enter queues the selected building and Esc cancels browsing. You can also browse the city map and choose Queue visit in one action. Visits replace earlier daily assignments; travel runs when you advance the day. In Orders, letter shortcuts browse groups and prepare tasks; Enter confirms a prepared job card and Esc cancels it. Tab moves between controls; Enter or Space activates the focused control. Enter continues messages and arrows move during operations. Required names use the text field. F1 opens this guide. Classic view retains the original menu shortcuts.',
                 ),
                 const SizedBox(height: 14),
                 const Text(
@@ -1175,6 +1199,14 @@ class _ModernGameShellState extends State<ModernGameShell> {
         _normaliseJournalReturn();
         setState(() {});
       }
+    }
+  }
+
+  Future<void> _openJournalSectionFromShortcut(int section) async {
+    await _openJournalSection(section);
+    if (mounted && !console.textInput) {
+      _journalKey.currentState?.revealSection(section);
+      _keyboard.requestFocus();
     }
   }
 

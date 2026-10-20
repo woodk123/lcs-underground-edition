@@ -75,6 +75,10 @@ Operation cleanup snapshots participants before custody, hauling or relocation c
 
 Free Clinic patients remain admitted until the existing healed/60-day discharge condition. Clinic support remains 6 at an ordinary non-LCS site and generates no new treatment bill; university hospitals retain support 16 and law-dependent charges. Sleeper staff at their own clinic workplace are distinguished from admitted patients.
 
+## Journal shortcuts
+
+`journal_navigation_shortcuts.dart` registers Alt+1 through Alt+0 for the first ten journal tabs, Alt+O for Options, Alt+X for Save & exit and Alt+W for the available day/plans control. These presentation routes are distinct from the original reader's bare keys. Tabs use the same safe section routing as pointer controls and reveal the selected tab within the horizontal strip. Footer commands reuse the same live callbacks, source revisions and draft guards as their buttons; Alt+W never acknowledges a required report. Modal routes, editable fields and busy/required readers retain their input.
+
 ## Development
 
 Use a full restart after engine changes; hot reload cannot reliably restart an awaited game loop. Add meaningful regressions under `upstream/test/` when changing rules, persistence or command routing. Build and release tools live in `scripts/`; generated reports, SDKs and packages are ignored.

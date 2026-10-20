@@ -65,6 +65,8 @@ The runner reserves **18879 and 18882** by default and fails if either is occupi
 
 Every stage must pass and report the exact browser-loaded JavaScript hash. The aggregate also records source commit, uncommitted state, source-content fingerprint, pinned toolchain, per-stage logs and complete web-file hashes. A source or artifact change during the run fails acceptance. A supplied build may be reused with `--web-root <directory> --expected-hash <main.dart.js SHA-256>`; the report labels it as supplied rather than claiming it was compiled from the current source. The default command builds its own artifact.
 
+Journal-header regressions in `organisation_journal_test.dart` exercise every displayed Alt binding through real readers, footer routing back from Agenda, pending-draft and required-report guards, modal/search/name isolation, unchanged campaign/RNG during navigation, and reachable labels at desktop and 800×600/150%. The keyboard browser helper also navigates by Alt chords, saves through Alt+X, and checks Alt+W cannot advance a prepared order. Bare source keys retain their current-reader meanings.
+
 ## Browser regressions
 
 ### Equipment and vehicle artwork
