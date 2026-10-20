@@ -569,6 +569,50 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     ),
   );
 
+  // Presentation-owned lists keep their local letter meanings. Advertise HQ
+  // routes as scoped metadata when those keys do not reach the HQ reader.
+  bool get _sourceKeysPassThrough =>
+      !_showPeople &&
+      !_showBases &&
+      widget.section != networkJournalSection &&
+      !_managementDialog &&
+      !_hasUnconfirmedDraft;
+
+  bool get _headquartersKeysActive =>
+      console.screen == 'headquarters' &&
+      controller.canNavigate &&
+      _sourceKeysPassThrough;
+
+  String _headquartersShortcut(String key) =>
+      _headquartersKeysActive ? key : 'HQ: $key';
+
+  String? _originalSectionShortcut(int section) {
+    if (console.screen == 'organisation' && _sourceKeysPassThrough) {
+      final key = switch (section) {
+        1 => 'v',
+        2 => '4',
+        peopleJournalSection => '0',
+        _ => null,
+      };
+      if (key != null &&
+          console.actions.any(
+            (action) => action.key == key && action.enabled,
+          )) {
+        return key;
+      }
+    }
+    final route = journalOriginalSectionRoutes[section];
+    return route == null ? null : _headquartersShortcut(route);
+  }
+
+  String _sectionShortcutHelp(int section) {
+    final route = journalOriginalSectionRoutes[section];
+    final current = _originalSectionShortcut(section);
+    return '${current == null ? '' : 'Keyboard shortcut: ${journalShortcutSpokenLabel(current)}. '}'
+        '${route == null ? '' : 'Original headquarters route: ${journalShortcutLabel(route)}. '}'
+        'Optional global shortcut: ${journalSectionShortcuts[section]}.';
+  }
+
   Widget _sectionTabs(bool narrow) {
     const tabs = <(int, String, JournalIcon)>[
       (0, 'Organisation', JournalIcon.crew),
@@ -594,7 +638,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       child: Tooltip(
         excludeFromSemantics: true,
         message: controller.canNavigate
-            ? '${item.$1 == networkJournalSection ? 'Sleeper agents · monthly standing orders' : item.$2} · ${journalSectionShortcuts[item.$1]}'
+            ? '${item.$1 == networkJournalSection ? 'Sleeper agents · monthly standing orders' : item.$2}. ${_sectionShortcutHelp(item.$1)}'
             : '${item.$2}: finish the current decision first.',
         child: Material(
           color: Colors.transparent,
@@ -619,7 +663,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                     ? 'Network. $reviews ${reviews == 1 ? 'role' : 'roles'} to review.'
                     : item.$2,
                 hint:
-                    'Keyboard shortcut: ${journalSectionShortcuts[item.$1]}${item.$1 == networkJournalSection ? '. Sleeper agents · monthly standing orders' : ''}',
+                    '${_sectionShortcutHelp(item.$1)}${item.$1 == networkJournalSection ? ' Sleeper agents · monthly standing orders.' : ''}',
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 3,
@@ -635,10 +679,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                             icon: item.$3,
                             size: narrow ? 22 : 28,
                           ),
-                          const SizedBox(width: 4),
-                          JournalShortcutBadge(
-                            shortcut: journalSectionShortcuts[item.$1]!,
-                          ),
+                          if (_originalSectionShortcut(item.$1)
+                              case final shortcut?) ...[
+                            const SizedBox(width: 4),
+                            JournalShortcutBadge(shortcut: shortcut),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 2),
@@ -3953,7 +3998,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           ? null
           : continuing
           ? continueAction?.key ?? 'Enter'
-          : journalAdvanceShortcut,
+          : _headquartersShortcut('w'),
       continuing: continuing,
       detailOwnsContinue: detailOwnsContinue,
       onPressed: onPressed,
@@ -4033,9 +4078,15 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           padding: const EdgeInsets.symmetric(horizontal: 9),
         ),
         icon: const Icon(Icons.save_outlined, size: 17),
-        label: const JournalCommandLabel(
-          shortcut: journalSaveShortcut,
-          label: 'Save & exit',
+        label: Tooltip(
+          excludeFromSemantics: true,
+          message:
+              'At headquarters: X. '
+              'Optional global shortcut: $journalSaveShortcut.',
+          child: JournalCommandLabel(
+            shortcut: _headquartersShortcut('x'),
+            label: 'Save & exit',
+          ),
         ),
       ),
       if (cancel?.enabled == true)
@@ -4054,7 +4105,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ConstrainedBox(
           constraints: BoxConstraints(maxWidth: narrow ? 230 : 340),
           child: Tooltip(
-            message: primary.label,
+            message: primary.continuing
+                ? primary.label
+                : '${primary.label}. At headquarters: W. '
+                      'Optional global shortcut: $journalAdvanceShortcut.',
             child: FilledButton.icon(
               key: const ValueKey('journal-advance-day'),
               onPressed: primary.onPressed,
@@ -4114,7 +4168,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             18 +
             17 +
             8 +
-            _shortcutBadgeWidth(context, journalSaveShortcut) +
+            _shortcutBadgeWidth(context, _headquartersShortcut('x')) +
             8 +
             _textWidth(context, 'Save & exit', saveTextStyle);
         final advanceWidth = primary.detailOwnsContinue

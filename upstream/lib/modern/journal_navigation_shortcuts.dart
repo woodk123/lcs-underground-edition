@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 
-/// Presentation routes use a modifier so original reader keys keep their meaning.
+/// Optional presentation routes; the original LCS routes lead visible labels.
 const journalSectionShortcuts = <int, String>{
   0: 'Alt+1',
   9: 'Alt+2',
@@ -13,6 +13,16 @@ const journalSectionShortcuts = <int, String>{
   5: 'Alt+9',
   6: 'Alt+0',
   7: 'Alt+O',
+};
+
+/// Exact routes through the original headquarters and asset-review readers.
+/// Views with no matching original route deliberately have no entry.
+const journalOriginalSectionRoutes = <int, String>{
+  9: 'r → 0',
+  1: 'r → v',
+  2: 'r → 4',
+  3: 'l',
+  4: 'm',
 };
 
 int? journalSectionForKey(LogicalKeyboardKey key) => switch (key) {
@@ -36,7 +46,16 @@ const journalSaveShortcut = 'Alt+X';
 const journalAdvanceShortcut = 'Alt+W';
 
 const journalNavigationHelp =
-    'Journal tabs: Alt+1 Organisation, Alt+2 People, Alt+3 Network, '
+    'Original LCS keys remain the main controls. At headquarters: '
+    'L opens the Liberal Agenda, M opens Media, R reviews assets and squads, '
+    'A assigns tasks, B opens sleeper assignments, E equips the squad, '
+    'V opens vehicles, F opens operations, W carries out plans or waits, '
+    'and X saves and exits. From R, V opens finances, 4 opens Justice '
+    '(when available), and 0 opens the personnel directory. '
+    'Keys keep the meaning of the current menu. A badge marked HQ shows '
+    'a route to use after returning to headquarters.\n\n'
+    'Optional global journal navigation: '
+    'Alt+1 Organisation, Alt+2 People, Alt+3 Network, '
     'Alt+4 Bases, Alt+5 Ledger, Alt+6 Justice, Alt+7 Agenda, '
     'Alt+8 Newspaper, Alt+9 Reports, Alt+0 City maps and Alt+O Options. '
     'Alt+X uses Save & exit; Alt+W uses the available day/plans control. '

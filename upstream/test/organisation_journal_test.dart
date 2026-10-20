@@ -2030,7 +2030,7 @@ void main() {
   });
 
   testWidgets(
-    'Alt journal tabs follow real readers and retain campaign state and RNG',
+    'optional Alt routes retain original labels, real readers and campaign state',
     (tester) async {
       await mount(tester);
       final before = _snapshot();
@@ -2063,10 +2063,29 @@ void main() {
           of: _key('journal-section:$section'),
           matching: find.byType(JournalShortcutBadge),
         );
-        expect(badge, findsOneWidget);
+        final original = journalOriginalSectionRoutes[section];
+        if (original == null) {
+          expect(badge, findsNothing);
+        } else {
+          expect(badge, findsOneWidget);
+          final shortcut = tester.widget<JournalShortcutBadge>(badge).shortcut;
+          final direct = switch (section) {
+            1 => 'v',
+            2 => '4',
+            9 => '0',
+            _ => null,
+          };
+          expect({original, 'HQ: $original', direct}, contains(shortcut));
+          expect(shortcut, isNot(contains('Alt+')));
+        }
         expect(
-          tester.widget<JournalShortcutBadge>(badge).shortcut,
-          journalSectionShortcuts[section],
+          tester
+              .getSemantics(_key('journal-section:$section'))
+              .getSemanticsData()
+              .hint,
+          contains(
+            'Optional global shortcut: ${journalSectionShortcuts[section]}',
+          ),
         );
         expect(
           tester
@@ -2090,6 +2109,94 @@ void main() {
     },
   );
 
+  for (final (size, reading) in [
+    (const Size(1280, 720), 1.0),
+    (const Size(800, 600), 1.5),
+  ]) {
+    testWidgets(
+      'original LCS routes lead labels and retain reader meanings at $size/$reading',
+      (tester) async {
+        final harness = await mount(tester, size: size);
+        journalReadingScale.value = reading;
+        await _settle(tester);
+        final before = _snapshot();
+        reseedRNG(seed: 20261021);
+        final rolls = List.generate(8, (_) => lcsRandom(100000));
+        reseedRNG(seed: 20261021);
+        String badge(String key) => tester
+            .widget<JournalShortcutBadge>(
+              find.descendant(
+                of: _key(key),
+                matching: find.byType(JournalShortcutBadge),
+              ),
+            )
+            .shortcut;
+        Future<void> sourceKey(LogicalKeyboardKey key, String character) async {
+          await _focusGame(tester);
+          await tester.sendKeyEvent(key, character: character);
+          await _settle(tester);
+        }
+
+        expect(badge('journal-section:3'), 'l');
+        expect(journalShortcutLabel(badge('journal-section:3')), 'L');
+        expect(badge('journal-section:4'), 'm');
+        expect(badge('journal-section:1'), 'r → v');
+        expect(badge('journal-section:9'), 'r → 0');
+        expect(badge('journal-save-exit'), 'x');
+        expect(badge('journal-advance-day'), 'w');
+        for (final section in [0, 8, 10, 5, 6, 7]) {
+          expect(
+            find.descendant(
+              of: _key('journal-section:$section'),
+              matching: find.byType(JournalShortcutBadge),
+            ),
+            findsNothing,
+          );
+        }
+
+        await sourceKey(LogicalKeyboardKey.keyL, 'l');
+        expect(engine.console.navigation?.section, 'agenda');
+        expect(badge('journal-section:3'), 'HQ: l');
+        expect(journalShortcutLabel(badge('journal-section:3')), 'HQ: L');
+        expect(badge('journal-save-exit'), 'HQ: x');
+        expect(badge('journal-advance-day'), 'HQ: w');
+        final dispatched = List<int>.of(harness.dispatched);
+        // The original Agenda reader treats W as Back. It must not become an HQ
+        // day command just because the graphical footer also offers day advance.
+        await sourceKey(LogicalKeyboardKey.keyW, 'w');
+        expect(engine.console.screen, 'headquarters');
+        expect(harness.dispatched, dispatched);
+        expect(_snapshot(), before);
+
+        await sourceKey(LogicalKeyboardKey.keyM, 'm');
+        expect(mediaOverviewFrame(engine.console), isNotNull);
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await _settle(tester);
+        expect(engine.console.screen, 'headquarters');
+        await sourceKey(LogicalKeyboardKey.keyR, 'r');
+        expect(engine.console.screen, 'organisation');
+        expect(badge('journal-section:1'), 'v');
+        expect(badge('journal-section:9'), '0');
+        await sourceKey(LogicalKeyboardKey.keyV, 'v');
+        expect(ledgerReportFrame(engine.console)?.management, isTrue);
+        await _tap(tester, 'journal-section:0');
+        expect(engine.console.screen, 'headquarters');
+        await sourceKey(LogicalKeyboardKey.keyR, 'r');
+        await sourceKey(LogicalKeyboardKey.digit0, '0');
+        expect(engine.console.screen, 'personnel-directory');
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await _settle(tester);
+        expect(engine.console.screen, 'headquarters');
+        expect(_snapshot(), before);
+        expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
+        await sourceKey(LogicalKeyboardKey.keyX, 'x');
+        expect(harness.dispatched.last, engine.Key.x);
+        expect(_snapshot(), before);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets(
     'modified footer commands safely leave Agenda before dispatching HQ keys',
     (tester) async {
@@ -2108,10 +2215,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(
-        tester.widget<JournalShortcutBadge>(saveBadge).shortcut,
-        journalSaveShortcut,
-      );
+      expect(tester.widget<JournalShortcutBadge>(saveBadge).shortcut, 'HQ: x');
       expect(
         tester.getSemantics(_key('journal-save-exit')).getSemanticsData().label,
         startsWith('Save & exit'),
@@ -2127,10 +2231,7 @@ void main() {
         of: _key('journal-advance-day'),
         matching: find.byType(JournalShortcutBadge),
       );
-      expect(
-        tester.widget<JournalShortcutBadge>(dayBadge).shortcut,
-        journalAdvanceShortcut,
-      );
+      expect(tester.widget<JournalShortcutBadge>(dayBadge).shortcut, 'HQ: w');
       expect(
         tester
             .getSemantics(_key('journal-advance-day'))
@@ -2289,8 +2390,8 @@ void main() {
       _insideViewport(tester, _key('journal-save-exit'), size, 'Save & exit');
       _insideViewport(tester, _key('journal-advance-day'), size, 'Wait a day');
       for (final (key, shortcut, caption) in [
-        ('journal-save-exit', journalSaveShortcut, 'Save & exit'),
-        ('journal-advance-day', journalAdvanceShortcut, 'Wait a day'),
+        ('journal-save-exit', 'HQ: x', 'Save & exit'),
+        ('journal-advance-day', 'HQ: w', 'Wait a day'),
       ]) {
         final badge = find.descendant(
           of: _key(key),

@@ -113,6 +113,12 @@ void main() {
     );
     expect(journalShortcutSpokenLabel('Down'), 'Down arrow');
     expect(journalShortcutLabel('a'), 'A');
+    expect(journalShortcutLabel('HQ: l'), 'HQ: L');
+    expect(journalShortcutLabel('r → v'), 'R → V');
+    expect(
+      journalShortcutSpokenLabel('HQ: r → v'),
+      'At headquarters, R, then V',
+    );
     expect(journalShortcutLabel('A'), 'Shift+A');
     expect(journalShortcutSpokenLabel('A'), 'Shift A');
   });

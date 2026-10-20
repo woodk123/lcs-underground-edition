@@ -1227,7 +1227,13 @@ class _ModernGameShellState extends State<ModernGameShell> {
   }
 
   Future<void> _mediaAction(String key) async {
-    final action = _action(key);
+    // The original paged reader accepts Escape as Back even though its visible
+    // authored control is Enter. Resolve that alias to the current Back action.
+    final action =
+        _action(key) ??
+        (key == 'Escape' && console.navigation?.section == 'media'
+            ? _action(console.navigation!.backKey) ?? _action('Enter')
+            : null);
     if (action == null) return;
     if (action.key == 'Enter' || action.key == 'Escape') {
       if (await _organisation.sendAction(

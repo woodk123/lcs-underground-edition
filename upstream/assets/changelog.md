@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-* See direct shortcuts on every journal tab: Alt+1–0 and Alt+O for Options. Labelled Alt+X saves and exits, and Alt+W uses the available day/plans control while preserving required choices and draft guards.
+* Keep original LCS keys prominent in the graphical journal: L for Agenda, M for Media, X to save and exit, W for the current day/plans control, and original routes through asset review. Labels mark routes that start at headquarters; optional Alt navigation stays in help and tooltips.
+* Escape returns from the graphical Media overview through its original Back control.
 
 * Choose daily orders from a full task list with visible shortcuts, relevant skills, costs and current assignments. Switch to the map when needed without losing its position.
 * Choose a compact graphical layout and turn introductory explanations on or off independently of reading size; these preferences persist between launches.

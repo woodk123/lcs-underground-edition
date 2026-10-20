@@ -4,6 +4,10 @@ import 'package:lcs_new_age/modern/journal_theme.dart';
 /// Labels for an exact source key or a registered presentation shortcut.
 /// Rendering a badge never registers or remaps input by itself.
 String journalShortcutLabel(String shortcut) => switch (shortcut) {
+  _ when shortcut.startsWith('HQ: ') =>
+    'HQ: ${journalShortcutLabel(shortcut.substring(4))}',
+  _ when shortcut.contains(' → ') =>
+    shortcut.split(' → ').map(journalShortcutLabel).join(' → '),
   'Escape' => 'Esc',
   'Up' => '↑',
   'Down' => '↓',
@@ -21,6 +25,10 @@ String journalShortcutLabel(String shortcut) => switch (shortcut) {
 };
 
 String journalShortcutSpokenLabel(String shortcut) => switch (shortcut) {
+  _ when shortcut.startsWith('HQ: ') =>
+    'At headquarters, ${journalShortcutSpokenLabel(shortcut.substring(4))}',
+  _ when shortcut.contains(' → ') =>
+    shortcut.split(' → ').map(journalShortcutSpokenLabel).join(', then '),
   'Up' => 'Up arrow',
   'Down' => 'Down arrow',
   'Left' => 'Left arrow',

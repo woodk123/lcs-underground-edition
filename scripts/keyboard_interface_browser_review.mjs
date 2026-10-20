@@ -20,7 +20,7 @@ const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const decode = save => typeof save.saveData === 'string' ? JSON.parse(save.saveData) : save.saveData;
 const report = {
   status: 'running', url,
-  scope: 'Unmodified bundled Felix save in disposable profiles. Modified journal-tab and Save exit shortcuts, modal and pending-draft isolation, and keyboard-only assignment selection, cancellation and confirmation in graphical view at desktop and compact 800x600/150%; the same explicit assignment sequence in Classic. Import/export and preference changes are setup. No day advances, outcomes or skill values are supplied.',
+  scope: 'Unmodified bundled Felix save in disposable profiles. Original LCS L/M/Escape/W/X menu meanings and source-first labels, optional modified journal-tab and Save exit shortcuts, modal and pending-draft isolation, and keyboard-only assignment selection, cancellation and confirmation in graphical view at desktop and compact 800x600/150%; the same explicit assignment sequence in Classic. Import/export and preference changes are setup. No day advances, outcomes or skill values are supplied.',
   checks: [], screenshots: [], sequences: [], pageErrors: [], consoleErrors: [], failedRequests: [],
 };
 const expected = value('--expected-hash', null);
@@ -61,8 +61,9 @@ async function runScenario({ name, viewport, compact, classic }) {
     await page.screenshot({ path: resolve(output, path), fullPage: true });
     report.screenshots.push(path);
   }
-  async function exportGame(label, { keyboardExit = false } = {}) {
-    if (keyboardExit) await key('Alt+x');
+  async function exportGame(label, { keyboardExit = false, originalExit = false } = {}) {
+    if (originalExit) await key('x');
+    else if (keyboardExit) await key('Alt+x');
     else await click(/^Save & exit/);
     await wait(/Start a New Game/);
     await click(/^Load & Manage Saves/);
@@ -98,13 +99,26 @@ async function runScenario({ name, viewport, compact, classic }) {
       await page.getByRole('alertdialog').getByRole('checkbox', { name: 'Compact', exact: true }).click();
       await page.getByRole('switch', { name: /^Show explanations/ }).click();
       // Keys that would advance time or open readers must stay inside the dialog.
-      for (const command of ['w', 'a', 'f', 'Alt+7', 'Alt+x', 'Alt+w']) await key(command);
+      for (const command of ['l', 'm', 'r', 'x', 'w', 'a', 'f', 'Alt+7', 'Alt+x', 'Alt+w']) await key(command);
       await key('Escape');
       assert.deepEqual(await exportGame('after-preferences'), before);
       report.checks.push(`${name}: preferences and modal shortcuts preserve campaign`);
     }
 
     if (!classic) {
+      await capture('original-controls-headquarters');
+      await key('l');
+      await wait(/The Liberal Agenda/);
+      await capture('original-controls-agenda');
+      // Original Agenda W is Back, not an HQ day command. Original HQ X
+      // must still save and exit after that reader has returned.
+      await key('w');
+      await key('m');
+      await wait(/Press archive/);
+      await key('Escape');
+      assert.deepEqual(await exportGame('after-original-keys', { originalExit: true }), before,
+        'Original L opens Agenda, W returns without a day advance, M/Escape opens and closes Media, and HQ X saves unchanged state.');
+      report.checks.push(`${name}: original L/M/Escape/W/X keys retain source menu meanings and campaign state`);
       for (const [command, heading] of [
         ['Alt+7', /The Liberal Agenda/],
         ['Alt+o', /Journal options/],
