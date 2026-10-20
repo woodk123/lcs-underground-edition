@@ -15,6 +15,7 @@ import 'package:lcs_new_age/engine/organisation_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/main.dart';
+import 'package:lcs_new_age/modern/journal_city_plan.dart';
 import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
@@ -268,6 +269,20 @@ void main() {
     await _settle(tester);
     expect(_key('journal-order-map'), findsOneWidget);
     expect(_key('journal-activity:donations'), findsNothing);
+    final mapState = tester.state(find.byType(JournalCityPlan));
+    await tester.tap(find.byTooltip('Show location index'));
+    await _settle(tester);
+    expect(find.byTooltip('Show city plan'), findsOneWidget);
+    journalReadingScale.value = 1.5;
+    tester.view.physicalSize = const Size(800, 600);
+    await _settle(tester);
+    expect(tester.state(find.byType(JournalCityPlan)), same(mapState));
+    expect(
+      _key('journal-location-index'),
+      findsOneWidget,
+      reason: 'The same index must survive reading and viewport changes.',
+    );
+    expect(find.byTooltip('Show city plan'), findsOneWidget);
     await tester.tap(_key('journal-orders-map-toggle'));
     await _settle(tester);
     expect(_key('journal-order-map'), findsNothing);

@@ -233,7 +233,9 @@ try {
   await click(/^Reading size/);
   await page.getByRole('menuitem', { name: '150%', exact: true }).click();
   await page.setViewportSize({ width: 800, height: 600 });
-  assert.ok(await page.getByRole('button', { name: /^Show city plan/ }).count(), 'The optional map keeps its location index at enlarged reading size.');
+  const retainedMapIndex = page.getByRole('button', { name: /^Show city plan/ });
+  await retainedMapIndex.waitFor({ state: 'visible' });
+  assert.equal(await retainedMapIndex.count(), 1, 'The optional map keeps its location index at enlarged reading size.');
   await capture('07-member-switch-map-800x600-at150');
   await click(/^Tasks$/);
   assert.equal(await page.getByRole('button', { name: /^Show city plan/ }).count(), 0,
