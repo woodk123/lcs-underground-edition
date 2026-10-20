@@ -67,16 +67,14 @@ async function revealTopTab(name) {
     return bounds && bounds.y >= 0 && bounds.y < 100 && bounds.x >= 0 && bounds.x + bounds.width <= stripRight + 1;
   }
   if (await visible()) return;
-  // Scroll the real horizontal tab strip. Flutter's clipped semantics nodes
-  // cannot be revealed by scrolling the outer browser document.
-  await page.mouse.move(Math.min(320, stripRight / 2), 35);
-  await page.mouse.wheel(-2000, 0);
-  await page.waitForTimeout(180);
-  for (let step = 0; step < 8; step++) {
+  // Traverse real controls so Flutter brings focused tabs into view. Horizontal
+  // wheel gestures at the strip's edge can invoke native browser history.
+  for (let step = 0; step < 120; step++) {
     if (await visible()) return;
-    await page.mouse.wheel(360, 0);
-    await page.waitForTimeout(180);
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(60);
   }
+  if (await visible()) return;
   assert.fail(`The top tab ${String(name)} must be reachable through its horizontal strip.`);
 }
 async function click(name) {
