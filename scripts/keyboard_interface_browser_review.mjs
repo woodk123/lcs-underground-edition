@@ -20,7 +20,7 @@ const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const decode = save => typeof save.saveData === 'string' ? JSON.parse(save.saveData) : save.saveData;
 const report = {
   status: 'running', url,
-  scope: 'Unmodified bundled Felix save in disposable profiles. Original LCS L/M/Escape/W/X menu meanings and source-first labels, optional modified journal-tab and Save exit shortcuts, modal and pending-draft isolation, and keyboard-only assignment selection, cancellation and confirmation in graphical view at desktop and compact 800x600/150%; the same explicit assignment sequence in Classic. Import/export and preference changes are setup. No day advances, outcomes or skill values are supplied.',
+  scope: 'Unmodified bundled Felix save in disposable profiles. Original LCS L/M/Escape/W/X menu meanings and source-first labels, optional modified journal-tab and Save exit shortcuts, modal isolation, and the identical immediate A/A/B/1 assignment and source Back keys in graphical desktop, graphical compact 800x600/150%, and Classic. Pointer task previews retain separate draft cancellation and day-advance protection. Import/export and preference changes are setup. No day advances, outcomes or skill values are supplied.',
   checks: [], screenshots: [], sequences: [], pageErrors: [], consoleErrors: [], failedRequests: [],
 };
 const expected = value('--expected-hash', null);
@@ -143,29 +143,51 @@ async function runScenario({ name, viewport, compact, classic }) {
     for (const command of opening) await key(command);
     if (!classic) {
       await wait(/Choose a task/);
+      assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 0,
+        'The original task key applies immediately without creating a journal draft.');
+    }
+    await capture('keyboard-assigned-task');
+    // Task 1 applies immediately and leaves the original actor reader open.
+    // Each original Back key returns to the same person list; A reopens it.
+    const backAliasProbe = ['Escape', 'a', 'Enter', 'a', 'Space', 'Space'];
+    for (const command of backAliasProbe) await key(command);
+    if (classic) await click(/^Switch readable \/ classic view/);
+    const after = await exportGame('after-original-assignment');
+    const expectedCampaign = structuredClone(before);
+    expectedCampaign.lcs.pool[0].activity = { type: 'donations' };
+    assert.deepEqual(after, expectedCampaign,
+      'The original A/A/B/1 keys immediately assign only the selected first actor; Back aliases preserve that choice.');
+    report.sequences.push({
+      name, viewport, readingScale: compact ? 1.5 : 1,
+      assignment: opening, assignmentKeypresses: opening.length,
+      assignmentEffect: 'Category B applies its original default; task 1 immediately assigns donations and retains the actor reader.',
+      backAliasProbe,
+      mouseInputsDuringTaskSequence: 0,
+    });
+    report.checks.push(`${name}: original keyboard assignment is immediate and original Back aliases preserve menu flow`);
+    if (!classic) {
+      // Reopen the same source actor/category and restore task 1 before the
+      // separate pointer-only preview. Raw category B can change its default.
+      for (const command of opening) await key(command);
+      await wait(/Choose a task/);
+      await click(/^Prepare .*Make and Sell Art/);
+      await wait(/Prepared, awaiting confirmation|Prepared · awaiting confirmation/);
       assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 1);
       await key('Alt+w');
       assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 1,
-        'The global day shortcut must not dismiss or commit a prepared order.');
-      await capture('prepared-order');
+        'The global day shortcut must not dismiss or commit a pointer-prepared order.');
+      await capture('pointer-prepared-order');
       await key('Escape');
       assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 0);
-      await key('1');
+      for (const command of ['Escape', 'Space']) await key(command);
+      assert.deepEqual(await exportGame('after-pointer-draft'), after,
+        'Pointer preview, blocked day advance and cancellation preserve the complete assigned campaign.');
+      report.sequences.at(-1).pointerDraftProbe = {
+        reentry: opening, prepare: 'Pointer: Make and Sell Art',
+        blockedCommand: 'Alt+w', cancel: 'Escape', sourceBack: ['Escape', 'Space'],
+      };
+      report.checks.push(`${name}: pointer draft cancellation and day-advance guard preserve the complete campaign`);
     }
-    await key('Enter');
-    if (classic) await click(/^Switch readable \/ classic view/);
-    const after = await exportGame('after');
-    const expectedCampaign = structuredClone(before);
-    expectedCampaign.lcs.pool[0].activity = { type: 'donations' };
-    assert.deepEqual(after, expectedCampaign, 'Only the explicitly selected first actor receives the confirmed task.');
-    report.sequences.push({
-      name, viewport, readingScale: compact ? 1.5 : 1,
-      assignment: [...opening, 'Enter'], assignmentKeypresses: opening.length + 1,
-      cancellationProbe: classic ? [] : ['Escape', '1'],
-      mouseInputsDuringTaskSequence: 0,
-    });
-    await capture('confirmed-order');
-    report.checks.push(`${name}: keyboard assignment changes only the selected actor`);
     if (compact) {
       await page.reload({ waitUntil: 'networkidle' });
       await wait(/Start a New Game/);
@@ -176,15 +198,21 @@ async function runScenario({ name, viewport, compact, classic }) {
       report.checks.push(`${name}: display preferences survive reload`);
     }
     await verifyLoaded(expected.toLowerCase());
+    return { before, after };
   } finally {
     await context.close();
   }
 }
 
 try {
-  await runScenario({ name: 'graphical-desktop', viewport: { width: 1440, height: 1000 }, compact: false, classic: false });
-  await runScenario({ name: 'graphical-compact', viewport: { width: 800, height: 600 }, compact: true, classic: false });
-  await runScenario({ name: 'classic-reference', viewport: { width: 1440, height: 1000 }, compact: false, classic: true });
+  const desktop = await runScenario({ name: 'graphical-desktop', viewport: { width: 1440, height: 1000 }, compact: false, classic: false });
+  const compact = await runScenario({ name: 'graphical-compact', viewport: { width: 800, height: 600 }, compact: true, classic: false });
+  const classic = await runScenario({ name: 'classic-reference', viewport: { width: 1440, height: 1000 }, compact: false, classic: true });
+  assert.deepEqual(desktop.before, classic.before, 'Graphical and Classic start from the same complete campaign.');
+  assert.deepEqual(compact.before, classic.before, 'Compact graphical and Classic start from the same complete campaign.');
+  assert.deepEqual(desktop.after, classic.after, 'Graphical and Classic produce the same complete campaign from identical original keys.');
+  assert.deepEqual(compact.after, classic.after, 'Compact graphical and Classic produce the same complete campaign from identical original keys.');
+  report.checks.push('Original A/A/B/1 assignment and Back-key journey produce identical complete campaigns in Classic and both graphical layouts.');
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.consoleErrors, []);
   assert.deepEqual(report.failedRequests, []);

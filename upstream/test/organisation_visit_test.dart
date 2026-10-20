@@ -87,6 +87,33 @@ Future<void> _tap(WidgetTester tester, String key) async {
   await _settle(tester);
 }
 
+Future<void> _keyboard(
+  WidgetTester tester,
+  LogicalKeyboardKey key, {
+  String? character,
+}) async {
+  tester
+      .widgetList<Focus>(find.byType(Focus))
+      .singleWhere((widget) => widget.focusNode?.debugLabel == 'Game keyboard')
+      .focusNode!
+      .requestFocus();
+  await tester.pump();
+  await tester.sendKeyEvent(key, character: character);
+  await _settle(tester);
+}
+
+Future<void> _sourceChoice(WidgetTester tester, String type, String id) async {
+  final action = engine.console.actions.singleWhere(
+    (action) => action.entityType == type && action.entityId == id,
+  );
+  expect(action.enabled, isTrue);
+  await _keyboard(
+    tester,
+    LogicalKeyboardKey(action.key.toLowerCase().codeUnitAt(0)),
+    character: action.key.toLowerCase(),
+  );
+}
+
 void main() {
   late String fixture;
   setUpAll(() async {
@@ -495,48 +522,57 @@ void main() {
   );
 
   testWidgets(
-    'Operations confirms only after reviewing destination and Escape preserves prior visit',
+    'Operations raw letters queue immediately and Back aliases return one original level',
     (tester) async {
       final site = target();
-      await mount(tester);
+      final person = game.pool.first;
+      person.activity = Activity(ActivityType.donations);
+      final harness = await mount(tester);
+      final date = game.date;
+      reseedRNG(seed: 41509);
+      final rolls = List.generate(12, (_) => lcsRandom(100000));
+      reseedRNG(seed: 41509);
       await _tap(tester, 'journal-orders');
       await _tap(tester, 'journal-order-group:3');
       await _tap(tester, 'journal-plan-visit');
       await _tap(tester, 'journal-map-place:${site.district.idString}');
-      final source = engine.console.actions.singleWhere(
-        (a) => a.entityId == site.idString,
-      );
-      final before = _snapshot();
-      await tester.sendKeyEvent(
-        LogicalKeyboardKey(source.key.toLowerCase().codeUnitAt(0)),
-        character: source.key.toLowerCase(),
-      );
-      await _settle(tester);
-      expect(_snapshot(), before);
-      expect(find.text('Visit ${site.getName()}'), findsOneWidget);
-      await _tap(tester, 'journal-confirm-order');
-      expect(game.activeSquad!.activity.idString, site.idString);
-      expect(find.textContaining('Visit queued'), findsWidgets);
-      final queued = _snapshot();
-      await _tap(tester, 'journal-orders');
-      await _tap(tester, 'journal-order-group:3');
-      await _tap(tester, 'journal-plan-visit');
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-      await _settle(tester);
+      await _sourceChoice(tester, 'site', site.idString);
       expect(engine.console.screen, 'headquarters');
-      expect(_snapshot(), queued);
+      expect(game.activeSquad!.activity.type, ActivityType.visit);
+      expect(game.activeSquad!.activity.idString, site.idString);
+      expect(_key('journal-confirm-order'), findsNothing);
       for (final (key, character) in [
+        (LogicalKeyboardKey.enter, null),
+        (LogicalKeyboardKey.escape, null),
         (LogicalKeyboardKey.keyX, 'x'),
         (LogicalKeyboardKey.space, ' '),
       ]) {
-        await _tap(tester, 'journal-orders');
-        await _tap(tester, 'journal-order-group:3');
-        await _tap(tester, 'journal-plan-visit');
-        await tester.sendKeyEvent(key, character: character);
-        await _settle(tester);
-        expect(engine.console.screen, 'headquarters');
+        // The district Back command keeps the queued visit. The same command
+        // at the city root deliberately clears it, as Classic has always done.
+        await _keyboard(tester, LogicalKeyboardKey.keyF, character: 'f');
+        await _sourceChoice(tester, 'district', site.district.idString);
+        final queued = _snapshot();
+        await _keyboard(tester, key, character: character);
+        expect(engine.console.screen, 'planning');
+        expect(
+          engine.console.actions.any((a) => a.entityType == 'district'),
+          isTrue,
+        );
         expect(_snapshot(), queued);
+        await _keyboard(tester, key, character: character);
+        expect(engine.console.screen, 'headquarters');
+        expect(game.activeSquad!.activity.type, ActivityType.none);
+        expect(person.activity.type, ActivityType.donations);
+        await _keyboard(tester, LogicalKeyboardKey.keyF, character: 'f');
+        await _sourceChoice(tester, 'district', site.district.idString);
+        await _sourceChoice(tester, 'site', site.idString);
+        expect(engine.console.screen, 'headquarters');
+        expect(game.activeSquad!.activity.idString, site.idString);
       }
+      expect(game.date, date);
+      expect(harness.commands, isNot(contains(engine.Key.w)));
+      expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+      expect(tester.takeException(), isNull);
     },
   );
 
@@ -626,15 +662,20 @@ void main() {
   );
 
   testWidgets(
-    'Enter queues the inspected headquarters destination without advancing a day',
+    'an inspected headquarters map leaves Enter and source travel letters authoritative',
     (tester) async {
       final harness = await mount(tester);
       final site = target();
       await _tap(tester, 'journal-map-place:${site.district.idString}');
       await _tap(tester, 'journal-map-place:${site.idString}');
       final date = game.date;
-      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      await _settle(tester);
+      final before = _snapshot();
+      await _keyboard(tester, LogicalKeyboardKey.enter);
+      expect(_snapshot(), before);
+      expect(engine.console.screen, 'headquarters');
+      await _keyboard(tester, LogicalKeyboardKey.keyF, character: 'f');
+      await _sourceChoice(tester, 'district', site.district.idString);
+      await _sourceChoice(tester, 'site', site.idString);
       expect(game.activeSquad!.activity.idString, site.idString);
       expect(engine.console.screen, 'headquarters');
       expect(game.date, date);
@@ -691,7 +732,10 @@ void main() {
       await _tap(tester, 'journal-prepare-map-visit');
       expect(engine.console.screen, 'headquarters');
       expect(game.activeSquad!.activity.idString, site.idString);
-      expect(game.date.toIso8601String(), jsonDecode(before)['date']);
+      expect(
+        game.date.toIso8601String(),
+        (jsonDecode(before) as Map<String, dynamic>)['date'],
+      );
     },
   );
 

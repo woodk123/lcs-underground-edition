@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Use the original Classic keys and menu flow throughout the graphical view: category defaults, tasks, sleeper roles, purchases and destinations take effect on their original key, and Back returns to the same parent menu. Held keys repeat normally.
+* Show source keys on title and character-creation controls and page hints on profiles. Text entry starts at the end of a prefilled name; Escape finishes with the visible edits, while the separate Cancel edits button restores the original text.
+
 * Keep original LCS keys prominent in the graphical journal: L for Agenda, M for Media, X to save and exit, W for the current day/plans control, and original routes through asset review. Labels mark routes that start at headquarters; optional Alt navigation stays in help and tooltips. The active tab stays visible when navigating by keyboard.
 * Escape returns from the graphical Media overview through its original Back control.
 

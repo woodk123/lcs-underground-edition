@@ -14,6 +14,7 @@ import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/equipment_help.dart';
 import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_recruitment.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/legal_status.dart';
@@ -383,6 +384,7 @@ class CrewDossier extends StatefulWidget {
     this.embedded = false,
     this.page = 0,
     this.onPage,
+    this.pageShortcuts = const [],
   });
 
   final Creature person;
@@ -390,6 +392,9 @@ class CrewDossier extends StatefulWidget {
   final bool embedded;
   final int page;
   final ValueChanged<int>? onPage;
+
+  /// Enabled page keys supplied by the current original profile reader.
+  final List<String> pageShortcuts;
 
   @override
   State<CrewDossier> createState() => _CrewDossierState();
@@ -564,6 +569,35 @@ class _CrewDossierState extends State<CrewDossier> {
                           ),
                         ),
                         child: Text(label, style: JournalPalette.small),
+                      ),
+                    ),
+                  if (widget.onPage != null &&
+                      widget.pageShortcuts.any(
+                        (key) => const {'Up', 'Down'}.contains(key),
+                      ))
+                    Semantics(
+                      key: const ValueKey('journal-profile-page-shortcuts'),
+                      label: 'More info',
+                      hint:
+                          'Keyboard shortcuts: ${widget.pageShortcuts.where((key) => const {'Up', 'Down'}.contains(key)).map(journalShortcutSpokenLabel).join(', ')}',
+                      excludeSemantics: true,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            for (final key in widget.pageShortcuts.where(
+                              (key) => const {'Up', 'Down'}.contains(key),
+                            )) ...[
+                              JournalShortcutBadge(shortcut: key),
+                              const SizedBox(width: 5),
+                            ],
+                            const Text(
+                              'More info',
+                              style: JournalPalette.small,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                 ],

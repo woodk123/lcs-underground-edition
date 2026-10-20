@@ -236,6 +236,11 @@ class JournalTitlePage extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(width: 8),
+        JournalShortcutBadge(
+          shortcut: action.key,
+          primary: primary && action.enabled,
+        ),
         if (action.enabled) ...[
           const SizedBox(width: 6),
           const Icon(Icons.arrow_forward, size: 17),
@@ -245,7 +250,7 @@ class JournalTitlePage extends StatelessWidget {
     final actionKey = ValueKey('journal-title-action:${action.key}');
     return Tooltip(
       message: action.enabled
-          ? '$label · Shortcut: ${action.key.toUpperCase()}'
+          ? '$label · Shortcut: ${journalShortcutSpokenLabel(action.key)}'
           : caption.isEmpty
           ? '$label is unavailable.'
           : caption,

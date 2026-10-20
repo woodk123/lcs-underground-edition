@@ -166,57 +166,6 @@ class JournalBasesViewState extends State<JournalBasesView> {
     await _send(purchase, notice: 'Purchase completed.');
   }
 
-  /// Lets the enclosing journal preserve staged purchase confirmation for
-  /// keyboard users. Required messages and text prompts keep their own reader.
-  bool handleGameShortcut(String key) {
-    if (console.textInput || console.eventMessage != null) return false;
-    // This directory may sit over an HQ input reader while inspecting bases.
-    // Do not let unlabelled HQ letters run a day, save/exit, change squads, or
-    // open a different hidden reader behind the visible directory.
-    if (_busy || console.screen == 'headquarters') return true;
-    if (!BaseManagementController.ownsScreen(console)) return false;
-    final normalized = normalizeConsoleKey(key);
-    if (_validPurchase) {
-      if (normalized == 'Enter') {
-        unawaited(
-          _confirmPurchase(_purchase!, _purchaseRevision!, _purchaseVersion),
-        );
-      } else if (const {'Escape', 'Backspace'}.contains(normalized)) {
-        _updateState(() => _purchase = null);
-      }
-      return true;
-    }
-    if (const {'Escape', 'Enter', 'Backspace'}.contains(normalized)) {
-      unawaited(_route(_routes.closeSource));
-      return true;
-    }
-    final action = console.actions
-        .where((action) => action.key == normalized && action.enabled)
-        .firstOrNull;
-    if (action == null) return true;
-    if (console.screen == 'base-investment') {
-      if (const {
-        'compound-upgrade',
-        'base-supplies',
-      }.contains(action.entityType)) {
-        final site = game.sites
-            .where((site) => site.idString == action.entityCategory)
-            .firstOrNull;
-        if (site != null) {
-          _updateState(() {
-            _selectedId = site.id;
-            _purchase = action;
-            _purchaseRevision = console.revision.value;
-            _purchaseVersion++;
-          });
-        }
-      }
-    } else {
-      unawaited(_send(action));
-    }
-    return true;
-  }
-
   String _label(ConsoleAction action) =>
       stripConsoleColors(action.label).replaceFirst(RegExp(r'^\S+\s*-\s*'), '');
 
@@ -655,11 +604,7 @@ class JournalBasesViewState extends State<JournalBasesView> {
                         ),
                       ),
                 icon: const Icon(Icons.check),
-                label: const JournalCommandLabel(
-                  shortcut: 'Enter',
-                  label: 'Confirm purchase',
-                  primary: true,
-                ),
+                label: const Text('Confirm purchase'),
               ),
               TextButton(
                 onPressed: _busy
@@ -671,10 +616,7 @@ class JournalBasesViewState extends State<JournalBasesView> {
                           _updateState(() => _purchase = null);
                         }
                       },
-                child: const JournalCommandLabel(
-                  shortcut: 'Escape',
-                  label: 'Cancel',
-                ),
+                child: const Text('Cancel'),
               ),
             ],
           ),
@@ -683,12 +625,7 @@ class JournalBasesViewState extends State<JournalBasesView> {
           onPressed: _busy
               ? null
               : () => unawaited(_route(_routes.closeSource)),
-          child: purchase == null
-              ? const JournalCommandLabel(
-                  shortcut: 'Escape',
-                  label: 'Done purchasing',
-                )
-              : const Text('Done purchasing'),
+          child: const Text('Done purchasing'),
         ),
       ],
     );
@@ -729,10 +666,7 @@ class JournalBasesViewState extends State<JournalBasesView> {
         ),
       TextButton(
         onPressed: _busy ? null : () => unawaited(_route(_routes.closeSource)),
-        child: const JournalCommandLabel(
-          shortcut: 'Escape',
-          label: 'Done moving equipment',
-        ),
+        child: const Text('Done moving equipment'),
       ),
     ]);
   }
@@ -811,10 +745,7 @@ class JournalBasesViewState extends State<JournalBasesView> {
       _paging(),
       TextButton(
         onPressed: _busy ? null : () => unawaited(_route(_routes.closeSource)),
-        child: const JournalCommandLabel(
-          shortcut: 'Escape',
-          label: 'Done assigning bases',
-        ),
+        child: const Text('Done assigning bases'),
       ),
     ]);
   }

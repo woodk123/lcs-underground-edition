@@ -55,8 +55,11 @@ Future<void> _focusAction(WidgetTester tester, ConsoleAction action) async {
   await tester.ensureVisible(control);
   final text = find.descendant(of: control, matching: find.byType(Text)).first;
   final focus = Focus.of(tester.element(text));
-  focus.requestFocus();
-  await tester.pump();
+  // Use deliberate traversal: incidental pointer focus must not steal Back.
+  for (var step = 0; step < 100 && !focus.hasPrimaryFocus; step++) {
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+  }
   expect(focus.hasPrimaryFocus, isTrue);
 }
 

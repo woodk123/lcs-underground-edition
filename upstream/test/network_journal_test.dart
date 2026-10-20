@@ -122,6 +122,16 @@ Future<void> _keyboard(
   await _settle(tester);
 }
 
+String _snapshotWithOrder(Creature person, ActivityType type) {
+  final original = person.activity;
+  try {
+    person.activity = Activity(type);
+    return _snapshot();
+  } finally {
+    person.activity = original;
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late String fixture;
@@ -457,7 +467,7 @@ void main() {
   );
 
   testWidgets(
-    'cancel and person switching discard drafts; Enter confirms selected actor',
+    'pointer cancel and person switching discard drafts; Confirm targets the selected actor',
     (tester) async {
       final first = _sleeper('First Sleeper');
       final second = _sleeper('Second Sleeper', order: ActivityType.sleeperSpy);
@@ -465,18 +475,18 @@ void main() {
       final secondOrder = second.activity;
       final before = _snapshot();
       await mount(tester);
-      await _keyboard(tester, LogicalKeyboardKey.keyB, character: 'b');
-      await _keyboard(tester, LogicalKeyboardKey.digit2, character: '2');
+      await _tap(tester, 'network-espionage');
+      await _tap(tester, 'network-task:sleeperEmbezzle');
       expect(_key('network-confirm-order'), findsOneWidget);
       expect(_snapshot(), before);
-      await _keyboard(tester, LogicalKeyboardKey.escape);
+      await _tap(tester, 'network-cancel-order');
       expect(_key('network-confirm-order'), findsNothing);
       expect(_snapshot(), before);
       await _tap(tester, 'network-espionage');
       await _tap(tester, 'network-task:sleeperEmbezzle');
       await _tap(tester, 'network-agent:${second.id}');
       expect(_key('network-confirm-order'), findsNothing);
-      await _keyboard(tester, LogicalKeyboardKey.enter);
+      await _tap(tester, 'network-keep-order');
       expect(first.activity, same(firstOrder));
       expect(second.activity, same(secondOrder));
       expect(_snapshot(), before);
@@ -486,7 +496,7 @@ void main() {
       second.activity = Activity(ActivityType.sleeperLiberal);
       final expected = _snapshot();
       second.activity = secondOrder;
-      await _keyboard(tester, LogicalKeyboardKey.enter);
+      await _tap(tester, 'network-confirm-order');
       expect(first.activity, same(firstOrder));
       expect(second.activity.type, ActivityType.sleeperLiberal);
       expect(_snapshot(), expected);
@@ -499,75 +509,167 @@ void main() {
     },
   );
 
+  testWidgets(
+    'Network tab yields to original sleeper keys, defaults, recall and parent Back',
+    (tester) async {
+      final first = _sleeper('Native First', order: ActivityType.sleeperSpy);
+      final second = _sleeper(
+        'Native Second',
+        order: ActivityType.sleeperRecruit,
+      );
+      final secondOrder = second.activity;
+      final harness = await mount(tester);
+      final original = _snapshot();
+      final layingLow = _snapshotWithOrder(first, ActivityType.none);
+      final embezzling = _snapshotWithOrder(
+        first,
+        ActivityType.sleeperEmbezzle,
+      );
+      final recalling = _snapshotWithOrder(first, ActivityType.sleeperJoinLcs);
+      final date = game.date;
+      reseedRNG(seed: 60204);
+      final rolls = List.generate(12, (_) => lcsRandom(100000));
+      reseedRNG(seed: 60204);
+
+      // The Network tab is a pointer view at HQ. B still opens the original
+      // sleeper roster, and A selects that roster's first authored actor.
+      await _keyboard(tester, LogicalKeyboardKey.keyB, character: 'b');
+      expect(activityOrderFrame(engine.console), isNull);
+      expect(engine.console.navigation?.section, 'assignments');
+      expect(engine.console.screen, isNot('headquarters'));
+      expect(_snapshot(), original);
+      await _keyboard(tester, LogicalKeyboardKey.keyA, character: 'a');
+      expect(activityOrderFrame(engine.console)?.actorId, first.id);
+      await _keyboard(tester, LogicalKeyboardKey.keyB, character: 'b');
+      expect(first.activity.type, ActivityType.none);
+      expect(_snapshot(), layingLow);
+      await _keyboard(tester, LogicalKeyboardKey.digit2, character: '2');
+      expect(first.activity.type, ActivityType.sleeperEmbezzle);
+      expect(_snapshot(), embezzling);
+      expect(_key('network-confirm-order'), findsNothing);
+      await _keyboard(tester, LogicalKeyboardKey.escape);
+      expect(activityOrderFrame(engine.console), isNull);
+      expect(engine.console.navigation?.section, 'assignments');
+      expect(engine.console.screen, isNot('headquarters'));
+      await _keyboard(tester, LogicalKeyboardKey.enter);
+      expect(engine.console.screen, 'headquarters');
+      expect(_snapshot(), embezzling);
+
+      // A pointer draft retains its explicit button workflow. Raw Enter closes
+      // the source actor reader and keeps the standing order already in force.
+      await _tap(tester, 'journal-section:8');
+      await _tap(tester, 'network-advocacy');
+      await _tap(tester, 'network-task:sleeperLiberal');
+      expect(_key('network-confirm-order'), findsOneWidget);
+      expect(_snapshot(), embezzling);
+      await _keyboard(tester, LogicalKeyboardKey.enter);
+      expect(activityOrderFrame(engine.console), isNull);
+      expect(engine.console.navigation?.section, 'assignments');
+      expect(engine.console.screen, isNot('headquarters'));
+      expect(_snapshot(), embezzling);
+      await _keyboard(tester, LogicalKeyboardKey.keyA, character: 'a');
+      expect(activityOrderFrame(engine.console)?.actorId, first.id);
+      await _keyboard(tester, LogicalKeyboardKey.keyC, character: 'c');
+      expect(first.activity.type, ActivityType.sleeperJoinLcs);
+      expect(_snapshot(), recalling);
+      expect(first.sleeperAgent, isTrue);
+      await _keyboard(tester, LogicalKeyboardKey.enter);
+      expect(activityOrderFrame(engine.console), isNull);
+      expect(engine.console.screen, isNot('headquarters'));
+      await _keyboard(tester, LogicalKeyboardKey.enter);
+      expect(engine.console.screen, 'headquarters');
+      expect(_snapshot(), recalling);
+      expect(second.activity, same(secondOrder));
+      expect(game.date, date);
+      expect(harness.dispatched, isNot(contains(engine.Key.w)));
+      expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   for (final layout in [
     (const Size(1280, 800), 1.0),
     (const Size(800, 600), 1.5),
   ]) {
-    testWidgets('compact Network labels follow current role keys at $layout', (
-      tester,
-    ) async {
-      final person = _sleeper('Keyboard role review');
-      journalPresentation.value = const JournalPreferenceValues(
-        compact: true,
-        showGuidance: false,
-      );
-      journalReadingScale.value = layout.$2;
-      await mount(tester, size: layout.$1);
-      final before = _snapshot();
-      reseedRNG(seed: 9204);
-      final expected = lcsRandom(100000);
-      reseedRNG(seed: 9204);
-      expect(
-        find.text('Choose an agent, then a standing order.'),
-        findsNothing,
-      );
-      expect(
-        find.byKey(const ValueKey('network-current-order')),
-        findsOneWidget,
-      );
-      for (final (key, shortcut) in [
-        ('network-advocacy', 'a'),
-        ('network-espionage', 'b'),
-        ('network-recall', 'c'),
-      ]) {
-        final label = tester.widget<JournalCommandLabel>(
+    testWidgets(
+      'compact Network labels retain source keys and immediate roles at $layout',
+      (tester) async {
+        final person = _sleeper('Keyboard role review');
+        journalPresentation.value = const JournalPreferenceValues(
+          compact: true,
+          showGuidance: false,
+        );
+        journalReadingScale.value = layout.$2;
+        await mount(tester, size: layout.$1);
+        final before = _snapshot();
+        reseedRNG(seed: 9204);
+        final expected = lcsRandom(100000);
+        reseedRNG(seed: 9204);
+        expect(
+          find.text('Choose an agent, then a standing order.'),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const ValueKey('network-current-order')),
+          findsOneWidget,
+        );
+        // Pointer browsing opens the actual selected sleeper reader without
+        // executing the native category default. Its labels now refer to that
+        // exact reader; raw numeric keys must still act immediately.
+        await _tap(tester, 'network-espionage');
+        expect(activityOrderFrame(engine.console)?.actorId, person.id);
+        for (final (key, shortcut) in [
+          ('network-advocacy', 'a'),
+          ('network-espionage', 'b'),
+          ('network-recall', 'c'),
+        ]) {
+          final label = tester.widget<JournalCommandLabel>(
+            find.descendant(
+              of: _key(key),
+              matching: find.byType(JournalCommandLabel),
+            ),
+          );
+          expect(label.shortcut, shortcut);
+        }
+        final source = engine.console.actions.firstWhere(
+          (action) => action.entityId == ActivityType.sleeperEmbezzle.name,
+        );
+        final choice = _key('network-task:sleeperEmbezzle');
+        final choiceLabel = tester.widget<JournalCommandLabel>(
           find.descendant(
-            of: _key(key),
+            of: choice,
             matching: find.byType(JournalCommandLabel),
           ),
         );
-        expect(label.shortcut, shortcut);
-      }
-      await _keyboard(tester, LogicalKeyboardKey.keyB, character: 'b');
-      final source = engine.console.actions.firstWhere(
-        (action) => action.entityId == ActivityType.sleeperEmbezzle.name,
-      );
-      final choice = _key('network-task:sleeperEmbezzle');
-      final choiceLabel = tester.widget<JournalCommandLabel>(
-        find.descendant(of: choice, matching: find.byType(JournalCommandLabel)),
-      );
-      expect(choiceLabel.shortcut, source.key);
-      await _keyboard(tester, LogicalKeyboardKey.digit2, character: '2');
-      for (final (key, shortcut) in [
-        ('network-confirm-order', 'Enter'),
-        ('network-cancel-order', 'Escape'),
-      ]) {
-        final label = tester.widget<JournalCommandLabel>(
-          find.descendant(
-            of: _key(key),
-            matching: find.byType(JournalCommandLabel),
-          ),
+        expect(choiceLabel.shortcut, source.key);
+        await _tap(tester, 'network-task:sleeperEmbezzle');
+        expect(_key('network-confirm-order'), findsOneWidget);
+        expect(_key('network-cancel-order'), findsOneWidget);
+        expect(find.text('Prepared change · not confirmed'), findsOneWidget);
+        expect(person.activity.type, ActivityType.none);
+        await _tap(tester, 'network-cancel-order');
+        expect(_key('network-confirm-order'), findsNothing);
+        expect(_snapshot(), before);
+        final committed = _snapshotWithOrder(
+          person,
+          ActivityType.sleeperEmbezzle,
         );
-        expect(label.shortcut, shortcut);
-      }
-      expect(find.text('Prepared change · not confirmed'), findsOneWidget);
-      expect(person.activity.type, ActivityType.none);
-      await _keyboard(tester, LogicalKeyboardKey.escape);
-      expect(_key('network-confirm-order'), findsNothing);
-      expect(_snapshot(), before);
-      expect(lcsRandom(100000), expected);
-      expect(tester.takeException(), isNull);
-    });
+        await _keyboard(tester, LogicalKeyboardKey.digit2, character: '2');
+        expect(person.activity.type, ActivityType.sleeperEmbezzle);
+        expect(_snapshot(), committed);
+        expect(activityOrderFrame(engine.console)?.actorId, person.id);
+        expect(_key('network-confirm-order'), findsNothing);
+        await _keyboard(tester, LogicalKeyboardKey.escape);
+        expect(activityOrderFrame(engine.console), isNull);
+        expect(engine.console.navigation?.section, 'assignments');
+        expect(engine.console.screen, isNot('headquarters'));
+        await _keyboard(tester, LogicalKeyboardKey.enter);
+        expect(engine.console.screen, 'headquarters');
+        expect(_snapshot(), committed);
+        expect(lcsRandom(100000), expected);
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 
   testWidgets('stale source revision cannot confirm a captured draft', (
@@ -578,11 +680,15 @@ void main() {
     await mount(tester);
     await _tap(tester, 'network-espionage');
     await _tap(tester, 'network-task:sleeperEmbezzle');
+    final retained = tester
+        .widget<FilledButton>(_key('network-confirm-order'))
+        .onPressed!;
     engine.console.revision.value++;
     await _settle(tester);
     final before = _snapshot();
     expect(_key('network-confirm-order'), findsNothing);
-    await _keyboard(tester, LogicalKeyboardKey.enter);
+    retained();
+    await _settle(tester);
     expect(person.activity, same(original));
     expect(_snapshot(), before);
     expect(tester.takeException(), isNull);
@@ -610,24 +716,28 @@ void main() {
     expect(find.byType(AlertDialog), findsNothing);
     expect(_key('network-confirm-order'), findsOneWidget);
     expect(_snapshot(), before);
-    await _keyboard(tester, LogicalKeyboardKey.escape);
+    await _tap(tester, 'network-cancel-order');
     expect(_key('network-confirm-order'), findsNothing);
     expect(_snapshot(), before);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets(
-    'eligibility change prevents Enter from committing an open draft',
+    'eligibility change prevents a retained pointer confirmation from committing a draft',
     (tester) async {
       final person = _sleeper('Interrupted Agent');
       final original = person.activity;
       await mount(tester);
       await _tap(tester, 'network-espionage');
       await _tap(tester, 'network-task:sleeperEmbezzle');
+      final retained = tester
+          .widget<FilledButton>(_key('network-confirm-order'))
+          .onPressed!;
       person.hidingDaysLeft = 3;
       final before = _snapshot();
       final revision = engine.console.revision.value;
-      await _keyboard(tester, LogicalKeyboardKey.enter);
+      retained();
+      await _settle(tester);
       expect(person.activity, same(original));
       expect(engine.console.revision.value, revision);
       expect(_snapshot(), before);
@@ -644,7 +754,7 @@ void main() {
     final person = _sleeper('Returning Agent', order: ActivityType.sleeperSpy);
     final original = person.activity;
     await mount(tester);
-    await _keyboard(tester, LogicalKeyboardKey.keyC, character: 'c');
+    await _tap(tester, 'network-recall');
     expect(find.text('Confirm recall'), findsOneWidget);
     expect(find.textContaining('Next eligible day'), findsOneWidget);
     expect(person.activity, same(original));
@@ -652,7 +762,7 @@ void main() {
     final expected = _snapshot();
     person.activity = original;
     final date = game.date;
-    await _keyboard(tester, LogicalKeyboardKey.enter);
+    await _tap(tester, 'network-confirm-order');
     expect(person.sleeperAgent, isTrue);
     expect(person.activity.type, ActivityType.sleeperJoinLcs);
     expect(game.date, date);
@@ -686,11 +796,14 @@ void main() {
         ]) {
           expect(tester.widget<OutlinedButton>(_key(key)).onPressed, isNull);
         }
-        await _keyboard(tester, LogicalKeyboardKey.keyB, character: 'b');
-        await _keyboard(tester, LogicalKeyboardKey.digit2, character: '2');
-        await _keyboard(tester, LogicalKeyboardKey.enter);
         expect(_key('network-confirm-order'), findsNothing);
       }
+      expect(_snapshot(), before);
+      // Original B has no eligible sleeper roster to open. Presentation
+      // selection cannot make one of these unavailable people keyboard-ready.
+      await _keyboard(tester, LogicalKeyboardKey.keyB, character: 'b');
+      expect(activityOrderFrame(engine.console), isNull);
+      expect(engine.console.screen, 'headquarters');
       expect(_snapshot(), before);
       expect(tester.takeException(), isNull);
     },

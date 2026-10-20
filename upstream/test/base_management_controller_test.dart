@@ -83,6 +83,30 @@ class _BaseHarness {
   }
 }
 
+Finder _purchaseButton(String sourceKey) => find
+    .ancestor(
+      of: find.byWidgetPredicate(
+        (widget) =>
+            widget is JournalCommandLabel && widget.shortcut == sourceKey,
+      ),
+      matching: find.byType(OutlinedButton),
+    )
+    .first;
+
+Future<void> _preparePurchase(WidgetTester tester, String sourceKey) async {
+  final button = _purchaseButton(sourceKey);
+  await tester.ensureVisible(button);
+  await tester.tap(button);
+  await tester.pump();
+}
+
+Future<void> _cancelPurchase(WidgetTester tester) async {
+  final cancel = find.widgetWithText(TextButton, 'Cancel');
+  await tester.ensureVisible(cancel);
+  await tester.tap(cancel);
+  await tester.pump();
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late String save;
@@ -474,10 +498,10 @@ void main() {
     },
   );
 
-  testWidgets('purchase keyboard stages, cancels and confirms through source', (
+  testWidgets('purchase pointer stages, cancels and confirms through source', (
     tester,
   ) async {
-    final base = newBase('Keyboard warehouse');
+    final base = newBase('Pointer warehouse');
     game.ledger.forceSetFunds(5000);
     await tester.runAsync(() async {
       final routes = start();
@@ -500,22 +524,22 @@ void main() {
     );
     final rations = base.compound.rations;
     final funds = game.ledger.funds;
-    expect(key.currentState!.handleGameShortcut('r'), isTrue);
-    await tester.pump();
+    await _preparePurchase(tester, 'r');
     expect(find.text('Confirm purchase'), findsOneWidget);
     expect(key.currentState!.hasPreparedPurchase, isTrue);
     expect(drafts, [true]);
     expect(base.compound.rations, rations);
     expect(game.ledger.funds, funds);
-    expect(key.currentState!.handleGameShortcut('Escape'), isTrue);
-    await tester.pump();
+    await _cancelPurchase(tester);
     expect(find.text('Confirm purchase'), findsNothing);
     expect(key.currentState!.hasPreparedPurchase, isFalse);
     expect(drafts, [true, false]);
     expect(base.compound.rations, rations);
-    key.currentState!.handleGameShortcut('r');
+    await _preparePurchase(tester, 'r');
+    final confirm = find.widgetWithText(FilledButton, 'Confirm purchase');
+    await tester.ensureVisible(confirm);
     await tester.runAsync(() async {
-      key.currentState!.handleGameShortcut('Enter');
+      await tester.tap(confirm);
       for (var step = 0; step < 20 && organisation!.busy; step++) {
         await Future<void>.delayed(const Duration(milliseconds: 3));
       }
@@ -525,7 +549,7 @@ void main() {
     expect(game.ledger.funds, funds - 150);
     expect(key.currentState!.hasPreparedPurchase, isFalse);
     expect(drafts, [true, false, true, false]);
-    key.currentState!.handleGameShortcut('r');
+    await _preparePurchase(tester, 'r');
     expect(key.currentState!.hasPreparedPurchase, isTrue);
     engine.console.revision.value++;
     await tester.pump();
@@ -547,9 +571,9 @@ void main() {
     (const Size(800, 600), 1.5),
   ]) {
     testWidgets(
-      'compact Bases exposes staged source keys without spending at $layout',
+      'compact Bases exposes source labels and pointer drafts without spending at $layout',
       (tester) async {
-        final base = newBase('Compact keyboard warehouse');
+        final base = newBase('Compact pointer warehouse');
         game.ledger.forceSetFunds(5000);
         await tester.runAsync(() async {
           final routes = start();
@@ -595,37 +619,38 @@ void main() {
           choices.where((label) => label.shortcut == source.key),
           isNotEmpty,
         );
+        final done = find.widgetWithText(TextButton, 'Done purchasing');
+        expect(done, findsOneWidget);
         expect(
-          choices
-              .singleWhere((label) => label.label == 'Done purchasing')
-              .shortcut,
-          'Escape',
+          find.descendant(
+            of: done,
+            matching: find.byType(JournalShortcutBadge),
+          ),
+          findsNothing,
         );
         reseedRNG(seed: 9205);
         final expected = lcsRandom(100000);
         reseedRNG(seed: 9205);
-        key.currentState!.handleGameShortcut(source.key);
+        await _preparePurchase(tester, source.key);
         await tester.pumpAndSettle();
-        final pending = tester.widgetList<JournalCommandLabel>(
-          find.byType(JournalCommandLabel),
-        );
-        expect(
-          pending
-              .singleWhere((label) => label.label == 'Confirm purchase')
-              .shortcut,
-          'Enter',
-        );
-        expect(
-          pending.singleWhere((label) => label.label == 'Cancel').shortcut,
-          'Escape',
-        );
-        // Escape cancels a draft; it does not close the source until no draft remains.
-        expect(
-          pending.where((label) => label.label == 'Done purchasing'),
-          isEmpty,
-        );
+        for (final localControl in [
+          find.widgetWithText(FilledButton, 'Confirm purchase'),
+          find.widgetWithText(TextButton, 'Cancel'),
+          done,
+        ]) {
+          expect(localControl, findsOneWidget);
+          expect(
+            find.descendant(
+              of: localControl,
+              matching: find.byType(JournalShortcutBadge),
+            ),
+            findsNothing,
+            reason: 'Local pointer controls must not claim source reader keys.',
+          );
+        }
+        // The pointer Cancel control only clears its local purchase draft.
         expect(jsonEncode(game.gameState), before);
-        key.currentState!.handleGameShortcut('Escape');
+        await _cancelPurchase(tester);
         await tester.pumpAndSettle();
         expect(find.text('Confirm purchase'), findsNothing);
         expect(engine.console.actions, contains(source));
@@ -673,10 +698,9 @@ void main() {
           )
           .onPressed!;
 
-      key.currentState!.handleGameShortcut('r');
-      await tester.pump();
+      await _preparePurchase(tester, 'r');
       final canceledConfirmation = currentConfirmation();
-      key.currentState!.handleGameShortcut('Escape');
+      await _cancelPurchase(tester);
       canceledConfirmation();
       await tester.pump();
       expect(base.compound.rations, rations);
@@ -685,18 +709,18 @@ void main() {
 
       // Re-preparing the same source action is a new draft even though the
       // original reader, action identity and revision have not changed.
-      key.currentState!.handleGameShortcut('r');
+      await _preparePurchase(tester, 'r');
       canceledConfirmation();
       await tester.pump();
       expect(key.currentState!.hasPreparedPurchase, isTrue);
       expect(base.compound.rations, rations);
       expect(game.ledger.funds, funds);
       final replacedConfirmation = currentConfirmation();
-      key.currentState!.handleGameShortcut('Escape');
+      await _cancelPurchase(tester);
       final upgrade = engine.console.actions.firstWhere(
         (action) => action.entityType == 'compound-upgrade' && action.enabled,
       );
-      key.currentState!.handleGameShortcut(upgrade.key);
+      await _preparePurchase(tester, upgrade.key);
       replacedConfirmation();
       await tester.pump();
       expect(key.currentState!.hasPreparedPurchase, isTrue);
@@ -729,7 +753,6 @@ void main() {
       base.loot.add(Item('WEAPON_22_REVOLVER'));
       baseModeOptionsDisplay(game.activeSquad?.site);
       organisation = OrganisationController(console: engine.console);
-      final key = GlobalKey<JournalBasesViewState>();
       final before = jsonEncode(game.gameState.toJson());
       tester.view.physicalSize = const Size(640, 1050);
       tester.view.devicePixelRatio = 1;
@@ -739,7 +762,6 @@ void main() {
         MaterialApp(
           theme: buildJournalTheme(),
           home: JournalBasesView(
-            key: key,
             console: engine.console,
             controller: organisation!,
           ),
@@ -747,16 +769,17 @@ void main() {
       );
       expect(find.text('Bases & Stores'), findsOneWidget);
       expect(find.text('Assign home bases'), findsOneWidget);
-      for (final hiddenHeadquartersKey in ['w', 'x', 'i', 'z', '?']) {
-        expect(
-          key.currentState!.handleGameShortcut(hiddenHeadquartersKey),
-          isTrue,
-        );
-        expect(engine.console.lastKey, isNull);
-      }
-      engine.console.eventMessage = 'Required acknowledgement';
-      expect(key.currentState!.handleGameShortcut('Enter'), isFalse);
-      engine.console.eventMessage = null;
+      final row = find.text(base.getName(includeCity: true));
+      await tester.ensureVisible(row);
+      await tester.pumpAndSettle();
+      expect(row.hitTestable(), findsOneWidget);
+      await tester.tap(row);
+      await tester.pump();
+      final stored = find.text(base.loot.single.equipTitle());
+      await tester.ensureVisible(stored);
+      await tester.pumpAndSettle();
+      expect(stored.hitTestable(), findsOneWidget);
+      expect(engine.console.lastKey, isNull);
       expect(tester.takeException(), isNull);
       expect(jsonEncode(game.gameState.toJson()), before);
       await tester.pumpWidget(const SizedBox.shrink());

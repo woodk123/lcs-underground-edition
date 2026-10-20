@@ -8,6 +8,7 @@ import 'package:lcs_new_age/modern/age_help.dart';
 import 'package:lcs_new_age/modern/attribute_help.dart';
 import 'package:lcs_new_age/modern/creation_bonus_help.dart';
 import 'package:lcs_new_age/modern/crew_portrait.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
 
@@ -327,44 +328,54 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
 
   Widget _field(CreationField field, CreationContext creation, int revision) {
     final activate = _dispatch(field.key, revision, creation);
+    final action = _action(field.key);
     final generatedName =
         creation.stage == CreationStage.identity &&
         const {'a', 'b'}.contains(normalizeConsoleKey(field.key));
-    return OutlinedButton(
-      key: ValueKey('creation-field:${field.key}'),
-      onPressed: activate,
-      style: OutlinedButton.styleFrom(
-        backgroundColor: JournalPalette.card,
-        padding: const EdgeInsets.all(12),
-        alignment: Alignment.centerLeft,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(field.label, style: JournalPalette.small),
-                const SizedBox(height: 4),
-                Text(
-                  field.value,
-                  style: JournalPalette.heading.copyWith(fontSize: 16),
-                ),
-                if (field.description.isNotEmpty) ...[
-                  const SizedBox(height: 5),
-                  Text(field.description, style: JournalPalette.small),
+    return Semantics(
+      hint: action == null
+          ? null
+          : 'Keyboard shortcut: ${journalShortcutSpokenLabel(action.key)}',
+      child: OutlinedButton(
+        key: ValueKey('creation-field:${field.key}'),
+        onPressed: activate,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: JournalPalette.card,
+          padding: const EdgeInsets.all(12),
+          alignment: Alignment.centerLeft,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(field.label, style: JournalPalette.small),
+                  const SizedBox(height: 4),
+                  Text(
+                    field.value,
+                    style: JournalPalette.heading.copyWith(fontSize: 16),
+                  ),
+                  if (field.description.isNotEmpty) ...[
+                    const SizedBox(height: 5),
+                    Text(field.description, style: JournalPalette.small),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Icon(
-            generatedName ? Icons.refresh : Icons.sync,
-            size: 19,
-            color: JournalPalette.brassDark,
-          ),
-        ],
+            if (action != null) ...[
+              const SizedBox(width: 8),
+              JournalShortcutBadge(shortcut: action.key),
+            ],
+            const SizedBox(width: 8),
+            Icon(
+              generatedName ? Icons.refresh : Icons.sync,
+              size: 19,
+              color: JournalPalette.brassDark,
+            ),
+          ],
+        ),
       ),
     );
   }

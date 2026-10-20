@@ -991,14 +991,14 @@ void main() {
   );
 
   testWidgets(
-    'raw journal category and task shortcuts remain previews until Enter',
+    'raw journal category and task keys retain immediate source assignments and Back',
     (tester) async {
       await mount(tester);
       final person = game.squad.first;
-      final order = person.activity;
+      person.activity = Activity.none();
       await _tap(tester, 'journal-orders');
       await _focusGame(tester);
-      final before = _snapshot();
+      final before = jsonDecode(_snapshot()) as Map<String, dynamic>;
       final date = game.date;
       final funds = game.ledger.funds;
       reseedRNG(seed: 81230);
@@ -1007,28 +1007,26 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.keyB, character: 'b');
       await _settle(tester);
       expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
-      expect(person.activity, same(order));
-      expect(_snapshot(), before);
+      expect(person.activity.type, isNot(ActivityType.none));
+      expect(_key('journal-confirm-order'), findsNothing);
       final revision = engine.console.revision.value;
       await tester.sendKeyEvent(LogicalKeyboardKey.digit1, character: '1');
       await _settle(tester);
-      expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
-      expect(person.activity, same(order));
-      expect(_snapshot(), before);
-      expect(engine.console.revision.value, revision);
+      expect(person.activity.type, ActivityType.donations);
+      expect(_key('journal-confirm-order'), findsNothing);
+      expect(engine.console.revision.value, greaterThan(revision));
+      final people = ((before['lcs'] as Map<String, dynamic>)['pool'] as List)
+          .cast<Map<String, dynamic>>();
+      people.singleWhere((entry) => entry['id'] == person.id)['activity'] = {
+        'type': 'donations',
+      };
+      expect(jsonDecode(_snapshot()), before);
+      final assigned = _snapshot();
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await _settle(tester);
-      expect(_key('journal-confirm-order'), findsNothing);
-      expect(person.activity, same(order));
-      expect(_snapshot(), before);
-      expect(engine.console.revision.value, revision);
-      await tester.sendKeyEvent(LogicalKeyboardKey.digit1, character: '1');
-      await _settle(tester);
-      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      await _settle(tester);
-      expect(engine.console.screen, 'activity-orders');
-      expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
-      expect(person.activity.type, ActivityType.donations);
+      expect(activityOrderFrame(engine.console), isNull);
+      expect(engine.console.navigation?.section, 'assignments');
+      expect(_snapshot(), assigned);
       expect(
         game.squad
             .skip(1)
@@ -1927,7 +1925,7 @@ void main() {
   );
 
   testWidgets(
-    'manual ledger Back restores the organisation without an extra chapter click',
+    'manual ledger Back returns to its original asset-review parent',
     (tester) async {
       await mount(tester);
       final before = _snapshot();
@@ -1935,10 +1933,9 @@ void main() {
       expect(ledgerReportFrame(engine.console)?.management, isTrue);
       await _tap(tester, 'journal-ledger-close');
       expect(ledgerReportFrame(engine.console), isNull);
-      expect(
-        _key('journal-member:${game.squad.first.id}').hitTestable(),
-        findsOneWidget,
-      );
+      expect(engine.console.screen, 'organisation');
+      expect(engine.console.navigation?.section, 'people');
+      expect(engine.console.actions.any((action) => action.key == 'v'), isTrue);
       expect(_snapshot(), before);
       expect(tester.takeException(), isNull);
     },
@@ -2198,6 +2195,9 @@ void main() {
         expect(engine.console.screen, 'personnel-directory');
         await tester.sendKeyEvent(LogicalKeyboardKey.escape);
         await _settle(tester);
+        expect(engine.console.screen, 'organisation');
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await _settle(tester);
         expect(engine.console.screen, 'headquarters');
         expect(_snapshot(), before);
         expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
@@ -2355,7 +2355,7 @@ void main() {
       tester.widget<TextField>(nameField).controller!.text,
       'Edited but unconfirmed',
     );
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.tap(find.widgetWithText(TextButton, 'Cancel edits'));
     await _settle(tester);
     expect(_snapshot(), before);
 
@@ -2630,6 +2630,11 @@ void main() {
       );
       engine.console.sendInput('Escape');
       await _settle(tester);
+      expect(engine.console.screen, 'organisation');
+      await _focusGame(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit0, character: '0');
+      await _settle(tester);
+      expect(engine.console.screen, 'personnel-directory');
       await _tap(tester, 'personnel-back-directory');
       expect(_key('personnel-directory'), findsOneWidget);
       expect(_snapshot(), before);

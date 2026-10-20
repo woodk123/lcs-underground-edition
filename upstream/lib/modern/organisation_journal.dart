@@ -103,12 +103,14 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   JournalPeopleScope _peopleScope = JournalPeopleScope.people;
   bool _managementDialog = false;
   final ScrollController _narrowJournalScroll = ScrollController();
+  final ScrollController _sectionScroll = ScrollController();
   final PersonnelDirectoryController _personnel =
       PersonnelDirectoryController();
 
   @override
   void dispose() {
     _narrowJournalScroll.dispose();
+    _sectionScroll.dispose();
     _personnel.dispose();
     super.dispose();
   }
@@ -117,6 +119,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   bool _ordersMap = false;
   bool _showReports = false;
   bool _personnelTools = false;
+  bool _sourceKeyboardInput = false;
   Skill _poolSort = Skill.firearms;
   int _group = 0;
   int? _poolPerson;
@@ -258,119 +261,63 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             .firstOrNull
       : null;
 
-  /// Journal shortcuts use the same prepare/confirm path as pointer controls.
-  /// The original immediate keyboard handlers remain available in Classic view.
+  /// Presentation dialogs keep their own input. Otherwise the original reader
+  /// owns every game key, including category defaults, immediate choices and
+  /// Back aliases. Pointer previews must never add keyboard confirmation steps.
   bool handleGameShortcut(String key) {
-    if (_managementDialog) {
-      if (normalizeConsoleKey(key) == 'Escape') {
-        unawaited(Navigator.of(context, rootNavigator: true).maybePop());
-      }
-      return true;
+    if (!_managementDialog) return false;
+    if (normalizeConsoleKey(key) == 'Escape') {
+      unawaited(Navigator.of(context, rootNavigator: true).maybePop());
     }
-    if (_showBases && _basesKey.currentState != null) {
-      if (console.screen == 'headquarters' &&
-          normalizeConsoleKey(key) == 'Escape') {
-        widget.onSection?.call(0);
-        return true;
-      }
-      return _basesKey.currentState!.handleGameShortcut(key);
-    }
-    if (_showPeople) {
-      if (normalizeConsoleKey(key) == 'Escape') widget.onSection?.call(0);
-      return true;
-    }
-    if (widget.section == networkJournalSection &&
-        _networkKey.currentState != null) {
-      return _networkKey.currentState!.handleGameShortcut(key);
-    }
-    if (controller.busy || _visitRouting) return false;
-    if (console.screen == 'personnel-directory' &&
-        normalizeConsoleKey(key) == 'Escape') {
-      unawaited(controller.returnToHeadquarters());
-      return true;
-    }
-    if (!planning &&
-        controller.canNavigate &&
-        (console.screen == 'headquarters' ||
-            widget.section == 6 && widget.detail == null) &&
-        _selectedDestination != null &&
-        normalizeConsoleKey(key) == 'Enter') {
-      _queueSelectedVisit?.call();
-      return true;
-    }
-    if (planning) {
-      final normalized = normalizeConsoleKey(key);
-      if (const {'Escape', 'x', 'Space'}.contains(normalized)) {
-        unawaited(_cancelVisit());
-        return true;
-      }
-      if (normalized == 'Enter') {
-        final action = _visitAction;
-        if (action?.enabled == true) unawaited(_confirmVisit(action!));
-        return true;
-      }
-      // Destination keys must prepare a card, never commit behind the journal.
-      final action = console.actions
-          .where((a) => a.key == normalized)
-          .firstOrNull;
-      if (action?.entityType == 'site') {
-        setState(() {
-          _targetId = action!.entityId;
-          _targetSquadId = squad?.id;
-        });
-        return true;
-      }
-    }
-    if (!activityFrame) return false;
-    final normalized = normalizeConsoleKey(key);
-    if (normalized == 'Escape' && hasPreparedOrder) {
-      setState(() => _pendingOrder = null);
-      return true;
-    }
-    if (normalized == 'Enter' && hasPreparedOrder) {
-      unawaited(_commitPreparedOrder());
-      return true;
-    }
-    final action = console.actions
-        .where((a) => a.key == normalized && a.enabled)
+    return true;
+  }
+
+  /// Drop pointer-only drafts before a source key and expose the current source
+  /// roster rather than a differently sorted/searchable presentation directory.
+  void prepareForSourceInput() {
+    setState(() {
+      _pendingOrder = null;
+      _pendingRevision = null;
+      _targetId = null;
+      _ordersMap = false;
+      _showReports = false;
+      _pool = false;
+      _personnelTools = true;
+      _orders = activityFrame || planning;
+      _sourceKeyboardInput = true;
+      _syncSourceCategory();
+    });
+  }
+
+  void pointerInputStarted() => _sourceKeyboardInput = false;
+
+  void _syncSourceCategory() {
+    final frame = activityOrderFrame(console);
+    if (frame == null) return;
+    _orders = true;
+    final category = console.actions
+        .where(
+          (action) =>
+              action.key == frame.selectedCategoryKey &&
+              const {
+                'activity-category',
+                'sleeper-category',
+                'sleeper-category-selected',
+              }.contains(action.entityType),
+        )
         .firstOrNull;
-    if (action == null) return false;
-    if (const {
-      'activity-category',
-      'sleeper-category',
-      'sleeper-category-selected',
-    }.contains(action.entityType)) {
-      setState(() {
-        _orders = true;
-        _ordersMap = false;
-        _pendingOrder = null;
-        _categoryId = action.entityId;
-        _group =
-            const {
-              'legal',
-              'illegal',
-              'sleeper-espionage',
-            }.contains(action.entityId)
-            ? 0
-            : const {'activism', 'sleeper-advocacy'}.contains(action.entityId)
-            ? 2
-            : 1;
-      });
-      unawaited(
-        controller.browseCategory(action, revision: console.revision.value),
-      );
-      return true;
-    }
-    if (activityTypeForAction(action) != null &&
-        !action.entityType!.endsWith('-confirm')) {
-      setState(() {
-        _pendingOrder = action;
-        _pendingRevision = console.revision.value;
-        _ordersMap = false;
-      });
-      return true;
-    }
-    return false;
+    _categoryId = category?.entityId;
+    _group = category == null
+        ? 3
+        : const {
+            'legal',
+            'illegal',
+            'sleeper-espionage',
+          }.contains(category.entityId)
+        ? 0
+        : const {'activism', 'sleeper-advocacy'}.contains(category.entityId)
+        ? 2
+        : 1;
   }
 
   /// Global journal commands use the same live controls as pointer activation.
@@ -442,6 +389,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       _orders = false;
       _showReports = widget.section == 5;
     }
+    if (_sourceKeyboardInput) _syncSourceCategory();
   }
 
   @override
@@ -767,8 +715,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   double.infinity,
                 );
                 return Scrollbar(
+                  controller: _sectionScroll,
                   child: SingleChildScrollView(
                     key: const ValueKey('journal-section-scroll'),
+                    controller: _sectionScroll,
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
@@ -2498,15 +2448,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                       ),
                     ),
                     icon: const Icon(Icons.check, size: 16),
-                    label: const Wrap(
-                      spacing: 6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        JournalShortcutBadge(shortcut: 'Enter', primary: true),
-                        Text('Confirm order'),
-                      ],
-                    ),
+                    label: const Text('Confirm order'),
                   ),
                 )
               else if (confirmation != null)
@@ -2548,7 +2490,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   tooltip: 'Cancel prepared order',
                   key: const ValueKey('journal-cancel-order'),
                   onPressed: () => setState(() => _pendingOrder = null),
-                  icon: const JournalShortcutBadge(shortcut: 'Escape'),
+                  icon: const Icon(Icons.close, size: 18),
                 )
               else if (activityFrame || planning)
                 IconButton(
@@ -3091,7 +3033,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           const Padding(
             padding: EdgeInsets.only(top: 3, bottom: 6),
             child: Text(
-              'Task key: prepare · Enter: confirm · Esc: cancel',
+              'Original task keys assign immediately · Back keys keep the original menu flow',
               key: ValueKey('journal-orders-keyboard-help'),
               style: JournalPalette.small,
             ),

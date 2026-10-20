@@ -9,6 +9,7 @@ import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/monthly_ledger_history.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
+import 'package:lcs_new_age/utils/interface_options.dart';
 
 /// An account book of the original report's recorded figures and stock values.
 /// It never recalculates income, expenses, sale prices or game balances.
@@ -42,19 +43,28 @@ class JournalLedgerOverviewState extends State<JournalLedgerOverview> {
     final snapshot = _snapshot;
     if (snapshot == null) return false;
     final key = event.logicalKey;
-    if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.enter) {
+    final character = event.character;
+    final code = character != null && character.length == 1
+        ? character.toLowerCase().codeUnitAt(0)
+        : null;
+    if (key == LogicalKeyboardKey.escape ||
+        key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.space ||
+        code != null && isBackKey(code)) {
       setState(() => _previous = false);
-    } else if ({
-      LogicalKeyboardKey.arrowLeft,
-      LogicalKeyboardKey.arrowUp,
-      LogicalKeyboardKey.pageUp,
-    }.contains(key)) {
+    } else if (code != null && isPageUp(code) ||
+        {
+          LogicalKeyboardKey.arrowLeft,
+          LogicalKeyboardKey.arrowUp,
+          LogicalKeyboardKey.pageUp,
+        }.contains(key)) {
       _turnHistoryPage(-1, snapshot);
-    } else if ({
-      LogicalKeyboardKey.arrowRight,
-      LogicalKeyboardKey.arrowDown,
-      LogicalKeyboardKey.pageDown,
-    }.contains(key)) {
+    } else if (code != null && isPageDown(code) ||
+        {
+          LogicalKeyboardKey.arrowRight,
+          LogicalKeyboardKey.arrowDown,
+          LogicalKeyboardKey.pageDown,
+        }.contains(key)) {
       _turnHistoryPage(1, snapshot);
     }
     return true;

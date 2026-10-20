@@ -272,57 +272,6 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
     if (mounted) setState(() => _notice = 'Current role reviewed.');
   }
 
-  /// Prevent the original immediate-assignment keys from bypassing the draft.
-  bool handleGameShortcut(String key) {
-    final normalized = normalizeConsoleKey(key);
-    if (_mechanicsOpen) {
-      if (normalized == 'Escape') {
-        unawaited(Navigator.of(context, rootNavigator: true).maybePop());
-      }
-      return true;
-    }
-    if (widget.inspectedPerson != null) {
-      if (normalized == 'Escape') widget.onCloseInspection();
-      return true;
-    }
-    if (_busy || !controller.canNavigate) return true;
-    if (normalized == 'Escape') {
-      setState(() {
-        _clearDraft();
-        _category = null;
-      });
-      return true;
-    }
-    if (normalized == 'Enter') {
-      if (_validDraft) unawaited(_confirm());
-      return true;
-    }
-    if (normalized == 'a' || normalized == 'b') {
-      unawaited(
-        _browse(normalized == 'a' ? 'sleeper-advocacy' : 'sleeper-espionage'),
-      );
-      return true;
-    }
-    if (normalized == 'c') {
-      unawaited(_recall());
-      return true;
-    }
-    final frame = activityOrderFrame(console);
-    if (frame?.sleeper == true) {
-      final action = console.actions
-          .where(
-            (a) =>
-                a.key == normalized &&
-                a.entityType == 'sleeper-activity' &&
-                a.enabled,
-          )
-          .firstOrNull;
-      if (action != null) _prepare(action);
-      return true;
-    }
-    return false;
-  }
-
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: Listenable.merge([controller, controller.networkReviews]),
@@ -720,10 +669,8 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
                     backgroundColor: JournalPalette.olive,
                   ),
                   icon: const Icon(Icons.check, size: 18),
-                  label: JournalCommandLabel(
-                    shortcut: 'Enter',
-                    primary: true,
-                    label: pending == ActivityType.sleeperJoinLcs
+                  label: Text(
+                    pending == ActivityType.sleeperJoinLcs
                         ? 'Confirm recall'
                         : 'Confirm standing order',
                   ),
@@ -731,10 +678,7 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
                 TextButton(
                   key: const ValueKey('network-cancel-order'),
                   onPressed: _busy ? null : () => setState(_clearDraft),
-                  child: const JournalCommandLabel(
-                    shortcut: 'Escape',
-                    label: 'Cancel prepared change',
-                  ),
+                  child: const Text('Cancel prepared change'),
                 ),
               ] else
                 FilledButton.icon(

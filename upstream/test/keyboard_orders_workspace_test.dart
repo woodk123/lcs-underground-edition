@@ -152,8 +152,9 @@ void main() {
     (const Size(720, 600), 1.5, true),
   ]) {
     testWidgets(
-      'keyboard assignment keeps concise choices and cancellation at ${layout.$1}',
+      'original keyboard assignments and separate pointer drafts stay usable at ${layout.$1}',
       (tester) async {
+        game.squad.first.activity = Activity(ActivityType.none);
         final reader = await mount(
           tester,
           layout.$1,
@@ -167,12 +168,24 @@ void main() {
         reseedRNG(seed: 20261020);
 
         // Same source route as Classic: A opens assignments, A picks actor,
-        // B opens legal fundraising, 1 chooses donations.
+        // B applies the source's legal default, then 1 assigns donations.
+        // The original actor reader stays open until its Back key is pressed.
         await _gameKey(tester, LogicalKeyboardKey.keyA, 'a');
         await _gameKey(tester, LogicalKeyboardKey.keyA, 'a');
         await _gameKey(tester, LogicalKeyboardKey.keyB, 'b');
         expect(activityOrderFrame(engine.console)?.actorId, actor.id);
         expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
+        expect(
+          actor.activity.type,
+          isIn([
+            ActivityType.donations,
+            ActivityType.sellTshirts,
+            ActivityType.sellArt,
+            ActivityType.sellMusic,
+          ]),
+          reason: 'The original category key immediately assigns its default.',
+        );
+        expect(_snapshot(), isNot(before));
         expect(find.byType(OrganisationJournal), findsOneWidget);
         if (layout.$3) {
           final name = _key('journal-member-name:${actor.id}');
@@ -226,18 +239,70 @@ void main() {
 
         final revision = engine.console.revision.value;
         await _gameKey(tester, LogicalKeyboardKey.digit1, '1');
+        expect(_key('journal-confirm-order'), findsNothing);
+        expect(actor.activity.type, ActivityType.donations);
+        expect(engine.console.revision.value, greaterThan(revision));
+        expect(activityOrderFrame(engine.console)?.actorId, actor.id);
+        expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
+        final expected = jsonDecode(before) as Map<String, dynamic>;
+        final people =
+            ((expected['lcs'] as Map<String, dynamic>)['pool'] as List)
+                .cast<Map<String, dynamic>>();
+        people.singleWhere((person) => person['id'] == actor.id)['activity'] = {
+          'type': 'donations',
+        };
+        expect(jsonDecode(_snapshot()), expected);
+        final assigned = _snapshot();
+
+        for (final back in [
+          LogicalKeyboardKey.escape,
+          LogicalKeyboardKey.enter,
+          LogicalKeyboardKey.space,
+        ]) {
+          await _gameKey(
+            tester,
+            back,
+            back == LogicalKeyboardKey.space ? ' ' : null,
+          );
+          expect(activityOrderFrame(engine.console), isNull);
+          expect(engine.console.navigation?.section, 'assignments');
+          expect(_snapshot(), assigned);
+          await _gameKey(tester, LogicalKeyboardKey.keyA, 'a');
+          expect(activityOrderFrame(engine.console)?.actorId, actor.id);
+        }
+
+        // Pointer choices retain the journal's separate preview/confirm flow.
+        await _gameKey(tester, LogicalKeyboardKey.keyB, 'b');
+        await _gameKey(tester, LogicalKeyboardKey.digit1, '1');
+        final pointerChoice = _key('journal-activity:sellArt');
+        await tester.scrollUntilVisible(
+          pointerChoice,
+          80,
+          scrollable: find.descendant(
+            of: find.byKey(const PageStorageKey('journal-tasks:0:legal')),
+            matching: find.byType(Scrollable),
+          ),
+        );
+        await _settle(tester);
+        expect(pointerChoice.hitTestable(), findsOneWidget);
+        final pointerRevision = engine.console.revision.value;
+        await tester.tap(pointerChoice);
+        await _settle(tester);
         expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
         expect(_key('journal-assigned-order'), findsOneWidget);
-        expect(_snapshot(), before);
-        expect(engine.console.revision.value, revision);
-        await _gameKey(tester, LogicalKeyboardKey.escape);
+        expect(_snapshot(), assigned);
+        expect(engine.console.revision.value, pointerRevision);
+        await tester.tap(_key('journal-cancel-order'));
+        await _settle(tester);
         expect(_key('journal-confirm-order'), findsNothing);
-        expect(_snapshot(), before);
+        expect(_snapshot(), assigned);
         expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
-
-        await _gameKey(tester, LogicalKeyboardKey.digit1, '1');
-        await _gameKey(tester, LogicalKeyboardKey.enter);
-        expect(actor.activity.type, ActivityType.donations);
+        await tester.ensureVisible(pointerChoice);
+        await tester.tap(pointerChoice);
+        await _settle(tester);
+        await tester.tap(_key('journal-confirm-order'));
+        await _settle(tester);
+        expect(actor.activity.type, ActivityType.sellArt);
         expect(
           game.squad
               .skip(1)

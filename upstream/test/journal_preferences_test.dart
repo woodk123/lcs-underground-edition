@@ -192,7 +192,7 @@ void main() {
       expect(tester.widget<TextField>(field).controller!.text, 'Avery');
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
-      expect(await pendingName, 'Alice');
+      expect(await pendingName, 'Avery');
       expect(tester.takeException(), isNull);
     },
   );

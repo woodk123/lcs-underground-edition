@@ -183,7 +183,7 @@ try {
   assert.doesNotMatch(await uiText(), /Calculation: Daily income/);
   assert.ok(await page.getByRole('button', { name: 'Confirm order', exact: true }).isEnabled());
   report.checks.push('mechanics-modal-keeps-draft-and-blocks-game-shortcuts');
-  await page.keyboard.press('Escape'); // Cancel the draft, not an engine action.
+  await click(/^Cancel prepared order$/); // Explicit pointer cancellation preserves this source menu.
   await click(/^Reading size/);
   await page.getByRole('menuitem', { name: '150%', exact: true }).click();
   await page.setViewportSize({ width: 800, height: 600 });
@@ -198,7 +198,7 @@ try {
   await capture('06-mechanics-800x600-at150');
   await page.keyboard.press('Escape');
   assert.ok(await page.getByRole('button', { name: 'Confirm order', exact: true }).isEnabled());
-  await page.keyboard.press('Escape');
+  await click(/^Cancel prepared order$/);
   await click(new RegExp(`^Inspect ${escape(actor.name)}(?:$|\\s)`));
   await click(/^Full dossier/);
   dossier = page.getByRole('dialog');

@@ -84,6 +84,8 @@ class _ModernGameShellState extends State<ModernGameShell> {
   bool _mediaProduction = false;
   bool _openingJournalSection = false;
   bool _pendingJournalReturn = false;
+  bool _organisationWasBusy = false;
+  bool _keyboardTraversal = false;
   final _journalKey = GlobalKey<OrganisationJournalState>();
   final _ledgerKey = GlobalKey<JournalLedgerOverviewState>();
   Console get console => engine.console;
@@ -109,12 +111,26 @@ class _ModernGameShellState extends State<ModernGameShell> {
     _journalSession = hq && game.pool.isNotEmpty;
     _lastConsoleScreen = console.screen;
     console.revision.addListener(_refresh);
+    // A source await may already exist before this shell mounts (for example
+    // after restoring a session). Initialise its editor and focus as well.
+    _refresh();
   }
 
   void _organisationChanged() {
     if (!mounted) return;
+    final finishedCommand = _organisationWasBusy && !_organisation.busy;
+    _organisationWasBusy = _organisation.busy;
     _normaliseJournalReturn();
     setState(() {});
+    if (finishedCommand &&
+        !_helpOpen &&
+        (ModalRoute.of(context)?.isCurrent ?? true)) {
+      if (console.textInput) {
+        _restoreTextEntryFocus();
+      } else {
+        _keyboard.requestFocus();
+      }
+    }
   }
 
   void _normaliseJournalReturn() {
@@ -155,10 +171,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
     if (title) _journalSession = false;
     if (console.textInput && !_wasTextInput) {
       _entry.text = console.textInputValue;
-      _entry.selection = TextSelection(
-        baseOffset: 0,
-        extentOffset: _entry.text.length,
-      );
+      _entry.selection = TextSelection.collapsed(offset: _entry.text.length);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && console.textInput && !_helpOpen) {
           _entryFocus.requestFocus();
@@ -259,28 +272,30 @@ class _ModernGameShellState extends State<ModernGameShell> {
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.tab) {
+      _keyboardTraversal = true;
+    }
     // Browser focus can return to the game while a presentation dialog or
     // popup menu is still open. Those keys belong to the overlay route.
     if (ModalRoute.of(context)?.isCurrent == false) {
       return KeyEventResult.ignored;
     }
-    if (_inspectedPersonId != null &&
+    if (!_classic &&
+        _inspectedPersonId != null &&
         !console.textInput &&
         event is KeyDownEvent &&
         event.logicalKey == LogicalKeyboardKey.escape) {
       setState(() => _inspectedPersonId = null);
       return KeyEventResult.handled;
     }
-    if (_inspectedPersonId != null &&
-        (game.mode == GameMode.site ||
-            headquartersFrame(console)?.siege != null)) {
+    if (!_classic && _inspectedPersonId != null && !console.textInput) {
       // Inspection keys must not become field orders or a siege surrender.
       return KeyEventResult.ignored;
     }
     if (console.textInput &&
         event is KeyDownEvent &&
         event.logicalKey == LogicalKeyboardKey.escape) {
-      _send('Escape');
+      unawaited(_submitText(terminalKey: 'Escape'));
       return KeyEventResult.handled;
     }
     if (event is KeyDownEvent &&
@@ -305,7 +320,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
         _sending ||
         _navigating ||
         _organisation.busy ||
-        event is! KeyDownEvent) {
+        event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
     if (!_classic &&
@@ -331,63 +346,54 @@ class _ModernGameShellState extends State<ModernGameShell> {
         return KeyEventResult.handled;
       }
     }
-    if (!_keyboard.hasPrimaryFocus &&
+    if (_keyboardTraversal &&
+        !_keyboard.hasPrimaryFocus &&
         (event.logicalKey == LogicalKeyboardKey.enter ||
             event.logicalKey == LogicalKeyboardKey.space)) {
-      // Let the focused button's ActivateIntent handle Enter / Space.
+      // Deliberate Tab traversal activates controls. A pointer-retained focus
+      // must not replace the original reader's Enter/Space meaning.
       return KeyEventResult.ignored;
     }
-    if (event.logicalKey == LogicalKeyboardKey.tab ||
+    if (const [
+          LogicalKeyboardKey.tab,
+          LogicalKeyboardKey.altLeft,
+          LogicalKeyboardKey.altRight,
+          LogicalKeyboardKey.altGraph,
+          LogicalKeyboardKey.shiftLeft,
+          LogicalKeyboardKey.shiftRight,
+          LogicalKeyboardKey.controlLeft,
+          LogicalKeyboardKey.controlRight,
+          LogicalKeyboardKey.metaLeft,
+          LogicalKeyboardKey.metaRight,
+        ].contains(event.logicalKey) ||
         HardwareKeyboard.instance.isControlPressed ||
         HardwareKeyboard.instance.isMetaPressed ||
-        HardwareKeyboard.instance.isAltPressed ||
-        event.character == null &&
-            ![
-              LogicalKeyboardKey.enter,
-              LogicalKeyboardKey.escape,
-              LogicalKeyboardKey.backspace,
-              LogicalKeyboardKey.arrowUp,
-              LogicalKeyboardKey.arrowDown,
-              LogicalKeyboardKey.arrowLeft,
-              LogicalKeyboardKey.arrowRight,
-              LogicalKeyboardKey.pageUp,
-              LogicalKeyboardKey.pageDown,
-            ].contains(event.logicalKey)) {
+        HardwareKeyboard.instance.isAltPressed) {
       return KeyEventResult.ignored;
     }
-    final journalKey = event.logicalKey == LogicalKeyboardKey.enter
-        ? 'Enter'
-        : event.logicalKey == LogicalKeyboardKey.escape
-        ? 'Escape'
-        : event.character;
+    _keyboardTraversal = false;
+    final journalKey = keyEventToString(event);
+    if (journalKey.isEmpty) return KeyEventResult.ignored;
     if (!_classic &&
         _ledgerKey.currentState?.handleGameShortcut(event) == true) {
       return KeyEventResult.handled;
     }
-    if (journalKey != null &&
-        _journalKey.currentState?.handleGameShortcut(journalKey) == true) {
-      return KeyEventResult.handled;
-    }
-    if (!_classic &&
-        ledgerReportFrame(console)?.management == true &&
-        (journalKey == 'Enter' || journalKey == 'Escape')) {
-      unawaited(_ledgerAction(ledgerReportFrame(console)!.closeAction.key));
-      return KeyEventResult.handled;
-    }
-    if (!_classic &&
-        mediaOverviewFrame(console) != null &&
-        (journalKey == 'Enter' || journalKey == 'Escape')) {
-      unawaited(_mediaAction(journalKey!));
+    if (_journalKey.currentState?.handleGameShortcut(journalKey) == true) {
       return KeyEventResult.handled;
     }
     // The visible form owns edits. Tabbing to another control must not type
     // into the hidden source mvgetstr reader behind that form.
     if (console.textInput) return KeyEventResult.ignored;
+    if (!_classic) {
+      _journalKey.currentState?.prepareForSourceInput();
+      if (_journalSection != 0) setState(() => _journalSection = 0);
+    }
+    if (!_keyboard.hasPrimaryFocus) _keyboard.requestFocus();
     console.keyEvent(event);
     return KeyEventResult.handled;
   }
 
-  Future<void> _submitText() async {
+  Future<void> _submitText({String terminalKey = 'Enter'}) async {
     if (_sending || !console.textInput) return;
     final value = _entry.text;
     setState(() {
@@ -400,7 +406,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
     for (final char in value.characters) {
       if (!await _textKey(char)) break;
     }
-    await _textKey('Enter');
+    await _textKey(terminalKey);
     if (mounted) {
       setState(() {
         _sending = false;
@@ -492,7 +498,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const Text(
-                  '$journalNavigationHelp\n\nKeyboard works in graphical view. At headquarters: F opens squad visits, N selects the next squad, A opens assignments, and W carries out plans or waits a day. In the visit planner, letter keys select districts and buildings; Enter queues the selected building and Esc cancels browsing. You can also browse the city map and choose Queue visit in one action. Visits replace earlier daily assignments; travel runs when you advance the day. In Orders, letter shortcuts browse groups and prepare tasks; Enter confirms a prepared job card and Esc cancels it. Tab moves between controls; Enter or Space activates the focused control. Enter continues messages and arrows move during operations. Required names use the text field. F1 opens this guide. Classic view retains the original menu shortcuts.',
+                  '$journalNavigationHelp\n\nKeyboard works in graphical view. At headquarters: F opens squad visits, N selects the next squad, A opens assignments, and W carries out plans or waits a day. In the visit planner, letter keys open districts and queue buildings immediately; Back returns one original level and cancels a queued departure at the city root. You can also browse the city map and choose Queue visit in one action. Visits replace earlier daily assignments; travel runs when you advance the day. Game keys follow the original menus in every view: category defaults and task or destination selections take effect on the same key as Classic, and Back returns one original menu level. Pointer task cards can still be prepared and confirmed with their visible controls. Tab moves between controls; Enter or Space activates the focused control. Enter continues messages and arrows move during operations. Required names use the text field. F1 opens this guide. Classic view retains the original menu shortcuts.',
                 ),
                 const SizedBox(height: 14),
                 const Text(
@@ -633,113 +639,119 @@ class _ModernGameShellState extends State<ModernGameShell> {
       },
       child: FocusTraversalGroup(
         policy: ReadingOrderTraversalPolicy(),
-        child: Focus(
-          focusNode: _keyboard,
-          autofocus: true,
-          onKeyEvent: _onKey,
-          child: MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: TextScaler.linear(_textScale)),
-            child: console.eventMessage != null && !classic
-                ? journal
-                      ? Theme(
-                          data: buildJournalTheme(),
-                          child: _journalDesktop(),
-                        )
-                      : _journalFallback(compact)
-                : creation != null && !classic
-                ? JournalCreationPage(
-                    console: console,
-                    context: creation,
-                    onAction: _send,
-                    inputBar: _inputBar(creation: true),
-                    onHelp: _help,
-                    readingControl: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const JournalPreferencesButton(),
-                        PopupMenuButton<double>(
-                          tooltip: 'Reading size',
-                          initialValue: _textScale,
-                          onSelected: (value) =>
-                              setState(() => _textScale = value),
-                          icon: const Icon(
-                            Icons.text_fields,
-                            color: JournalPalette.brassDark,
+        child: Listener(
+          onPointerDown: (_) {
+            _keyboardTraversal = false;
+            _journalKey.currentState?.pointerInputStarted();
+          },
+          child: Focus(
+            focusNode: _keyboard,
+            autofocus: true,
+            onKeyEvent: _onKey,
+            child: MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(_textScale)),
+              child: console.eventMessage != null && !classic
+                  ? journal
+                        ? Theme(
+                            data: buildJournalTheme(),
+                            child: _journalDesktop(),
+                          )
+                        : _journalFallback(compact)
+                  : creation != null && !classic
+                  ? JournalCreationPage(
+                      console: console,
+                      context: creation,
+                      onAction: _send,
+                      inputBar: _inputBar(creation: true),
+                      onHelp: _help,
+                      readingControl: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const JournalPreferencesButton(),
+                          PopupMenuButton<double>(
+                            tooltip: 'Reading size',
+                            initialValue: _textScale,
+                            onSelected: (value) =>
+                                setState(() => _textScale = value),
+                            icon: const Icon(
+                              Icons.text_fields,
+                              color: JournalPalette.brassDark,
+                            ),
+                            itemBuilder: (_) => [
+                              for (final scale in [1.0, 1.25, 1.5])
+                                PopupMenuItem(
+                                  value: scale,
+                                  child: Text('${(scale * 100).round()}%'),
+                                ),
+                            ],
                           ),
-                          itemBuilder: (_) => [
-                            for (final scale in [1.0, 1.25, 1.5])
-                              PopupMenuItem(
-                                value: scale,
-                                child: Text('${(scale * 100).round()}%'),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  )
-                : title && !classic
-                ? JournalTitlePage(
-                    console: console,
-                    onAction: _send,
-                    onHelp: _help,
-                  )
-                : journal
-                ? Theme(data: buildJournalTheme(), child: _journalDesktop())
-                : !classic
-                ? _journalFallback(compact)
-                : Column(
-                    children: [
-                      _topbar(compact),
-                      if (!title && width < 900) _sectionStrip(),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            if (!title && width >= 900) _sidebar(),
-                            Expanded(
-                              child: Stack(
-                                children: [
-                                  Positioned.fill(
-                                    child: title && !_classic
-                                        ? _titlePage(compact)
-                                        : hq && !classic
-                                        ? _withCrewInspector(
-                                            _headquarters(compact),
-                                          )
-                                        : _withCrewInspector(
-                                            _workspace(classic, compact),
-                                          ),
-                                  ),
-                                  Positioned.fill(
-                                    child: ExcludeFocus(
-                                      excluding: !classic,
-                                      child: Offstage(
-                                        offstage: !classic,
-                                        child: Padding(
-                                          padding: EdgeInsets.fromLTRB(
-                                            20,
-                                            100,
-                                            compact ? 20 : 340,
-                                            compact ? 300 : 90,
-                                          ),
-                                          child: ConsoleWidget(
-                                            console,
-                                            key: ConsoleWidget.globalKey,
+                        ],
+                      ),
+                    )
+                  : title && !classic
+                  ? JournalTitlePage(
+                      console: console,
+                      onAction: _send,
+                      onHelp: _help,
+                    )
+                  : journal
+                  ? Theme(data: buildJournalTheme(), child: _journalDesktop())
+                  : !classic
+                  ? _journalFallback(compact)
+                  : Column(
+                      children: [
+                        _topbar(compact),
+                        if (!title && width < 900) _sectionStrip(),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              if (!title && width >= 900) _sidebar(),
+                              Expanded(
+                                child: Stack(
+                                  children: [
+                                    Positioned.fill(
+                                      child: title && !_classic
+                                          ? _titlePage(compact)
+                                          : hq && !classic
+                                          ? _withCrewInspector(
+                                              _headquarters(compact),
+                                            )
+                                          : _withCrewInspector(
+                                              _workspace(classic, compact),
+                                            ),
+                                    ),
+                                    Positioned.fill(
+                                      child: ExcludeFocus(
+                                        excluding: !classic,
+                                        child: Offstage(
+                                          offstage: !classic,
+                                          child: Padding(
+                                            padding: EdgeInsets.fromLTRB(
+                                              20,
+                                              100,
+                                              compact ? 20 : 340,
+                                              compact ? 300 : 90,
+                                            ),
+                                            child: ConsoleWidget(
+                                              console,
+                                              key: ConsoleWidget.globalKey,
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      _statusbar(),
-                    ],
-                  ),
+                        _statusbar(),
+                      ],
+                    ),
+            ),
           ),
         ),
       ),
@@ -1198,6 +1210,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
       if (mounted) {
         _normaliseJournalReturn();
         setState(() {});
+        if (!console.textInput) _keyboard.requestFocus();
       }
     }
   }
@@ -1218,8 +1231,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
         frame.closeAction,
         revision: console.revision.value,
       )) {
-        await _organisation.returnToHeadquarters();
-        if (mounted && hq) setState(() => _journalSection = 0);
+        if (mounted) setState(() => _journalSection = 0);
       }
     } else {
       _send(key);
@@ -1297,7 +1309,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
             BaseManagementController.ownsScreen(console) ||
             _organisation.busy)) {
       detail = null;
-    } else if (!primary) {
+    } else if (!primary || console.screen == 'organisation') {
       detail = _workspace(false, true, embeddedJournal: true);
     } else if (_journalSection == 2 &&
         console.screen == 'organisation' &&
@@ -1333,6 +1345,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
           ? 4
           : _journalSection,
       fullSpreadDetail:
+          console.screen == 'organisation' ||
           console.eventMessage != null ||
           recoveryContext(console) != null ||
           console.screen == 'squad_choice' ||
@@ -1956,6 +1969,12 @@ class _ModernGameShellState extends State<ModernGameShell> {
                     person: profile.person,
                     embedded: true,
                     page: profile.page,
+                    pageShortcuts: [
+                      for (final action in console.actions)
+                        if (action.enabled &&
+                            {'Up', 'Down'}.contains(action.key))
+                          action.key,
+                    ],
                     onPage: (next) {
                       final delta = (next - profile.page) % 3;
                       if (delta != 0) _send(delta == 1 ? 'Down' : 'Up');
@@ -2636,6 +2655,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
       key: creation ? const ValueKey('creation-public-name') : null,
       focusNode: _entryFocus,
       controller: _entry,
+      selectAllOnFocus: false,
       onSubmitted: (_) => unawaited(_submitText()),
       decoration: InputDecoration(
         isDense: true,
@@ -2657,10 +2677,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
     );
     final cancel = TextButton(
       onPressed: _sending ? null : () => _send('Escape'),
-      child: JournalCommandLabel(
-        shortcut: 'Escape',
-        label: creation ? 'Use original name' : 'Cancel',
-      ),
+      child: Text(creation ? 'Use original name' : 'Cancel edits'),
     );
     if (creation) {
       return Column(
