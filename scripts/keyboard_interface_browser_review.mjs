@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript, waitForSemantics, waitForUiSettled } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -40,21 +40,16 @@ async function runScenario({ name, viewport, compact, classic }) {
     ...[...host.querySelectorAll('[aria-label]')].map(node => node.getAttribute('aria-label')),
   ].filter(Boolean).join('\n'));
   async function wait(pattern) {
-    const deadline = Date.now() + 20000;
-    while (Date.now() < deadline) {
-      if (await page.locator('flt-semantics-host').count() && pattern.test(await text())) return;
-      await page.waitForTimeout(100);
-    }
-    throw new Error(`Missing ${pattern}: ${await text()}`);
+    await waitForSemantics(page, pattern);
   }
   async function click(pattern, locator = page) {
     await locator.getByRole('button', { name: pattern }).first().click();
     await page.mouse.move(1, 1);
-    await page.waitForTimeout(200);
+    await waitForUiSettled(page);
   }
   async function key(key) {
     await page.keyboard.press(key);
-    await page.waitForTimeout(220);
+    await waitForUiSettled(page);
   }
   async function capture(label) {
     const path = `${name}-${label}.png`;
@@ -79,7 +74,7 @@ async function runScenario({ name, viewport, compact, classic }) {
     return data;
   }
   try {
-    await page.goto(url, { waitUntil: 'networkidle' });
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
     await wait(/Start a New Game/);
     const choosing = page.waitForEvent('filechooser');
     await click(/^Import a Save/);
@@ -189,7 +184,7 @@ async function runScenario({ name, viewport, compact, classic }) {
       report.checks.push(`${name}: pointer draft cancellation and day-advance guard preserve the complete campaign`);
     }
     if (compact) {
-      await page.reload({ waitUntil: 'networkidle' });
+      await page.reload({ waitUntil: 'domcontentloaded' });
       await wait(/Start a New Game/);
       await click(/^Interface preferences/);
       assert.equal(await page.getByRole('checkbox', { name: 'Compact', exact: true }).getAttribute('aria-checked'), 'true');

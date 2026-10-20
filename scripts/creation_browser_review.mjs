@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript, waitForSemantics, waitForUiSettled } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -33,12 +33,7 @@ async function text() {
   ].filter(Boolean).join('\n'));
 }
 async function wait(pattern) {
-  const until = Date.now() + 15000;
-  while (Date.now() < until) {
-    if (await page.locator('flt-semantics-host').count() && pattern.test(await text())) return;
-    await page.waitForTimeout(100);
-  }
-  throw new Error(`Missing ${pattern}: ${await text()}`);
+  await waitForSemantics(page, pattern);
 }
 async function click(pattern) {
   const target = page.getByRole('button', { name: pattern }).first();
@@ -46,19 +41,19 @@ async function click(pattern) {
     const box = await target.count() ? await target.boundingBox() : null, viewport = page.viewportSize();
     if (box && box.height > 5 && box.y >= 0 && box.y + Math.min(box.height / 2, 35) < viewport.height - 4) {
       await target.click({ position: { x: Math.min(20, box.width / 2), y: Math.min(25, box.height / 2) } });
-      await page.waitForTimeout(200); return;
+      await waitForUiSettled(page); return;
     }
     if (!box || box.height <= 5 || box.y > viewport.height - 80) {
       await page.mouse.move(viewport.width * .3, viewport.height * .5);
-      await page.mouse.wheel(0, 240); await page.waitForTimeout(180);
+      await page.mouse.wheel(0, 240); await waitForUiSettled(page);
     } else {
-      await target.scrollIntoViewIfNeeded(); await page.waitForTimeout(120);
+      await target.scrollIntoViewIfNeeded(); await waitForUiSettled(page);
     }
   }
   throw new Error(`Cannot reach ${pattern}`);
 }
 async function capture(name) {
-  await page.mouse.move(2, 2); await page.waitForTimeout(220);
+  await page.mouse.move(2, 2); await waitForUiSettled(page);
   assert.equal(await page.getByRole('dialog').count(), 0);
   assert.doesNotMatch(await text(), /AVAILABLE CHOICES/);
   const bytes = await page.screenshot({ path: resolve(output, `${name}.png`), fullPage: true });
@@ -71,12 +66,17 @@ async function capture(name) {
 async function rerollPortrait(prefix) {
   const preview = page.getByRole('img', { name: 'Founder portrait preview', exact: true });
   await preview.waitFor();
-  await page.waitForTimeout(300);
+  await waitForUiSettled(page);
   const beforeText = await text();
+  const beforeIdentity = await preview.getAttribute('flt-semantics-identifier');
   const before = createHash('sha256').update(await preview.screenshot()).digest('hex');
   await click(/^Reroll portrait$/);
   await page.mouse.move(2, 2);
-  await page.waitForTimeout(350);
+  await page.waitForFunction(previous => {
+    const preview = document.querySelector('[flt-semantics-identifier^="founder-preview:"]');
+    return preview && preview.getAttribute('flt-semantics-identifier') !== previous;
+  }, beforeIdentity);
+  await waitForUiSettled(page);
   const after = createHash('sha256').update(await preview.screenshot()).digest('hex');
   assert.notEqual(after, before, 'Reroll must visibly change the portrait');
   assert.equal(await text(), beforeText, 'Reroll must leave names and settings unchanged');
@@ -106,11 +106,25 @@ async function checkNameLocation() {
   assert.ok(begin.y >= field.y + field.height && begin.x + begin.width <= field.x + field.width + 2);
   report.checks.push({ name: 'name-field-below-question', status: 'passed', field });
 }
+async function waitForBonusPopup(message, timeout = 1000, visible = true) {
+  const handle = await page.waitForFunction(({ source, flags, visible }) => {
+    const pattern = new RegExp(source, flags);
+    const present = [...document.querySelectorAll('flt-semantics-host *')].some(node => {
+      const bounds = node.getBoundingClientRect();
+      return bounds.width > 200 && bounds.height > 60
+        && pattern.test(node.innerText ?? '') && getComputedStyle(node).visibility !== 'hidden'
+        && !node.children.length;
+    });
+    return present === visible;
+  }, { source: message.source, flags: message.flags, visible }, { polling: 'raf', timeout });
+  await handle.dispose();
+}
 async function bonusHelp(prefix, scale, choice = 'A', stats = [
   ['law', /Choosing this: Law/], ['agility', /Choosing this: Agility/],
 ]) {
   await page.mouse.move(2, 2);
-  await page.waitForTimeout(350);
+  await waitForBonusPopup(/Choosing this:/, 10000, false);
+  await waitForUiSettled(page);
   const answer = page.getByRole('button', { name: new RegExp(`^${choice}(?:\\s|$)`) }).first();
   let box;
   for (let attempt = 0; attempt < 18; attempt++) {
@@ -120,7 +134,7 @@ async function bonusHelp(prefix, scale, choice = 'A', stats = [
     if (box && box.height > 60 * scale && box.y >= 0 && box.y + box.height < page.viewportSize().height - 70) break;
     await page.mouse.move(page.viewportSize().width * .3, page.viewportSize().height * .5);
     await page.mouse.wheel(0, 200);
-    await page.waitForTimeout(150);
+    await waitForUiSettled(page);
   }
   assert.ok(box);
   const before = await text();
@@ -131,7 +145,12 @@ async function bonusHelp(prefix, scale, choice = 'A', stats = [
     let popup;
     for (let x = previousX; x < Math.min(box.x + box.width - 12, box.x + 380 * scale); x += 12) {
       await page.mouse.move(x, y);
-      await page.waitForTimeout(450);
+      try {
+        await waitForBonusPopup(message);
+      } catch (error) {
+        if (error.name === 'TimeoutError') continue;
+        throw error;
+      }
       const candidates = page.getByText(message);
       for (const candidate of await candidates.all()) {
         // Sidebar rows expose the same help in their accessibility labels.
@@ -150,7 +169,7 @@ async function bonusHelp(prefix, scale, choice = 'A', stats = [
       if (popup) break;
     }
     assert.ok(popup, `No ${name} tooltip over the answer bonus`);
-    await page.waitForTimeout(250);
+    await waitForUiSettled(page);
     const bounds = await popup.boundingBox();
     const viewport = page.viewportSize();
     assert.ok(bounds && bounds.x >= 0 && bounds.y >= 0
@@ -162,10 +181,11 @@ async function bonusHelp(prefix, scale, choice = 'A', stats = [
     console.log(`PASS ${prefix}-bonus-${name}`);
   }
   await page.mouse.move(2, 2);
-  await page.waitForTimeout(350);
+  await waitForSemantics(page, before);
   assert.equal(await text(), before, 'Inspecting bonuses must not select an answer or change founder facts');
   await page.mouse.move(lastPoint.x, lastPoint.y);
-  await page.waitForTimeout(450);
+  await waitForBonusPopup(stats.at(-1)[1]);
+  await waitForUiSettled(page);
   return lastPoint;
 }
 async function founderFlow({ fate, prefix, name }) {
@@ -194,11 +214,11 @@ async function founderFlow({ fate, prefix, name }) {
         await bonusHelp('normal', 1);
         await bonusHelp('computers-normal', 1, 'C', [['computers', /Choosing this: Computers/]]);
         await page.mouse.move(2, 2);
-        await page.waitForTimeout(350);
+        await waitForUiSettled(page);
         await click(/^Reading size/);
         await page.getByRole('menuitem', { name: '150%', exact: true }).click();
         await page.setViewportSize({ width: 800, height: 600 });
-        await page.waitForTimeout(250);
+        await waitForUiSettled(page);
         await bonusHelp('large', 1.5);
         const bonus = await bonusHelp('computers-large', 1.5, 'C', [['computers', /Choosing this: Computers/]]);
         await page.mouse.click(bonus.x, bonus.y);
@@ -207,7 +227,7 @@ async function founderFlow({ fate, prefix, name }) {
         await click(/^Reading size/);
         await page.getByRole('menuitem', { name: '100%', exact: true }).click();
         await page.setViewportSize({ width: 1280, height: 720 });
-        await page.waitForTimeout(200);
+        await waitForUiSettled(page);
         continue;
       }
       // Include the advertised manifesto reward in the real creation/save path.
@@ -268,13 +288,13 @@ try {
   page.on('pageerror', error => report.pageErrors.push(error.stack ?? error.message));
   page.on('console', message => {if(message.type()==='error') report.consoleErrors.push(message.text());});
   page.on('requestfailed', request => report.failedRequests.push({url:request.url(),failure:request.failure()?.errorText}));
-  await page.goto(url, {waitUntil:'networkidle'}); await wait(/Start a New Game/);
+  await page.goto(url, {waitUntil:'domcontentloaded'}); await wait(/Start a New Game/);
   if(!args.includes('--large-only'))await founderFlow({fate:false,prefix:'manual',name:'Journal Founder Review'});
   await click(/^Start a New Game/); await wait(/Campaign dossier/);
   await click(/^Reading size/);
   await writeFile(resolve(output,'reading-menu.html'),await page.locator('flt-semantics-host').innerHTML());
-  await page.getByRole('menuitem',{name:'150%',exact:true}).click();await page.waitForTimeout(200);
-  await page.setViewportSize({width:800,height:600});await page.waitForTimeout(250);
+  await page.getByRole('menuitem',{name:'150%',exact:true}).click();await waitForUiSettled(page);
+  await page.setViewportSize({width:800,height:600});await waitForUiSettled(page);
   await capture('large-01-settings');
   await click(/^Continue to founder/);await wait(/The founder/);
   const largeIdentity = await rerollPortrait('large');

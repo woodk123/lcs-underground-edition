@@ -46,6 +46,22 @@ Run the common creation, opening-week, organisation and save journey from the re
 python scripts/shared_acceptance.py
 ```
 
+Browser journeys run with **four workers** by default. Creation must pass,
+including its exported founder and exact loaded-build checks, before the fresh
+opening week starts. Other journeys use independent browser profiles and output
+directories against the same read-only web build. Use `--browser-workers 1` for
+sequential troubleshooting or choose a limit from 1 to 5. Four is intended for a
+machine with ample CPU and memory; lower it when running other heavy workloads.
+The coordinator retains independent failures, marks dependent journeys blocked,
+and waits for browser cleanup before releasing its servers. `browser_seconds`
+records elapsed browser time; per-step durations overlap and must not be added
+to calculate elapsed time. Step start/completion timestamps show the overlap.
+
+Shared browser helpers wait for expected accessible reader text, portrait changes,
+tooltip visibility and daily reader transitions. Scrolling, resizing and ignored
+keyboard commands also wait for stable rendered semantics. These checks replace
+fixed pauses; they do not skip the original actions, layout checks or save comparisons.
+
 Install the pinned SDK and resolve dependencies as described in [Building](BUILDING.md#development-mode). The browser helpers use installed Chrome and Edge, with locked dependencies installed by `npm ci --prefix upstream/tool/offline_test`. The runner verifies the SDK pin, regenerates serializers, runs the focused test files (including legal summaries and operation history), builds a separate release web player and injects its offline manifest. It then runs these existing helpers against that one build:
 
 | Stage | What it establishes |
@@ -247,7 +263,7 @@ Each response uses the current source controls, including the exact victory ackn
 
 The `siege_journal_test.dart`, `siege_campaign_consequences_test.dart` and `car_remaining_paths_test.dart` suites exercise the original handlers and source actions. They cover local versus remote squad selection, exact displayed targets, immutable details, stale/nested callbacks, dossier keyboard isolation, source police reports, bailout, terminal combat/death persistence, hauled/reserve participants, outside-patient bleeding and prison-escape flags, vehicle/ownership consequences, and discharge after headquarters loss. Prepared first-reader tests are distinct from full outcome tests.
 
-Run the browser helpers sequentially for a complete acceptance pass, keeping fresh-context startup loads separate. Preserve failed/interrupted reports as well as successful final reports. These paths do not certify every siege faction, escalation, generated map or campaign ending; native Windows GUI checks remain separate.
+Run these supplemental gameplay browser helpers sequentially for a complete acceptance pass, keeping fresh-context startup loads separate. The shared acceptance runner schedules its own six journeys with the worker limit described above; this does not make other fixed-origin helpers safe to run together. Preserve failed/interrupted reports as well as successful final reports. These paths do not certify every siege faction, escalation, generated map or campaign ending; native Windows GUI checks remain separate.
 
 ## Release checks
 

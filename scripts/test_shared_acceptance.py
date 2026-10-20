@@ -7,6 +7,7 @@ import socket
 import subprocess
 import sys
 import tempfile
+from threading import Barrier, Lock
 import unittest
 from unittest.mock import patch
 
@@ -14,6 +15,57 @@ import shared_acceptance as acceptance
 
 
 class AcceptanceTests(unittest.TestCase):
+    def test_browser_workers_overlap_but_wait_for_validated_creation(self):
+        rendezvous = Barrier(2, timeout=5)
+        lock = Lock()
+        active, peak = 0, 0
+        finished = set()
+        collected = []
+
+        def execute(name):
+            nonlocal active, peak
+            with lock:
+                active += 1
+                peak = max(peak, active)
+                if name == 'fresh-week':
+                    self.assertIn('creation', finished)
+            if name in ('creation', 'prepared-week'):
+                rendezvous.wait()
+            with lock:
+                finished.add(name)
+                active -= 1
+
+        acceptance.run_browser_plan({'creation': (), 'fresh-week': ('creation',), 'prepared-week': ()},
+                                    execute, 2, lambda name, error: collected.append((name, error)))
+        self.assertEqual(peak, 2)
+        self.assertEqual(finished, {'creation', 'fresh-week', 'prepared-week'})
+        self.assertEqual(len(collected), 3)
+        self.assertTrue(all(error is None for _, error in collected))
+
+    def test_browser_failure_blocks_dependent_but_retains_independent_results(self):
+        executed, collected = [], {}
+
+        def execute(name):
+            executed.append(name)
+            if name == 'creation':
+                raise ValueError('stale browser-loaded hash')
+
+        with self.assertRaisesRegex(RuntimeError, 'creation.*fresh-week'):
+            acceptance.run_browser_plan({'creation': (), 'fresh-week': ('creation',), 'personnel': ()},
+                                        execute, 2, lambda name, error: collected.update({name: error}))
+        self.assertCountEqual(executed, ['creation', 'personnel'])
+        self.assertIsNone(collected['personnel'])
+        self.assertIn('dependency', str(collected['fresh-week']))
+
+    def test_one_browser_worker_is_sequential_and_invalid_limits_fail(self):
+        executed = []
+        plan = {'creation': (), 'fresh-week': ('creation',), 'personnel': ()}
+        acceptance.run_browser_plan(plan, executed.append, 1, lambda *_: None)
+        self.assertEqual(executed, list(plan))
+        for workers in (0, 6):
+            with self.assertRaisesRegex(ValueError, 'workers'):
+                acceptance.run_browser_plan(plan, executed.append, workers, lambda *_: None)
+
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)

@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions, observeMainScript, revealPersonnelDossier } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript, revealPersonnelDossier, waitForSemantics, waitForUiSettled } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -67,22 +67,17 @@ async function uiText() {
   ].filter(Boolean).join('\n'));
 }
 async function wait(pattern) {
-  const deadline = Date.now() + 20000;
-  while (Date.now() < deadline) {
-    if (await page.locator('flt-semantics-host').count() && pattern.test(await uiText())) return;
-    await page.waitForTimeout(100);
-  }
-  throw new Error(`Missing ${pattern}: ${await uiText()}`);
+  await waitForSemantics(page, pattern);
 }
 async function click(name, locator = page) {
   const item = locator.getByRole('button', { name }).first();
   await item.click();
   await page.mouse.move(2, 2);
-  await page.waitForTimeout(220);
+  await waitForUiSettled(page);
 }
 async function capture(name) {
   await page.mouse.move(2, 2);
-  await page.waitForTimeout(200);
+  await waitForUiSettled(page);
   await page.screenshot({ path: resolve(output, `${name}.png`), fullPage: true });
   report.screenshots.push(`${name}.png`);
   report.checks.push(name);
@@ -101,7 +96,7 @@ async function revealDossierText(dossier, text, isButton = false) {
     if (box && box.y >= bounds.y + 65 && box.y + Math.min(25, box.height / 2) < bounds.y + bounds.height - 75) return target;
     await page.mouse.move(bounds.x + bounds.width * .65, bounds.y + bounds.height * .65);
     await page.mouse.wheel(0, box && box.y < bounds.y + 65 ? -220 : 220);
-    await page.waitForTimeout(100);
+    await waitForUiSettled(page);
   }
   throw new Error(`Cannot reach dossier text: ${text}`);
 }
@@ -122,7 +117,7 @@ async function exportGame(name) {
   return data;
 }
 try {
-  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
   await wait(/Start a New Game/);
   const choosing = page.waitForEvent('filechooser');
   await click(/^Import a Save/);

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from contextlib import ExitStack
 from datetime import datetime, timezone
 from functools import partial
@@ -67,6 +68,7 @@ def output_directory(root: Path, value: str) -> Path:
 def run_step(report: dict, output: Path, name: str, command: list[str], cwd: Path, *, env=None) -> None:
     print(f'RUN {name}', flush=True)
     step = {'name': name, 'command': command, 'log': f'{name}.log', 'status': 'running'}
+    step['started'] = datetime.now(timezone.utc).isoformat()
     report['steps'].append(step)
     started = time.monotonic()
     try:
@@ -82,6 +84,50 @@ def run_step(report: dict, output: Path, name: str, command: list[str], cwd: Pat
         raise
     finally:
         step['seconds'] = round(time.monotonic() - started, 3)
+        step['completed'] = datetime.now(timezone.utc).isoformat()
+
+
+def run_browser_plan(dependencies, execute, workers, completed):
+    """Bound concurrency; only validated success unlocks dependent journeys.
+
+    The coordinator alone calls completed(), so aggregate evidence is never
+    written by competing browser threads. Independent failures are collected;
+    their dependents are blocked while already-running browsers finish cleanup.
+    """
+    if not 1 <= workers <= 5:
+        raise ValueError('Browser workers must be between 1 and 5.')
+    pending = dict(dependencies)
+    if any(set(required) - pending.keys() for required in pending.values()):
+        raise ValueError('Unknown browser dependency.')
+    passed, failures = set(), {}
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        running = {}
+        while pending or running:
+            for name, required in list(pending.items()):
+                if any(parent in failures for parent in required):
+                    error = RuntimeError(f'{name} blocked by a failed browser dependency.')
+                    failures[name] = error
+                    del pending[name]
+                    completed(name, error)
+                elif len(running) < workers and set(required) <= passed:
+                    running[pool.submit(execute, name)] = name
+                    del pending[name]
+            if not running:
+                if pending:
+                    raise ValueError('Cyclic browser dependencies.')
+                break
+            finished, _ = wait(running, return_when=FIRST_COMPLETED)
+            for future in finished:
+                name = running.pop(future)
+                error = future.exception()
+                if error is None:
+                    passed.add(name)
+                else:
+                    failures[name] = error
+                completed(name, error)
+    if failures:
+        names = ', '.join(failures)
+        raise RuntimeError(f'Browser acceptance failed: {names}. See per-stage logs and reports.') from next(iter(failures.values()))
 
 
 def validate_browser_report(path: Path, expected_hash: str) -> dict:
@@ -154,6 +200,10 @@ def run(args) -> Path:
         ports = (args.port, args.personnel_port)
         if len(set(ports)) != 2 or any(not 18879 <= port <= 18999 for port in ports):
             raise ValueError('Choose two different dedicated QA ports between 18879 and 18999.')
+        workers = args.browser_workers
+        if not 1 <= workers <= 5:
+            raise ValueError('Browser workers must be between 1 and 5.')
+        report['browser_workers'] = workers
         report['origins'] = [f'http://127.0.0.1:{port}/' for port in ports]
         web = (ROOT / args.web_root).resolve(strict=True) if supplied else output / 'web'
         suffix = '.bat' if os.name == 'nt' else ''
@@ -214,19 +264,43 @@ def run(args) -> Path:
                 ('keyboard-interface', 'keyboard_interface_browser_review.mjs', []),
                 ('personnel', 'personnel_browser_review.mjs', []),
             ]
-            for name, helper, extra in suites:
+            suite_map = {name: (helper, extra) for name, helper, extra in suites}
+            results = {name: {'steps': []} for name in suite_map}
+            setup_steps = list(report['steps'])
+            browser_started = time.monotonic()
+
+            def execute(name):
+                helper, extra = suite_map[name]
                 qa_url = report['origins'][1 if name == 'personnel' else 0]
                 command = [node, str(ROOT / 'scripts' / helper), '--expected-hash', expected,
                            '--url', qa_url, '--out', str(output / name), *extra]
                 if args.browser_executable:
                     command.extend(['--browser-executable', args.browser_executable])
-                run_step(report, output, name, command, ROOT,
+                run_step(results[name], output, name, command, ROOT,
                          env={**os.environ, 'LCS_ACCEPTANCE_QA_URL': qa_url})
                 data = validate_browser_report(output / name / 'report.json', expected)
-                report['browser_suites'].append({'name': name, 'report': f'{name}/report.json',
-                                               'scope': data['scope'], 'checks': len(data['checks']),
-                                               'days': len(data.get('days', []))})
+                results[name]['suite'] = {'name': name, 'report': f'{name}/report.json',
+                                         'scope': data['scope'], 'checks': len(data['checks']),
+                                         'days': len(data.get('days', []))}
+
+            def completed(name, error):
+                result = results[name]
+                if error is not None:
+                    if not result['steps']:
+                        result['steps'].append({'name': name, 'status': 'blocked', 'seconds': 0})
+                    result['steps'][-1].update(status='failed' if result['steps'][-1]['status'] != 'blocked'
+                                              else 'blocked', error=str(error))
+                # Copy only completed results; running threads own their evidence.
+                result['collected'] = True
+                report['steps'] = setup_steps + [step for key in suite_map if results[key].get('collected')
+                                                 for step in results[key]['steps']]
+                report['browser_suites'] = [results[key]['suite'] for key in suite_map
+                                           if results[key].get('collected') and 'suite' in results[key]]
+                report['browser_seconds'] = round(time.monotonic() - browser_started, 3)
                 write_json(report_path, report)
+
+            run_browser_plan({name: ('creation',) if name == 'fresh-week' else () for name in suite_map},
+                             execute, workers, completed)
             if source_identity(ROOT) != report['source'] or file_hashes(web) != payload:
                 raise ValueError('Source or compiled build changed during acceptance. Rerun on settled input.')
         report['status'] = 'passed'
@@ -248,6 +322,8 @@ def main():
     parser.add_argument('--web-root', help='Reuse an existing build with its required --expected-hash.')
     parser.add_argument('--expected-hash')
     parser.add_argument('--browser-executable', help='Optional path to an installed Chromium browser.')
+    parser.add_argument('--browser-workers', type=int, default=4,
+                        help='Concurrent isolated browser journeys, 1–5 (default: 4; 1 is sequential).')
     parser.add_argument('--port', type=int, default=PORTS[0], help='Dedicated QA port (18879–18999).')
     parser.add_argument('--personnel-port', type=int, default=PORTS[1], help='Separate personnel QA port.')
     args = parser.parse_args()

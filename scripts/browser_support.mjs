@@ -6,6 +6,47 @@ import { resolve } from 'node:path';
 
 export const QA_URL = 'http://127.0.0.1:18879/';
 
+// Flutter's accessible reader includes labels and editable values that aren't
+// present in innerText. Wait on the same evidence that journey assertions use.
+export async function waitForSemantics(page, pattern, { timeout = 20000 } = {}) {
+  const handle = await page.waitForFunction(({ source, flags, exact }) => {
+    const host = document.querySelector('flt-semantics-host');
+    if (!host) return false;
+    const text = [host.innerText,
+      ...[...host.querySelectorAll('[aria-label]')].map(node => node.getAttribute('aria-label')),
+      ...[...host.querySelectorAll('input,textarea')].map(node => node.value),
+    ].filter(Boolean).join('\n');
+    return exact === undefined ? new RegExp(source, flags).test(text) : text === exact;
+  }, typeof pattern === 'string' ? { exact: pattern } : { source: pattern.source, flags: pattern.flags },
+  { timeout, polling: 'raf' });
+  await handle.dispose();
+}
+
+// For scrolling, resizing, screenshots and deliberately ignored keys there
+// isn't always a new reader to wait for. Observe stable semantics/layout over
+// rendered frames instead of sleeping a guessed number of milliseconds.
+// Callers still wait for the expected reader/control after navigation.
+export async function waitForUiSettled(page) {
+  await page.evaluate(() => new Promise((resolve, reject) => {
+    let previous, stable = 0, frame;
+    const timer = setTimeout(() => {
+      cancelAnimationFrame(frame);
+      reject(new Error('Flutter semantics/layout did not settle within 10 seconds.'));
+    }, 10000);
+    function check() {
+      const host = document.querySelector('flt-semantics-host');
+      const snapshot = host?.outerHTML;
+      stable = snapshot && snapshot === previous ? stable + 1 : 0;
+      previous = snapshot;
+      if (stable >= 3) {
+        clearTimeout(timer);
+        resolve();
+      } else frame = requestAnimationFrame(check);
+    }
+    frame = requestAnimationFrame(check);
+  }));
+}
+
 export async function revealPersonnelDossier(page, name) {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const target = page.getByRole('button', { name: new RegExp(`^Open dossier for ${escaped}\\.`) }).first();
@@ -19,7 +60,7 @@ export async function revealPersonnelDossier(page, name) {
     // the viewport. Aim inside the list, above the persistent footer.
     await page.mouse.move(viewport.width * .76, viewport.height - 105);
     await page.mouse.wheel(0, box && box.y < 75 ? -180 : 180);
-    await page.waitForTimeout(150);
+    await waitForUiSettled(page);
   }
   throw new Error(`Cannot reach personnel dossier for ${name}`);
 }

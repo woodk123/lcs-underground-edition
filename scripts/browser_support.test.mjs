@@ -2,7 +2,50 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import test from 'node:test';
-import { QA_URL, assertQaUrl, chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
+import { runInNewContext } from 'node:vm';
+import { QA_URL, assertQaUrl, chromiumLaunchOptions, observeMainScript,
+  waitForSemantics, waitForUiSettled } from './browser_support.mjs';
+
+test('reader waits reject stale/missing readers and observe labels and editable values', async () => {
+  let host = null, disposed = false;
+  const document = { querySelector: () => host };
+  const page = {
+    async waitForFunction(predicate, argument, options) {
+      assert.equal(options.polling, 'raf');
+      const matches = () => runInNewContext(`(${predicate})(${JSON.stringify(argument)})`, { document });
+      assert.equal(matches(), false, 'A missing or stale reader must not satisfy the wait.');
+      host = { innerText: 'New reader', querySelectorAll: selector => selector === '[aria-label]'
+        ? [{ getAttribute: () => 'Confirm assignment' }] : [{ value: 'Typed founder' }] };
+      assert.equal(matches(), true);
+      return { dispose: async () => { disposed = true; } };
+    },
+  };
+  await waitForSemantics(page, /confirm assignment.*typed founder/is);
+  assert.ok(disposed);
+  host.innerText = 'Old reader';
+  await waitForSemantics(page, 'New reader\nConfirm assignment\nTyped founder');
+});
+
+test('layout waits restart observation when semantics change between rendered frames', async () => {
+  const snapshots = ['old', 'old', 'new', 'new', 'new', 'new'];
+  let frames = 0;
+  const page = { evaluate: callback => runInNewContext(`(${callback})()`, {
+    document: { querySelector: () => ({ outerHTML: snapshots[Math.min(frames++ , snapshots.length - 1)] }) },
+    requestAnimationFrame: callback => setImmediate(callback), cancelAnimationFrame: clearImmediate,
+    setTimeout, clearTimeout,
+  }) };
+  await waitForUiSettled(page);
+  assert.ok(frames >= snapshots.length, 'Changing layout must restart the stable-frame count.');
+});
+
+test('a reader that never appears fails its bounded layout wait', async () => {
+  const page = { evaluate: callback => runInNewContext(`(${callback})()`, {
+    document: { querySelector: () => null },
+    requestAnimationFrame: () => 1, cancelAnimationFrame: () => {},
+    setTimeout: callback => setImmediate(callback), clearTimeout: clearImmediate,
+  }) };
+  await assert.rejects(waitForUiSettled(page), /did not settle/);
+});
 
 test('browser journeys accept only the isolated QA origin and root page', () => {
   assert.equal(assertQaUrl(), QA_URL);

@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions, observeMainScript, revealPersonnelDossier } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript, revealPersonnelDossier, waitForSemantics, waitForUiSettled } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -62,21 +62,17 @@ async function uiText() {
     ...[...node.querySelectorAll('[aria-label]')].map(item => item.getAttribute('aria-label'))].filter(Boolean).join('\n')) : '';
 }
 async function wait(pattern) {
-  for (let i = 0; i < 200; i++) {
-    if (pattern.test(await uiText())) return;
-    await page.waitForTimeout(100);
-  }
-  throw new Error(`Missing ${pattern}: ${await uiText()}`);
+  await waitForSemantics(page, pattern);
 }
 async function click(name) {
   await page.getByRole('button', { name }).first().click();
   await page.mouse.move(2, 2);
-  await page.waitForTimeout(200);
+  await waitForUiSettled(page);
   if (String(name).includes('Back to directory')) await top();
 }
 async function top() {
   await page.mouse.move(page.viewportSize().width * .76, page.viewportSize().height * .55);
-  await page.mouse.wheel(0, -10000); await page.waitForTimeout(200);
+  await page.mouse.wheel(0, -10000); await waitForUiSettled(page);
 }
 async function capture(name) {
   await page.screenshot({ path: resolve(output, `${name}.png`), fullPage: true });
@@ -98,15 +94,16 @@ async function exportGame(name) {
 async function search(text) {
   await top();
   const input = page.getByRole('textbox', { name: /Find anyone/ });
-  await input.fill(text); await page.waitForTimeout(250);
+  await input.fill(text); await waitForUiSettled(page);
 }
 async function row(name, screenshot) {
   const target = await revealPersonnelDossier(page, name);
   if (screenshot) await capture(screenshot);
-  await target.click(); await page.mouse.move(2, 2); await page.waitForTimeout(300);
+  await target.click(); await page.mouse.move(2, 2); await waitForUiSettled(page);
+  await wait(/Back to directory/);
 }
 try {
-  await page.goto(url, { waitUntil: 'networkidle' }); await wait(/Start a New Game/);
+  await page.goto(url, { waitUntil: 'domcontentloaded' }); await wait(/Start a New Game/);
   const choosing = page.waitForEvent('filechooser'); await click(/^Import a Save/);
   await (await choosing).setFiles(fixturePath); await wait(/Save imported/);
   await page.keyboard.press('Enter'); await wait(/Start a New Game/);
@@ -131,7 +128,8 @@ try {
   await wait(/Back to directory/); await capture('02-chaz-native-profile');
   await click(/^Back to directory$/); await wait(/people.*Hospital/);
   await page.getByRole('textbox', { name: /Find anyone/ }).click();
-  await page.waitForTimeout(100);
+  await page.waitForFunction(() => [...document.querySelectorAll('input,textarea')]
+    .some(node => node.value === 'chaz'));
   assert.equal(await page.locator('input,textarea').evaluateAll(nodes => nodes.map(node => node.value).find(value => value === 'chaz') ?? ''), 'chaz');
   report.checks.push('Search finds patient across Active; native profile closes retaining Hospital and search');
   await search('Zed 23'); await row('Zed 23'); await wait(/Back to directory/);

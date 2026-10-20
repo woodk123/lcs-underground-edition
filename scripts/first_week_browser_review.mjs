@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript, waitForSemantics, waitForUiSettled } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -82,17 +82,12 @@ async function uiText() {
   ].filter(Boolean).join('\n'));
 }
 async function wait(pattern) {
-  const deadline = Date.now() + 20000;
-  while (Date.now() < deadline) {
-    if (pattern.test(await uiText())) return;
-    await page.waitForTimeout(100);
-  }
-  throw new Error(`Missing ${pattern}: ${await uiText()}`);
+  await waitForSemantics(page, pattern);
 }
 async function click(name) {
   await page.getByRole('button', { name }).first().click();
   await page.mouse.move(2, 2);
-  await page.waitForTimeout(220);
+  await waitForUiSettled(page);
 }
 async function capture(name) {
   await page.mouse.move(2, 2);
@@ -150,6 +145,7 @@ async function advanceOneDay(previous, baseline) {
   let arrived = false;
   let lastFrame;
   for (let prompt = 0; prompt < 80; prompt++) {
+    const previousFrame = await page.locator('flt-semantics-host').innerHTML();
     const text = await uiText();
     const buttons = await page.getByRole('button').evaluateAll(nodes => nodes.map(node => node.getAttribute('aria-label') ?? node.textContent));
     const saveExit = page.getByRole('button', { name: /^Save & exit/ });
@@ -167,11 +163,13 @@ async function advanceOneDay(previous, baseline) {
       await click(/Leave|Done shopping|Done pawning/);
     } else if (await page.getByRole('button', { name: /Continue|Read newspaper|Read the paper|Done|Next|Any other key/i }).count()) {
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(180);
+      await page.waitForFunction(previous => document.querySelector('flt-semantics-host')?.innerHTML !== previous,
+        previousFrame);
     } else {
       // A rendered daily result can precede the next awaited engine frame.
       // Wait for its source action rather than sending a guessed command.
-      await page.waitForTimeout(100);
+      await page.waitForFunction(previous => document.querySelector('flt-semantics-host')?.innerHTML !== previous,
+        previousFrame);
     }
   }
   assert.ok(arrived, `Must return to headquarters on ${target}. Last frame: ${lastFrame}`);
@@ -254,7 +252,13 @@ try {
   await wait(/What shall we designate/);
   await page.getByRole('textbox').fill('First-week field team');
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(300);
+  await wait(/Select squad First-week field team|[A-S] First-week field team Location:/);
+  // The source squad reader may remain open after naming. Return through its
+  // current Back action before using the headquarters squad-selection rail.
+  if (!await page.getByRole('button', { name: /Select squad First-week field team/ }).count()) {
+    await click(/^Back$/);
+  }
+  await wait(/Select squad First-week field team/);
   await click(/Select squad First-week field team/);
   await capture('03-form-new-two-person-squad');
 
