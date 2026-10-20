@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* See illustrations for every tangible weapon, outfit, ammunition type and loot item in equipment lists, shops and guides, including 113 newly painted catalogue items.
+
 * Use the original Classic keys and menu flow throughout the graphical view: category defaults, tasks, sleeper roles, purchases and destinations take effect on their original key, and Back returns to the same parent menu. Held keys repeat normally.
 * Show source keys on title and character-creation controls and page hints on profiles. Text entry starts at the end of a prefilled name; Escape finishes with the visible edits, while the separate Cancel edits button restores the original text.
 

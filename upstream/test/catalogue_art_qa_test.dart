@@ -13,6 +13,8 @@ import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/engine/item_help_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
+import 'package:lcs_new_age/items/ammo.dart';
+import 'package:lcs_new_age/items/flag_type.dart';
 import 'package:lcs_new_age/items/item_type.dart';
 import 'package:lcs_new_age/items/weapon_type.dart';
 import 'package:lcs_new_age/main.dart';
@@ -27,6 +29,14 @@ import 'package:lcs_new_age/vehicles/vehicle.dart';
 import 'package:lcs_new_age/vehicles/vehicle_type.dart';
 
 import 'test_support.dart';
+
+const _unillustratedTypes = {
+  'WEAPON_NONE',
+  'CLOTHING_NONE',
+  'WEAPON_BITE',
+  'WEAPON_PROBOSCIS',
+  'WEAPON_FIRE_BREATH',
+};
 
 String _painting(CatalogueArtEntry art) => '${art.asset}:${art.source}';
 
@@ -54,14 +64,20 @@ Future<void> _settleCataloguePaintings(WidgetTester tester) async {
 Future<void> _warmCatalogueAtlases(WidgetTester tester) async {
   // Keep every shared native-image future inside a live test zone until it has
   // decoded, as the application does during its single cache lifetime.
+  final representatives = <String, CatalogueArtEntry>{};
+  for (final id in itemTypes.keys) {
+    if (equipmentArtwork(id) case final art?) representatives[art.asset] = art;
+  }
+  for (final id in vehicleTypes.keys) {
+    if (vehicleArtwork(id) case final art?) representatives[art.asset] = art;
+  }
   await tester.pumpWidget(
     MaterialApp(
       theme: buildJournalTheme(),
-      home: Row(
+      home: Wrap(
         children: [
-          CatalogueIllustration(art: equipmentArtwork('WEAPON_9MM_HANDGUN')!),
-          CatalogueIllustration(art: equipmentArtwork('CLOTHING_CLOTHES')!),
-          CatalogueIllustration(art: vehicleArtwork('BUG')!),
+          for (final art in representatives.values)
+            CatalogueIllustration(art: art),
         ],
       ),
     ),
@@ -95,7 +111,23 @@ void main() {
         for (final id in itemTypes.keys)
           if (equipmentArtwork(id) case final art?) art,
       ];
-      expect(equipment.map(_painting).toSet(), hasLength(32));
+      final tangibleIds = itemTypes.keys.toSet().difference({
+        ..._unillustratedTypes,
+        ...flagTypes.keys,
+      });
+      expect(itemTypes.keys, containsAll(_unillustratedTypes));
+      // Flags already own exact authored SVGs, independent of catalogue sheets.
+      expect(flagTypes, hasLength(25));
+      for (final flag in flagTypes.values) {
+        expect(File(flag.assetPath).existsSync(), isTrue, reason: flag.idName);
+        expect(equipmentArtwork(flag.idName), isNull);
+      }
+      expect(tangibleIds, hasLength(145));
+      for (final id in tangibleIds) {
+        expect(equipmentArtwork(id), isNotNull, reason: id);
+      }
+      expect(equipment, hasLength(tangibleIds.length));
+      expect(equipment.map(_painting).toSet(), hasLength(tangibleIds.length));
       expect(vehicleTypes, hasLength(11));
       final vehicles = <CatalogueArtEntry>[];
       for (final id in vehicleTypes.keys) {
@@ -107,8 +139,7 @@ void main() {
       for (final unsupported in [
         '',
         'UNRECOGNIZED_CATALOGUE_ITEM',
-        'WEAPON_NONE',
-        'CLOTHING_NONE',
+        ..._unillustratedTypes,
         'BUG',
       ]) {
         expect(equipmentArtwork(unsupported), isNull, reason: unsupported);
@@ -241,7 +272,7 @@ void main() {
         for (final record in _jsonRecords(manifest['assets']))
           record['runtime_path'] as String: record,
       };
-      expect(provenance['equipment_paintings'], 32);
+      expect(provenance['equipment_paintings'], 145);
       expect(provenance['vehicle_paintings'], 11);
       final declaredIds = <String>{};
       for (final asset in _jsonRecords(provenance['assets'])) {
@@ -275,7 +306,16 @@ void main() {
           );
         }
       }
-      expect(declaredIds, hasLength(43));
+      expect(
+        declaredIds,
+        unorderedEquals([
+          ...itemTypes.keys.where(
+            (id) =>
+                !_unillustratedTypes.contains(id) && !flagTypes.containsKey(id),
+          ),
+          ...vehicleTypes.keys,
+        ]),
+      );
     },
   );
 
@@ -363,7 +403,14 @@ void main() {
           addTearDown(tester.view.resetDevicePixelRatio);
           addTearDown(tester.view.resetPhysicalSize);
           final sent = <String>[];
-          for (final enabled in [true, false]) {
+          for (final (typeId, enabled) in [
+            ('WEAPON_9MM_HANDGUN', true),
+            ('WEAPON_M4', true),
+            ('CLOTHING_KIMONO', true),
+            ('AMMO_GASOLINE', true),
+            ('LOOT_CHEMICAL', true),
+            ('WEAPON_M4', false),
+          ]) {
             engine.erase();
             engine.addOptionText(
               10,
@@ -372,7 +419,7 @@ void main() {
               'A - 9mm Pistol (2) — \$1234',
               enabledWhen: enabled,
             );
-            describeChoiceItemType(engine.console, 'a', 'WEAPON_9MM_HANDGUN');
+            describeChoiceItemType(engine.console, 'a', typeId);
             await tester.pumpWidget(
               MaterialApp(
                 theme: buildJournalTheme(),
@@ -395,6 +442,16 @@ void main() {
             await tester.pumpAndSettle();
             await _settleCataloguePaintings(tester);
             expect(find.byType(CatalogueIllustration), findsOneWidget);
+            expect(
+              _painting(
+                tester
+                    .widget<CatalogueIllustration>(
+                      find.byType(CatalogueIllustration),
+                    )
+                    .art,
+              ),
+              _painting(equipmentArtwork(typeId)!),
+            );
             final callsBefore = sent.length;
             await tester.tapAt(
               tester.getCenter(find.byType(CatalogueIllustration)),
@@ -418,7 +475,10 @@ void main() {
           reseedRNG(seed: 95104);
           for (final selection in [
             (DecisionTopic.weapons, 'WEAPON_9MM_HANDGUN'),
+            (DecisionTopic.weapons, 'WEAPON_M4'),
+            (DecisionTopic.weapons, 'AMMO_GASOLINE'),
             (DecisionTopic.clothing, 'CLOTHING_CLOTHES'),
+            (DecisionTopic.clothing, 'CLOTHING_KIMONO'),
             (DecisionTopic.vehicles, 'BUG'),
           ]) {
             await tester.pumpWidget(
@@ -435,6 +495,9 @@ void main() {
                     child: DecisionGuideButton(
                       topic: selection.$1,
                       itemType: selection.$2,
+                      item: selection.$2.startsWith('AMMO_')
+                          ? Ammo(selection.$2)
+                          : null,
                       actor: game.pool.first,
                     ),
                   ),
@@ -478,7 +541,13 @@ void main() {
       }
 
       tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(1600, 1400);
+      // Six columns, with enough complete rows for every current painting.
+      final paintingCount =
+          itemTypes.length -
+          _unillustratedTypes.length -
+          flagTypes.length +
+          vehicleTypes.length;
+      tester.view.physicalSize = Size(1600, ((paintingCount + 5) ~/ 6) * 165);
       addTearDown(tester.view.resetDevicePixelRatio);
       addTearDown(tester.view.resetPhysicalSize);
       final paintings = <String, (String, CatalogueArtEntry)>{};

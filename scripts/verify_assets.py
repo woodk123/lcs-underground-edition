@@ -58,6 +58,47 @@ def verify(root: Path) -> dict:
     if len(runtime_paths) != len(runtime_art['assets']):
         raise ValueError('Duplicated runtime artwork references')
 
+    # Coverage is tied to the authored catalogues, not just whichever subset a
+    # renderer happens to support. New tangible types must bring their artwork.
+    coverage = read('assets/catalogue/coverage.json')
+    required = set()
+    authored = set()
+    for catalogue in ('weapons', 'clothing', 'ammo', 'loot', 'vehicles'):
+        authored.update(node.attrib['idname'] for node in ET.parse(
+            root / f'upstream/assets/xml/{catalogue}.xml').getroot()
+            if 'idname' in node.attrib)
+    entries = coverage['catalogues']
+    declared = [entry['type_id'] for entry in entries]
+    if len(declared) != len(set(declared)) or set(declared) != authored:
+        raise ValueError('Coverage inventory differs from authored catalogues')
+    exclusions = {'WEAPON_NONE', 'CLOTHING_NONE', 'WEAPON_BITE',
+                  'WEAPON_PROBOSCIS', 'WEAPON_FIRE_BREATH'}
+    excluded = {entry['type_id'] for entry in entries if not entry['illustration_required']}
+    if excluded != exclusions:
+        raise ValueError('Unexpected unillustrated catalogue types')
+    required = authored - excluded
+    paintings = set()
+    runtime_records = {a['runtime_path']: a for a in runtime_art['assets']}
+    for asset in read('assets/catalogue/provenance.json')['assets']:
+        file(root, asset['source_path'], asset['source_sha256'])
+        file(root, asset['runtime_path'], asset['runtime_sha256'])
+        file(root, asset['prompt_path'])
+        record = runtime_records[asset['runtime_path']]
+        if (asset['source_path'] != record['original_path']
+                or (asset['width'], asset['height']) != (record['width'], record['height'])):
+            raise ValueError('Catalogue provenance differs from runtime manifest')
+        for entry in asset['entries']:
+            identity = entry['type_id']
+            if identity in paintings:
+                raise ValueError(f'Duplicate catalogue painting: {identity}')
+            paintings.add(identity)
+            x, y, width, height = entry['source_rect']
+            if not (x >= 0 and y >= 0 and width > 0 and height > 0
+                    and x + width <= asset['width'] and y + height <= asset['height']):
+                raise ValueError(f'Invalid catalogue crop: {identity}')
+    if paintings != required:
+        raise ValueError(f'Missing or unexpected catalogue paintings: {sorted(paintings ^ required)}')
+
     ids = []
     atlases = set()
     for library, first, count in (('portraits-v2', 0, 250), ('portraits-v3', 250, 128)):
@@ -92,7 +133,8 @@ def verify(root: Path) -> dict:
         raise ValueError(f'Unexpected or missing runtime images: {sorted(actual_paths ^ runtime_paths)}')
     return {'status': 'passed', 'verified_files': len(checked),
             'runtime_images': len(runtime_paths), 'portrait_atlases': len(atlases),
-            'portraits': len(ids), 'flag_assets': len(flag_assets)}
+            'portraits': len(ids), 'flag_assets': len(flag_assets),
+            'catalogue_paintings': len(paintings), 'catalogue_exclusions': len(excluded)}
 
 
 def main() -> None:

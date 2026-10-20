@@ -3,6 +3,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+part 'catalogue_art_supplement.dart';
+
 /// A painting of a catalogue type, never an item's condition, ammunition count,
 /// installed armour or a vehicle's generated colour/year. Live text owns those.
 @immutable
@@ -121,12 +123,14 @@ const _vehicleIds = <String>[
   'VAN',
 ];
 
-/// Exact stable type IDs only: unsupported items keep their existing text.
+/// Exact stable type IDs only: absence sentinels and body attacks keep text.
 CatalogueArtEntry? equipmentArtwork(String? typeId) {
   var index = _weaponIds.indexOf(typeId ?? '');
   if (index >= 0) return CatalogueArtEntry(_weapons, _weaponRects[index]);
   index = _gearIds.indexOf(typeId ?? '');
-  return index < 0 ? null : CatalogueArtEntry(_gear, _gearRects[index]);
+  return index < 0
+      ? _supplementalEquipment[typeId]
+      : CatalogueArtEntry(_gear, _gearRects[index]);
 }
 
 CatalogueArtEntry? vehicleArtwork(String? typeId) {
