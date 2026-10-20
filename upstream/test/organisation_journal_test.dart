@@ -2156,6 +2156,12 @@ void main() {
 
         await sourceKey(LogicalKeyboardKey.keyL, 'l');
         expect(engine.console.navigation?.section, 'agenda');
+        _insideViewport(
+          tester,
+          _key('journal-section:3'),
+          size,
+          'Original L reveals the selected Agenda tab',
+        );
         expect(badge('journal-section:3'), 'HQ: l');
         expect(journalShortcutLabel(badge('journal-section:3')), 'HQ: L');
         expect(badge('journal-save-exit'), 'HQ: x');
@@ -2170,6 +2176,12 @@ void main() {
 
         await sourceKey(LogicalKeyboardKey.keyM, 'm');
         expect(mediaOverviewFrame(engine.console), isNotNull);
+        _insideViewport(
+          tester,
+          _key('journal-section:4'),
+          size,
+          'Original M reveals the selected Newspaper tab',
+        );
         await tester.sendKeyEvent(LogicalKeyboardKey.escape);
         await _settle(tester);
         expect(engine.console.screen, 'headquarters');

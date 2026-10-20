@@ -404,6 +404,21 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       if (!mounted) return;
       final target = _sectionKeys[section]?.currentContext;
       if (target != null) {
+        final scrollable = Scrollable.maybeOf(target, axis: Axis.horizontal);
+        final targetBox = target.findRenderObject();
+        final scrollBox = scrollable?.context.findRenderObject();
+        if (targetBox is RenderBox && scrollBox is RenderBox) {
+          final left = targetBox
+              .localToGlobal(Offset.zero, ancestor: scrollBox)
+              .dx;
+          // A visible tab needs no movement. Preserve the player's strip
+          // position when a source reader changes within the visible group.
+          if (left >= 0 &&
+              left + targetBox.size.width <=
+                  scrollable!.position.viewportDimension) {
+            return;
+          }
+        }
         unawaited(
           Scrollable.ensureVisible(
             target,
@@ -419,6 +434,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   void didUpdateWidget(OrganisationJournal oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.section != widget.section) {
+      revealSection(widget.section);
       _visitRequest++;
       _pendingOrder = null;
       _pool = false;
