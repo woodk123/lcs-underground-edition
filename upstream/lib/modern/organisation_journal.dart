@@ -35,6 +35,7 @@ import 'package:lcs_new_age/modern/order_mechanics_dialog.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/modern/organisation_crew_pool.dart';
 import 'package:lcs_new_age/modern/organisation_order_card.dart';
+import 'package:lcs_new_age/modern/organisation_order_workspace.dart';
 import 'package:lcs_new_age/modern/organisation_reviews.dart';
 import 'package:lcs_new_age/modern/personnel_directory.dart';
 import 'package:lcs_new_age/modern/recruitment_target_picker.dart';
@@ -110,6 +111,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   bool _managementDialog = false;
   final ScrollController _narrowJournalScroll = ScrollController();
   final ScrollController _sectionScroll = ScrollController();
+  final ScrollController _orderTaskScroll = ScrollController();
   final PersonnelDirectoryController _personnel =
       PersonnelDirectoryController();
 
@@ -117,6 +119,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   void dispose() {
     _narrowJournalScroll.dispose();
     _sectionScroll.dispose();
+    _orderTaskScroll.dispose();
     _personnel.dispose();
     super.dispose();
   }
@@ -132,6 +135,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   String? _areaId, _targetId, _categoryId;
   _PreparedOrder? _pendingOrder;
   List<ConsoleAction> _orderBrowseActions = const [];
+  String? _orderBrowseTaskStorageId;
   int? _targetSquadId;
   bool _visitRouting = false;
   String? _visitMessage;
@@ -1426,6 +1430,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   _showReports && !_orders && widget.detail == null,
                   controller.canNavigate
                       ? () async {
+                          _settleOrderTaskScroll();
                           if (await controller.returnToHeadquarters() &&
                               mounted) {
                             widget.onCloseInspection?.call();
@@ -1649,6 +1654,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   );
 
   Future<void> _openGroup(int group, {String? categoryId}) async {
+    _settleOrderTaskScroll();
     widget.onCloseInspection?.call();
     setState(() {
       _orders = true;
@@ -1845,6 +1851,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               controller.selectedPersonId == member.id)) {
         return;
       }
+      _settleOrderTaskScroll();
       setState(() => _pendingOrder = null);
       final wasOrders = _orders || activityFrame;
       final categoryId = _categoryId;
@@ -2565,6 +2572,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     // only while controls are disabled; dispatch always uses the fresh frame.
     if (activityFrame && !controller.busy) {
       _orderBrowseActions = List.of(console.actions);
+      _orderBrowseTaskStorageId = 'journal-tasks:$_group:$_categoryId';
     }
     final browsingActions = controller.busy
         ? _orderBrowseActions
@@ -2596,286 +2604,149 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               (_group == 3 ? a.x < 40 : a.x >= 40),
         )
         .toList();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                planning
-                    ? 'Choose a destination'
-                    : _ordersMap
-                    ? 'Browse destinations'
-                    : 'Choose a task',
-                key: const ValueKey('journal-orders-heading'),
-                style: JournalPalette.heading,
-              ),
-            ),
-            if (!planning)
-              TextButton.icon(
-                key: const ValueKey('journal-orders-map-toggle'),
-                onPressed: () => setState(() => _ordersMap = !_ordersMap),
-                icon: Icon(
-                  _ordersMap ? Icons.list : Icons.map_outlined,
-                  size: 17,
-                ),
-                label: Text(_ordersMap ? 'Tasks' : 'Map'),
-              ),
-          ],
-        ),
-        if (!showMap)
-          const Padding(
-            padding: EdgeInsets.only(top: 3, bottom: 6),
-            child: Text(
-              'Original task keys assign immediately · Back keys keep the original menu flow',
-              key: ValueKey('journal-orders-keyboard-help'),
-              style: JournalPalette.small,
-            ),
+    final revision = console.revision.value;
+    return OrganisationOrderWorkspace(
+      heading: planning
+          ? 'Choose a destination'
+          : _ordersMap
+          ? 'Browse destinations'
+          : 'Choose a task',
+      showMap: showMap,
+      onToggleMap: planning
+          ? null
+          : () {
+              _settleOrderTaskScroll();
+              setState(() => _ordersMap = !_ordersMap);
+            },
+      categories: [
+        for (final category in visibleCategories)
+          OrganisationOrderCategoryView(
+            label: _clean(category.label),
+            shortcut: category.key,
+            selected: _categoryId == category.entityId,
+            onSelect: category.enabled && !controller.busy
+                ? () => _browseOrderCategory(category, revision: revision)
+                : null,
           ),
-        if (!showMap && visibleCategories.length > 1)
-          Wrap(
-            spacing: 4,
-            runSpacing: 3,
-            children: [
-              for (final category in visibleCategories)
-                OutlinedButton(
-                  onPressed: category.enabled && !controller.busy
-                      ? () {
-                          setState(() {
-                            _categoryId = category.entityId;
-                            _pendingOrder = null;
-                            _ordersMap = false;
-                          });
-                          unawaited(
-                            controller.browseCategory(
-                              category,
-                              revision: console.revision.value,
-                            ),
-                          );
-                        }
-                      : null,
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 6,
-                    ),
-                    minimumSize: const Size(44, 32),
-                    backgroundColor: _categoryId == category.entityId
-                        ? JournalPalette.selected
-                        : null,
-                  ),
-                  child: Wrap(
-                    spacing: 6,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      JournalShortcutBadge(shortcut: category.key),
-                      Text(_clean(category.label), style: JournalPalette.small),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        if (!showMap && visibleCategories.length > 1) const SizedBox(height: 6),
-        Expanded(
-          key: const ValueKey('journal-order-workspace'),
-          child: IndexedStack(
-            index: showMap ? 1 : 0,
-            sizing: StackFit.expand,
-            children: [
-              ExcludeFocus(
-                excluding: showMap,
-                child: tasks.isNotEmpty || _group == 3
-                    ? ListView(
-                        key: PageStorageKey(
-                          'journal-tasks:$_group:$_categoryId',
-                        ),
-                        padding: EdgeInsets.zero,
-                        children: [
-                          if (_group == 3)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 5),
-                              child: DecoratedBox(
-                                decoration: journalTabDecoration(
-                                  selected: false,
-                                  enabled:
-                                      controller.canNavigate && !undercover,
-                                ),
-                                child: TextButton(
-                                  key: const ValueKey('journal-plan-visit'),
-                                  onPressed:
-                                      controller.canNavigate && !undercover
-                                      ? () {
-                                          setState(() {
-                                            _targetId = null;
-                                            _targetSquadId = null;
-                                          });
-                                          unawaited(_prepareMapVisit());
-                                        }
-                                      : null,
-                                  style: TextButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 5,
-                                      vertical: 7,
-                                    ),
-                                    minimumSize: const Size(44, 44),
-                                    shape: const RoundedRectangleBorder(),
-                                  ),
-                                  child: const Row(
-                                    children: [
-                                      JournalOrderIcon(
-                                        type: ActivityType.visit,
-                                        size: 28,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          'Visit a location',
-                                          style: JournalPalette.body,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          for (final task in tasks) _taskButton(task),
-                        ],
-                      )
-                    : Center(
-                        child: Text(
-                          controller.busy
-                              ? 'Opening current orders…'
-                              : 'Choose an order group to see its tasks.',
-                          style: JournalPalette.small,
-                        ),
-                      ),
-              ),
-              ExcludeFocus(
-                excluding: !showMap,
-                child: KeyedSubtree(
-                  key: const ValueKey('journal-order-map'),
-                  child: _mapContext(),
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
+      // Cached rows must keep their own storage identity until the new reader
+      // arrives. A short cached category must not clamp another category's
+      // restored offset, including through native web accessibility scrolling.
+      taskStorageId: controller.busy && _orderBrowseTaskStorageId != null
+          ? _orderBrowseTaskStorageId!
+          : 'journal-tasks:$_group:$_categoryId',
+      taskScrollController: _orderTaskScroll,
+      tasks: [for (final task in tasks) _taskView(task, revision: revision)],
+      leadingTask: _group == 3 ? _visitTaskChoice() : null,
+      emptyMessage: controller.busy
+          ? 'Opening current orders…'
+          : 'Choose an order group to see its tasks.',
+      map: _mapContext(),
     );
   }
 
-  Widget _taskButton(ConsoleAction action) {
+  void _settleOrderTaskScroll() {
+    if (_orderTaskScroll.hasClients) {
+      // Ending an in-flight scroll persists its current offset to PageStorage
+      // before a category/reader transition can dispose the scroll position.
+      _orderTaskScroll.jumpTo(_orderTaskScroll.offset);
+    }
+  }
+
+  // A rendered or cached choice is never authority for a later reader. Capture
+  // its observed revision with the action before passing callbacks to views.
+  bool _isCurrentOrderChoice(ConsoleAction action, {required int revision}) =>
+      mounted &&
+      !controller.busy &&
+      activityFrame &&
+      console.revision.value == revision &&
+      console.actions.contains(action) &&
+      action.enabled &&
+      action.entityCategory == activityOrderFrame(console)!.actorId.toString();
+
+  void _browseOrderCategory(ConsoleAction category, {required int revision}) {
+    if (!_isCurrentOrderChoice(category, revision: revision)) return;
+    _settleOrderTaskScroll();
+    setState(() {
+      _categoryId = category.entityId;
+      _pendingOrder = null;
+      _ordersMap = false;
+    });
+    unawaited(controller.browseCategory(category, revision: revision));
+  }
+
+  OrganisationOrderTaskView _taskView(
+    ConsoleAction action, {
+    required int revision,
+  }) {
     final type = activityTypeForAction(action)!;
     final help = activityMechanics(type, actor: person);
-    final selected = hasPreparedOrder
-        ? activityTypeForAction(_pendingOrder!.action) == type
-        : person?.activity.type == type;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
-      child: MechanicsTooltip(
-        message:
-            '${help.summary}\n${help.factors}\n${help.cost}\n${help.unavailableReason ?? ''}\n${help.calculation?.text ?? ''}',
-        maxWidth: 520,
-        child: DecoratedBox(
-          decoration: journalTabDecoration(
-            selected: selected,
-            enabled: action.enabled,
-          ),
-          child: TextButton(
-            key: ValueKey('journal-activity:${action.entityId}'),
-            onPressed: action.enabled && !controller.busy
-                ? () => setState(() {
-                    _pendingOrder = (
-                      action: action,
-                      revision: console.revision.value,
-                    );
-                    _ordersMap = false;
-                  })
-                : null,
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: _compact ? 6 : 10,
-              ),
-              minimumSize: const Size(48, 48),
-              shape: const RoundedRectangleBorder(),
-            ),
-            child: Semantics(
-              label:
-                  'Prepare ${_clean(action.label)} · ${journalShortcutSpokenLabel(action.key)} shortcut${selected
-                      ? hasPreparedOrder
-                            ? ' · Prepared, awaiting confirmation'
-                            : ' · Currently assigned'
-                      : ''}${!action.enabled ? ' · Unavailable${help.unavailableReason == null ? '' : ': ${help.unavailableReason}'}' : ''}',
-              selected: selected,
-              excludeSemantics: true,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  JournalShortcutBadge(shortcut: action.key),
-                  const SizedBox(width: 8),
-                  if (!_compact) ...[
-                    JournalOrderIcon(type: type, size: 28),
-                    const SizedBox(width: 8),
-                  ],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _clean(action.label),
-                          style: JournalPalette.body.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: action.enabled
-                                ? JournalPalette.ink
-                                : JournalPalette.muted,
-                          ),
-                        ),
-                        if (selected)
-                          Text(
-                            hasPreparedOrder
-                                ? 'Prepared'
-                                : 'Currently assigned',
-                            style: JournalPalette.small.copyWith(
-                              color: hasPreparedOrder
-                                  ? JournalPalette.binding
-                                  : JournalPalette.olive,
-                            ),
-                          ),
-                        if (help.factors.isNotEmpty)
-                          Text(
-                            'Uses: ${help.factors}',
-                            style: JournalPalette.small,
-                          ),
-                        if (help.cost.isNotEmpty &&
-                            help.cost != 'No activity fee')
-                          Text(
-                            'Cost: ${help.cost}',
-                            style: JournalPalette.small,
-                          ),
-                        if (_showGuidance && selected)
-                          Text(help.summary, style: JournalPalette.small),
-                        if (!action.enabled)
-                          Text(
-                            help.unavailableReason == null
-                                ? 'Unavailable'
-                                : 'Unavailable: ${help.unavailableReason}',
-                            style: JournalPalette.small.copyWith(
-                              color: JournalPalette.danger,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+    final prepared = hasPreparedOrder;
+    return OrganisationOrderTaskView(
+      taskId: action.entityId,
+      type: type,
+      label: _clean(action.label),
+      shortcut: action.key,
+      enabled: action.enabled,
+      selected: prepared
+          ? activityTypeForAction(_pendingOrder!.action) == type
+          : person?.activity.type == type,
+      prepared: prepared,
+      tooltip:
+          '${help.summary}\n${help.factors}\n${help.cost}\n${help.unavailableReason ?? ''}\n${help.calculation?.text ?? ''}',
+      summary: help.summary,
+      factors: help.factors,
+      cost: help.cost,
+      unavailableReason: help.unavailableReason,
+      compact: _compact,
+      showGuidance: _showGuidance,
+      onPrepare: action.enabled && !controller.busy
+          ? () {
+              if (!_isCurrentOrderChoice(action, revision: revision)) return;
+              setState(() {
+                _pendingOrder = (action: action, revision: revision);
+                _ordersMap = false;
+              });
+            }
+          : null,
     );
   }
+
+  Widget _visitTaskChoice() => Padding(
+    padding: const EdgeInsets.only(bottom: 5),
+    child: DecoratedBox(
+      decoration: journalTabDecoration(
+        selected: false,
+        enabled: controller.canNavigate && !undercover,
+      ),
+      child: TextButton(
+        key: const ValueKey('journal-plan-visit'),
+        onPressed: controller.canNavigate && !undercover
+            ? () {
+                setState(() {
+                  _targetId = null;
+                  _targetSquadId = null;
+                });
+                unawaited(_prepareMapVisit());
+              }
+            : null,
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 7),
+          minimumSize: const Size(44, 44),
+          shape: const RoundedRectangleBorder(),
+        ),
+        child: const Row(
+          children: [
+            JournalOrderIcon(type: ActivityType.visit, size: 28),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text('Visit a location', style: JournalPalette.body),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 
   Widget _reportsContext(bool narrow) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -1324,6 +1325,16 @@ void main() {
       isFalse,
     );
     expect(_key('journal-confirm-order'), findsNothing);
+    final unavailable = _key('journal-activity:prostitution');
+    expect(unavailable, findsOneWidget);
+    expect(tester.widget<TextButton>(unavailable).onPressed, isNull);
+    await tester.ensureVisible(unavailable);
+    await _settle(tester);
+    final revision = engine.console.revision.value;
+    await tester.tap(unavailable);
+    await _settle(tester);
+    expect(engine.console.revision.value, revision);
+    expect(_key('journal-confirm-order'), findsNothing);
     priorConfirm();
     await _settle(tester);
     expect(
@@ -1334,6 +1345,219 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'retained task and category callbacks cannot replace the current actor draft',
+    (tester) async {
+      await mount(tester);
+      await business(tester);
+      final first = game.squad.first;
+      final next = game.squad[1];
+      final oldTask = tester
+          .widget<TextButton>(_key('journal-activity:donations'))
+          .onPressed!;
+      final oldCategory = tester
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, 'Illegal Fundraising'),
+          )
+          .onPressed!;
+      final before = campaignSnapshot();
+      reseedRNG(seed: 42061);
+      final rolls = List.generate(8, (_) => lcsRandom(100000));
+      reseedRNG(seed: 42061);
+      await _tap(tester, 'journal-member:${next.id}');
+      await _tap(tester, 'journal-activity:donations');
+      final revision = engine.console.revision.value;
+      final confirm = tester
+          .widget<FilledButton>(_key('journal-confirm-order'))
+          .onPressed!;
+      for (final retained in [oldTask, oldCategory]) {
+        retained();
+        await _settle(tester);
+        expect(activityOrderFrame(engine.console)?.actorId, next.id);
+        expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
+        expect(_key('journal-confirm-order'), findsOneWidget);
+        expect(find.text('Prepared · awaiting confirmation'), findsOneWidget);
+        expect(engine.console.revision.value, revision);
+        expect(campaignSnapshot(), before);
+      }
+      confirm();
+      await _settle(tester);
+      expect(first.activity.type, ActivityType.sellArt);
+      expect(next.activity.type, ActivityType.donations);
+      expect(activityOrderFrame(engine.console)?.actorId, next.id);
+      expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
+      expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'busy actor navigation displays cached tasks with no dispatch authority',
+    (tester) async {
+      await mount(tester);
+      await business(tester);
+      final journal = tester.widget<OrganisationJournal>(
+        find.byType(OrganisationJournal),
+      );
+      final previousTask = tester
+          .widget<TextButton>(_key('journal-activity:donations'))
+          .onPressed!;
+      final previousCategory = tester
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, 'Illegal Fundraising'),
+          )
+          .onPressed!;
+      final before = campaignSnapshot();
+      final next = game.squad[1];
+      await tester.tap(_key('journal-member:${next.id}'));
+      expect(journal.controller.busy, isTrue);
+      var busyFrames = 0;
+      for (var frame = 0; frame < 60; frame++) {
+        await tester.pump(const Duration(milliseconds: 1));
+        if (!journal.controller.busy) continue;
+        busyFrames++;
+        expect(
+          tester
+              .widget<TextButton>(_key('journal-activity:donations'))
+              .onPressed,
+          isNull,
+        );
+        expect(
+          tester
+              .widget<OutlinedButton>(
+                find.widgetWithText(OutlinedButton, 'Illegal Fundraising'),
+              )
+              .onPressed,
+          isNull,
+        );
+        previousTask();
+        previousCategory();
+        expect(campaignSnapshot(), before);
+      }
+      expect(busyFrames, greaterThan(0));
+      await _settle(tester);
+      expect(activityOrderFrame(engine.console)?.actorId, next.id);
+      expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
+      expect(_key('journal-confirm-order'), findsNothing);
+      expect(campaignSnapshot(), before);
+      await _tap(tester, 'journal-activity:donations');
+      await _tap(tester, 'journal-confirm-order');
+      expect(next.activity.type, ActivityType.donations);
+      expect(
+        game.squad
+            .where((person) => person != next)
+            .every((person) => person.activity.type == ActivityType.sellArt),
+        isTrue,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'enlarged task scroll survives category browsing, actor changes, map and revisit',
+    (tester) async {
+      await mount(tester, size: const Size(1024, 720));
+      await tester.tap(find.byTooltip('Reading size'));
+      await _settle(tester);
+      await tester.tap(find.text('150%'));
+      await _settle(tester);
+      await _tap(tester, 'journal-orders');
+      await _tap(tester, 'journal-order-group:1');
+      final before = campaignSnapshot();
+      final list = find.byKey(
+        const PageStorageKey('journal-tasks:1:acquisition'),
+      );
+      ScrollPosition position() => tester
+          .state<ScrollableState>(
+            find.descendant(of: list, matching: find.byType(Scrollable)),
+          )
+          .position;
+      expect(position().maxScrollExtent, greaterThan(0));
+      // Switch categories during a real scroll, before its end notification
+      // would normally persist the offset to PageStorage (as in web scrolling).
+      unawaited(
+        position().animateTo(
+          position().maxScrollExtent,
+          duration: const Duration(seconds: 1),
+          curve: Curves.linear,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+      var offset = position().pixels;
+      expect(offset, greaterThan(0));
+      expect(position().isScrollingNotifier.value, isTrue);
+      final controller = tester
+          .widget<OrganisationJournal>(find.byType(OrganisationJournal))
+          .controller;
+      Future<void> browse(String label, String cachedCategory) async {
+        await tester.tap(find.widgetWithText(OutlinedButton, label));
+        var busyFrames = 0;
+        for (var frame = 0; frame < 60; frame++) {
+          await tester.pump(const Duration(milliseconds: 1));
+          if (!controller.busy) continue;
+          busyFrames++;
+          expect(
+            find.byKey(PageStorageKey('journal-tasks:1:$cachedCategory')),
+            findsOneWidget,
+            reason: 'Cached rows retain their own category scroll identity.',
+          );
+        }
+        expect(busyFrames, greaterThan(0));
+        await _settle(tester);
+      }
+
+      await browse('Teaching Classes', 'acquisition');
+      await browse('Recruitment and Acquisition', 'teaching');
+      expect(position().pixels, closeTo(offset, .01));
+      // Also retain the full end offset through the hidden-pane/group path.
+      position().jumpTo(position().maxScrollExtent);
+      await _settle(tester);
+      offset = position().pixels;
+      final row = _key('journal-activity:makeFlag');
+      final taskFocus = Focus.of(
+        tester.element(
+          find.descendant(of: row, matching: find.byType(JournalShortcutBadge)),
+        ),
+      );
+      expect(taskFocus.canRequestFocus, isTrue);
+      await _tap(tester, 'journal-orders-map-toggle');
+      expect(taskFocus.canRequestFocus, isFalse);
+      taskFocus.requestFocus();
+      await tester.pump();
+      expect(taskFocus.hasFocus, isFalse);
+      final mapButton = find.byTooltip('Show location index');
+      final mapFocus = Focus.of(
+        tester.element(
+          find.descendant(of: mapButton, matching: find.byType(Icon)).first,
+        ),
+      );
+      expect(mapFocus.canRequestFocus, isTrue);
+      await _tap(tester, 'journal-order-group:0');
+      expect(_key('journal-order-map'), findsOneWidget);
+      await _tap(tester, 'journal-order-group:1');
+      expect(_key('journal-order-map'), findsOneWidget);
+      expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'd');
+      await _tap(tester, 'journal-orders-map-toggle');
+      expect(mapFocus.canRequestFocus, isFalse);
+      mapFocus.requestFocus();
+      await tester.pump();
+      expect(mapFocus.hasFocus, isFalse);
+      expect(position().pixels, closeTo(offset, .01));
+      final next = game.squad[1];
+      await _showCrewMember(tester, next.id);
+      await _tap(tester, 'journal-member:${next.id}');
+      expect(position().pixels, closeTo(offset, .01));
+      await _tap(tester, 'journal-reports');
+      await _tap(tester, 'journal-orders');
+      expect(activityOrderFrame(engine.console)?.actorId, next.id);
+      expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'd');
+      expect(position().pixels, closeTo(offset, .01));
+      expect(campaignSnapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'repeated assignments keep the nested category and affect only confirmed members',

@@ -240,6 +240,86 @@ try {
   await page.getByRole('menuitem', { name: '100%', exact: true }).click();
   await page.setViewportSize({ width: 1440, height: 1000 });
   report.checks.push('tasks-prioritise-choices-and-optional-map-retains-index-and-category');
+  // Exercise the actual task scroller at both supported acceptance layouts.
+  // This uses the same declared campaign; the later complete export comparison
+  // still permits only the two explicitly confirmed teaching assignments.
+  report.taskBrowserLayouts = [];
+  for (const layout of [
+    { width: 1280, height: 720, reading: '100%' },
+    { width: 1024, height: 720, reading: '150%' },
+  ]) {
+    await click(/^Reading size/);
+    await page.getByRole('menuitem', { name: layout.reading, exact: true }).click();
+    await page.setViewportSize({ width: layout.width, height: layout.height });
+    await click(/^Orders(?:$|\s)/);
+    await click(/^Personnel(?:$|\s)/);
+    await wait(/Recruitment and Acquisition/);
+    const lastTask = page.getByRole('button', { name: /^Prepare Procure a Wheelchair(?:$|\s)/ });
+    const firstTask = await page.getByRole('button', { name: /^Prepare / }).first().boundingBox();
+    assert.ok(firstTask);
+    await page.mouse.move(firstTask.x + firstTask.width * .7, firstTask.y + firstTask.height * .6);
+    await page.mouse.wheel(0, 2000);
+    await waitForUiSettled(page);
+    const bottom = await lastTask.boundingBox();
+    if (layout.reading === '150%') {
+      const firstAfterScroll = page.getByRole('button', { name: /^Prepare Recruiting(?:$|\s)/ });
+      const after = await firstAfterScroll.count() ? await firstAfterScroll.boundingBox() : null;
+      assert.ok(!after || after.y < firstTask.y - 50,
+        'The enlarged Acquisition journey must actually scroll its task list.');
+    }
+    assert.ok(bottom && bottom.y > 0 && bottom.y + bottom.height <= layout.height - 35,
+      'The last task must be reachable through the task scroller.');
+    async function assertRetainedScroll(step) {
+      const bounds = await lastTask.boundingBox();
+      assert.ok(bounds && Math.abs(bounds.y - bottom.y) < 2,
+        `Keep task scroll after ${step}: ${JSON.stringify({ bottom, bounds })}`);
+    }
+    await click('Teaching Classes');
+    await click('Recruitment and Acquisition');
+    await assertRetainedScroll('category round-trip');
+    await click(/^Map$/);
+    assert.equal(await lastTask.count(), 0, 'Hidden task rows leave browser semantics.');
+    await click(/^Tasks$/);
+    await assertRetainedScroll('map round-trip');
+    await click(new RegExp(`^Select crew ${escape(crew[0].name)}(?:$|\\s)`));
+    await click(new RegExp(`^Select crew ${escape(crew[1].name)}(?:$|\\s)`));
+    await assertRetainedScroll('actor change');
+    await click(/^Crew reports(?:$|\s)/);
+    await click(/^Orders(?:$|\s)/);
+    await assertRetainedScroll('Reports revisit');
+    await click(/^Prepare Make a Flag(?:$|\s)/);
+    await click(/^Order mechanics(?:$|\s)/);
+    const mechanics = page.getByRole('alertdialog');
+    await mechanics.waitFor();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Escape');
+    await waitForUiSettled(page);
+    assert.ok(await page.getByRole('button', { name: 'Confirm order', exact: true }).isEnabled());
+    await click(/^Cancel prepared order$/);
+    assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 0);
+    await assertRetainedScroll('help and draft cancellation');
+    await capture(`08-acquisition-scroll-${layout.width}x${layout.height}-${layout.reading.slice(0, -1)}`);
+    await click(/^Business(?:$|\s)/);
+    await click(/^Prepare Perform Live Music(?:$|\s)/);
+    await click('Confirm order');
+    await wait(/Legal Fundraising/);
+    assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 0);
+    await capture(`08-task-browser-${layout.width}x${layout.height}-${layout.reading.slice(0, -1)}`);
+    report.taskBrowserLayouts.push({ ...layout, taskScrollAnchor: bottom,
+      checks: ['category round-trip', 'map round-trip', 'actor change', 'Reports revisit',
+        'mechanics dismissal', 'draft cancellation', 'actor-only confirmation'] });
+    const confirmedMusic = await exportGame(`task-browser-${layout.width}-confirmed`);
+    const expectedMusic = structuredClone(before);
+    expectedMusic.lcs.pool.find(person => person.id === crew[1].id).activity = { type: 'sellMusic' };
+    assert.deepEqual(confirmedMusic, expectedMusic,
+      'Each layout confirmation changes only the intended actor through the original reader.');
+  }
+  await click(/^Reading size/);
+  await page.getByRole('menuitem', { name: '100%', exact: true }).click();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await click(/^Orders(?:$|\s)/);
+  await click(/^Personnel(?:$|\s)/);
+  await click('Teaching Classes');
   for (const member of crew.slice(0, 2)) {
     await click(new RegExp(`^Select crew ${escape(member.name)}(?:$|\\s)`));
     await click(/^Prepare Teach Liberal Arts(?:$|\s)/);

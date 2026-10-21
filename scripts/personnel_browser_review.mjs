@@ -94,7 +94,15 @@ async function exportGame(name) {
 async function search(text) {
   await top();
   const input = page.getByRole('textbox', { name: /Find anyone/ });
-  await input.fill(text); await waitForUiSettled(page);
+  // Let Flutter acknowledge the restored field's focus before sending keys;
+  // filling the semantics input immediately can leave the live query intact.
+  await input.click();
+  await waitForUiSettled(page);
+  await page.keyboard.press('Control+A');
+  await page.keyboard.type(text);
+  await page.waitForFunction(value => [...document.querySelectorAll('input,textarea')]
+    .some(node => node === document.activeElement && node.value === value), text);
+  await waitForUiSettled(page);
 }
 async function row(name, screenshot) {
   const target = await revealPersonnelDossier(page, name);

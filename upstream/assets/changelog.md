@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.2.7 — 2026-10-21
+
+* Keep the scrolled task position when switching Orders categories, opening and closing the map, or revisiting tasks, including at enlarged reading sizes.
+
 ## Underground Edition 0.2.6 — 2026-10-21
 
 * Keep pursuit controls aligned with their accessibility targets when changing reading size.
