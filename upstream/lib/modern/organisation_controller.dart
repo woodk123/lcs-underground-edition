@@ -38,6 +38,7 @@ class OrganisationController extends ChangeNotifier {
   String? _message;
   int? _selectedSquadId;
   int? _selectedPersonId;
+  (int?, int?)? _sourceSquadSelection;
 
   bool get busy => _busy;
   String? get message => _message;
@@ -724,6 +725,16 @@ class OrganisationController extends ChangeNotifier {
     // tab selection must never point at a different team from the one that
     // will receive the engine's equipment and operation commands.
     if (isHeadquarters || organisationOverviewFrame(console) != null) {
+      // Follow Classic's number-key selection only when the source selection
+      // changes. Unrelated repaints must preserve pointer-only inspection.
+      final sourceSelection = (
+        game.activeSquad?.id,
+        game.activeSquadMember?.id,
+      );
+      if (_sourceSquadSelection != sourceSelection) {
+        _sourceSquadSelection = sourceSelection;
+        _selectedPersonId = sourceSelection.$2;
+      }
       final changedSquad = _selectedSquadId != game.activeSquad?.id;
       _selectedSquadId = game.activeSquad?.id;
       if (changedSquad && selectedPerson?.squadId != _selectedSquadId) {

@@ -1778,6 +1778,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             Text(
               allocating
                   ? 'Drag crew between these pages, or use Add / Remove.'
+                  : _showSquadNumberKeys
+                  ? '1–6: select · repeat: profile · 0: clear'
                   : 'Select a name to inspect. Crew pool changes the team.',
               style: JournalPalette.small,
             ),
@@ -1786,7 +1788,19 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     ),
   );
 
+  bool get _showSquadNumberKeys =>
+      controller.isHeadquarters &&
+      controller.canNavigate &&
+      widget.section == 0 &&
+      widget.inspectedPerson == null &&
+      !undercover &&
+      !allocating;
+
   Widget _memberRow(Creature member) {
+    final squadIndex = game.squad.indexOf(member);
+    final numberKey = _showSquadNumberKeys && squadIndex >= 0
+        ? '${squadIndex + 1}'
+        : null;
     final injury = crewInjurySummary(member);
     final location = member.location?.getName(short: true) ?? 'In hiding';
     final showingOrders = _orders || activityFrame;
@@ -1897,6 +1911,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ),
         child: Row(
           children: [
+            if (numberKey != null) ...[
+              JournalShortcutBadge(shortcut: numberKey),
+              const SizedBox(width: 4),
+            ],
             Expanded(
               child: TextButton(
                 key: ValueKey('journal-member:${member.id}'),

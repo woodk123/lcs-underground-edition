@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.2.3 — 2026-10-21
+
+* Select squad members with 1–6 in the graphical headquarters roster, with visible number hints. Press the selected number again for their profile, or 0 to clear the selection, following Classic controls.
+
 ## Underground Edition 0.2.2 — 2026-10-21
 
 * Character legal status explains how wanted offences affect court cases, with Possible penalties help showing base prison time for current charges under current laws.
