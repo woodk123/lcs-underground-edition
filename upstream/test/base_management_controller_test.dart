@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/basemode/base_mode.dart';
+import 'package:lcs_new_age/basemode/base_security.dart';
+import 'package:lcs_new_age/basemode/flag.dart';
 import 'package:lcs_new_age/basemode/invest_in_location.dart';
 import 'package:lcs_new_age/basemode/review_mode.dart';
 import 'package:lcs_new_age/engine/base_management_context.dart';
@@ -59,6 +61,9 @@ class _BaseHarness {
               game.activeSquad = null;
               game.activeSafehouse = bases[(index + 1) % bases.length];
             }
+          case engine.Key.p:
+            final base = game.activeSquad?.site ?? game.activeSafehouse;
+            if (base != null) await prideOrProtest(base);
           case engine.Key.i:
             final base = game.activeSafehouse;
             if (base != null && base.upgradable && !base.siege.underSiege) {
@@ -158,6 +163,76 @@ void main() {
       engine.console.actions.singleWhere(
         (action) => action.entityType == type && action.entityId == id,
       );
+
+  test(
+    'surveillance warning retains exact Classic thresholds and faction weighting',
+    () {
+      final base = newBase('Security warehouse');
+      final protection = base.heatProtection;
+      expect(protection, greaterThan(0));
+      for (final (fraction, expected) in [
+        (0.0, null),
+        (.3, null),
+        (.3 + 1 / protection, 'Possible'),
+        (.6 + 1 / protection, 'Likely'),
+        (.9 + 1 / protection, 'Overt'),
+      ]) {
+        base.extraHeatFromCorps = (protection * fraction).floor();
+        expect(baseSurveillanceWarning(base), expected);
+        engine.erase();
+        printSafehouseSecurityBox(base);
+        final text = engine.console.buffer
+            .map((row) => row.map((cell) => cell.glyph).join())
+            .join('\n');
+        if (expected != null) expect(text, contains(expected));
+      }
+      base.extraHeatFromCorps = 0;
+      base.extraHeatFromCIA = (protection * .3).floor() * 2;
+      expect(baseSurveillanceWarning(base), isNull);
+      base.extraHeatFromCIA += 2;
+      expect(baseSurveillanceWarning(base), 'Possible');
+      base.extraHeatFromCIA = 0;
+      base.extraHeatFromRuralMobs = protection;
+      expect(baseSurveillanceWarning(base), 'Overt');
+    },
+  );
+
+  test(
+    'contextual flags open the selected base and cancel without purchasing',
+    () async {
+      final selected = newBase('Flag warehouse');
+      selected.loot.add(Item('WEAPON_22_REVOLVER'));
+      game.ledger.forceSetFunds(100);
+      final routes = start();
+      String snapshot() {
+        final state = game.gameState.toJson()
+          ..remove('activeSquadId')
+          ..remove('activeSafehouseId');
+        return jsonEncode(state);
+      }
+
+      final before = snapshot();
+      final label = flagHeadquartersChoice(selected).label;
+      expect(
+        await routes.openFlags(selected.id, expectedLabel: label),
+        isTrue,
+        reason: routes.message,
+      );
+      expect((game.activeSquad?.site ?? game.activeSafehouse)?.id, selected.id);
+      expect(engine.console.actions.any((a) => a.key == 'Escape'), isTrue);
+      expect(snapshot(), before);
+      engine.console.sendInput('Escape');
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(engine.console.screen, 'headquarters');
+      expect(snapshot(), before);
+      expect(
+        await routes.openFlags(selected.id, expectedLabel: 'obsolete action'),
+        isFalse,
+      );
+      expect(engine.console.screen, 'headquarters');
+      expect(snapshot(), before);
+    },
+  );
 
   test('unused shelters become bases when occupied, stocked or acquired', () {
     final site = newBase('Unused shelter')
@@ -751,6 +826,8 @@ void main() {
     (tester) async {
       final base = newBase('Visible warehouse');
       base.loot.add(Item('WEAPON_22_REVOLVER'));
+      base.heat = base.heatProtection + 1;
+      base.extraHeatFromCorps = base.heatProtection + 1;
       baseModeOptionsDisplay(game.activeSquad?.site);
       organisation = OrganisationController(console: engine.console);
       final before = jsonEncode(game.gameState.toJson());
@@ -775,6 +852,16 @@ void main() {
       expect(row.hitTestable(), findsOneWidget);
       await tester.tap(row);
       await tester.pump();
+      expect(
+        find.text('Heat ${base.heat} · Secrecy ${base.heatProtection}'),
+        findsOneWidget,
+      );
+      expect(find.text('Overt surveillance'), findsOneWidget);
+      expect(
+        find.text('Heat exceeds this base’s protection by 1.'),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('base-flags')), findsOneWidget);
       final stored = find.text(base.loot.single.equipTitle());
       await tester.ensureVisible(stored);
       await tester.pumpAndSettle();

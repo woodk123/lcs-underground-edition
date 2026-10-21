@@ -150,7 +150,7 @@ try {
       await hq(); await click(new RegExp(`^${tab}(?:$|[.\\s])`)); await screen(`tab-${tab.toLowerCase().replaceAll(' ', '-')}`);
     });
   }
-  for (const rail of ['People', 'Vehicles', 'Weapons', 'Orders', 'Crew pool']) {
+  for (const rail of ['All people', 'Vehicles', 'Equipment', 'Orders', 'Assign to squads']) {
     await journey(`rail-${rail}`, async () => {
       await hq(); await click(new RegExp(`^${rail}(?:$|[.\\s])`)); await screen(`rail-${rail.toLowerCase().replaceAll(' ', '-')}`);
     });
@@ -159,7 +159,7 @@ try {
     await hq(); await click(/^People(?:$|[.\s])/);
     await click(/^Leadership$/); await screen('people-leadership');
     await click(/^Captives$/); await screen('people-captives');
-    await click(/^Directory$/); await screen('people-directory');
+    await click(/^All people$/); await screen('people-directory');
   });
   await journey('media-production', async () => {
     await hq(); await click(/^Newspaper(?:$|\s)/);
@@ -203,7 +203,7 @@ try {
   });
   await journey('people-sort', async () => {
     await hq(); await click(/^People(?:$|[.\s])/);
-    await click(/^Roster tools/);
+    await click(/^Sort & reorder crew/);
     await click(/^T Sort Liberals/); await screen('people-sort');
     await page.keyboard.press('Escape');
     await click(/^Z Reorder Liberals/); await screen('people-reorder');
@@ -218,7 +218,7 @@ try {
     });
   }
   await journey('headquarters-command-menu', async () => {
-    await hq(); await click(/^More headquarters commands/); await screen('headquarters-command-menu');
+    await hq(); await click(/^HQ commands/); await screen('headquarters-command-menu');
     await page.keyboard.press('Escape');
   });
   await journey('field-guide', async () => {

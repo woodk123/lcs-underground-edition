@@ -51,6 +51,28 @@ class OrganisationOverviewFrame {
   final List<int> squadIds;
 }
 
+/// A task's display facts, authored by the original order reader.
+@immutable
+class ActivityOrderTask {
+  const ActivityOrderTask(this.typeId, this.label, {this.enabled = true});
+
+  final String typeId, label;
+  final bool enabled;
+}
+
+@immutable
+class ActivityOrderCategory {
+  ActivityOrderCategory(
+    this.id,
+    this.key,
+    this.label,
+    Iterable<ActivityOrderTask> tasks,
+  ) : tasks = List.unmodifiable(tasks);
+
+  final String id, key, label;
+  final List<ActivityOrderTask> tasks;
+}
+
 /// One actor's original daily-order menu and its read-only category previews.
 ///
 /// Original letter keys retain their original immediate assignment behavior.
@@ -65,7 +87,9 @@ class ActivityOrderFrame {
     required this.navigation,
     required Iterable<String> categoryKeys,
     this.selectedCategoryKey,
-  }) : categoryPreviewCommands = Map.unmodifiable({
+    Iterable<ActivityOrderCategory> catalog = const [],
+  }) : catalog = List.unmodifiable(catalog),
+       categoryPreviewCommands = Map.unmodifiable({
          for (final key in categoryKeys)
            key: String.fromCharCode(0xE100 + key.codeUnitAt(0)),
        });
@@ -76,6 +100,10 @@ class ActivityOrderFrame {
   final ConsoleNavigation navigation;
   final String? selectedCategoryKey;
   final Map<String, String> categoryPreviewCommands;
+
+  /// Source-authored display facts only; search must resolve a fresh action
+  /// through the matching category before preparing or executing a task.
+  final List<ActivityOrderCategory> catalog;
 
   int? categoryCodeForPreview(int command) {
     for (final entry in categoryPreviewCommands.entries) {

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
@@ -1154,6 +1155,106 @@ void main() {
     },
   );
 
+  for (final large in [false, true]) {
+    testWidgets(
+      'task search crosses categories with safe drafts and retained query, large=$large',
+      (tester) async {
+        journalReadingScale.value = large ? 1.5 : 1;
+        await mount(
+          tester,
+          size: large ? const Size(1024, 720) : const Size(1280, 900),
+        );
+        await business(tester);
+        if (large) {
+          for (final key in [
+            'journal-pool',
+            'journal-clipboard',
+            'journal-equipment',
+            'journal-order-group:0',
+            'journal-order-group:1',
+            'journal-order-group:2',
+            'journal-order-group:3',
+          ]) {
+            _insideViewport(tester, _key(key), const Size(1024, 720), key);
+            final text = find
+                .descendant(of: _key(key), matching: find.byType(Text))
+                .first;
+            expect(
+              tester.renderObject<RenderParagraph>(text).didExceedMaxLines,
+              isFalse,
+              reason:
+                  '$key must show its complete label at enlarged reading size.',
+            );
+          }
+        }
+        final actor = game.squad.first;
+        final before = campaignSnapshot();
+        final revision = engine.console.revision.value;
+        reseedRNG(seed: 9614);
+        final rolls = List.generate(12, (_) => lcsRandom(100000));
+        reseedRNG(seed: 9614);
+        await tester.enterText(_key('journal-order-search'), 'training');
+        await _settle(tester);
+        expect(engine.console.revision.value, revision);
+        expect(_key('journal-activity:study'), findsOneWidget);
+        expect(_key('journal-activity:donations'), findsNothing);
+        await _tap(tester, 'journal-activity:study');
+        expect(find.text('Prepared · awaiting confirmation'), findsOneWidget);
+        expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'e');
+        expect(campaignSnapshot(), before);
+        await _tap(tester, 'journal-cancel-order');
+        expect(campaignSnapshot(), before);
+        expect(
+          tester
+              .widget<TextField>(_key('journal-order-search'))
+              .controller!
+              .text,
+          'training',
+        );
+        await tester.enterText(_key('journal-order-search'), 'hacking');
+        await _settle(tester);
+        final unavailable = tester.widget<TextButton>(
+          _key('journal-activity:hacking'),
+        );
+        expect(unavailable.onPressed, isNull);
+        expect(campaignSnapshot(), before);
+        await tester.enterText(_key('journal-order-search'), 'money');
+        await _settle(tester);
+        await _tap(tester, 'journal-activity:donations');
+        final retained = tester
+            .widget<TextButton>(_key('journal-activity:donations'))
+            .onPressed;
+        await _tap(tester, 'journal-cancel-order');
+        await _tap(tester, 'journal-member:${game.squad[1].id}');
+        retained?.call();
+        await _settle(tester);
+        expect(_key('journal-confirm-order'), findsNothing);
+        expect(
+          tester
+              .widget<TextField>(_key('journal-order-search'))
+              .controller!
+              .text,
+          'money',
+        );
+        expect(campaignSnapshot(), before);
+        expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+        await _tap(tester, 'journal-activity:donations');
+        await _tap(tester, 'journal-confirm-order');
+        expect(game.squad[1].activity.type, ActivityType.donations);
+        expect(actor.activity.type, ActivityType.sellArt);
+        // Returning to the task browser retains search; typing never answers the game.
+        expect(
+          tester
+              .widget<TextField>(_key('journal-order-search'))
+              .controller!
+              .text,
+          'money',
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets(
     'group browsing, task staging and Cancel leave actual assignments and RNG intact',
     (tester) async {
@@ -1409,7 +1510,11 @@ void main() {
       await _settle(tester);
       await tester.tap(find.text('150%'));
       await _settle(tester);
-      await business(tester);
+      await _tap(tester, 'journal-orders');
+      // This unsupported 800x600 stress layout may scroll its navigation rail.
+      await tester.ensureVisible(_key('journal-order-group:0'));
+      await _settle(tester);
+      await _tap(tester, 'journal-order-group:0');
       final list = find.byKey(const PageStorageKey('journal-tasks:0:legal'));
       final scroll = find.descendant(
         of: list,
@@ -1543,6 +1648,10 @@ void main() {
             find.widgetWithText(OutlinedButton, 'Illegal Fundraising'),
           )
           .onPressed!;
+      final searchBounds = tester.getRect(_key('journal-order-search'));
+      final taskBounds = tester.getRect(
+        find.byKey(const PageStorageKey('journal-tasks:0:legal')),
+      );
       final before = campaignSnapshot();
       final next = game.squad[1];
       await tester.tap(_key('journal-member:${next.id}'));
@@ -1552,6 +1661,14 @@ void main() {
         await tester.pump(const Duration(milliseconds: 1));
         if (!journal.controller.busy) continue;
         busyFrames++;
+        expect(_key('journal-order-search'), findsOneWidget);
+        expect(tester.getRect(_key('journal-order-search')), searchBounds);
+        expect(
+          tester.getRect(
+            find.byKey(const PageStorageKey('journal-tasks:0:legal')),
+          ),
+          taskBounds,
+        );
         expect(
           tester
               .widget<TextButton>(_key('journal-activity:donations'))
@@ -2205,7 +2322,7 @@ void main() {
           .widget<FilledButton>(_key('journal-advance-day'))
           .onPressed!;
       final retainedCommands = tester
-          .widget<IconButton>(_key('journal-more-commands'))
+          .widget<TextButton>(_key('journal-more-commands'))
           .onPressed!;
       reseedRNG(seed: 181004);
       final rolls = List.generate(8, (_) => lcsRandom(100000));
@@ -2219,7 +2336,7 @@ void main() {
         isNull,
       );
       expect(
-        tester.widget<IconButton>(_key('journal-more-commands')).onPressed,
+        tester.widget<TextButton>(_key('journal-more-commands')).onPressed,
         isNull,
       );
       // Old footer callbacks must recheck local state, even though preparing a
@@ -3157,7 +3274,7 @@ void main() {
       final before = campaignSnapshot();
       await _tap(tester, 'journal-clipboard');
       await _tap(tester, 'personnel-tools');
-      expect(find.text('Roster tools'), findsOneWidget);
+      expect(find.text('Sort & reorder crew'), findsOneWidget);
       final sort = engine.console.actions.firstWhere(
         (action) => action.key == 't',
       );

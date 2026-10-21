@@ -24,6 +24,58 @@ import 'package:lcs_new_age/utils/colors.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 import 'package:pixel_snap/material.dart' hide Key;
 
+/// The exact HQ flag/protest choice, shared with contextual base controls.
+({String label, bool enabled, bool highlight}) flagHeadquartersChoice(
+  Site loc,
+) {
+  String label;
+  bool enabled;
+  bool highlight;
+  bool sieged = loc.siege.underSiege;
+  bool policeSiege = sieged && loc.siege.activeSiegeType == SiegeType.police;
+  bool ownsAnyFlag = loc.loot.any((i) => i is Flag);
+  if (policeSiege && loc.hasFlag) {
+    FlagType flag = loc.flyingFlag!;
+    if (flag.burns) {
+      if (!loc.siege.flagBurnUsed) {
+        label = "P - Protest: Burn the flag";
+        enabled = true;
+        highlight = true;
+      } else {
+        label = "P - Pride: Switch flags";
+        enabled = ownsAnyFlag;
+        highlight = false;
+      }
+    } else {
+      // Waving can be repeated, but only the first wave has any impact
+      enabled = true;
+      if (!loc.siege.flagWaveUsed) {
+        label = "P - Protest: Wave the flag defiantly";
+        highlight = true;
+      } else {
+        label = "P - Protest: Wave the flag again";
+        highlight = false;
+      }
+    }
+  } else if (sieged) {
+    label = loc.hasFlag ? "P - Pride: Switch flags" : "P - Pride: Raise a flag";
+    enabled = ownsAnyFlag;
+    highlight = false;
+  } else {
+    bool canSwitch = ownsAnyFlag || ledger.funds >= 20;
+    String price = ownsAnyFlag ? "" : "(\$20)";
+    enabled = canSwitch;
+    highlight = false;
+    if (loc.hasFlag) {
+      label = "P - Pride: Switch flags $price";
+    } else {
+      label = "P - Pride: Fly a flag here $price";
+    }
+  }
+
+  return (label: label, enabled: enabled, highlight: highlight);
+}
+
 Future<void> prideOrProtest(Site loc) async {
   bool sieged = loc.siege.underSiege;
   bool policeSiege = sieged && loc.siege.activeSiegeType == SiegeType.police;

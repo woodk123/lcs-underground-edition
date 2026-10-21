@@ -165,7 +165,7 @@ try {
     scene = 'street';
     const original = normalized.state;
     // Remove clothes with the actual equipment handler, preserving the weapon.
-    await click(/^Weapons(?:$|\s)/); await click(/Strip a Squad member/);
+    await click(/^Equipment(?:$|\s)/); await click(/Strip a Squad member/);
     await click(/^5 Yann Zedner(?:$|\s)/); await click(/^Enter Done$/);
     const stripped = (await snapshot('stripped-through-ui')).state;
     const actor = stripped.lcs.pool.find(p => p.id === 4);

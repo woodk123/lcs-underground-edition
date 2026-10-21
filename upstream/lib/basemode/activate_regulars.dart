@@ -175,20 +175,33 @@ Future<void> assignTask(Creature c) async {
     _activity(ActivityType.none, "X - Lay Low for Now", state != 0);
     addOptionText(19, 40, "?", "? - About the Selected Activity");
     addOptionText(20, 40, "Enter", "Enter - Confirm Selection");
-    if (state == Key.a) {
-      _activismSubmenu(c);
-    } else if (state == Key.b) {
-      _legalSubmenu();
-    } else if (state == Key.c) {
-      _illegalSubmenu(c);
-    } else if (state == Key.d) {
-      _acquisitionSubmenu(c);
-    } else if (state == Key.e) {
-      _educationSubmenu(c);
-    } else if (state == Key.t) {
-      _teachingSubmenu();
-    } else if (state == Key.m) {
-      _medicalSubmenu(c);
+    final catalog = _orderCatalog(c, canInterrogateHostages, canDisposeCorpses);
+    final selectedCategory = catalog
+        .where(
+          (category) =>
+              category.key.isNotEmpty && category.key.codeUnitAt(0) == state,
+        )
+        .firstOrNull;
+    if (selectedCategory != null) {
+      _y = 10;
+      for (final task in selectedCategory.tasks) {
+        _subActivity(
+          ActivityType.values.byName(task.typeId),
+          task.label,
+          greyOut: !task.enabled,
+        );
+      }
+      if (state == Key.d) {
+        _y++;
+        mvaddstrc(_y++, 40, midGray, "Laundry and mending clothing are");
+        mvaddstrc(_y++, 40, midGray, "handled by Liberals set to Lay Low.");
+      } else if (state == Key.m) {
+        _y++;
+        mvaddstrc(_y++, 40, midGray, "Capable medics will always provide");
+        mvaddstrc(_y++, 40, midGray, "medical care to themselves or others");
+        mvaddstrc(_y++, 40, midGray, "in the same location.  This does not");
+        mvaddstrc(_y++, 40, midGray, "interfere with other tasks.");
+      }
     }
     _activityFooter(c);
     console.annotateActionEntity(
@@ -211,6 +224,7 @@ Future<void> assignTask(Creature c) async {
             action.entityCategory == c.id.toString(),
       ),
       navigation: console.navigation!,
+      catalog: catalog,
       categoryKeys: const ['a', 'b', 'c', 'd', 'e', 't', 'm'],
       selectedCategoryKey: state == 0 ? null : String.fromCharCode(state),
     );
@@ -350,32 +364,85 @@ void _subActivity(ActivityType activity, String desc, {bool greyOut = false}) {
   _activity(activity, desc, false, x: 40, grayOut: greyOut);
 }
 
-void _activismSubmenu(Creature c) {
-  _y = 10;
-  _subActivity(ActivityType.communityService, "1 - Community Service");
-  _subActivity(ActivityType.trouble, "2 - Liberal Disobedience");
-  _subActivity(ActivityType.graffiti, "3 - Graffiti");
+// The same read-only facts render Classic's current submenu and power search.
+List<ActivityOrderCategory> _orderCatalog(
+  Creature c,
+  bool canInterrogate,
+  bool canDispose,
+) => [
+  ActivityOrderCategory('activism', 'a', 'Liberal Activism', _activismTasks(c)),
+  ActivityOrderCategory('legal', 'b', 'Legal Fundraising', _legalTasks()),
+  ActivityOrderCategory(
+    'illegal',
+    'c',
+    'Illegal Fundraising',
+    _illegalTasks(c),
+  ),
+  ActivityOrderCategory(
+    'acquisition',
+    'd',
+    'Recruitment and Acquisition',
+    _acquisitionTasks(c),
+  ),
+  ActivityOrderCategory(
+    'education',
+    'e',
+    'Education and Learning',
+    _educationTasks(c),
+  ),
+  ActivityOrderCategory('teaching', 't', 'Teaching Classes', _teachingTasks()),
+  ActivityOrderCategory(
+    'medical',
+    'm',
+    'Medical and Support',
+    _medicalTasks(c),
+  ),
+  ActivityOrderCategory('operations', '', 'Operations and rest', [
+    ActivityOrderTask(
+      ActivityType.interrogation.name,
+      'I - Interact with a Prisoner',
+      enabled: canInterrogate,
+    ),
+    ActivityOrderTask(
+      ActivityType.bury.name,
+      'Z - Corpse Disposal',
+      enabled: canDispose,
+    ),
+    ActivityOrderTask(ActivityType.none.name, 'X - Lay Low for Now'),
+  ]),
+];
+
+List<ActivityOrderTask> _activismTasks(Creature c) {
   String needHackerDen = c.site?.compound.hackerDen != true
       ? " (Need Den)"
       : "";
-  _subActivity(
-    ActivityType.hacking,
-    "4 - Hacking$needHackerDen",
-    greyOut:
-        c.rawSkill[Skill.computers]! == 0 || c.site?.compound.hackerDen != true,
-  );
-  _subActivity(
-    ActivityType.writeGuardian,
-    "5 - Write Liberal Guardian Articles",
-  );
   String needVideoRoom = c.site?.compound.videoRoom != true
       ? " (Need Studio)"
       : "";
-  _subActivity(
-    ActivityType.streamGuardian,
-    "6 - Stream Guardian TV$needVideoRoom",
-    greyOut: c.site?.compound.videoRoom != true,
-  );
+  return [
+    ActivityOrderTask(
+      ActivityType.communityService.name,
+      "1 - Community Service",
+    ),
+    ActivityOrderTask(ActivityType.trouble.name, "2 - Liberal Disobedience"),
+    ActivityOrderTask(ActivityType.graffiti.name, "3 - Graffiti"),
+    ActivityOrderTask(
+      ActivityType.hacking.name,
+      "4 - Hacking$needHackerDen",
+      enabled:
+          !(c.rawSkill[Skill.computers]! == 0 ||
+              c.site?.compound.hackerDen != true),
+    ),
+    ActivityOrderTask(
+      ActivityType.writeGuardian.name,
+      "5 - Write Liberal Guardian Articles",
+    ),
+    ActivityOrderTask(
+      ActivityType.streamGuardian.name,
+      "6 - Stream Guardian TV$needVideoRoom",
+      enabled: !(c.site?.compound.videoRoom != true),
+    ),
+  ];
 }
 
 void _activismChoice(Creature c, int choice) {
@@ -406,12 +473,16 @@ void _activismDefault(Creature c, {bool noCommunityService = false}) {
   }
 }
 
-void _legalSubmenu() {
-  _y = 10;
-  _subActivity(ActivityType.donations, "1 - Solicit Donations");
-  _subActivity(ActivityType.sellTshirts, "2 - Make and Sell Clothing");
-  _subActivity(ActivityType.sellArt, "3 - Make and Sell Art");
-  _subActivity(ActivityType.sellMusic, "4 - Perform Live Music");
+List<ActivityOrderTask> _legalTasks() {
+  return [
+    ActivityOrderTask(ActivityType.donations.name, "1 - Solicit Donations"),
+    ActivityOrderTask(
+      ActivityType.sellTshirts.name,
+      "2 - Make and Sell Clothing",
+    ),
+    ActivityOrderTask(ActivityType.sellArt.name, "3 - Make and Sell Art"),
+    ActivityOrderTask(ActivityType.sellMusic.name, "4 - Perform Live Music"),
+  ];
 }
 
 void _legalChoice(Creature c, int choice) {
@@ -442,23 +513,25 @@ void _legalDefault(Creature c) {
   }
 }
 
-void _illegalSubmenu(Creature c) {
-  _y = 10;
-  _subActivity(ActivityType.sellDrugs, "1 - Sell Weed Brownies");
-  _subActivity(
-    ActivityType.prostitution,
-    "2 - Prostitution",
-    greyOut: c.age < 18,
-  );
+List<ActivityOrderTask> _illegalTasks(Creature c) {
   String needHackerDen = c.site?.compound.hackerDen != true
       ? " (Need Den)"
       : "";
-  _subActivity(
-    ActivityType.ccfraud,
-    "3 - Credit Card Fraud$needHackerDen",
-    greyOut:
-        c.rawSkill[Skill.computers] == 0 || c.site?.compound.hackerDen != true,
-  );
+  return [
+    ActivityOrderTask(ActivityType.sellDrugs.name, "1 - Sell Weed Brownies"),
+    ActivityOrderTask(
+      ActivityType.prostitution.name,
+      "2 - Prostitution",
+      enabled: !(c.age < 18),
+    ),
+    ActivityOrderTask(
+      ActivityType.ccfraud.name,
+      "3 - Credit Card Fraud$needHackerDen",
+      enabled:
+          !(c.rawSkill[Skill.computers] == 0 ||
+              c.site?.compound.hackerDen != true),
+    ),
+  ];
 }
 
 void _illegalChoice(Creature c, int choice) {
@@ -483,21 +556,18 @@ void _illegalDefault(Creature c) {
   }
 }
 
-void _acquisitionSubmenu(Creature c) {
-  _y = 10;
-  _subActivity(ActivityType.recruiting, "1 - Recruiting");
-  _subActivity(ActivityType.stealCars, "2 - Steal a Car");
-  _subActivity(ActivityType.makeClothing, "3 - Make Clothing");
-  _subActivity(ActivityType.makeFlag, "4 - Make a Flag");
-  _subActivity(
-    ActivityType.wheelchair,
-    "5 - Procure a Wheelchair",
-    greyOut: c.canWalk || c.hasWheelchair,
-  );
-
-  _y++;
-  mvaddstrc(_y++, 40, midGray, "Laundry and mending clothing are");
-  mvaddstrc(_y++, 40, midGray, "handled by Liberals set to Lay Low.");
+List<ActivityOrderTask> _acquisitionTasks(Creature c) {
+  return [
+    ActivityOrderTask(ActivityType.recruiting.name, "1 - Recruiting"),
+    ActivityOrderTask(ActivityType.stealCars.name, "2 - Steal a Car"),
+    ActivityOrderTask(ActivityType.makeClothing.name, "3 - Make Clothing"),
+    ActivityOrderTask(ActivityType.makeFlag.name, "4 - Make a Flag"),
+    ActivityOrderTask(
+      ActivityType.wheelchair.name,
+      "5 - Procure a Wheelchair",
+      enabled: !(c.canWalk || c.hasWheelchair),
+    ),
+  ];
 }
 
 Future<void> _acquisitionChoice(Creature c, int choice) async {
@@ -516,10 +586,14 @@ void _acquisitionDefault(Creature c) {
   }
 }
 
-void _educationSubmenu(Creature c) {
-  _y = 10;
-  _subActivity(ActivityType.study, "1 - Practice a Skill (Free)");
-  _subActivity(ActivityType.takeClass, "2 - Take Paid Classes (\$30/day)");
+List<ActivityOrderTask> _educationTasks(Creature c) {
+  return [
+    ActivityOrderTask(ActivityType.study.name, "1 - Practice a Skill (Free)"),
+    ActivityOrderTask(
+      ActivityType.takeClass.name,
+      "2 - Take Paid Classes (\$30/day)",
+    ),
+  ];
 }
 
 Future<void> _educationChoice(Creature c, int choice) async {
@@ -535,11 +609,15 @@ Future<void> _educationChoice(Creature c, int choice) async {
   }
 }
 
-void _teachingSubmenu() {
-  _y = 10;
-  _subActivity(ActivityType.teachLiberalArts, "1 - Teach Liberal Arts");
-  _subActivity(ActivityType.teachCovert, "2 - Teach Covert Ops");
-  _subActivity(ActivityType.teachFighting, "3 - Teach Fighting");
+List<ActivityOrderTask> _teachingTasks() {
+  return [
+    ActivityOrderTask(
+      ActivityType.teachLiberalArts.name,
+      "1 - Teach Liberal Arts",
+    ),
+    ActivityOrderTask(ActivityType.teachCovert.name, "2 - Teach Covert Ops"),
+    ActivityOrderTask(ActivityType.teachFighting.name, "3 - Teach Fighting"),
+  ];
 }
 
 void _teachingChoice(Creature c, int choice) {
@@ -548,19 +626,14 @@ void _teachingChoice(Creature c, int choice) {
   if (choice == 3) c.activity = Activity(ActivityType.teachFighting);
 }
 
-void _medicalSubmenu(Creature c) {
-  _y = 10;
-  _subActivity(
-    ActivityType.clinic,
-    "1 - Go to the Hospital",
-    greyOut: c.blood >= c.maxBlood,
-  );
-  //_subActivity(ActivityType.augment, "2 - Augment a Liberal");
-  _y++;
-  mvaddstrc(_y++, 40, midGray, "Capable medics will always provide");
-  mvaddstrc(_y++, 40, midGray, "medical care to themselves or others");
-  mvaddstrc(_y++, 40, midGray, "in the same location.  This does not");
-  mvaddstrc(_y++, 40, midGray, "interfere with other tasks.");
+List<ActivityOrderTask> _medicalTasks(Creature c) {
+  return [
+    ActivityOrderTask(
+      ActivityType.clinic.name,
+      "1 - Go to the Hospital",
+      enabled: !(c.blood >= c.maxBlood),
+    ),
+  ];
 }
 
 void _medicalChoice(Creature c, int choice) {

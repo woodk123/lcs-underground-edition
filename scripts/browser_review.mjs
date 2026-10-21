@@ -253,9 +253,27 @@ try {
   assert.ok(await page.getByRole('button', { name: 'Confirm order', exact: true }).isEnabled());
   report.checks.push('mechanics-modal-keeps-draft-and-blocks-game-shortcuts');
   await click(/^Cancel prepared order$/); // Explicit pointer cancellation preserves this source menu.
+  const searchTasks = async (suffix) => {
+    const input = page.getByRole('textbox', { name: /Search all tasks/ });
+    await input.fill('training');
+    await wait(/Prepare Practice a Skill/);
+    await click(/^Prepare Practice a Skill/);
+    assert.ok(await page.getByRole('button', { name: 'Confirm order', exact: true }).isEnabled());
+    await capture(`task-search-${suffix}`);
+    await click(/^Cancel prepared order$/);
+    assert.equal(await input.inputValue(), 'training');
+    await input.fill('money');
+    await wait(/Prepare Solicit Donations/);
+    await click(/^Prepare Solicit Donations/);
+    await click(/^Cancel prepared order$/);
+    await click(/^Clear task search$/);
+    report.checks.push(`task-search-${suffix}-crosses-categories-and-cancels`);
+  };
+  await searchTasks('desktop');
   await click(/^Reading size/);
   await page.getByRole('menuitem', { name: '150%', exact: true }).click();
   await page.setViewportSize({ width: 1024, height: 720 });
+  await searchTasks('1024x720-at150');
   await click(/^Prepare Solicit Donations(?:$|\s)/);
   await capture('05-order-brief-1024x720-at150');
   await click(/^Order mechanics(?:$|\s)/);
@@ -456,11 +474,10 @@ try {
   await capture('17-profile-member-switch-keeps-skills-tab');
   await click(/^Back to directory/);
   await wait(/Personnel directory/);
-  // The global directory has an Equipment utility; profile/equipment rails
-  // retain their original Weapons label.
+  // Equipment has the same name in the directory and squad rail.
   await click(/^Equipment$/);
   await wait(/Increase ammo allocation/);
-  assert.equal((await uiText()).split('\n').filter(line => line.trim() === 'Equipment').length, 1);
+  assert.ok((await uiText()).includes('Equipment'));
   assert.doesNotMatch(await uiText(), /Crew & choices|Equip the Squad|Cursors -/);
   await click(new RegExp(`^Select crew ${escape(crew[1].name)}(?:$|\\s)`));
   const selectedEquipment = page.getByRole('button', { name: new RegExp(`^2 ${escape(crew[1].name)}(?:$|\\s)`) });

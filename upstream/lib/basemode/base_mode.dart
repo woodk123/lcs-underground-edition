@@ -1,10 +1,8 @@
-import 'dart:ui';
-
-import 'package:collection/collection.dart';
 import 'package:lcs_new_age/basemode/activate_regulars.dart';
 import 'package:lcs_new_age/basemode/activate_sleepers.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/basemode/base_actions.dart';
+import 'package:lcs_new_age/basemode/base_security.dart';
 import 'package:lcs_new_age/basemode/blind_time_log.dart';
 import 'package:lcs_new_age/basemode/disbanding.dart';
 import 'package:lcs_new_age/basemode/flag.dart';
@@ -25,8 +23,6 @@ import 'package:lcs_new_age/engine/organisation_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/gamestate/squad.dart';
 import 'package:lcs_new_age/gamestate/time.dart';
-import 'package:lcs_new_age/items/flag.dart';
-import 'package:lcs_new_age/items/flag_type.dart';
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/location/siege.dart';
 import 'package:lcs_new_age/location/site.dart';
@@ -568,58 +564,14 @@ SiegeBriefing _siegeBriefing(Site loc) {
 }
 
 void addFlagButton(int y, int x, Site loc) {
-  String label;
-  bool enabled;
-  bool highlight;
-  bool sieged = loc.siege.underSiege;
-  bool policeSiege = sieged && loc.siege.activeSiegeType == SiegeType.police;
-  bool ownsAnyFlag = loc.loot.any((i) => i is Flag);
-  if (policeSiege && loc.hasFlag) {
-    FlagType flag = loc.flyingFlag!;
-    if (flag.burns) {
-      if (!loc.siege.flagBurnUsed) {
-        label = "P - Protest: Burn the flag";
-        enabled = true;
-        highlight = true;
-      } else {
-        label = "P - Pride: Switch flags";
-        enabled = ownsAnyFlag;
-        highlight = false;
-      }
-    } else {
-      // Waving can be repeated, but only the first wave has any impact
-      enabled = true;
-      if (!loc.siege.flagWaveUsed) {
-        label = "P - Protest: Wave the flag defiantly";
-        highlight = true;
-      } else {
-        label = "P - Protest: Wave the flag again";
-        highlight = false;
-      }
-    }
-  } else if (sieged) {
-    label = loc.hasFlag ? "P - Pride: Switch flags" : "P - Pride: Raise a flag";
-    enabled = ownsAnyFlag;
-    highlight = false;
-  } else {
-    bool canSwitch = ownsAnyFlag || ledger.funds >= 20;
-    String price = ownsAnyFlag ? "" : "(\$20)";
-    enabled = canSwitch;
-    highlight = false;
-    if (loc.hasFlag) {
-      label = "P - Pride: Switch flags $price";
-    } else {
-      label = "P - Pride: Fly a flag here $price";
-    }
-  }
-
+  final choice = flagHeadquartersChoice(loc);
   addOptionText(
     y,
     x,
     "p",
-    label,
-    baseColorKey: highlight ? "G" : "w",
-    enabledWhen: enabled,
+    choice.label,
+    baseColorKey: choice.highlight ? "G" : "w",
+    enabledWhen: choice.enabled,
   );
 }
 
@@ -644,27 +596,17 @@ void printSafehouseSecurityBox(Site site) {
     mvaddstrc(11, 2, lightGray, "Secrecy: ");
     addstrc(heat > heatProtection ? red : darkGray, "$heatProtection");
   }
-  int extrajudicialHeat = [
-    site.extraHeatFromCIA ~/ 2,
-    site.extraHeatFromCCS,
-    site.extraHeatFromCorps,
-    site.extraHeatFromRuralMobs * 2,
-  ].max;
-  if (extrajudicialHeat > heatProtection * 0.3) {
+  final description = baseSurveillanceWarning(site);
+  if (description != null) {
     setColor(lightGray);
     mvaddstr(12, 1, "│                │");
     mvaddstr(13, 1, "│                │");
     mvaddstr(14, 1, "└────────────────┘");
-    Color color = darkGray;
-    String description = "Possible";
-    if (extrajudicialHeat > heatProtection * 0.6) {
-      color = midGray;
-      description = "Likely";
-    }
-    if (extrajudicialHeat > heatProtection * 0.9) {
-      color = red;
-      description = "Overt";
-    }
+    final color = switch (description) {
+      'Overt' => red,
+      'Likely' => midGray,
+      _ => darkGray,
+    };
     mvaddstrc(12, 4, color, description);
     mvaddstrc(13, 4, color, "Surveillance");
   }

@@ -32,6 +32,7 @@ import 'package:lcs_new_age/modern/location_details.dart';
 import 'package:lcs_new_age/modern/location_help.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/order_mechanics_dialog.dart';
+import 'package:lcs_new_age/modern/order_search.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/modern/organisation_crew_pool.dart';
 import 'package:lcs_new_age/modern/organisation_crew_roster.dart';
@@ -115,6 +116,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   final ScrollController _narrowJournalScroll = ScrollController();
   final ScrollController _sectionScroll = ScrollController();
   final ScrollController _orderTaskScroll = ScrollController();
+  final TextEditingController _orderSearch = TextEditingController();
+  int _searchRequest = 0;
   final PersonnelDirectoryController _personnel =
       PersonnelDirectoryController();
 
@@ -123,6 +126,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     _narrowJournalScroll.dispose();
     _sectionScroll.dispose();
     _orderTaskScroll.dispose();
+    _orderSearch.dispose();
     _personnel.dispose();
     super.dispose();
   }
@@ -138,6 +142,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   String? _areaId, _targetId, _categoryId;
   _PreparedOrder? _pendingOrder;
   List<ConsoleAction> _orderBrowseActions = const [];
+  List<ActivityOrderCategory> _orderBrowseCatalog = const [];
   String? _orderBrowseTaskStorageId;
   int? _targetSquadId;
   bool _visitRouting = false;
@@ -290,6 +295,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   /// Drop pointer-only drafts before a source key and expose the current source
   /// roster rather than a differently sorted/searchable presentation directory.
   void prepareForSourceInput() {
+    _orderSearch.clear();
+    _searchRequest++;
     setState(() {
       _pendingOrder = null;
       _targetId = null;
@@ -397,6 +404,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     if (oldWidget.section != widget.section) {
       revealSection(widget.section);
       _visitRequest++;
+      _searchRequest++;
       _pendingOrder = null;
       _pool = false;
       _poolPerson = null;
@@ -804,7 +812,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                     children: [
                       const Expanded(
                         child: Text(
-                          'Roster tools',
+                          'Sort & reorder crew',
                           style: JournalPalette.heading,
                         ),
                       ),
@@ -1286,8 +1294,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   }
 
   Widget _innerRail(bool narrow) => SizedBox(
-    width: _compact && widget.textScale > 1.1
-        ? 88
+    width: widget.textScale > 1.1
+        ? 104
         : narrow
         ? 64
         : 72,
@@ -1360,7 +1368,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ),
         _railButton(
           Icons.manage_accounts,
-          'Crew pool',
+          'Assign to\nsquads',
           _pool || allocating,
           controller.canNavigate
               ? () async {
@@ -1376,10 +1384,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 }
               : null,
           key: 'journal-pool',
+          semanticLabel: 'Assign to squads',
         ),
         _railButton(
           Icons.assignment_ind,
-          'People',
+          'All people',
           console.navigation?.section == 'people' ||
               console.journalProfile != null,
           controller.canNavigate
@@ -1412,7 +1421,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ),
         _railButton(
           Icons.inventory_2,
-          'Weapons',
+          'Equipment',
           console.navigation?.section == 'equipment',
           controller.canNavigate ? () => _openManagementSection('e') : null,
           key: 'journal-equipment',
@@ -1458,7 +1467,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               selected: selected,
               excludeSemantics: true,
               label: semanticLabel ?? label,
-              child: _compact
+              child: _compact || widget.textScale > 1.1
                   ? Container(
                       alignment: Alignment.center,
                       constraints: const BoxConstraints(minHeight: 44),
@@ -1480,7 +1489,13 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                       ),
                     )
                   : SizedBox(
-                      height: 32 + MediaQuery.textScalerOf(context).scale(12),
+                      height:
+                          32 +
+                          MediaQuery.textScalerOf(context).scale(
+                            key == 'journal-pool' || key == 'journal-clipboard'
+                                ? 24
+                                : 12,
+                          ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 2,
@@ -1509,7 +1524,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                             ),
                             Text(
                               label,
-                              maxLines: 1,
+                              maxLines:
+                                  key == 'journal-pool' ||
+                                      key == 'journal-clipboard'
+                                  ? 2
+                                  : 1,
                               textAlign: TextAlign.center,
                               overflow: TextOverflow.ellipsis,
                               style: JournalPalette.small.copyWith(
@@ -1538,8 +1557,13 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     });
     _pendingOrder = null;
     final selected = person;
-    if (group == 3 && !undercover) return;
     if (selected == null) return;
+    if (group == 3 &&
+        !undercover &&
+        selected.squad?.activity.type != null &&
+        selected.squad!.activity.type != ActivityType.none) {
+      return;
+    }
     if (!activityFrame && !await controller.openOrders(selected.id)) return;
     if (!mounted || group == 3 && !undercover) return;
     final id = undercover
@@ -2003,7 +2027,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                       children: [
                         const Expanded(
                           child: Text(
-                            'Roster tools',
+                            'Sort & reorder crew',
                             style: JournalPalette.heading,
                           ),
                         ),
@@ -2178,6 +2202,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     // only while controls are disabled; dispatch always uses the fresh frame.
     if (activityFrame && !controller.busy) {
       _orderBrowseActions = List.of(console.actions);
+      _orderBrowseCatalog = activityOrderFrame(console)!.catalog;
       _orderBrowseTaskStorageId = 'journal-tasks:$_group:$_categoryId';
     }
     final browsingActions = controller.busy
@@ -2211,6 +2236,17 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         )
         .toList();
     final revision = console.revision.value;
+    final catalog = controller.busy
+        ? _orderBrowseCatalog
+        : activityOrderFrame(console)?.catalog ??
+              const <ActivityOrderCategory>[];
+    final searching = _orderSearch.text.trim().isNotEmpty && catalog.isNotEmpty;
+    final results = [
+      for (final category in catalog)
+        for (final task in category.tasks)
+          if (matchesOrderSearch(category, task, _orderSearch.text))
+            (category, task),
+    ];
     return OrganisationOrderWorkspace(
       heading: planning
           ? 'Choose a destination'
@@ -2224,30 +2260,137 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               _settleOrderTaskScroll();
               setState(() => _ordersMap = !_ordersMap);
             },
-      categories: [
-        for (final category in visibleCategories)
-          OrganisationOrderCategoryView(
-            label: _clean(category.label),
-            shortcut: category.key,
-            selected: _categoryId == category.entityId,
-            onSelect: category.enabled && !controller.busy
-                ? () => _browseOrderCategory(category, revision: revision)
-                : null,
-          ),
-      ],
+      search: catalog.isEmpty
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: TextField(
+                key: const ValueKey('journal-order-search'),
+                controller: _orderSearch,
+                style: JournalPalette.body,
+                decoration: InputDecoration(
+                  isDense: true,
+                  labelText: 'Search all tasks',
+                  hintText: 'Try money, training, recruit or healing',
+                  prefixIcon: const Icon(Icons.search, size: 18),
+                  suffixIcon: _orderSearch.text.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Clear task search',
+                          onPressed: () {
+                            _orderSearch.clear();
+                            _searchChanged('');
+                          },
+                          icon: const Icon(Icons.clear, size: 18),
+                        ),
+                ),
+                onChanged: _searchChanged,
+              ),
+            ),
+      categories: searching
+          ? []
+          : [
+              for (final category in visibleCategories)
+                OrganisationOrderCategoryView(
+                  label: _clean(category.label),
+                  shortcut: category.key,
+                  selected: _categoryId == category.entityId,
+                  onSelect: category.enabled && !controller.busy
+                      ? () => _browseOrderCategory(category, revision: revision)
+                      : null,
+                ),
+            ],
       // Cached rows must keep their own storage identity until the new reader
       // arrives. A short cached category must not clamp another category's
       // restored offset, including through native web accessibility scrolling.
-      taskStorageId: controller.busy && _orderBrowseTaskStorageId != null
+      taskStorageId: searching
+          ? 'journal-task-search:${_orderSearch.text.trim()}'
+          : controller.busy && _orderBrowseTaskStorageId != null
           ? _orderBrowseTaskStorageId!
           : 'journal-tasks:$_group:$_categoryId',
       taskScrollController: _orderTaskScroll,
-      tasks: [for (final task in tasks) _taskView(task, revision: revision)],
-      leadingTask: _group == 3 ? _visitTaskChoice() : null,
+      tasks: searching
+          ? [
+              for (final (category, task) in results)
+                _searchTaskView(category, task, revision: revision),
+            ]
+          : [for (final task in tasks) _taskView(task, revision: revision)],
+      leadingTask: !searching && _group == 3 ? _visitTaskChoice() : null,
       emptyMessage: controller.busy
           ? 'Opening current orders…'
+          : searching
+          ? 'No matching tasks. Try another word or clear the search.'
           : 'Choose an order group to see its tasks.',
       map: _mapContext(),
+    );
+  }
+
+  void _searchChanged(String _) {
+    _settleOrderTaskScroll();
+    setState(() {
+      _pendingOrder = null;
+      _searchRequest++;
+    });
+  }
+
+  OrganisationOrderTaskView _searchTaskView(
+    ActivityOrderCategory category,
+    ActivityOrderTask task, {
+    required int revision,
+  }) {
+    final type = ActivityType.values.byName(task.typeId);
+    final help = activityMechanics(type, actor: person);
+    return OrganisationOrderTaskView(
+      taskId: task.typeId,
+      type: type,
+      label: _clean(task.label),
+      shortcut: '',
+      categoryLabel: category.label,
+      enabled: task.enabled,
+      selected: hasPreparedOrder
+          ? _pendingOrder!.action.entityId == task.typeId
+          : person?.activity.type == type,
+      prepared: hasPreparedOrder,
+      tooltip: '${help.summary}\n${help.cost}',
+      summary: help.summary,
+      factors: help.factors,
+      cost: help.cost,
+      unavailableReason: help.unavailableReason,
+      compact: _compact,
+      showGuidance: _showGuidance,
+      onPrepare: !task.enabled || controller.busy
+          ? null
+          : () async {
+              final request = ++_searchRequest;
+              final actorId = person?.id;
+              final action = await controller.resolveOrderSearch(
+                category,
+                task,
+                revision: revision,
+              );
+              if (!mounted ||
+                  request != _searchRequest ||
+                  person?.id != actorId ||
+                  action == null) {
+                return;
+              }
+              _settleOrderTaskScroll();
+              setState(() {
+                _categoryId = category.id == 'operations' ? null : category.id;
+                _group = switch (category.id) {
+                  'legal' || 'illegal' => 0,
+                  'activism' => 2,
+                  'operations' => 3,
+                  _ => 1,
+                };
+                _pendingOrder = (
+                  action: action,
+                  revision: console.revision.value,
+                );
+              });
+              FocusScope.of(context).unfocus();
+              _restoreInputFocus();
+            },
     );
   }
 
@@ -3048,16 +3191,22 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     final dateFunds =
         '${game.day} ${getMonth(game.month).substring(0, 3)} ${game.year}  ·  \$${game.ledger.funds}';
     final utilities = <Widget>[
-      IconButton(
-        tooltip: 'More headquarters commands',
-        key: const ValueKey('journal-more-commands'),
-        onPressed: controller.canNavigate && !unconfirmedDraft
-            ? _headquartersCommands
-            : null,
-        icon: const Icon(
-          Icons.menu_book,
-          color: JournalPalette.brassLight,
-          size: 21,
+      Tooltip(
+        message: 'More headquarters commands',
+        child: TextButton.icon(
+          key: const ValueKey('journal-more-commands'),
+          onPressed: controller.canNavigate && !unconfirmedDraft
+              ? _headquartersCommands
+              : null,
+          icon: const Icon(
+            Icons.menu_book,
+            color: JournalPalette.brassLight,
+            size: 21,
+          ),
+          label: Text(
+            'HQ commands',
+            style: JournalPalette.small.copyWith(color: JournalPalette.card),
+          ),
         ),
       ),
       Expanded(
@@ -3216,7 +3365,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         // Four utility buttons plus a readable two-line date/funds label.
         // Measure the command labels so wider fonts wrap before they overflow.
         final minimumUtilitiesWidth =
-            4 * kMinInteractiveDimension +
+            3 * kMinInteractiveDimension +
+            60 +
+            _textWidth(context, 'HQ commands', JournalPalette.small) +
             _textWidth(context, dateFunds, JournalPalette.small) / 2;
         final requiredWidth =
             minimumUtilitiesWidth +

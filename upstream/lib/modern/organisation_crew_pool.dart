@@ -52,7 +52,7 @@ class OrganisationCrewPoolView extends StatelessWidget {
       builder: (context, incoming, rejected) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Available crew', style: JournalPalette.heading),
+          const Text('Assign to squads', style: JournalPalette.heading),
           DropdownButton<Skill>(
             value: sortSkill,
             isExpanded: true,

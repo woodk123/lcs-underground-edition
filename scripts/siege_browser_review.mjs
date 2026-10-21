@@ -175,7 +175,7 @@ const lose = /^(?:D[-\s]*)?(?:Try to lose them|Dash away)$/i;
 async function headquartersAction(name) {
   if (await available(name)) return click(name);
   if (!baselineRun) throw Error(`Siege response is hidden: ${name}: ${await text()}`);
-  await click(/^More headquarters commands$/);
+  await click(/^HQ commands/);
   const menu = page.getByRole('menuitem', { name }).first();
   await menu.click(); await page.waitForTimeout(180);
 }

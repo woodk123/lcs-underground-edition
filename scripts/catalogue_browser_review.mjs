@@ -132,10 +132,10 @@ try {
     }
     // The source equipment reader consolidates/sorts freshly supplied stock.
     // Let that ordinary setup finish before baselining read-only inspection.
-    await click(/^Weapons(?:$|[.\s])/); await wait(/Equip the Squad|Equipment/);
+    await click(/^Equipment(?:$|[.\s])/); await wait(/Equip the Squad|Equipment/);
     await page.keyboard.press('Escape'); await wait(/Save & exit/);
     const before = await exportGame('before-inspection');
-    await click(/^Weapons(?:$|[.\s])/); await wait(/Equip the Squad|Equipment/);
+    await click(/^Equipment(?:$|[.\s])/); await wait(/Equip the Squad|Equipment/);
     for (const [guide, id] of [[/^Weapons guide/, 'weapons'], [/^Clothing & armour guide/, 'clothing']]) {
       await click(guide); await capture(`guide-${id}`);
       await page.getByRole('button', { name: 'Close decision guide', exact: true }).click();

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## Underground Edition 0.3.0 — 2026-10-21
+
+* Search daily orders across every category using task names or goals such as money, training, recruiting and healing. Search results prepare the original order for confirmation, with unavailable choices explained.
+* Find Equipment under the same name throughout the journal, with clearer All people, Assign to squads and Sort & reorder crew controls. Headquarters commands now have a visible label.
+* Compare base Heat with Secrecy and see surveillance warnings beside security facilities. Flag and protest actions are available at the selected base with their original labels and costs.
+* Task cards distinguish preparing an order with the mouse or focused control from assigning it immediately with its original game key.
+
 ## Underground Edition 0.2.7 — 2026-10-21
 
 * Keep the scrolled task position when switching Orders categories, opening and closing the map, or revisiting tasks, including at enlarged reading sizes.

@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lcs_new_age/basemode/base_security.dart';
+import 'package:lcs_new_age/basemode/flag.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/engine/base_management_context.dart';
 import 'package:lcs_new_age/engine/console.dart';
@@ -423,32 +425,76 @@ class JournalBasesViewState extends State<JournalBasesView> {
     ]);
   }
 
-  Widget _facilities(
-    Site site,
-  ) => _card('Security & facilities', Icons.shield_outlined, [
-    Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final upgrade in CompoundUpgrade.values.where(
-          (upgrade) => upgrade.isActiveOn(site),
-        ))
-          Chip(label: Text(_upgradeName(upgrade))),
-        if (!CompoundUpgrade.values.any((upgrade) => upgrade.isActiveOn(site)))
-          const Text('No compound upgrades installed.'),
-      ],
-    ),
-    if (site.discreet)
-      const Text('Hidden location', style: JournalPalette.small),
-    if (site.siege.underSiege && site.siege.lightsOff)
-      _note('Power is cut during the siege.', danger: true),
-    if (site.siege.underSiege && site.compound.cameras && site.siege.camerasOff)
-      _note('Security cameras are off during the siege.', danger: true),
-    const SizedBox(height: 5),
-    Text('Heat ${site.heat}', style: JournalPalette.small),
-    const SizedBox(height: 6),
-    _rent(site),
-  ]);
+  Widget _facilities(Site site) {
+    final flag = flagHeadquartersChoice(site);
+    return _card('Security & facilities', Icons.shield_outlined, [
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final upgrade in CompoundUpgrade.values.where(
+            (upgrade) => upgrade.isActiveOn(site),
+          ))
+            Chip(label: Text(_upgradeName(upgrade))),
+          if (!CompoundUpgrade.values.any(
+            (upgrade) => upgrade.isActiveOn(site),
+          ))
+            const Text('No compound upgrades installed.'),
+        ],
+      ),
+      if (site.discreet)
+        const Text('Hidden location', style: JournalPalette.small),
+      if (site.siege.underSiege && site.siege.lightsOff)
+        _note('Power is cut during the siege.', danger: true),
+      if (site.siege.underSiege &&
+          site.compound.cameras &&
+          site.siege.camerasOff)
+        _note('Security cameras are off during the siege.', danger: true),
+      const SizedBox(height: 5),
+      Text(
+        'Heat ${site.heat} · Secrecy ${site.heatProtection}',
+        key: const ValueKey('base-security-comparison'),
+        style: JournalPalette.body.copyWith(
+          color: site.heat > site.heatProtection
+              ? JournalPalette.danger
+              : JournalPalette.ink,
+        ),
+      ),
+      Text(
+        site.heat > site.heatProtection
+            ? 'Heat exceeds this base’s protection by ${site.heat - site.heatProtection}.'
+            : 'Heat is within this base’s protection.',
+        style: JournalPalette.small,
+      ),
+      const Text(
+        'Secrecy protects against exposure. These values are not raid percentages.',
+        style: JournalPalette.small,
+      ),
+      if (baseSurveillanceWarning(site) case final warning?)
+        _note('$warning surveillance', danger: true),
+      const SizedBox(height: 8),
+      Text(
+        site.hasFlag ? 'Flying: ${site.flyingFlag!.name}' : 'No flag flying.',
+        style: JournalPalette.small,
+      ),
+      TextButton.icon(
+        key: const ValueKey('base-flags'),
+        onPressed:
+            !_busy &&
+                !isAvailableShelter(site) &&
+                !_validPurchase &&
+                flag.enabled
+            ? () => _route(
+                () => _routes.openFlags(site.id, expectedLabel: flag.label),
+              )
+            : null,
+        icon: const Icon(Icons.flag_outlined),
+        label: Text(flag.label.replaceFirst(RegExp(r'^P - '), '')),
+      ),
+      const SizedBox(height: 6),
+      _rent(site),
+    ]);
+  }
 
   Widget _rent(Site site) {
     final rent = baseRentSummary(site);

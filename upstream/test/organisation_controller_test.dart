@@ -787,6 +787,85 @@ void main() {
   }
 
   test(
+    'search catalogue agrees with every source category and rejects stale results',
+    () async {
+      final actor = game.squad.first;
+      final journal = start();
+      expect(await journal.openOrders(actor.id), isTrue);
+      final before = campaignSnapshot();
+      reseedRNG(seed: 44628);
+      final rolls = List.generate(12, (_) => lcsRandom(100000));
+      reseedRNG(seed: 44628);
+      final original = activityOrderFrame(engine.console)!;
+      final originalRevision = engine.console.revision.value;
+      final staleCategory = original.catalog.first;
+      final staleTask = staleCategory.tasks.first;
+      for (final categoryId in original.catalog.map(
+        (category) => category.id,
+      )) {
+        final frame = activityOrderFrame(engine.console)!;
+        final category = frame.catalog.singleWhere(
+          (category) => category.id == categoryId,
+        );
+        for (final typeId in category.tasks.map((task) => task.typeId)) {
+          final current = activityOrderFrame(engine.console)!;
+          final currentCategory = current.catalog.singleWhere(
+            (category) => category.id == categoryId,
+          );
+          final task = currentCategory.tasks.singleWhere(
+            (task) => task.typeId == typeId,
+          );
+          final result = await journal.resolveOrderSearch(
+            currentCategory,
+            task,
+            revision: engine.console.revision.value,
+          );
+          if (task.enabled) {
+            expect(result, isNotNull, reason: task.label);
+            expect(engine.console.actions, contains(same(result)));
+            expect(result!.entityId, task.typeId);
+            expect(result.label, task.label);
+            expect(result.entityCategory, actor.id.toString());
+          } else {
+            expect(result, isNull, reason: task.label);
+          }
+          expect(campaignSnapshot(), before);
+        }
+      }
+      expect(
+        await journal.resolveOrderSearch(
+          staleCategory,
+          staleTask,
+          revision: originalRevision,
+        ),
+        isNull,
+      );
+      expect(campaignSnapshot(), before);
+      expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+      final frame = activityOrderFrame(engine.console)!;
+      final category = frame.catalog.singleWhere(
+        (category) => category.id == 'legal',
+      );
+      final task = category.tasks.singleWhere(
+        (task) => task.typeId == 'donations',
+      );
+      final action = await journal.resolveOrderSearch(
+        category,
+        task,
+        revision: engine.console.revision.value,
+      );
+      expect(
+        await journal.commitOrder(
+          action!,
+          revision: engine.console.revision.value,
+        ),
+        isTrue,
+      );
+      expect(actor.activity.type, ActivityType.donations);
+    },
+  );
+
+  test(
     'all seven regular categories preview without changing an order',
     () async {
       final person = game.pool.first;

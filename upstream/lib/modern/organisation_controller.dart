@@ -464,6 +464,43 @@ class OrganisationController extends ChangeNotifier {
         return _dispatchKey(preview);
       });
 
+  /// Search facts have no dispatch authority. Open their source category
+  /// without assigning its default, then return that reader's exact action.
+  Future<ConsoleAction?> resolveOrderSearch(
+    ActivityOrderCategory category,
+    ActivityOrderTask task, {
+    required int revision,
+  }) async {
+    ConsoleAction? result;
+    await _run(() async {
+      final frame = activityOrderFrame(console);
+      if (frame == null ||
+          console.revision.value != revision ||
+          !frame.catalog.contains(category) ||
+          !category.tasks.contains(task) ||
+          !task.enabled) {
+        return false;
+      }
+      if (category.key.isNotEmpty) {
+        final preview = frame.categoryPreviewCommands[category.key];
+        if (preview == null || !await _dispatchKey(preview)) return false;
+      }
+      final current = activityOrderFrame(console);
+      if (current == null || current.actorId != frame.actorId) return false;
+      result = console.actions
+          .where(
+            (action) =>
+                action.entityType == 'activity' &&
+                action.entityId == task.typeId &&
+                action.entityCategory == frame.actorId.toString() &&
+                action.enabled,
+          )
+          .firstOrNull;
+      return result != null;
+    });
+    return result;
+  }
+
   /// Confirm applies exactly one staged source task, then closes only its own
   /// ordinary confirmation menu. Required skill/crafting/prisoner/name choices
   /// remain explicit and are never filled or dismissed automatically.

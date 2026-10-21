@@ -262,7 +262,7 @@ try {
   await click(/Select squad First-week field team/);
   await capture('03-form-new-two-person-squad');
 
-  await click(/^Weapons(?:$|\s)/);
+  await click(/^Equipment(?:$|\s)/);
   await wait(/Increase ammo allocation/);
   await click(new RegExp(`^1 ${escape(fieldMember.name)}.*Unequip weapon`, 's'));
   const weaponName = current.lcs.pool.find(person => person.id === fieldMember.id).equippedWeapon.typeName;

@@ -676,7 +676,7 @@ void main() {
           .widget<FilledButton>(_key('journal-advance-day'))
           .onPressed!;
       final retainedCommands = tester
-          .widget<IconButton>(_key('journal-more-commands'))
+          .widget<TextButton>(_key('journal-more-commands'))
           .onPressed!;
       reseedRNG(seed: 181006);
       final rolls = List.generate(8, (_) => lcsRandom(100000));
@@ -696,7 +696,7 @@ void main() {
         isNull,
       );
       expect(
-        tester.widget<IconButton>(_key('journal-more-commands')).onPressed,
+        tester.widget<TextButton>(_key('journal-more-commands')).onPressed,
         isNull,
       );
       retainedAdvance();
@@ -719,7 +719,7 @@ void main() {
         isNotNull,
       );
       expect(
-        tester.widget<IconButton>(_key('journal-more-commands')).onPressed,
+        tester.widget<TextButton>(_key('journal-more-commands')).onPressed,
         isNotNull,
       );
       expect(_snapshot(), beforePurchase);

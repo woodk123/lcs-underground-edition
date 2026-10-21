@@ -331,7 +331,7 @@ class PersonnelDirectory extends StatelessWidget {
                           onPressed: enabled ? onTools : null,
                           icon: const Icon(Icons.tune, size: 15),
                           label: const Text(
-                            'Roster tools',
+                            'Sort & reorder crew',
                             style: JournalPalette.small,
                           ),
                         ),

@@ -20,6 +20,7 @@ class OrganisationOrderWorkspace extends StatelessWidget {
     required this.map,
     this.onToggleMap,
     this.leadingTask,
+    this.search,
   });
 
   final String heading;
@@ -27,11 +28,12 @@ class OrganisationOrderWorkspace extends StatelessWidget {
   final List<OrganisationOrderCategoryView> categories;
   final String taskStorageId;
   final ScrollController taskScrollController;
-  final List<OrganisationOrderTaskView> tasks;
+  final List<Widget> tasks;
   final String emptyMessage;
   final Widget map;
   final VoidCallback? onToggleMap;
   final Widget? leadingTask;
+  final Widget? search;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -71,11 +73,12 @@ class OrganisationOrderWorkspace extends StatelessWidget {
                   const Padding(
                     padding: EdgeInsets.only(top: 3, bottom: 6),
                     child: Text(
-                      'Original task keys assign immediately · Back keys keep the original menu flow',
+                      'Click: prepare, then confirm · Task key: assign immediately',
                       key: ValueKey('journal-orders-keyboard-help'),
                       style: JournalPalette.small,
                     ),
                   ),
+                  if (search != null) search!,
                   if (categories.length > 1)
                     Wrap(spacing: 4, runSpacing: 3, children: categories),
                   if (categories.length > 1) const SizedBox(height: 6),
@@ -169,6 +172,7 @@ class OrganisationOrderTaskView extends StatelessWidget {
     required this.compact,
     required this.showGuidance,
     this.onPrepare,
+    this.categoryLabel,
   });
 
   final String? taskId;
@@ -186,6 +190,9 @@ class OrganisationOrderTaskView extends StatelessWidget {
   final bool compact;
   final bool showGuidance;
   final VoidCallback? onPrepare;
+
+  /// Search results open another source category; its keys are not active yet.
+  final String? categoryLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -212,7 +219,7 @@ class OrganisationOrderTaskView extends StatelessWidget {
             ),
             child: Semantics(
               label:
-                  'Prepare $label · ${journalShortcutSpokenLabel(shortcut)} shortcut${selected
+                  'Prepare $label${categoryLabel == null ? ' · Assign immediately with ${journalShortcutSpokenLabel(shortcut)}' : ' · $categoryLabel'}${selected
                       ? prepared
                             ? ' · Prepared, awaiting confirmation'
                             : ' · Currently assigned'
@@ -222,8 +229,6 @@ class OrganisationOrderTaskView extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  JournalShortcutBadge(shortcut: shortcut),
-                  const SizedBox(width: 8),
                   if (!compact) ...[
                     JournalOrderIcon(type: type, size: 28),
                     const SizedBox(width: 8),
@@ -240,6 +245,29 @@ class OrganisationOrderTaskView extends StatelessWidget {
                                 ? JournalPalette.ink
                                 : JournalPalette.muted,
                           ),
+                        ),
+                        if (categoryLabel != null)
+                          Text(categoryLabel!, style: JournalPalette.small),
+                        Wrap(
+                          spacing: 10,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Text(
+                              'Click: Prepare order',
+                              style: JournalPalette.small,
+                            ),
+                            if (categoryLabel == null)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'Assign now: ',
+                                    style: JournalPalette.small,
+                                  ),
+                                  JournalShortcutBadge(shortcut: shortcut),
+                                ],
+                              ),
+                          ],
                         ),
                         if (selected)
                           Text(

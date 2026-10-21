@@ -166,7 +166,7 @@ class JournalPeopleViewState extends State<JournalPeopleView> {
                 selected: _scope == scope,
                 selectedColor: JournalPalette.selected,
                 label: Text(switch (scope) {
-                  JournalPeopleScope.people => 'Directory',
+                  JournalPeopleScope.people => 'All people',
                   JournalPeopleScope.leadership => 'Leadership',
                   JournalPeopleScope.captives => 'Captives',
                 }),

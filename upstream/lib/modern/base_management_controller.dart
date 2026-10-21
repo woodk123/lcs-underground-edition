@@ -38,18 +38,44 @@ class BaseManagementController extends ChangeNotifier {
     if (site == null) return _fail('This location is no longer an LCS base.');
     final reason = baseInvestmentUnavailableReason(site);
     if (reason != null) return _fail(reason);
+    if (!await _openBaseHeadquarters(siteId, requireUnselectedSquad: true)) {
+      return false;
+    }
+    return await _sendKey('i') && console.screen == 'base-investment';
+  });
+
+  Future<bool> openFlags(int siteId, {required String expectedLabel}) =>
+      _run(() async {
+        if (!await _openBaseHeadquarters(siteId)) return false;
+        final action = _action('p');
+        if (action == null ||
+            action.label != stripConsoleColors(expectedLabel).trim() ||
+            !action.enabled) {
+          return _fail('The flag action has changed. Choose it again.');
+        }
+        return _send(action);
+      });
+
+  Future<bool> _openBaseHeadquarters(
+    int siteId, {
+    bool requireUnselectedSquad = false,
+  }) async {
+    if (!organisationBases().any((site) => site.id == siteId)) {
+      return _fail('This location is no longer an LCS base.');
+    }
     if (!await organisation.returnToHeadquarters()) return false;
     final maxSteps = organisationBases().length + 1;
     for (var step = 0; step < maxSteps; step++) {
-      if (game.activeSquad == null && game.activeSafehouse?.id == siteId) {
-        return await _sendKey('i') && console.screen == 'base-investment';
+      if ((!requireUnselectedSquad || game.activeSquad == null) &&
+          (game.activeSquad?.site ?? game.activeSafehouse)?.id == siteId) {
+        return true;
       }
       if (console.screen != 'headquarters' || !await _sendKey('z')) {
         return false;
       }
     }
     return _fail('The selected base has changed. Choose it again.');
-  });
+  }
 
   Future<bool> openStores() => _run(() async {
     final reason = storesUnavailableReason();
