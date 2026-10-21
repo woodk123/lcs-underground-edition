@@ -137,7 +137,7 @@ void main() {
     'post-operation treatment notice has a working journal Continue',
     (tester) async {
       tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(800, 600);
+      tester.view.physicalSize = const Size(1024, 720);
       journalReadingScale.value = 1.5;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);

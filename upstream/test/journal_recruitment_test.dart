@@ -177,7 +177,7 @@ void main() {
 
   Future<void> mount(
     WidgetTester tester, {
-    Size size = const Size(800, 600),
+    Size size = const Size(1024, 720),
     double scale = 1.5,
   }) async {
     tester.view.physicalSize = size;
@@ -252,7 +252,7 @@ void main() {
   });
 
   testWidgets(
-    'long session list scrolls within the reader at 800x600 and 150%',
+    'long session list scrolls within the reader at 1024x720 and 150%',
     (tester) async {
       for (var i = 0; i < 15; i++) {
         final another =
@@ -289,7 +289,7 @@ void main() {
         ..location = game.sites.firstWhere(
           (s) => s.type == SiteType.homelessEncampment,
         );
-      tester.view.physicalSize = const Size(800, 600);
+      tester.view.physicalSize = const Size(1024, 720);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -297,7 +297,7 @@ void main() {
         MaterialApp(
           home: MediaQuery(
             data: const MediaQueryData(
-              size: Size(800, 600),
+              size: Size(1024, 720),
               textScaler: TextScaler.linear(1.5),
             ),
             child: Scaffold(

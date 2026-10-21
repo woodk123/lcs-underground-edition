@@ -279,7 +279,7 @@ void main() {
 
   for (final (size, scale) in [
     (const Size(1280, 800), 1.0),
-    (const Size(800, 600), 1.5),
+    (const Size(1024, 720), 1.5),
     (const Size(390, 844), 2.0),
   ]) {
     testWidgets('raid pursuers precede a full crew at $size/$scale', (
@@ -495,7 +495,7 @@ void main() {
   ) async {
     final semantics = tester.ensureSemantics();
     try {
-      await mount(tester, size: const Size(800, 600), fullCommands: true);
+      await mount(tester, size: const Size(1024, 720), fullCommands: true);
       final frame = pursuitContext(engine.console);
       final revision = engine.console.revision.value;
       final before = _snapshot();
@@ -517,7 +517,12 @@ void main() {
         final paintedBounds = tester.getRect(_action('p'));
         expect(semanticBounds.top, closeTo(paintedBounds.top, .01));
         expect(semanticBounds.bottom, closeTo(paintedBounds.bottom, .01));
-        expect(semanticBounds.bottom, lessThanOrEqualTo(600));
+        expect(
+          semanticBounds.bottom,
+          lessThanOrEqualTo(
+            tester.view.physicalSize.height / tester.view.devicePixelRatio,
+          ),
+        );
         expect(_action('p').hitTestable(), findsOneWidget);
       }
 
@@ -589,16 +594,21 @@ void main() {
   });
 
   testWidgets(
-    'car actions stay reachable at 800x600 and 150 percent reading size',
+    'car actions stay reachable at 1024x720 and 150 percent reading size',
     (tester) async {
-      await mount(tester, size: const Size(800, 600), scale: 1.5);
+      await mount(tester, size: const Size(1024, 720), scale: 1.5);
       expect(find.text('Car pursuit').hitTestable(), findsOneWidget);
       expect(
         find.byKey(const ValueKey('journal-pursuit-status')).hitTestable(),
         findsOneWidget,
       );
       expect(_action('p').hitTestable(), findsOneWidget);
-      expect(tester.getRect(_action('p')).bottom, lessThanOrEqualTo(600));
+      expect(
+        tester.getRect(_action('p')).bottom,
+        lessThanOrEqualTo(
+          tester.view.physicalSize.height / tester.view.devicePixelRatio,
+        ),
+      );
       await tester.drag(
         find.byKey(const ValueKey('journal-pursuit-scroll')),
         const Offset(0, -600),

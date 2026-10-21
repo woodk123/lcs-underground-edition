@@ -138,7 +138,7 @@ void main() {
 
   for (final size in [
     const Size(1280, 800),
-    const Size(800, 600),
+    const Size(1024, 720),
     const Size(390, 844),
   ]) {
     testWidgets('journal legislation keeps one source continuation at $size', (
@@ -157,7 +157,7 @@ void main() {
       engine.addOptionText(24, 0, 'Enter', 'Enter - Continue');
       final reader = engine.getKey();
       await tester.pumpAndSettle();
-      if (size.width == 800) journalReadingScale.value = 1.5;
+      if (size.width == 1024) journalReadingScale.value = 1.5;
       await tester.pumpAndSettle();
       expect(find.text('Watch the votes').hitTestable(), findsOneWidget);
       expect(
@@ -234,7 +234,7 @@ void main() {
           }
         });
         await tester.pumpAndSettle();
-        if (size.width == 800) journalReadingScale.value = 1.5;
+        if (size.width == 1024) journalReadingScale.value = 1.5;
         await tester.pumpAndSettle();
         expect(find.byType(JournalLegislationView), findsOneWidget);
         expect(find.text('Signed into law'), findsOneWidget);

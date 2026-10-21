@@ -121,7 +121,7 @@ void main() {
   );
 
   for (final viewport in [
-    (const Size(800, 600), 1.5),
+    (const Size(1024, 720), 1.5),
     (const Size(390, 844), 2.0),
   ]) {
     testWidgets(

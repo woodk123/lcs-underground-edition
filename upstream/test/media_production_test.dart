@@ -288,7 +288,7 @@ void main() {
     bool enabled = true,
   }) async {
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(800, 600);
+    tester.view.physicalSize = const Size(1024, 720);
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
@@ -334,7 +334,7 @@ void main() {
   }
 
   testWidgets(
-    'production is readable at 800x600 and 150%, prepares source orders without saving',
+    'production is readable at 1024x720 and 150%, prepares source orders without saving',
     (tester) async {
       final requests = <MediaProductionRequest>[];
       var openedPeople = 0;

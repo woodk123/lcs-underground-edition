@@ -183,7 +183,7 @@ void main() {
 
   for (final size in [
     const Size(1280, 720),
-    const Size(800, 600),
+    const Size(1024, 720),
     const Size(360, 640),
   ]) {
     for (final scale in [1.0, 1.5]) {

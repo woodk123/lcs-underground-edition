@@ -34,7 +34,7 @@ void main() {
   for (final size in [
     const Size(2560, 1440),
     const Size(1920, 1080),
-    const Size(800, 600),
+    const Size(1024, 720),
   ]) {
     testWidgets('daily profession picker renders and cancels at $size', (
       tester,

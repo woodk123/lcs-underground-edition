@@ -387,7 +387,7 @@ void main() {
 
   for (final (size, scale) in [
     (const Size(1280, 800), 1.0),
-    (const Size(800, 600), 1.5),
+    (const Size(1024, 720), 1.5),
   ]) {
     final suffix = '${size.width.toInt()}-${(scale * 100).round()}pct';
 

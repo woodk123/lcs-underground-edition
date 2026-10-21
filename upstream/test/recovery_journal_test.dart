@@ -584,7 +584,7 @@ void main() {
   );
 
   testWidgets(
-    'injured hospital member leads the first 800x600 viewport at 150 percent',
+    'injured hospital member leads the first 1024x720 viewport at 150 percent',
     (tester) async {
       final patient = game.squad.last;
       patient.blood = patient.maxBlood - 20;
@@ -596,7 +596,7 @@ void main() {
       await mount(
         tester,
         () => hospital(site),
-        size: const Size(800, 600),
+        size: const Size(1024, 720),
         scale: 1.5,
       );
       final firstPortrait = tester
@@ -618,14 +618,14 @@ void main() {
 
   for (final cash in [7, 1000]) {
     testWidgets(
-      'discharge choices fit 800x600 at 150 percent with cash $cash',
+      'discharge choices fit 1024x720 at 150 percent with cash $cash',
       (tester) async {
         final patient = _hospitalPatient();
         game.ledger.forceSetFunds(cash);
         final harness = await mount(
           tester,
           () => dischargeHospitalPatient(patient),
-          size: const Size(800, 600),
+          size: const Size(1024, 720),
           scale: 1.5,
         );
         expect(find.text('Hospital discharge'), findsOneWidget);
@@ -636,7 +636,12 @@ void main() {
           tester.widget<OutlinedButton>(_action('a')).onPressed != null,
           cash >= 250,
         );
-        expect(tester.getRect(_action('b')).bottom, lessThanOrEqualTo(600));
+        expect(
+          tester.getRect(_action('b')).bottom,
+          lessThanOrEqualTo(
+            tester.view.physicalSize.height / tester.view.devicePixelRatio,
+          ),
+        );
         await tester.tap(_action('b'));
         await tester.pumpAndSettle();
         expect(harness.returned, isTrue);
@@ -648,7 +653,7 @@ void main() {
   }
 
   testWidgets(
-    'court choices and adjacent skill values fit 800x600 at 150 percent',
+    'court choices and adjacent skill values fit 1024x720 at 150 percent',
     (tester) async {
       final defendant = game.squad.last;
       defendant.wantedForCrimes.updateAll((crime, count) => 0);
@@ -657,7 +662,7 @@ void main() {
       await mount(
         tester,
         () => trial(defendant),
-        size: const Size(800, 600),
+        size: const Size(1024, 720),
         scale: 1.5,
       );
       expect(find.text('Court defense'), findsOneWidget);
@@ -679,10 +684,10 @@ void main() {
 
   for (final fromHeadquarters in [true, false]) {
     testWidgets(
-      'shell recovery route from headquarters $fromHeadquarters at 800x600 / 150 percent',
+      'shell recovery route from headquarters $fromHeadquarters at 1024x720 / 150 percent',
       (tester) async {
         tester.view.devicePixelRatio = 1;
-        tester.view.physicalSize = const Size(800, 600);
+        tester.view.physicalSize = const Size(1024, 720);
         journalReadingScale.value = 1.5;
         final patient = _hospitalPatient();
         game.ledger.forceSetFunds(1000);

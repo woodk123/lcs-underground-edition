@@ -68,7 +68,9 @@ Future<void> _fundraiseUntilArrest(
     await doActivitySolicitDonations([person]);
   }
   if (!person.imprisoned) {
-    throw StateError('Natural indecency checks did not reach a police pursuit.');
+    throw StateError(
+      'Natural indecency checks did not reach a police pursuit.',
+    );
   }
 }
 
@@ -344,17 +346,22 @@ void main() {
   );
 
   testWidgets(
-    'real surrender remains visible at 800x600 with 150 percent text',
+    'real surrender remains visible at 1024x720 with 150 percent text',
     (tester) async {
       final harness = await mount(
         tester,
-        size: const Size(800, 600),
+        size: const Size(1024, 720),
         scale: 1.5,
       );
       expect(find.text('On-foot pursuit'), findsOneWidget);
       expect(find.text('Give up and surrender').hitTestable(), findsOneWidget);
       expect(_action('e').hitTestable(), findsOneWidget);
-      expect(tester.getRect(_action('g')).bottom, lessThanOrEqualTo(600));
+      expect(
+        tester.getRect(_action('g')).bottom,
+        lessThanOrEqualTo(
+          tester.view.physicalSize.height / tester.view.devicePixelRatio,
+        ),
+      );
       engine.console.sendInput('?');
       await tester.pumpAndSettle();
       expect(_action('g').hitTestable(), findsOneWidget);

@@ -65,7 +65,7 @@ const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 const pendingHashes = [];
 try {
   for (const large of [false, true]) {
-    const context = await browser.newContext({ viewport: large ? { width: 800, height: 600 } : { width: 1440, height: 1000 }, acceptDownloads: true });
+    const context = await browser.newContext({ viewport: large ? { width: 1024, height: 720 } : { width: 1440, height: 1000 }, acceptDownloads: true });
     const page = await context.newPage();
     page.setDefaultTimeout(15000);
     const prefix = large ? 'large' : 'desktop';

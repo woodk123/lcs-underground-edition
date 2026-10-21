@@ -23,7 +23,7 @@ const profile = resolve(root, `.local/browser-profiles/creation-${stamp}`);
 await mkdir(output, { recursive: true });
 await mkdir(profile, { recursive: true });
 const report = { status: 'running', started: new Date().toISOString(), expectedHash, url,
-  scope: 'Real original new-game settings, identity, ten background questions, briefing, public-name entry and playable HQ. Normal and150%/800x600 manual/fate journeys in an isolated profile.',
+  scope: 'Real original new-game settings, identity, ten background questions, briefing, public-name entry and playable HQ. Normal and150%/1024x720 manual/fate journeys in an isolated profile.',
   checks: [], screenshots: [], pageErrors: [], consoleErrors: [], failedRequests: [] };
 let context, page, verifyLoadedScript;
 async function text() {
@@ -217,7 +217,7 @@ async function founderFlow({ fate, prefix, name }) {
         await waitForUiSettled(page);
         await click(/^Reading size/);
         await page.getByRole('menuitem', { name: '150%', exact: true }).click();
-        await page.setViewportSize({ width: 800, height: 600 });
+        await page.setViewportSize({ width: 1024, height: 720 });
         await waitForUiSettled(page);
         await bonusHelp('large', 1.5);
         const bonus = await bonusHelp('computers-large', 1.5, 'C', [['computers', /Choosing this: Computers/]]);
@@ -294,7 +294,7 @@ try {
   await click(/^Reading size/);
   await writeFile(resolve(output,'reading-menu.html'),await page.locator('flt-semantics-host').innerHTML());
   await page.getByRole('menuitem',{name:'150%',exact:true}).click();await waitForUiSettled(page);
-  await page.setViewportSize({width:800,height:600});await waitForUiSettled(page);
+  await page.setViewportSize({width: 1024, height: 720});await waitForUiSettled(page);
   await capture('large-01-settings');
   await click(/^Continue to founder/);await wait(/The founder/);
   const largeIdentity = await rerollPortrait('large');

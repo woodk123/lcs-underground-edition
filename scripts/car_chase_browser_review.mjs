@@ -135,7 +135,7 @@ async function snapshot(name) {
   return { state: decode(env), envelope: env, path };
 }
 async function enlarged() {
-  await page.setViewportSize({ width: 800, height: 600 });
+  await page.setViewportSize({ width: 1024, height: 720 });
   await click(/^Reading size/);
   await page.getByRole('menuitem', { name: '150%', exact: true }).click();
   await page.waitForTimeout(200);
@@ -207,9 +207,9 @@ async function inspectAndEnlarge() {
   const bounds = await button(pullOver).boundingBox();
   (report.enlargedSurrenderBounds ??= []).push({ scene, attempt: attemptNumber, bounds,
     viewport: page.viewportSize() });
-  if (!bounds || bounds.y < 0 || bounds.y + bounds.height > 600)
-    issue('Car surrender control is not reachable at 800x600 with 150 percent reading size.');
-  await capture('car-800x600-at150');
+  if (!bounds || bounds.y < 0 || bounds.y + bounds.height > page.viewportSize().height)
+    issue('Car surrender control is not reachable at 1024x720 with 150 percent reading size.');
+  await capture('car-1024x720-at150');
   await page.waitForTimeout(500);
 }
 async function finishCar(mode) {

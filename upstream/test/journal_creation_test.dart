@@ -306,7 +306,7 @@ void main() {
 
   for (final view in [
     (size: const Size(1280, 720), scale: 1.0),
-    (size: const Size(800, 600), scale: 1.5),
+    (size: const Size(1024, 720), scale: 1.5),
   ]) {
     testWidgets('answer bonus help is passive and clickable at ${view.size}', (
       tester,
@@ -558,7 +558,7 @@ void main() {
     },
   );
 
-  for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
     for (final scale in [1.0, 1.5]) {
       testWidgets(
         'setup Continue remains visible at ${size.width}x${size.height}, scale $scale',

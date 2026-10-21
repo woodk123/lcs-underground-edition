@@ -771,7 +771,7 @@ void main() {
     'observed return persists a People badge until Keep resting is chosen',
     (tester) async {
       final returning = addPerson('Returned Crew')..sleeperAgent = true;
-      await mount(tester, size: const Size(800, 600), scale: 1.5);
+      await mount(tester, size: const Size(1024, 720), scale: 1.5);
       // Explicit simulated event fixture. A fresh awaited HQ frame is published
       // through the same source boundary the real end-of-day handler returns to.
       returning.sleeperAgent = false;
@@ -901,9 +901,9 @@ void main() {
   );
 
   testWidgets(
-    'all eleven top tabs remain reachable at 800 by 600 and 150 percent',
+    'all eleven top tabs remain reachable at 1024 by 720 and 150 percent',
     (tester) async {
-      await mount(tester, size: const Size(800, 600), scale: 1.5);
+      await mount(tester, size: const Size(1024, 720), scale: 1.5);
       for (final section in [0, 9, 8, 10, 1, 2, 3, 4, 5, 6, 7]) {
         await _tap(tester, 'journal-section:$section');
         expect(

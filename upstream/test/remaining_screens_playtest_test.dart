@@ -189,7 +189,7 @@ void main() {
 
   for (final (size, scale) in [
     (const Size(1280, 800), 1.0),
-    (const Size(800, 600), 1.5),
+    (const Size(1024, 720), 1.5),
   ]) {
     final variant = '${size.width.toInt()}x${size.height.toInt()} / $scale';
     for (final reader in ['equipment', 'reorder', 'kidnap', 'release']) {

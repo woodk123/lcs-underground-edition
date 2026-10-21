@@ -99,7 +99,7 @@ void main() {
     'a law guide opens without sending game input or changing state',
     (tester) async {
       tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(800, 600);
+      tester.view.physicalSize = const Size(1024, 720);
       addTearDown(tester.view.resetDevicePixelRatio);
       addTearDown(tester.view.resetPhysicalSize);
       final done = liberalAgenda();
@@ -278,7 +278,7 @@ void main() {
       'ending $vibe exposes a readable score control without chapter navigation',
       (tester) async {
         tester.view.devicePixelRatio = 1;
-        tester.view.physicalSize = const Size(800, 600);
+        tester.view.physicalSize = const Size(1024, 720);
         addTearDown(tester.view.resetDevicePixelRatio);
         addTearDown(tester.view.resetPhysicalSize);
         final done = liberalAgenda(vibe);
@@ -303,7 +303,12 @@ void main() {
         expect(find.text(frame.endingTitle!), findsOneWidget);
         final score = find.byKey(const ValueKey('journal-agenda-action:l'));
         expect(score.hitTestable(), findsOneWidget);
-        expect(tester.getRect(score).bottom, lessThanOrEqualTo(600));
+        expect(
+          tester.getRect(score).bottom,
+          lessThanOrEqualTo(
+            tester.view.physicalSize.height / tester.view.devicePixelRatio,
+          ),
+        );
         expect(find.textContaining('<——'), findsNothing);
         await tester.tap(score);
         await tester.pumpAndSettle();
@@ -315,7 +320,7 @@ void main() {
 
   for (final size in [
     const Size(1280, 720),
-    const Size(800, 600),
+    const Size(1024, 720),
     const Size(360, 640),
   ]) {
     for (final scale in [1.0, 1.5]) {

@@ -394,7 +394,7 @@ void main() {
       await _warmCatalogueAtlases(tester);
       for (final sizeAndScale in [
         (const Size(1280, 800), 1.0),
-        (const Size(800, 600), 1.5),
+        (const Size(1024, 720), 1.5),
         (const Size(360, 640), 2.0),
       ]) {
         {
@@ -689,7 +689,7 @@ void main() {
       // their original readers, prices and callbacks; no outcomes are mocked.
       for (final (size, scale, name) in [
         (const Size(1280, 800), 1.0, 'desktop'),
-        (const Size(800, 600), 1.5, 'large'),
+        (const Size(1024, 720), 1.5, 'large'),
       ]) {
         tester.view.physicalSize = size;
         journalReadingScale.value = scale;

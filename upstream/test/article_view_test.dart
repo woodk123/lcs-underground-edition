@@ -113,7 +113,7 @@ void main() {
       await mountArticle(
         tester,
         article,
-        size: const Size(800, 600),
+        size: const Size(1024, 720),
         textScale: 1.5,
       );
       await tester.ensureVisible(find.text('+12.8%'));
@@ -138,7 +138,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  for (final size in [const Size(800, 600), const Size(1280, 800)]) {
+  for (final size in [const Size(1024, 720), const Size(1280, 800)]) {
     testWidgets(
       'retains and scrolls full long article at ${size.width.toInt()}px',
       (tester) async {

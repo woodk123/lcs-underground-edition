@@ -62,7 +62,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
     for (final police in [false, true]) {
       testWidgets(
         'alarmed ${police ? 'police' : 'unarmed occupants'} movement uses the original override at $size',
@@ -316,7 +316,7 @@ void main() {
   ) async {
     final before = jsonEncode(game.gameState.toJson());
     final escape = chooseSiteEscapeDirection();
-    await mount(tester, const Size(800, 600));
+    await mount(tester, const Size(1024, 720));
     await tester.tap(find.text('Cancel escape'));
     await tester.pump();
     expect(await escape, isNull);
@@ -340,7 +340,7 @@ void main() {
       game.siteAlarm = true;
       final before = jsonEncode(game.gameState.toJson());
       final talk = talkInCombat(liberal, target);
-      await mount(tester, const Size(800, 600));
+      await mount(tester, const Size(1024, 720));
       ConsoleAction action(String key) =>
           engine.console.actions.singleWhere((a) => a.key == key);
       expect(action('b').enabled, isFalse);
@@ -380,7 +380,7 @@ void main() {
       final target = Creature.fromId(CreatureTypeIds.cop);
       final before = jsonEncode(game.gameState.toJson());
       final talk = talkOutsideCombat(liberal, target);
-      await mount(tester, const Size(800, 600));
+      await mount(tester, const Size(1024, 720));
       engine.console.sendInput('q');
       await tester.pumpAndSettle();
       expect(

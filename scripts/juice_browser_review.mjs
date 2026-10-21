@@ -156,10 +156,10 @@ try {
   await wait(/Juice 160/); await wait(/40 to Urban Commando \(200\)/);
   await capture('06-hospital-native-profile-juice');
   await click(/^Back to directory$/); await click(/^Organisation(?:$|\s)/);
-  await page.setViewportSize({ width: 800, height: 600 });
+  await page.setViewportSize({ width: 1024, height: 720 });
   await click(/^Reading size$/); await page.getByRole('menuitem', { name: '150%', exact: true }).click();
   await click(/^Inspect Artie Activist(?:\s|$)/); await wait(/Full dossier/);
-  await openHelp(); await wait(/40 more Juice/); await capture('07-800x600-at150-help');
+  await openHelp(); await wait(/40 more Juice/); await capture('07-1024x720-at150-help');
   async function earningBounds() {
     return page.getByRole('alertdialog').evaluate(root => {
       const match = [...root.querySelectorAll('*')].find(node =>
@@ -176,7 +176,7 @@ try {
   }
   const earningBox = await earningBounds();
   assert.ok(earningBox && earningBox.y >= 90 && earningBox.y + earningBox.height < 510, 'Earning guidance must scroll into the visible enlarged help viewport.');
-  await capture('08-800x600-at150-earning');
+  await capture('08-1024x720-at150-earning');
   await page.mouse.move(400, 330); await page.mouse.wheel(0, 650); await page.waitForTimeout(200);
   const capBounds = await page.getByRole('alertdialog').evaluate(root => {
     const match = [...root.querySelectorAll('*')].find(node =>
@@ -185,9 +185,9 @@ try {
     return rect ? { y: rect.y, height: rect.height } : null;
   });
   assert.ok(capBounds && capBounds.y >= 85 && capBounds.y + capBounds.height < 510, 'Activity cap paragraph must be readable inside the enlarged help viewport.');
-  await capture('09-800x600-at150-caps');
+  await capture('09-1024x720-at150-caps');
   await closeHelp(); await wait(/Juice 160/);
-  report.checks.push('800x600 at 150 percent help reads, scrolls and dismisses without losing underlying game');
+  report.checks.push('1024x720 at 150 percent help reads, scrolls and dismisses without losing underlying game');
   await page.setViewportSize({ width: 1440, height: 1100 });
   await click(/^Close crew inspection/);
   const after = await exportGame('after-inspection');

@@ -169,7 +169,7 @@ void main() {
 
   for (final (window, pane) in [
     (const Size(1280, 720), const Size(800, 470)),
-    (const Size(800, 600), const Size(560, 370)),
+    (const Size(1024, 720), const Size(560, 370)),
   ]) {
     testWidgets(
       'bounded tactical viewport and current action stay pinned at ${window.width} and 150%',

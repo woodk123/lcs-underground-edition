@@ -261,7 +261,7 @@ void main() {
   );
 
   for (final paid in [false, true]) {
-    for (final size in [const Size(1280, 800), const Size(800, 600)]) {
+    for (final size in [const Size(1280, 800), const Size(1024, 720)]) {
       testWidgets(
         '${paid ? 'paid' : 'free'} recruitment results replace stale choices at $size',
         (tester) async {

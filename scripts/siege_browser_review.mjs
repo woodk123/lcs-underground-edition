@@ -196,13 +196,13 @@ async function inspectAndEnlarge(actorName) {
       await wait(/Safehouse under (?:attack|siege)/);
       check('siege inspection blocks battle and surrender keys');
     }
-    await page.setViewportSize({ width: 800, height: 600 }); await click(/^Reading size/);
+    await page.setViewportSize({ width: 1024, height: 720 }); await click(/^Reading size/);
     await page.getByRole('menuitem', { name: '150%', exact: true }).click(); await page.waitForTimeout(200);
     for (const name of [fightEscape, giveUp]) {
       const bounds = await button(name).boundingBox();
-      assert.ok(bounds && bounds.y >= 0 && bounds.y + bounds.height <= 600, `${name} is reachable at enlarged size.`);
+      assert.ok(bounds && bounds.y >= 0 && bounds.y + bounds.height <= page.viewportSize().height, `${name} is reachable at enlarged size.`);
     }
-    await capture('headquarters-800x600-at150'); check('current siege status and responses are reachable at 800x600 with150% text');
+    await capture('headquarters-1024x720-at150'); check('current siege status and responses are reachable at 1024x720 with150% text');
   }
 }
 async function resolveOperation(mode) {

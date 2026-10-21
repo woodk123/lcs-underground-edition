@@ -39,7 +39,7 @@ await writeFile(fixture, JSON.stringify(envelope));
 const report = { status: 'running', expectedHash: expected, prepared: 'Copy of bundled Felix campaign with charges, heat and individual orders cleared, one parked Jeep and twenty-five explicitly prepared archive articles. Player storage is never used.', screens: [], failures: [], pageErrors: [], consoleErrors: [] };
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 const large = args.includes('--large');
-const context = await browser.newContext({ viewport: large ? { width: 800, height: 600 } : { width: 1440, height: 1000 }, acceptDownloads: true });
+const context = await browser.newContext({ viewport: large ? { width: 1024, height: 720 } : { width: 1440, height: 1000 }, acceptDownloads: true });
 const page = await context.newPage();
 page.setDefaultTimeout(7000);
 page.on('pageerror', error => report.pageErrors.push(String(error)));

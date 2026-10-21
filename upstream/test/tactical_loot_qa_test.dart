@@ -210,7 +210,7 @@ void main() {
       nextRngSeed = 1008;
       for (final (size, scale, name) in [
         (const Size(1280, 800), 1.0, 'desktop'),
-        (const Size(800, 600), 1.5, 'compact-150'),
+        (const Size(1024, 720), 1.5, 'compact-150'),
         (const Size(360, 640), 2.0, 'narrow-200'),
       ]) {
         tester.view.physicalSize = size;
@@ -258,7 +258,7 @@ void main() {
       }
       expect(moves, isEmpty);
       expect(List.generate(8, (_) => lcsRandom(100000)), expected);
-      tester.view.physicalSize = const Size(800, 600);
+      tester.view.physicalSize = const Size(1024, 720);
       await tester.pumpWidget(app(TacticalMapView(onMove: moves.add), 1.5));
       await settle();
       await tester.tap(find.byKey(const ValueKey('tactical-zoom-in')));

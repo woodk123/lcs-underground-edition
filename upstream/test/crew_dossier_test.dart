@@ -418,7 +418,7 @@ void main() {
 
   for (final reading in [
     (const Size(1280, 800), 1.0),
-    (const Size(800, 600), 1.5),
+    (const Size(1024, 720), 1.5),
   ]) {
     testWidgets(
       'skill level stays beside its name at ${reading.$1}, ${reading.$2}x',
@@ -612,7 +612,7 @@ void main() {
       await mountInspector(
         tester,
         person,
-        size: const Size(800, 600),
+        size: const Size(1024, 720),
         textScale: 1.5,
         actions: actions,
       );

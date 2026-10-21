@@ -58,7 +58,7 @@ void main() {
 
   for (final (name, size, scale) in [
     ('desktop', const Size(1280, 720), 1.0),
-    ('compact enlarged', const Size(800, 600), 1.5),
+    ('compact enlarged', const Size(1024, 720), 1.5),
     ('narrow', const Size(390, 844), 1.0),
   ]) {
     testWidgets('all location guides and expanded facilities work at $name', (

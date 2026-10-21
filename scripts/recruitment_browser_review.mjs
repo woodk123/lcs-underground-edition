@@ -56,7 +56,7 @@ async function capture(name) {
 function check(name) { report.checks.push(name); console.log(`PASS ${name}`); }
 async function start(width) {
   await context?.close();
-  context = await browser.newContext({ viewport: { width, height: width === 800 ? 600 : 1440 } });
+  context = await browser.newContext({ viewport: { width, height: width === 1024 ? 720 : 1440 } });
   page = await context.newPage(); page.setDefaultTimeout(12000);
   page.on('pageerror', e => report.pageErrors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') report.consoleErrors.push(m.text()); });
@@ -72,7 +72,7 @@ async function start(width) {
   const chooser = page.waitForEvent('filechooser'); await click(/^Import a Save/); await (await chooser).setFiles(fixture);
   await wait(/Save imported/); await page.keyboard.press('Enter'); await wait(/Start a New Game/);
   await click(/^Load & Manage Saves/); await click(/^A(?:\s|$)/); await click(/^L Load Game/); await wait(/Save & exit/);
-  if (width === 800) {
+  if (width === 1024) {
     await click(/^Reading size/); await page.getByRole('menuitem', { name: '150%', exact: true }).click();
   }
   await click(/^(?:Wait a day|Carry out your plans)/);
@@ -83,7 +83,7 @@ async function start(width) {
   throw Error(`No profession reader: ${await text()}`);
 }
 try {
-  for (const width of [2560, 800]) {
+  for (const width of [2560, 1024]) {
     await start(width); await capture(`professions-${width}`);
     assert.match(await text(), /Meeting difficulty/i);
     assert.match(await text(), /Page 1 of/);
@@ -99,7 +99,7 @@ try {
     assert.notEqual(await button(/^A /).textContent(), first);
     await page.keyboard.press('PageUp'); await page.waitForTimeout(250);
     assert.equal(await button(/^A /).textContent(), first); check(`profession pagination at ${width}`);
-    if (width === 800) {
+    if (width === 1024) {
       await page.keyboard.press('Escape'); await page.waitForTimeout(250); await capture(`cancel-${width}`);
       assert.doesNotMatch(await text(), /What type of person|asks around for/); check('profession cancellation');
     } else {

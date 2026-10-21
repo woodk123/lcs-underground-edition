@@ -31,6 +31,8 @@ The interface and artwork are being developed with AI assistance; the paintings 
 
 ## Playing
 
+The minimum supported game area is **1024×720**. The Windows player opens at **1280×720** by default; in a browser, allow at least 1024×720 of usable page space. Larger reading sizes are supported, with scrolling where needed. Smaller windows may work, but are outside the supported layout target.
+
 **[Play in your browser](https://woodk123.github.io/lcs-underground-edition/)** — no installation or account required. The hosted game updates after successful numbered releases and checked nightly publication. Its title and source page identify the exact build online. Saves belong to your browser profile on this site; export important campaigns before clearing browser data or switching devices. Downloaded browser players use separate save storage; use export/import to transfer a campaign.
 
 [Hosted build source and credits](https://woodk123.github.io/lcs-underground-edition/source.html) includes the exact matching source download for the version currently online.

@@ -35,7 +35,7 @@ Where work is delegated, agree file ownership and shared interfaces first, with 
 
 | Change | Focused verification | Integration evidence |
 |---|---|---|
-| UI layout or explanation | Check the relevant source facts and widget behaviour. Exercise mouse, keyboard and touch alternatives where affected. | Review the changed flow at desktop and 800×600 with 150% reading size; include the supported narrow/mobile layout when relevant. Important controls should be usable on entry. |
+| UI layout or explanation | Check the relevant source facts and widget behaviour. Exercise mouse, keyboard and touch alternatives where affected. | Review the changed flow at desktop and 1024×720 with 150% reading size; treat smaller/mobile layouts as optional robustness checks, not supported targets. Important controls should be usable on entry. |
 | Orders, menus or awaited input | Exercise the actual reader, actor identity, cancellation, replacement and retained callbacks. | Switch people/sections, open help, return and confirm. Verify only the intended action occurs and no command reaches a later prompt. |
 | Inspection, previews or animation | Compare complete campaign state, pending input and gameplay RNG before/after. | Navigate several related screens in one application/cache lifetime, with an overlay open and keyboard focus deliberately exercised. |
 | Gameplay, persistence or versioning | Test the actual handler and meaningful outcomes; regenerate saved-model code when needed. Follow the [version/save checks](VERSIONING.md#save-compatibility). | Load older fixtures, round-trip/export/import and restart. Use declared prepared scenarios for rare branches and ordinary play for natural progression. |

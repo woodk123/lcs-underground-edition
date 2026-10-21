@@ -68,7 +68,7 @@ void main() {
       'preferences preserve pending commands, state, RNG and reading at $reading',
       (tester) async {
         tester.view.devicePixelRatio = 1;
-        tester.view.physicalSize = const Size(800, 600);
+        tester.view.physicalSize = const Size(1024, 720);
         addTearDown(() {
           tester.view.resetPhysicalSize();
           tester.view.resetDevicePixelRatio();

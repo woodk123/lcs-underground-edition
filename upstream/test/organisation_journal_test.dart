@@ -307,7 +307,7 @@ void main() {
       await mount(
         tester,
         realHeadquarters: true,
-        size: large ? const Size(800, 600) : const Size(1280, 800),
+        size: large ? const Size(1024, 720) : const Size(1280, 800),
       );
       final before = campaignSnapshot();
       reseedRNG(seed: 62401);
@@ -457,12 +457,12 @@ void main() {
     }
   });
 
-  for (final size in [const Size(2200, 1200), const Size(800, 600)]) {
+  for (final size in [const Size(2200, 1200), const Size(1024, 720)]) {
     testWidgets('Clipboard and equipment use journal pages at $size', (
       tester,
     ) async {
       await mount(tester, size: size);
-      if (size.width == 800) {
+      if (size.width == 1024) {
         await tester.tap(find.byTooltip('Reading size'));
         await _settle(tester);
         await tester.tap(find.text('150%'));
@@ -553,7 +553,7 @@ void main() {
       final person = game.squad[1];
       person.hireId = game.squad.first.id;
       person.location = game.squad.first.location;
-      await mount(tester, size: const Size(800, 600));
+      await mount(tester, size: const Size(1024, 720));
       await tester.tap(find.byTooltip('Reading size'));
       await _settle(tester);
       await tester.tap(find.text('150%'));
@@ -589,7 +589,7 @@ void main() {
     },
   );
 
-  for (final size in [const Size(2200, 1200), const Size(800, 600)]) {
+  for (final size in [const Size(2200, 1200), const Size(1024, 720)]) {
     testWidgets(
       'left crew selection retains profile page and scroll at $size',
       (tester) async {
@@ -602,7 +602,7 @@ void main() {
         first.body.parts.first.bleeding = 2;
         second.blood = second.maxBlood ~/ 2;
         await mount(tester, size: size);
-        if (size.width == 800) {
+        if (size.width == 1024) {
           await tester.tap(find.byTooltip('Reading size'));
           await _settle(tester);
           await tester.tap(find.text('150%'));
@@ -691,7 +691,7 @@ void main() {
       'equipment follows left selection without dispatch or scroll reset at $size',
       (tester) async {
         await mount(tester, size: size);
-        if (size.width == 800) {
+        if (size.width == 1024) {
           await tester.tap(find.byTooltip('Reading size'));
           await _settle(tester);
           await tester.tap(find.text('150%'));
@@ -884,7 +884,7 @@ void main() {
     },
   );
 
-  for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
     testWidgets(
       'City maps queues the selected squad visit with one source-routed action at $size',
       (tester) async {
@@ -903,7 +903,7 @@ void main() {
         final before = campaignSnapshot();
         final originalDate = game.date;
         final harness = await mount(tester, size: size);
-        if (size.width == 800) {
+        if (size.width == 1024) {
           await tester.tap(find.byTooltip('Reading size'));
           await _settle(tester);
           await tester.tap(find.text('150%'));
@@ -1185,12 +1185,12 @@ void main() {
     },
   );
 
-  for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
     testWidgets(
       'member changes retain nested category and optional map state at $size',
       (tester) async {
         await mount(tester, size: size);
-        if (size.width == 800) {
+        if (size.width == 1024) {
           await tester.tap(find.byTooltip('Reading size'));
           await _settle(tester);
           await tester.tap(find.text('150%'));
@@ -1265,31 +1265,35 @@ void main() {
     );
   }
 
-  testWidgets('switching members retains the scrolled task list', (
-    tester,
-  ) async {
-    await mount(tester, size: const Size(800, 600));
-    await tester.tap(find.byTooltip('Reading size'));
-    await _settle(tester);
-    await tester.tap(find.text('150%'));
-    await _settle(tester);
-    await business(tester);
-    final list = find.byKey(const PageStorageKey('journal-tasks:0:legal'));
-    final scroll = find.descendant(of: list, matching: find.byType(Scrollable));
-    await tester.drag(list, const Offset(0, -160));
-    await _settle(tester);
-    final offset = tester.state<ScrollableState>(scroll).position.pixels;
-    expect(offset, greaterThan(0));
-    final next = game.squad[1];
-    await _showCrewMember(tester, next.id);
-    await _settle(tester);
-    await _tap(tester, 'journal-member:${next.id}');
-    expect(
-      tester.state<ScrollableState>(scroll).position.pixels,
-      closeTo(offset, .01),
-    );
-    expect(tester.takeException(), isNull);
-  });
+  testWidgets(
+    'below-minimum stress: switching members retains the scrolled task list',
+    (tester) async {
+      await mount(tester, size: const Size(800, 600));
+      await tester.tap(find.byTooltip('Reading size'));
+      await _settle(tester);
+      await tester.tap(find.text('150%'));
+      await _settle(tester);
+      await business(tester);
+      final list = find.byKey(const PageStorageKey('journal-tasks:0:legal'));
+      final scroll = find.descendant(
+        of: list,
+        matching: find.byType(Scrollable),
+      );
+      await tester.drag(list, const Offset(0, -160));
+      await _settle(tester);
+      final offset = tester.state<ScrollableState>(scroll).position.pixels;
+      expect(offset, greaterThan(0));
+      final next = game.squad[1];
+      await _showCrewMember(tester, next.id);
+      await _settle(tester);
+      await _tap(tester, 'journal-member:${next.id}');
+      expect(
+        tester.state<ScrollableState>(scroll).position.pixels,
+        closeTo(offset, .01),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('retained categories refresh availability for the new member', (
     tester,
@@ -1432,7 +1436,7 @@ void main() {
         journalReadingScale.value = large ? 1.5 : 1;
         await mount(
           tester,
-          size: large ? const Size(800, 600) : const Size(1280, 800),
+          size: large ? const Size(1024, 720) : const Size(1280, 800),
         );
         final before = campaignSnapshot();
         reseedRNG(seed: 41926);
@@ -1642,7 +1646,7 @@ void main() {
     },
   );
 
-  for (final size in [const Size(1280, 720), const Size(800, 700)]) {
+  for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
     testWidgets(
       'six crew, job card, eleven reachable sections and Confirm fit at ${size.width}x${size.height}',
       (tester) async {
@@ -1728,7 +1732,7 @@ void main() {
       (tester) async {
         await mount(
           tester,
-          size: enlarged ? const Size(800, 600) : const Size(1280, 720),
+          size: enlarged ? const Size(1024, 720) : const Size(1280, 720),
         );
         await business(tester);
         await _tap(tester, 'journal-activity:donations');
@@ -1896,7 +1900,7 @@ void main() {
   );
 
   testWidgets(
-    '800x600 at 150 percent shows prepared order timing inside its mechanics viewport',
+    '1024x720 at 150 percent shows prepared order timing inside its mechanics viewport',
     (tester) async {
       // Use the unchanged five-person save from the Chrome reproduction rather
       // than the six-person stress fixture used by the surrounding tests.
@@ -1904,7 +1908,7 @@ void main() {
       game.mode = GameMode.base;
       game.activeSquadMember = null;
       expect(game.squad.length, 5);
-      const size = Size(800, 600);
+      const size = Size(1024, 720);
       await mount(tester, size: size);
       final before = campaignSnapshot();
       await business(tester);
@@ -1975,7 +1979,7 @@ void main() {
   testWidgets('HQ reorder keeps both decisions visible at 150 percent', (
     tester,
   ) async {
-    const size = Size(800, 600);
+    const size = Size(1024, 720);
     await mount(tester, size: size);
     await tester.tap(find.byTooltip('Reading size'));
     await _settle(tester);
@@ -2304,7 +2308,7 @@ void main() {
 
   for (final (size, reading) in [
     (const Size(1280, 720), 1.0),
-    (const Size(800, 600), 1.5),
+    (const Size(1024, 720), 1.5),
   ]) {
     testWidgets(
       'original LCS routes lead labels and retain reader meanings at $size/$reading',
@@ -2579,7 +2583,7 @@ void main() {
 
   for (final (size, reading) in [
     (const Size(1280, 720), 1.0),
-    (const Size(800, 600), 1.5),
+    (const Size(1024, 720), 1.5),
   ]) {
     testWidgets('labelled journal shortcuts fit Agenda at $size/$reading', (
       tester,
