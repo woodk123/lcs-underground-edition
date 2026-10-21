@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/widgets.dart' show StringCharacters;
+import 'package:lcs_new_age/devtools/report_observation.dart';
+import 'package:lcs_new_age/devtools/tactical_observation.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
@@ -162,6 +164,7 @@ class DevelopmentBridge {
           'enabled': true,
         },
     ];
+    final report = reportObservation(current);
     return {
       'bridgeVersion': 1,
       'build': {
@@ -172,7 +175,9 @@ class DevelopmentBridge {
       'revision': current.revision.value,
       'screen': current.screen,
       'text': _screenText(current),
-      'report': current.eventMessage ?? current.currentReportText(),
+      'report': report?['text'] ?? '',
+      if (report != null) 'reportContext': report,
+      if (tacticalObservation(current, actions) case final map?) 'map': map,
       'awaitingInput': current.awaitingInput && current.lastKey == null,
       'blockedReason': blockedReason,
       'textInput': current.textInput

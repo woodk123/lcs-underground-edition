@@ -313,6 +313,13 @@ void printLocation(Site loc) {
 void locHeader([Site? loc]) {
   loc = loc ?? activeSquad?.site ?? activeSafehouse;
   console.locationHeading = loc?.getName(includeCity: true);
+  // Give each part of the Classic status row its own bounded columns. Long
+  // destinations and site names must not overwrite the date or cash balance.
+  final fundsWidth = 'Money:  \$${ledger.funds}'.length;
+  final fundsX = console.width - fundsWidth - 1;
+  const activityX = 41;
+  final dateText = '${getMonthShort(month)} $day, $year';
+  mvaddstr(0, 0, ''.padRight(console.width));
   move(0, 0);
   setColor(lightGray);
   if (loc != null) {
@@ -321,19 +328,25 @@ void locHeader([Site? loc]) {
     } else if (loc.siege.underSiege) {
       setColor(yellow);
     }
-    if (activeSquad == null) addstr("No Squad Selected, ");
-    addstr("${loc.getName(includeCity: true)}, ");
+    final place =
+        '${activeSquad == null ? 'No Squad Selected, ' : ''}${loc.getName(includeCity: true)}';
+    addstr('${fitConsoleText(place, activityX - dateText.length - 3)}, ');
   }
-  addstr("${getMonthShort(month)} $day, $year");
+  addstr(dateText);
   if (loc == null) {
     mvaddstrc(3, 6, darkGray, "To form a new squad:");
     mvaddstr(4, 6, "1) R - Review Assets and Form Squads");
     mvaddstr(5, 6, "2) Press Z to Assemble a New Squad");
   }
-  printFunds();
   if (activeSquad != null) {
-    printSquadActivityDescription(0, 41, activeSquad!);
+    printSquadActivityDescription(
+      0,
+      activityX,
+      activeSquad!,
+      width: fundsX - activityX - 1,
+    );
   }
+  printFunds();
 }
 
 void baseModeOptionsDisplay(Site? loc) {

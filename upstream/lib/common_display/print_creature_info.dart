@@ -147,8 +147,13 @@ void printWeapon(Creature cr) {
   }
 }
 
-void printTopSkills(int y, int x, Creature cr, int numberToPrint,
-    {int knowledge = 255}) {
+void printTopSkills(
+  int y,
+  int x,
+  Creature cr,
+  int numberToPrint, {
+  int knowledge = 255,
+}) {
   // Get skills sorted by level and experience
   List<MapEntry<Skill, int>> skills = List.generate(
     Skill.values.length,
@@ -187,15 +192,7 @@ void printTopSkills(int y, int x, Creature cr, int numberToPrint,
     }
     addstr(": ");
     if (knowledge > i + 2) {
-      if (levelXP < 100) {
-        addstr("$level.");
-        if (levelXP < 10) {
-          addstr("0");
-        }
-        addstr(levelXP.toString());
-      } else {
-        addstr("$level.99+");
-      }
+      addstr(skillProgressLabel(level, cr.skillXP(s)));
     } else {
       addstr("?");
     }
@@ -359,24 +356,16 @@ void printFullCreatureSkills(Creature cr) {
   setColor(lightGray);
 }
 
-void printSkillValue(Creature cr, Skill skill, int y, int x,
-    {bool emphasizePotential = false, bool showCap = true}) {
+void printSkillValue(
+  Creature cr,
+  Skill skill,
+  int y,
+  int x, {
+  bool emphasizePotential = false,
+  bool showCap = true,
+}) {
   move(y, x);
-  addstr("{:2d}.".format(cr.skill(skill)));
-  int xpPercent =
-      ((cr.skillXP(skill) / skillXpNeeded(cr.skill(skill))) * 100).round();
-  if (xpPercent < 100) {
-    if (xpPercent != 0) {
-      if (xpPercent < 10) {
-        addstr("0");
-      }
-      addstr("$xpPercent");
-    } else {
-      addstr("00");
-    }
-  } else {
-    addstr("99+");
-  }
+  addstr(skillProgressLabel(cr.skill(skill), cr.skillXP(skill), levelWidth: 2));
 
   if (showCap) {
     if (emphasizePotential) {
@@ -460,7 +449,7 @@ void printFullCreatureStats(Creature cr,
       Skill skill = Skill.values[s];
       if ((cr.skill(skill) * 10000 + cr.skillXP(skill)) > max &&
           !used[skill]!) {
-        max = cr.skill(skill) * 10000 + cr.skill(skill);
+        max = cr.skill(skill) * 10000 + cr.skillXP(skill);
         maxs = s;
       }
     }
@@ -476,13 +465,7 @@ void printFullCreatureStats(Creature cr,
       addstr(skill.displayName);
       addstr(": ");
       move(6 + skillsShown, 42);
-      addstr("{:2d}.".format(cr.skill(skill)));
-      if (cr.skillXP(skill) < 100 + (10 * cr.skill(skill))) {
-        addstr("{:02d}".format(
-            (cr.skillXP(skill) * 100) ~/ (100 + (10 * cr.skill(skill)))));
-      } else {
-        addstr("99+");
-      }
+      addstr(skillProgressLabel(cr.skill(skill), cr.skillXP(skill), levelWidth: 2));
 
       if (cr.skillCap(skill) == 0 || cr.skill(skill) < cr.skillCap(skill)) {
         setColor(darkGray);
