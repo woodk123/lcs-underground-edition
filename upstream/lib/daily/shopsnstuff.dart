@@ -278,6 +278,7 @@ Future<void> dealership(Site loc) async {
     if (c == Key.s && carToSell != null) {
       ledger.addFunds(price, Income.cars);
       vehiclePool.remove(carToSell);
+      clearVehicleAssignments(carToSell.id);
     }
 
     // Get a car

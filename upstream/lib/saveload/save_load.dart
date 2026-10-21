@@ -582,6 +582,20 @@ int compareVersionStrings(String a, String b) {
 }
 
 void applyBugFixes(String version) {
+  // Older saves can retain assignments to a sold or otherwise lost vehicle.
+  // Repair references without creating a vehicle or changing valid choices.
+  final vehicleIds = vehiclePool.map((vehicle) => vehicle.id).toSet();
+  for (final person in pool) {
+    if (person.carId != null && !vehicleIds.contains(person.carId)) {
+      person.carId = null;
+      person.isDriver = false;
+    }
+    if (person.preferredCarId != null &&
+        !vehicleIds.contains(person.preferredCarId)) {
+      person.preferredCarId = null;
+      person.preferredDriver = false;
+    }
+  }
   gameState.uniqueCreatures.syncWithPool();
   for (RecruitmentSession recruitmentSession in gameState.recruitmentSessions) {
     recruitmentSession.recruiter = pool.firstWhere(

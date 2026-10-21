@@ -18,11 +18,17 @@ typedef DevelopmentTextInput =
     Future<bool> Function(String text, String submit);
 
 class _Choice {
-  _Choice(this.console, this.revision, this.action, this.signature)
-    : sourceChoices = List.of(console.actions);
+  _Choice(
+    this.console,
+    this.revision,
+    this.action,
+    this.signature, {
+    this.navigation,
+  }) : sourceChoices = List.of(console.actions);
   final Console console;
   final int revision;
   final ConsoleAction? action;
+  final ConsoleNavigation? navigation;
   final String signature;
   final List<ConsoleAction> sourceChoices;
 }
@@ -86,18 +92,30 @@ class DevelopmentBridge {
       .map((row) => row.map((cell) => cell.glyph).join().trimRight())
       .join('\n');
 
-  String _choiceId(Console current, ConsoleAction? action, String signature) {
+  String _choiceId(
+    Console current,
+    ConsoleAction? action,
+    String signature, {
+    ConsoleNavigation? navigation,
+  }) {
     for (final entry in _choices.entries) {
       final choice = entry.value;
       if (identical(choice.console, current) &&
           choice.revision == current.revision.value &&
           identical(choice.action, action) &&
+          identical(choice.navigation, navigation) &&
           choice.signature == signature) {
         return entry.key;
       }
     }
     final id = 'choice-${_nextChoice++}';
-    _choices[id] = _Choice(current, current.revision.value, action, signature);
+    _choices[id] = _Choice(
+      current,
+      current.revision.value,
+      action,
+      signature,
+      navigation: navigation,
+    );
     return id;
   }
 
@@ -110,7 +128,7 @@ class DevelopmentBridge {
     );
     final signature = _signature(current);
     final actions = <Map<String, dynamic>>[
-      if (!current.textInput)
+      if (!current.textInput && current.eventMessage == null)
         for (final action in current.actions)
           {
             'id': _choiceId(current, action, ''),
@@ -133,6 +151,14 @@ class DevelopmentBridge {
           'kind': 'acknowledgement',
           'key': 'Enter',
           'label': 'Continue',
+          'enabled': true,
+        },
+      if (_hasNavigation(current))
+        {
+          'id': _choiceId(current, null, '', navigation: current.navigation),
+          'kind': 'source_navigation',
+          'key': current.navigation!.backKey,
+          'label': 'Back',
           'enabled': true,
         },
     ];
@@ -170,6 +196,17 @@ class DevelopmentBridge {
       (current.eventMessage != null ||
           current.actions.isEmpty ||
           const {'article', 'full_map'}.contains(current.screen));
+
+  bool _hasNavigation(Console current) =>
+      current.awaitingInput &&
+      current.lastKey == null &&
+      !current.textInput &&
+      current.eventMessage == null &&
+      current.navigation != null &&
+      current.navigation!.backKey.isNotEmpty &&
+      !current.actions.any(
+        (action) => action.key == current.navigation!.backKey,
+      );
 
   Map<String, dynamic> inspect(Map<String, dynamic> params) {
     final scope = params['scope'] ?? 'summary';
@@ -215,6 +252,53 @@ class DevelopmentBridge {
           'campaign': jsonDecode(jsonEncode(game.gameState.toJson())),
           'note':
               'Saved campaign fields only; tactical runtime state and RNG are not a restorable checkpoint.',
+        };
+      case 'context':
+        // Read existing fields only. Never generate NPCs or evaluate a roll to
+        // provide a convenient inspection summary.
+        return {
+          'activePersonId': game.activeSquadMember?.id,
+          'locations': [
+            for (final site in game.sites)
+              {
+                'id': site.id,
+                'name': site.name,
+                'type': site.type.name,
+                'cityId': site.cityId,
+                'hidden': site.hidden,
+                'controller': site.controller.name,
+              },
+          ],
+          'recruitment': [
+            for (final session in game.recruitmentSessions)
+              {
+                'personId': session.recruit.id,
+                'name': session.recruit.name,
+                'recruiterId': session.recruiterId,
+                'eagerness': session.eagerness,
+              },
+          ],
+          'vehicles': [
+            for (final vehicle in game.vehiclePool)
+              {
+                'id': vehicle.id,
+                'name': vehicle.fullName(),
+                'locationId': vehicle.locationId,
+                'heat': vehicle.heat,
+              },
+          ],
+          'encounter': [
+            for (final person in game.encounter)
+              {
+                'id': person.id,
+                'name': person.name,
+                'alive': person.alive,
+                'alignment': person.align.name,
+                'blood': person.blood,
+              },
+          ],
+          'note':
+              'Existing engine state for debugging; not a player discovery or readiness prediction.',
         };
       case 'person':
         final id = params['personId'];
@@ -263,23 +347,43 @@ class DevelopmentBridge {
     if (choice == null ||
         !identical(choice.console, current) ||
         choice.revision != current.revision.value ||
-        choice.action == null && choice.signature != _signature(current)) {
+        choice.action == null &&
+            choice.navigation == null &&
+            choice.signature != _signature(current)) {
       throw _BridgeError(
         'stale_action',
         'Choose an action ID from the latest observation.',
       );
     }
     final action = choice.action;
+    final navigation = choice.navigation;
+    // Generic source acknowledgements may retain their parent menu's actions.
+    // Those keys would only acknowledge the report; their old labels no longer
+    // describe the current reader. Require its scoped Continue capability.
+    if (current.eventMessage != null &&
+        (action != null || navigation != null)) {
+      throw _BridgeError(
+        'stale_action',
+        'Acknowledge the current report first.',
+      );
+    }
+    if (navigation != null &&
+        (!identical(navigation, current.navigation) ||
+            !_hasNavigation(current))) {
+      throw _BridgeError('stale_action', 'The navigation reader changed.');
+    }
     if (action == null &&
+        navigation == null &&
         (choice.sourceChoices.length != current.actions.length ||
             choice.sourceChoices.asMap().entries.any(
               (entry) => !identical(entry.value, current.actions[entry.key]),
             ))) {
       throw _BridgeError('stale_action', 'The acknowledgement reader changed.');
     }
-    if (action == null
-        ? !_hasAcknowledgement(current)
-        : !action.enabled || !current.actions.contains(action)) {
+    if (navigation == null &&
+        (action == null
+            ? !_hasAcknowledgement(current)
+            : !action.enabled || !current.actions.contains(action))) {
       throw _BridgeError(
         'stale_action',
         'This source choice is no longer available.',
@@ -288,7 +392,7 @@ class DevelopmentBridge {
     _prepareSourceInput?.call();
     _busy = true;
     try {
-      if (!current.sendInput(action?.key ?? 'Enter')) {
+      if (!current.sendInput(action?.key ?? navigation?.backKey ?? 'Enter')) {
         throw _BridgeError(
           'input_blocked',
           'The current input is already being processed.',

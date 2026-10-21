@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lcs_new_age/basemode/activate_regulars.dart';
 import 'package:lcs_new_age/devtools/development_bridge.dart';
 import 'package:lcs_new_age/engine/changelog.dart';
 import 'package:lcs_new_age/engine/console.dart';
@@ -79,6 +80,21 @@ void main() {
       for (var i = 0; i < 3; i++) {
         expect((await request(bridge, 'observe'))['ok'], true);
         expect((await request(bridge, 'inspect'))['ok'], true);
+        final context = await request(bridge, 'inspect', {'scope': 'context'});
+        expect(context['ok'], true);
+        final details = context['result'] as Map<String, dynamic>;
+        expect((details['locations'] as List).length, game.sites.length);
+        expect(
+          ((details['locations'] as List).first
+              as Map<String, dynamic>)['name'],
+          game.sites.first.name,
+        );
+        expect((details['vehicles'] as List).length, game.vehiclePool.length);
+        expect(
+          (details['recruitment'] as List).length,
+          game.recruitmentSessions.length,
+        );
+        expect((details['encounter'] as List).length, game.encounter.length);
         expect(
           (await request(bridge, 'inspect', {'scope': 'campaign'}))['ok'],
           true,
@@ -100,6 +116,156 @@ void main() {
       expect(List.generate(10, (_) => lcsRandom(1000000)), expected);
       console.sendInput('Enter');
       await pending;
+    },
+  );
+
+  test(
+    'actual source report hides retained parent actions and navigation',
+    () async {
+      final console = engine.console;
+      console.addAction('a', r'Spend $50 on recruitment');
+      console.navigation = const ConsoleNavigation(section: 'assignments');
+      console.mvaddstr(10, 0, 'The recruit found the discussion insightful.');
+      final state = jsonEncode(game.gameState.toJson());
+      final pending = engine.acknowledge(title: 'Recruitment report');
+      final observation = bridge.observe();
+      final actions = (observation['actions'] as List)
+          .cast<Map<String, dynamic>>();
+      expect(actions, hasLength(1));
+      expect(actions.single['kind'], 'acknowledgement');
+      expect(observation['report'], contains('insightful'));
+      expect(
+        console.actions.single.key,
+        'a',
+        reason: 'Do not edit source metadata.',
+      );
+      expect(
+        (await request(bridge, 'act', {
+          'revision': observation['revision'],
+          'actionId': actions.single['id'],
+        }))['ok'],
+        true,
+      );
+      await pending;
+      expect(console.eventMessage, isNull);
+      expect(jsonEncode(game.gameState.toJson()), state);
+    },
+  );
+
+  test(
+    'report boundary rejects captured parent and Back capabilities',
+    () async {
+      final console = engine.console;
+      console.addAction('a', r'Spend $50 on recruitment');
+      console.navigation = const ConsoleNavigation(section: 'assignments');
+      final pending = console.getkey();
+      final original = bridge.observe();
+      final old = (original['actions'] as List).cast<Map<String, dynamic>>();
+      console.eventMessage = 'A report now owns this reader.';
+      for (final action in old) {
+        expect(
+          (await request(bridge, 'act', {
+            'revision': original['revision'],
+            'actionId': action['id'],
+          })).errorCode,
+          'stale_action',
+        );
+        expect(console.lastKey, isNull);
+      }
+      final acknowledgement = firstAction(bridge);
+      expect(acknowledgement['kind'], 'acknowledgement');
+      expect(
+        (await request(bridge, 'act', {
+          'revision': console.revision.value,
+          'actionId': acknowledgement['id'],
+        }))['ok'],
+        true,
+      );
+      expect(await pending, 'Enter');
+    },
+  );
+
+  test(
+    'source navigation leaves the actual task roster without campaign or RNG changes',
+    () async {
+      final state = jsonEncode(game.gameState.toJson());
+      reseedRNG(seed: 491);
+      final expected = List.generate(10, (_) => lcsRandom(1000000));
+      reseedRNG(seed: 491);
+      final pending = activateRegulars();
+      final observation = bridge.observe();
+      final navigation = (observation['actions'] as List)
+          .cast<Map<String, dynamic>>()
+          .singleWhere((action) => action['kind'] == 'source_navigation');
+      expect(navigation['key'], 'Escape');
+      expect(
+        (await request(bridge, 'act', {
+          'revision': observation['revision'],
+          'actionId': navigation['id'],
+        }))['ok'],
+        true,
+      );
+      await pending;
+      expect(jsonEncode(game.gameState.toJson()), state);
+      expect(List.generate(10, (_) => lcsRandom(1000000)), expected);
+    },
+  );
+
+  test(
+    'navigation rejects replacement, explicit disabled Back and text entry',
+    () async {
+      final console = engine.console;
+      console.addAction('f', 'Current choice');
+      console.navigation = const ConsoleNavigation(section: 'assignments');
+      final pending = console.getkey();
+      Map<String, dynamic> navigation() => (bridge.observe()['actions'] as List)
+          .cast<Map<String, dynamic>>()
+          .singleWhere((action) => action['kind'] == 'source_navigation');
+      final captured = navigation();
+      console.navigation = ConsoleNavigation(
+        section: console.navigation!.section,
+      );
+      expect(
+        (await request(bridge, 'act', {
+          'revision': console.revision.value,
+          'actionId': captured['id'],
+        })).errorCode,
+        'stale_action',
+      );
+      final replacement = navigation();
+      console.addAction('Escape', 'Unavailable Back', enabled: false);
+      expect(
+        (bridge.observe()['actions'] as List)
+            .cast<Map<String, dynamic>>()
+            .where((action) => action['kind'] == 'source_navigation'),
+        isEmpty,
+      );
+      expect(
+        (await request(bridge, 'act', {
+          'revision': console.revision.value,
+          'actionId': replacement['id'],
+        })).errorCode,
+        'stale_action',
+      );
+      console.actions.removeLast();
+      console.textInput = true;
+      expect(
+        (await request(bridge, 'act', {
+          'revision': console.revision.value,
+          'actionId': replacement['id'],
+        })).errorCode,
+        'text_input_required',
+      );
+      console.textInput = false;
+      final current = navigation();
+      expect(
+        (await request(bridge, 'act', {
+          'revision': console.revision.value,
+          'actionId': current['id'],
+        }))['ok'],
+        true,
+      );
+      expect(await pending, 'Escape');
     },
   );
 

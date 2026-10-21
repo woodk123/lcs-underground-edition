@@ -16,28 +16,30 @@ async function fixture(t) {
   return root;
 }
 
-function fakeBrowser() {
+function fakeBrowser({ frames, download } = {}) {
   let current = 0, roll = 17;
   const page = new EventEmitter();
   const observation = () => ({ bridgeVersion: 1, build: { source: 'test' }, revision: current,
     screen: 'headquarters', awaitingInput: true, blockedReason: null,
-    actions: [{ id: `${current}:0`, key: 'D', label: 'Advance day', enabled: true }] });
+    actions: [{ id: `${current}:0`, key: 'D', label: 'Advance day', enabled: true }],
+    ...frames?.[Math.min(current, frames.length - 1)] });
   page.setDefaultTimeout = () => {};
   page.waitForFunction = async () => {};
   page.goto = async url => page.emit('response', { url: () => `${url}main.dart.js`, body: async () => Buffer.from('test compiled bytes') });
   page.screenshot = async ({ path }) => writeFile(path, 'test screenshot');
+  page.waitForEvent = event => new Promise(resolve => page.once(event, resolve));
   page.evaluate = async (_, { request }) => {
     let result;
     if (request.method === 'observe') result = observation();
     else if (request.method === 'inspect') result = { date: current, funds: 100, roll };
     else if (request.params.revision !== current || request.params.actionId !== `${current}:0`) {
       return JSON.stringify({ ok: false, error: { code: 'stale_revision', message: 'Observe again.' }, observation: observation() });
-    } else { current++; roll++; result = { accepted: true }; }
+    } else { current++; roll++; result = { accepted: true }; if (download) page.emit('download', download); }
     return JSON.stringify({ ok: true, result });
   };
   const context = { newPage: async () => page, close: async () => { context.closed = true; } };
   const browser = { newContext: async options => { browser.options = options; return context; }, close: async () => { browser.closed = true; } };
-  return { browser, context, observation };
+  return { browser, context, observation, invalidate: () => current++ };
 }
 
 test('owned static server serves exact bytes and rejects writes, directories and escaping symlinks', async t => {
@@ -74,7 +76,7 @@ test('session identifies actual loaded build, preserves inspection, serializes m
   assert.equal(started.mainJsSha256, createHash('sha256').update('test compiled bytes').digest('hex'));
   assert.equal(fake.browser.options.serviceWorkers, 'block');
   const before = await session.inspect({ scope: 'campaign' });
-  assert.deepEqual(await session.observe(), started.observation);
+  assert.deepEqual(await session.observe(), { ...started.observation, downloads: [], downloadErrors: [] });
   assert.deepEqual(await session.inspect({ scope: 'campaign' }), before);
   const command = { revision: 0, actionId: '0:0' };
   const results = await Promise.allSettled([session.command('act', command), session.command('act', command)]);
@@ -93,6 +95,90 @@ test('session identifies actual loaded build, preserves inspection, serializes m
   assert.ok(fake.browser.closed && fake.context.closed);
   await session.shutdown();
   assert.equal(JSON.parse(await readFile(resolve(started.evidenceDirectory, 'session.json'), 'utf8')).status, 'closed');
+});
+
+test('native downloads retain exact bytes, hashes and safe unique paths after close', async t => {
+  const root = await fixture(t), bytes = Buffer.from('{"original":"export bytes"}\n');
+  const fake = fakeBrowser({ download: {
+    suggestedFilename: () => '../../campaign.json',
+    saveAs: async path => { await new Promise(resolve => setTimeout(resolve, 15)); await writeFile(path, bytes); },
+  } });
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  await session.start({ webRoot: 'web', output: 'reports/download' });
+  const first = await session.command('act', { revision: 0, actionId: '0:0', expectDownload: true });
+  const second = await session.command('act', { revision: 1, actionId: '1:0', expectDownload: true });
+  assert.equal(first.downloads.length, 1);
+  assert.equal(first.downloads[0].bytes, bytes.length);
+  assert.equal(first.downloads[0].sha256, createHash('sha256').update(bytes).digest('hex'));
+  assert.notEqual(first.downloads[0].path, second.downloads[0].path);
+  assert.ok(first.downloads[0].path.startsWith(resolve(root, 'reports/download/downloads')));
+  assert.equal((await session.observe()).downloads.length, 2);
+  const closed = await session.close();
+  assert.equal(closed.downloads.length, 2);
+  assert.deepEqual(await readFile(first.downloads[0].path), bytes);
+});
+
+test('download failure is reported after accepted action without a retry', async t => {
+  const root = await fixture(t);
+  const fake = fakeBrowser({ download: { suggestedFilename: () => 'failed.json', saveAs: async () => { throw Error('download cancelled'); } } });
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  await session.start({ webRoot: 'web', output: 'reports/download-failure' });
+  await assert.rejects(session.command('act', { revision: 0, actionId: '0:0', expectDownload: true }), error => error.code === 'download_failed');
+  assert.equal((await session.observe()).revision, 1);
+  assert.match((await session.observe()).downloadErrors[0].message, /cancelled/);
+  await session.close();
+  assert.equal(JSON.parse(await readFile(resolve(root, 'reports/download-failure/session.json'))).hasErrors, true);
+});
+
+const ack = current => ({ actions: [{ id: `${current}:0`, kind: 'acknowledgement', enabled: true, label: 'Continue' }], report: `Report ${current}` });
+
+test('report helper retains every acknowledgement and stops before a real choice', async t => {
+  const root = await fixture(t), fake = fakeBrowser({ frames: [ack(0), ack(1), { report: null }] });
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  await session.start({ webRoot: 'web', output: 'reports/reports' });
+  const result = await session.continueReports({ revision: 0, actionId: '0:0' });
+  assert.equal(result.completedReports, 2);
+  assert.equal(result.stopReason, 'decision');
+  assert.equal(result.observation.revision, 2);
+  for (const [index, report] of result.reports.entries()) {
+    const snapshot = JSON.parse(await readFile(report.snapshot));
+    assert.equal(snapshot.observation.report, `Report ${index}`);
+    assert.equal(await readFile(report.screenshot, 'utf8'), 'test screenshot');
+  }
+});
+
+test('report helper respects count/time limits, blocked/text readers and source Enter choices', async t => {
+  const variants = [
+    { frames: [ack(0), ack(1)], params: { maxReports: 1 }, reason: 'limit', count: 1 },
+    { frames: [{ ...ack(0), textInput: { value: '' } }], reason: 'text_input', count: 0 },
+    { frames: [{ ...ack(0), blockedReason: 'modal' }], reason: 'blocked', count: 0 },
+    { frames: [{ actions: [{ id: '0:0', enabled: true, kind: 'source_action', key: 'Enter', label: 'Continue' }] }], reason: 'decision', count: 0 },
+    { frames: [{ actions: [...ack(0).actions, { id: 'real-choice', enabled: false, kind: 'source_action' }] }], reason: 'decision', count: 0 },
+    { frames: [ack(0)], params: { timeoutMs: 1 }, delayCapture: true, reason: 'timeout', count: 0 },
+  ];
+  for (const [index, variant] of variants.entries()) {
+    const root = await fixture(t), fake = fakeBrowser({ frames: variant.frames });
+    const session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+    t.after(() => session.close());
+    await session.start({ webRoot: 'web', output: `reports/limits-${index}` });
+    if (variant.delayCapture) session._capture = async () => { await new Promise(resolve => setTimeout(resolve, 10)); return {}; };
+    const result = await session.continueReports({ revision: 0, actionId: '0:0', ...variant.params });
+    assert.equal(result.stopReason, variant.reason);
+    assert.equal(result.completedReports, variant.count);
+    assert.equal(result.observation.revision, variant.count);
+    await session.close();
+  }
+});
+
+test('report helper rejects stale capabilities before and during continuation without retry', async t => {
+  const root = await fixture(t), fake = fakeBrowser({ frames: [ack(0), ack(1)] });
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  await session.start({ webRoot: 'web', output: 'reports/stale-report' });
+  await assert.rejects(session.continueReports({ revision: 9, actionId: '0:0' }), error => error.code === 'stale_action');
+  const capture = session._capture.bind(session);
+  session._capture = async params => { const result = await capture(params); fake.invalidate(); return result; };
+  await assert.rejects(session.continueReports({ revision: 0, actionId: '0:0' }), error => error.code === 'stale_revision' && error.progress.completedReports === 0);
+  assert.equal((await session.observe()).revision, 1, 'Only the simulated source replacement occurred.');
 });
 
 test('wrong expected build fails before browser launch and startup failure closes owned server', async t => {

@@ -161,6 +161,22 @@ void main() {
     },
   );
 
+  test('severe damage reports zero tissue health without healing the limb', () {
+    final person = game.squad.first;
+    final capture = OperationHistoryCapture(game.activeSite!);
+    final limb = (person.body as HumanoidBody).torso
+      ..bruised = true
+      ..relativeHealth = -.373611;
+    capture.finish();
+    expect(limb.relativeHealth, -.373611);
+    expect(
+      person.operationHistory.single.injuries,
+      contains('Torso: bruised, 0% tissue health'),
+    );
+    expect(capture.returnReport, contains('0% tissue health'));
+    expect(capture.returnReport, isNot(contains('-37%')));
+  });
+
   test(
     'rescued crew receive history; bodies carried in are not new casualties',
     () {
