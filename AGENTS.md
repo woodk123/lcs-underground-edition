@@ -18,11 +18,10 @@ Follow [development lessons](docs/DEVELOPMENT_LESSONS.md) for the working loop a
 Apply [the versioning policy](docs/VERSIONING.md) whenever changing player-visible behavior or preparing a release.
 
 - For a player-visible fix or feature, add a concise entry under **Unreleased** in `upstream/assets/changelog.md`. Describe what changes for the player. Internal refactoring, tests, documentation and build maintenance without a player-visible effect do not require an entry or a version bump.
-- Do not bump the version for every task, commit, push or nightly. Accumulate changes until a named preview or release is being prepared. A request to commit and push alone is not a release request.
-- When preparing a release, choose the bump autonomously from the whole unreleased batch: **patch** for fixes, small interface improvements, wording and modest balance changes; **minor** for a substantial feature, new system or significant interface improvement. Use the highest applicable level and explain the choice in the final report. Routine patch/minor decisions do not need confirmation.
+- Version completed player-visible changes before committing or pushing them, including ordinary development pushes and nightlies. Choose the bump from the impact of the coherent change batch, not the number of tasks or commits. Internal-only work and repackaging an already versioned batch do not need another bump. A version bump does not itself authorize publishing a tagged release or deploying the hosted game.
+- Choose the bump autonomously from the whole unversioned batch: **patch** for fixes, small interface improvements, wording and modest balance changes; **minor** for a substantial feature, new system, significant interface improvement or substantial expansion of visual content. Use the highest applicable level and explain the choice in the final report. Routine patch/minor decisions do not need confirmation.
 - A **major** bump requires explicit direction from the user. Continue authorized implementation and checks while leaving that release decision pending.
-- For the first numbered Underground release, finalize the initial `0.1.0` development baseline instead of immediately bumping it again. This exception applies only while the changelog has no dated Underground release section.
-- Keep `gameVersion` in `upstream/lib/utils/game_version.dart` and `version` in `upstream/pubspec.yaml` synchronized. When releasing, move Unreleased notes into a dated version section and leave an empty Unreleased section above it.
+- Keep `gameVersion` in `upstream/lib/utils/game_version.dart` and `version` in `upstream/pubspec.yaml` synchronized. When bumping, move the completed Unreleased batch into a dated version section and leave an empty Unreleased section above it. A dated section identifies versioned source; it does not claim that a public release has been published.
 - Keep `upstreamVersion`, `saveCompatibilityVersion`, the release version and source build ID separate. Never change save compatibility merely to advertise a release. Save-format changes require an explicit migration/compatibility design and save regression checks.
 - Preserve the inherited New Age changelog. Keep the source revision visible for bug reports and use the appropriate Development, Preview, Nightly or Release channel.
 
@@ -32,7 +31,7 @@ Run checks appropriate to the changed behavior before committing. Changes to ver
 
 Follow [the commit/push versioning checklist](docs/VERSIONING.md#before-committing-or-pushing) for every requested commit or push, including documentation-only work.
 
-- Review the requested outcome before committing: an ordinary push, a nightly, or a named preview/release. Apply the versioning policy explicitly; do not silently skip that decision or assume every push requires a bump.
+- Review player impact before committing: version completed player-visible changes even for an ordinary push or nightly, while retaining the version for internal-only work or an already versioned batch. Review named preview/release publication separately.
 - Confirm the changelog and any required version changes are complete, run the applicable checks, and stage only the task-owned path allowlist. Choose routine patch/minor release bumps without asking again.
 - In the completion report, state the commit and push status, the release version, and why it changed or stayed unchanged.
 - When a nightly or release is requested, verify publication for the intended commit before reporting it as published. If reporting the hosted game as updated, verify its build metadata matches that commit. A dispatched workflow alone is not a completed build or deployment.

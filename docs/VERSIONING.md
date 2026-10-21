@@ -16,41 +16,43 @@ The title footer shows the Underground release and channel first, then the New A
 
 ## Choosing a bump
 
-Choose from the complete batch of changes since the last numbered release, not the number of commits or lines changed. Agents may choose patch and minor bumps without asking. These game-release conventions apply during 0.x development too.
+Choose from the complete coherent batch of player-visible changes not yet assigned a version, not the number of commits or lines changed. Apply the decision before committing or pushing completed work, including ordinary development pushes and nightlies; do not wait for a named release. Agents may choose patch and minor bumps without asking. These conventions apply during 0.x development too.
 
 | Change in the batch | Bump | Example |
 |---|---|---|
 | Fixes, small UI improvements, wording corrections, modest balance changes | Patch | 0.1.0 → 0.1.1 |
-| Substantial feature, new gameplay system, significant interface improvement | Minor; reset patch | 0.1.1 → 0.2.0 |
+| Substantial feature, new gameplay system, significant interface improvement or substantial expansion of visual content | Minor; reset patch | 0.1.1 → 0.2.0 |
 | Major milestone or deliberate breaking change | Major; explicit user direction | 0.8.3 → 1.0.0 |
 | Internal refactoring, tests, documentation or build maintenance with no player-visible effect | None | Keep the current version |
 
-A substantial new People or Bases chapter is a minor change; fixing a clipped button or an incorrect crafting cost is a patch. A mixed batch containing a substantial feature receives one minor bump. A save incompatibility must be called out and designed explicitly even during 0.x; the release number alone cannot enforce save compatibility.
+A substantial new People or Bases chapter, a redesigned Orders workspace or completing a large equipment artwork catalogue is a minor change; fixing a clipped button, a single missing sprite or an incorrect crafting cost is a patch. A mixed batch containing a substantial change receives one minor bump. A save incompatibility must be called out and designed explicitly even during 0.x; the release number alone cannot enforce save compatibility.
+
+Version 0.2.0 assigns the accumulated changes after 0.1.0 a new player-facing identity: complete equipment artwork, the Orders workspace and display preferences, Classic keyboard flow, and related fixes. This is a minor bump because the batch substantially expands the interface and visual content, even though the underlying gameplay rules and save compatibility remain separate.
 
 ## During normal development
 
 1. Add concise player-facing notes under **Unreleased** in `upstream/assets/changelog.md`. Group related work and explain its effect, without implementation details or claims of testing that did not happen.
-2. Keep the release version unchanged until a named preview or release is prepared. Ordinary commits, pushes and automatic nightlies do not consume version numbers.
-3. In the completion report, mention an appropriate future bump when it helps explain the change. Do not treat every minor polish change as a new feature release.
+2. Before committing or pushing a completed player-visible batch, choose its patch/minor bump, synchronize both version fields, move its notes into a dated version section and leave an empty Unreleased section above it. Apply this to artwork and presentation changes as well as gameplay rules. Internal-only work, additional commits for the same already versioned batch, rebuilds and repackaging do not consume another version number.
+3. A dated version section records the source change batch, not proof of a published download. Preserve Development/Nightly channels until an actual preview/release is prepared. A commit/push request or version bump does not by itself authorize a tagged public release or hosted deployment.
 
-Unreleased notes appear in the in-game changelog of development/nightly builds. Preserve the original entries below **New Age history**. `docs/ORIGINAL_CODE_CHANGES.md` remains the broader description of how this fork differs from New Age.
+The in-game changelog includes Unreleased notes and dated version sections. Preserve the original entries below **New Age history**. `docs/ORIGINAL_CODE_CHANGES.md` remains the broader description of how this fork differs from New Age.
 
 ## Before committing or pushing
 
 Versioning is a required review step for every requested commit or push, even when the correct decision is to leave the version unchanged.
 
-1. **Identify the requested outcome.** An ordinary commit/push or a nightly keeps the current release version. A named preview/release applies the bump rules above to the complete unreleased batch. A request to commit and push does not by itself request a numbered release.
+1. **Review impact and the requested outcome.** A completed player-visible batch needs a patch/minor bump even for an ordinary commit/push or nightly. Internal-only work or an already versioned batch keeps the current version. Decide separately whether publication was requested; a commit/push request alone does not authorize a tagged public release.
 2. **Check the player-facing notes.** Fixes and features need an Unreleased entry. Internal tests, documentation and build maintenance without a player-visible effect need neither a changelog entry nor a bump.
-3. **Apply any required release changes before committing.** Choose patch/minor bumps autonomously; major bumps still require explicit direction. Synchronize both version fields, date the released notes and run the release/version/save checks. Keep save compatibility separate.
+3. **Apply any required version changes before committing.** Choose patch/minor bumps autonomously; major bumps still require explicit direction. Synchronize both version fields, date the versioned notes and run the version/save/title checks. Keep save compatibility separate. Named release preparation additionally needs the regular release checks.
 4. **Verify and commit the intended work.** Run checks appropriate to the changes, inspect the staged diff and use an explicit task-owned path allowlist. Preserve unrelated work. Verify the remote commit after pushing.
-5. **Report the version decision.** State the commit, push status, current release version and the reason for changing or retaining it. For example: “Pushed `<commit>`; version remains 0.1.0 because this is a nightly, with changes recorded under Unreleased.” For a numbered release, explain the selected bump instead.
+5. **Report the version decision.** State the commit, push status, current game version and the impact-based reason for changing or retaining it. For example: “Pushed `<commit>`; version is 0.2.0 for the expanded interface and complete equipment artwork.” Do not report an unchanged version solely because the build is a nightly or ordinary push.
 
 If publication was requested, also report its actual outcome and URL. Verify that the published nightly/release references the intended commit; do not call a queued or running workflow published. Before saying the browser game is updated, check its hosted `BUILD_INFO.json` against that commit. Report failures or pending deployment honestly.
 
 ## Preparing a named release
 
-1. Review the unreleased batch and choose the highest applicable bump. For the first numbered Underground preview/release, finalize the existing 0.1.0 baseline. No bump is necessary to repackage identical release source.
-2. Update `gameVersion` and the package version together. Move the batch into a `## Underground Edition X.Y.Z — YYYY-MM-DD` section using the actual release date, leaving an empty Unreleased section above it. Mention any save consequences clearly.
+1. Review any completed Unreleased work and apply the highest applicable bump if it is not already versioned. Use the current version when publishing an already versioned source batch; publishing or repackaging alone does not require another bump. The initial 0.1.0 baseline was finalized on 18 October 2026.
+2. Ensure `gameVersion` and the package version agree. Record newly versioned work in a `## Underground Edition X.Y.Z — YYYY-MM-DD` section dated when the batch was versioned, leaving an empty Unreleased section above it. Preserve that date when publishing later; release metadata records the publication date separately. Mention any save consequences clearly.
 3. Run version and save regressions, title layout checks and the regular release checks. Commit the release source before packaging, as required by the builders.
 4. Use a unique tag for each published preview/release. Existing date-based preview/nightly tag conventions remain valid; the embedded game version is independent of the tag. Keep players and matching source together.
 5. Report the version selected and why. Preparing a version or committing/pushing does not itself publish a release.

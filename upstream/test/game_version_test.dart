@@ -13,4 +13,17 @@ void main() {
     expect(packageVersion, gameVersion);
     expect(gameVersion, matches(RegExp(r'^\d+\.\d+\.\d+$')));
   });
+
+  test('latest versioned changelog matches the player-facing version', () {
+    final changelog = File('assets/changelog.md').readAsStringSync();
+    final latest = RegExp(
+      r'^## Underground Edition (\d+\.\d+\.\d+) — \d{4}-\d{2}-\d{2}$',
+      multiLine: true,
+    ).firstMatch(changelog);
+    expect(latest, isNotNull);
+    expect(latest!.group(1), gameVersion);
+    final unreleased = changelog.indexOf('## Unreleased');
+    expect(unreleased, greaterThanOrEqualTo(0));
+    expect(unreleased, lessThan(latest.start));
+  });
 }

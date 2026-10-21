@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.2.0 — 2026-10-21
+
+Expanded equipment artwork, Orders workspace, display preferences and Classic keyboard flow. Existing campaigns retain save compatibility 1.5.6.
+
 * See illustrations for every tangible weapon, outfit, ammunition type and loot item in equipment lists, shops and guides, including 113 newly painted catalogue items.
 
 * Use the original Classic keys and menu flow throughout the graphical view: category defaults, tasks, sleeper roles, purchases and destinations take effect on their original key, and Back returns to the same parent menu. Held keys repeat normally.
