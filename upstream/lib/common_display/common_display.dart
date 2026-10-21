@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/widgets.dart' show StringCharacters;
 import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/engine/engine.dart';
@@ -56,7 +57,13 @@ void printFunds({
   mvaddstrc(y, console.width - str.length - offsetFromRight, color, str);
 }
 
-void printSquadActivityDescription(int y, int x, Squad squad) {
+String fitConsoleText(String text, int width) {
+  if (width <= 0) return '';
+  if (text.characters.length <= width) return text;
+  return '${text.characters.take(width - 1)}…';
+}
+
+void printSquadActivityDescription(int y, int x, Squad squad, {int? width}) {
   String str = squad.activity.description;
   setColor(squad.activity.color);
   if (squad.activity.type == ActivityType.none) {
@@ -74,7 +81,7 @@ void printSquadActivityDescription(int y, int x, Squad squad) {
       setColor(white);
     }
   }
-  mvaddstr(y, x, str);
+  mvaddstr(y, x, width == null ? str : fitConsoleText(str, width));
 }
 
 void makeDelimiter({int y = 8}) {

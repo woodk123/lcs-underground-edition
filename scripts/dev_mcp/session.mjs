@@ -338,7 +338,10 @@ export class DevelopmentSession {
         if (Date.now() >= deadline) { stopReason = 'timeout'; break; }
         const command = await this._command('act', { revision: observation.revision, actionId: action.id }, deadline - Date.now());
         reports.push({ screenshot: capture.screenshot, snapshot: capture.snapshot,
-          revision: capture.observation.revision, report: capture.observation.report,
+          revision: capture.observation.revision, screen: capture.observation.screen,
+          kind: capture.observation.reportContext?.kind ?? 'source_report',
+          title: capture.observation.reportContext?.title ?? null,
+          report: capture.observation.reportContext?.text?.trim() || capture.observation.report?.trim() || capture.observation.text?.trim() || '',
           changedFields: command.changedFields, elapsedMs: command.elapsedMs, downloads: command.downloads });
         observation = command.observation;
       }

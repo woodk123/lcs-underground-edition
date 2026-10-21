@@ -170,6 +170,28 @@ test('report helper respects count/time limits, blocked/text readers and source 
   }
 });
 
+test('report batches return readable article, legislation and buffer fallback text', async t => {
+  const root = await fixture(t);
+  const fake = fakeBrowser({ frames: [
+    { ...ack(0), screen: 'article', report: '', text: 'Bitmap headline glyphs', reportContext: { kind: 'article', title: 'The actual headline', text: 'The actual headline\nComplete article body.' } },
+    { ...ack(1), screen: 'generic', report: '', reportContext: { kind: 'legislation', title: 'Legislation 2023', text: 'Flag Burning: decision pending.' } },
+    { ...ack(2), screen: 'generic', report: '   ', text: 'Original report buffer fallback.' },
+    { report: null },
+  ] });
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  await session.start({ webRoot: 'web', output: 'reports/readable-batches' });
+  const result = await session.continueReports({ revision: 0, actionId: '0:0' });
+  assert.equal(result.stopReason, 'decision');
+  assert.equal(result.completedReports, 3);
+  assert.deepEqual(result.reports.map(report => [report.screen, report.kind, report.title, report.report]), [
+    ['article', 'article', 'The actual headline', 'The actual headline\nComplete article body.'],
+    ['generic', 'legislation', 'Legislation 2023', 'Flag Burning: decision pending.'],
+    ['generic', 'source_report', null, 'Original report buffer fallback.'],
+  ]);
+  const retained = JSON.parse(await readFile(result.reports[0].snapshot, 'utf8'));
+  assert.equal(retained.observation.reportContext.text, result.reports[0].report);
+});
+
 test('report helper rejects stale capabilities before and during continuation without retry', async t => {
   const root = await fixture(t), fake = fakeBrowser({ frames: [ack(0), ack(1)] });
   const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });

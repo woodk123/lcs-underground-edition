@@ -31,7 +31,7 @@ TESTS = (
     'save_load_test.dart', 'save_round_trip_test.dart', 'save_recovery_test.dart',
     'operation_history_test.dart', 'crew_operation_history_test.dart',
     'keyboard_orders_workspace_test.dart', 'keyboard_reader_choices_test.dart',
-    'character_presentation_test.dart', 'journal_preferences_test.dart',
+    'character_presentation_test.dart', 'classic_status_display_test.dart', 'journal_preferences_test.dart',
     'keyboard_navigation_test.dart', 'text_prompt_focus_test.dart',
     'classic_keyboard_parity_test.dart', 'classic_ledger_keyboard_parity_test.dart',
     'classic_base_keyboard_parity_test.dart', 'classic_menu_labels_test.dart',

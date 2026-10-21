@@ -37,7 +37,7 @@ export function createDevelopmentServer(session = new DevelopmentSession()) {
     browserExecutable: z.string().optional(), headed: z.boolean().default(false),
     width: z.number().int().min(390).max(3840).default(1440), height: z.number().int().min(400).max(2160).default(1000),
   }).strict(), false, params => session.start(params));
-  tool('lcs_observe', 'Read the current source reader, input status, exact current actions and revision without consuming input or RNG.', z.object({}).strict(), true, () => session.observe());
+  tool('lcs_observe', 'Read the current source reader, input status, exact actions/revision, readable report context and known graphical tactical map without consuming input or RNG. Map movement entries reference existing source action IDs; unknown terrain remains hidden.', z.object({}).strict(), true, () => session.observe());
   tool('lcs_inspect', 'Read campaign summary, compact play context (named locations, prospects, vehicles and encounter), a person or complete campaign data without making game rolls. Prefer summary/context/person while playing.', z.object({
     scope: z.enum(['summary', 'context', 'person', 'campaign']).default('summary'), personId: z.number().int().optional(),
   }).strict(), true, params => session.inspect(params));

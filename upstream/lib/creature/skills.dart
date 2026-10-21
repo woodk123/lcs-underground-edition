@@ -2,6 +2,15 @@ import 'package:lcs_new_age/creature/attributes.dart';
 
 int skillXpNeeded(int skillLevel) => 100 + 10 * skillLevel;
 
+/// Display training progress without rounding an unearned percent or level up.
+String skillProgressLabel(int level, int xp, {int levelWidth = 1}) {
+  final percent = xp * 100 ~/ skillXpNeeded(level);
+  final progress = percent >= 100
+      ? '99+'
+      : percent.clamp(0, 99).toString().padLeft(2, '0');
+  return '${level.toString().padLeft(levelWidth)}.$progress';
+}
+
 enum Skill {
   art(Attribute.heart, "Art", "Create visual works of beauty.",
       classText: "Painting, color theory, and more."),

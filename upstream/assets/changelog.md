@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## Underground Edition 0.2.5 — 2026-10-21
+
+* Read consistent skill progress across character profiles, skills pages and summaries, with profile skills ordered by their actual level and experience.
+* Keep the date and cash balance readable in Classic headers when visiting places with long names.
+
 ## Underground Edition 0.2.4 — 2026-10-21
 
 * Select squad members with 1–6 in the graphical headquarters roster, with visible number hints. Press the selected number again for their profile, or 0 to clear the selection, following Classic controls.
