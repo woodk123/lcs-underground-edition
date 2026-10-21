@@ -182,7 +182,8 @@ const _objects = [
   _Entry(
     'Loot',
     TacticalTileKind.loot,
-    detail: 'A crate marks loot on a known tile.',
+    detail:
+        'A crate marks unsearched or mixed loot on a known tile. Known dropped items of one type use their catalogue picture. A number counts dropped stacks, not unsearched contents. Inspect tile details for item pictures and quantities.',
   ),
   _Entry(
     'Point of interest',

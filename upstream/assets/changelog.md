@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.2.3 — 2026-10-21
+
+* Recognize dropped loot by its item artwork on tactical maps. Mixed piles show a stack count, and tile details list the dropped items with pictures and quantities. Unsearched caches retain their crate until searched.
+
 ## Underground Edition 0.2.2 — 2026-10-21
 
 * Character legal status explains how wanted offences affect court cases, with Possible penalties help showing base prison time for current charges under current laws.

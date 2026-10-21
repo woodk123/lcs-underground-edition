@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
+import 'package:lcs_new_age/modern/catalogue_art.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/tactical_art.dart';
 import 'package:lcs_new_age/modern/tactical_symbols.dart';
@@ -10,6 +11,24 @@ const _teal = JournalPalette.olive;
 const _amber = JournalPalette.brassDark;
 const _danger = JournalPalette.danger;
 const _paper = JournalPalette.card;
+
+/// A frozen description of an already-created dropped stack, never a loot roll
+/// or a reference to a mutable inventory item.
+@immutable
+class TacticalLootItem {
+  const TacticalLootItem({
+    required this.typeId,
+    required this.title,
+    required this.quantity,
+    this.money = false,
+  });
+
+  final String typeId, title;
+  final int quantity;
+  final bool money;
+  CatalogueArtEntry? get artwork => equipmentArtwork(typeId);
+  String get label => money || quantity == 1 ? title : '$title ×$quantity';
+}
 
 enum TacticalTileKind {
   unknown,
@@ -58,6 +77,8 @@ class TacticalMapCell {
     this.lootAvailable = false,
     this.graffiti,
     this.visited = false,
+    this.droppedItems = const [],
+    this.unsearchedLoot = false,
   });
 
   final int x, y;
@@ -77,6 +98,21 @@ class TacticalMapCell {
   final bool lootAvailable;
   final TacticalGraffiti? graffiti;
   final bool visited;
+  final List<TacticalLootItem> droppedItems;
+  final bool unsearchedLoot;
+
+  CatalogueArtEntry? get lootArtwork =>
+      !unsearchedLoot &&
+          droppedItems.isNotEmpty &&
+          droppedItems.every((item) => item.typeId == droppedItems.first.typeId)
+      ? droppedItems.first.artwork
+      : null;
+
+  String get lootSummary => [
+    if (droppedItems.isNotEmpty)
+      'Dropped loot: ${droppedItems.length} ${droppedItems.length == 1 ? 'stack' : 'stacks'}',
+    if (unsearchedLoot) 'Unsearched loot',
+  ].join(' · ');
 
   /// A unit marker never replaces the known room, fixture or terrain beneath it.
   String get featureLabel => underlyingLabel ?? label;
@@ -95,6 +131,8 @@ class TacticalMapCell {
         'Previously explored',
       if (restricted) 'Restricted area',
       if (lootAvailable) 'Loot available (G)',
+      if (lootSummary.isNotEmpty) lootSummary,
+      for (final item in droppedItems) item.label,
       if (hazardLabel != null) ...hazardLabel!.split(' · '),
       if (burning && hazardLabel == null) 'Fire',
       if (actionHint.isNotEmpty) actionHint,
@@ -194,7 +232,21 @@ TacticalMapCell _describeTile(SiteTile? tile, int x, int y, bool cameras) {
       tile.x == position.x &&
       tile.y == position.y &&
       tile.z == position.z &&
-      game.groundLoot.isNotEmpty;
+      game.groundLoot.any((item) => item.stackSize > 0);
+  // groundLoot belongs to the standing squad, including while the engine
+  // temporarily points locx/locy at a door. Never copy the tile's unrolled loot.
+  final droppedItems = droppedLoot
+      ? List<TacticalLootItem>.unmodifiable([
+          for (final item in game.groundLoot)
+            if (item.stackSize > 0)
+              TacticalLootItem(
+                typeId: item.type.idName,
+                title: item.equipTitle(),
+                quantity: item.stackSize,
+                money: item.type.isMoney,
+              ),
+        ])
+      : const <TacticalLootItem>[];
   final base = _baseFeature(tile);
   var foreground = base;
   if (tile.x == position.x && tile.y == position.y && tile.z == position.z) {
@@ -257,6 +309,8 @@ TacticalMapCell _describeTile(SiteTile? tile, int x, int y, bool cameras) {
     burning: tile.burning,
     pointOfInterest: tile.special != TileSpecial.none,
     lootAvailable: tile.loot || droppedLoot,
+    droppedItems: droppedItems,
+    unsearchedLoot: tile.loot,
     actionHint: _actionHint(tile, droppedLoot: droppedLoot),
     graffiti: switch (base.label) {
       'LCS graffiti' => TacticalGraffiti.lcs,

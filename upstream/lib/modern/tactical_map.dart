@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:lcs_new_age/modern/catalogue_art.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/tactical_art.dart';
 import 'package:lcs_new_age/modern/tactical_legend.dart';
@@ -108,6 +109,10 @@ class _TacticalMapViewState extends State<TacticalMapView> {
   Widget build(BuildContext context) {
     final snapshot = TacticalMapSnapshot.capture();
     return TacticalArtwork(
+      lootArtwork: snapshot.cells
+          .map((cell) => cell.lootArtwork)
+          .nonNulls
+          .firstOrNull,
       builder: (context, art) => JournalSurface(
         key: const ValueKey('tactical-field-plan'),
         padding: const EdgeInsets.all(12),
@@ -658,6 +663,7 @@ class TacticalTileInspector extends StatelessWidget {
             if (tile.visible || current) 'In view' else 'Previously explored',
             if (tile.restricted) 'Restricted area',
             if (tile.lootAvailable) 'Loot available (G)',
+            if (tile.lootSummary.isNotEmpty) tile.lootSummary,
             if (tile.hazardLabel != null) tile.hazardLabel!,
           ].join(' · ');
     final advice = tile == null
@@ -851,38 +857,12 @@ class TacticalTileInspector extends StatelessWidget {
                 key: const ValueKey('tactical-tile-details'),
                 tooltip: 'Read full tile details',
                 icon: const Icon(Icons.info_outline, size: 18),
-                onPressed: () => showDialog<void>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Text(title),
-                    content: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (tile != null)
-                            SizedBox.square(
-                              dimension: 96,
-                              child: TacticalTilePreview(
-                                snapshot: snapshot,
-                                cell: tile,
-                                art: art,
-                              ),
-                            ),
-                          const SizedBox(height: 10),
-                          Text(
-                            [if (state.isNotEmpty) state, advice].join('\n\n'),
-                          ),
-                        ],
-                      ),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Close tile details'),
-                      ),
-                    ],
-                  ),
+                onPressed: () => showTacticalTileDetails(
+                  context,
+                  snapshot: snapshot,
+                  cell: tile,
+                  art: art,
+                  inspectionOnly: inspectionOnly,
                 ),
               ),
             ],
@@ -937,6 +917,31 @@ Future<void> showTacticalTileDetails(
             cell?.semanticLabel ??
                 'Use arrows or outlined tiles to move one step. Hold a tile or enable Inspect to examine it safely.',
           ),
+          if (cell != null && cell.droppedItems.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text('Dropped here'),
+            for (final item in cell.droppedItems)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 56,
+                      height: 44,
+                      child: item.artwork != null
+                          ? CatalogueIllustration(
+                              art: item.artwork!,
+                              height: 44,
+                            )
+                          : const Icon(Icons.inventory_2_outlined),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(item.label)),
+                  ],
+                ),
+              ),
+          ],
           if (inspectionOnly)
             const Padding(
               padding: EdgeInsets.only(top: 10),
@@ -1053,9 +1058,16 @@ class TacticalMapPainter extends CustomPainter {
         );
       }
     }
+    final lootArtwork = cell.lootArtwork;
+    final hasLootArt =
+        cell.objectSprite == TacticalObjectCell.crate &&
+        lootArtwork != null &&
+        art?.drawLoot(canvas, rect.deflate(rect.width * .08), lootArtwork) ==
+            true;
     final hasObject = art != null && cell.objectSprite != null;
     final hasHazard = art != null && cell.hazardSprite != null;
-    if (hasObject) {
+    if (hasObject &&
+        !(hasLootArt && cell.objectSprite == TacticalObjectCell.crate)) {
       // Art does not decide whether a feature is manually usable.
       art!.drawObject(
         canvas,
@@ -1065,6 +1077,30 @@ class TacticalMapPainter extends CustomPainter {
       );
       if (cell.objectSprite == TacticalObjectCell.signboard) {
         TacticalSymbols.drawSignLettering(canvas, rect);
+      }
+    }
+    if (!hasObject &&
+        !hasLootArt &&
+        cell.objectSprite == TacticalObjectCell.crate) {
+      TacticalSymbols.drawLoot(canvas, rect);
+    }
+    // Real dropped loot remains visible beside a room fixture, rather than
+    // replacing it. Unknown/unsearched contents always retain their crate.
+    if (cell.droppedItems.isNotEmpty &&
+        cell.objectSprite != TacticalObjectCell.crate) {
+      final lootRect = Rect.fromLTWH(
+        rect.left,
+        rect.top + rect.height * .15,
+        rect.width * .58,
+        rect.height * .58,
+      );
+      if (lootArtwork == null ||
+          art?.drawLoot(canvas, lootRect, lootArtwork) != true) {
+        if (art != null) {
+          art!.drawObject(canvas, lootRect, TacticalObjectCell.crate);
+        } else {
+          TacticalSymbols.drawLoot(canvas, lootRect);
+        }
       }
     }
     if (hasHazard) {
@@ -1168,7 +1204,11 @@ class TacticalMapPainter extends CustomPainter {
       case TacticalTileKind.stairsDown:
         TacticalSymbols.drawStairs(canvas, rect, up: false);
       case TacticalTileKind.loot:
-        if (!hasObject) TacticalSymbols.drawLoot(canvas, rect);
+        if (!hasObject &&
+            !hasLootArt &&
+            cell.objectSprite != TacticalObjectCell.crate) {
+          TacticalSymbols.drawLoot(canvas, rect);
+        }
       case TacticalTileKind.trap:
         if (!hasHazard) TacticalSymbols.drawTrap(canvas, rect);
       default:
@@ -1219,6 +1259,39 @@ class TacticalMapPainter extends CustomPainter {
         alongsideTrap:
             cell.hazardLabel?.contains('Defensive boobytrap') == true,
       );
+    }
+    if (cell.droppedItems.length > 1) {
+      // The standing tile has no movement arrow. Its lower-left corner leaves
+      // fire, trap, visited/interest badges and the squad token unobstructed.
+      // Count stacks, never unsearched contents or dollars.
+      final badge = Rect.fromLTWH(
+        rect.left + rect.width * .02,
+        rect.top + rect.height * .72,
+        rect.width * .36,
+        rect.height * .28,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(badge, Radius.circular(rect.width * .04)),
+        Paint()..color = _paper,
+      );
+      final count = cell.droppedItems.length;
+      final text = TextPainter(
+        text: TextSpan(
+          text: count > 99 ? '99+' : '$count',
+          style: TextStyle(
+            color: _ink,
+            fontFamily: 'ModernSans',
+            fontSize: rect.width * .23,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: badge.width);
+      text.paint(
+        canvas,
+        badge.center - Offset(text.width / 2, text.height / 2),
+      );
+      text.dispose();
     }
     // Remembered terrain keeps its shape but loses saturation and contrast.
     if (!cell.visible && cell.kind != TacticalTileKind.squad) {
