@@ -117,3 +117,18 @@ test('cached default build must pass current-source validation before browser la
   await assert.rejects(session.start({}), /Source changed/);
   assert.equal(checks, 1); assert.equal(launches, 0);
 });
+
+test('a root path alias cannot bypass cached default source validation', async t => {
+  const root = await fixture(t); let launches = 0, checks = 0;
+  await mkdir(resolve(root, '.local/dev-mcp/web'), { recursive: true });
+  await writeFile(resolve(root, '.local/dev-mcp/web/index.html'), '<html>Old build</html>');
+  await writeFile(resolve(root, '.local/dev-mcp/web/main.dart.js'), 'old compiled bytes');
+  const alias = resolve(root, 'root-alias');
+  await symlink(root, alias, 'junction');
+  const session = new DevelopmentSession({ root: alias,
+    launchBrowser: async () => { launches++; throw Error('Should not launch'); },
+    validatePrepared: async () => { checks++; throw Error('Source changed. Run prepare_dev_mcp.py.'); },
+  });
+  await assert.rejects(session.start({}), /Source changed/);
+  assert.equal(checks, 1); assert.equal(launches, 0);
+});

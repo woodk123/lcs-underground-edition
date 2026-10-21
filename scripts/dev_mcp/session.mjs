@@ -135,7 +135,13 @@ export class DevelopmentSession {
       await stat(resolve(webRoot, 'index.html'));
       const expected = hash(await readFile(resolve(webRoot, 'main.dart.js')));
       if (options.expectedHash) assert.equal(expected, options.expectedHash.toLowerCase(), 'Local web build does not match expectedHash.');
-      const currentPrepared = relative(resolve(this.root, '.local/dev-mcp/web'), webRoot) === ''
+      // Windows TEMP may use an 8.3 alias (RUNNER~1), and a checkout may be
+      // reached through a junction. Compare canonical paths on both sides so
+      // those spellings cannot bypass the default build's freshness check.
+      let defaultWebRoot;
+      try { defaultWebRoot = await realpath(resolve(this.root, '.local/dev-mcp/web')); }
+      catch (error) { if (error.code !== 'ENOENT') throw error; }
+      const currentPrepared = defaultWebRoot && relative(defaultWebRoot, webRoot) === ''
         ? await this.validatePrepared(webRoot) : undefined;
       const requested = options.output ?? `reports/dev-mcp/${new Date().toISOString().replaceAll(':', '-')}-${randomUUID().slice(0, 8)}`;
       this.output = await evidenceDirectory(this.root, requested);
