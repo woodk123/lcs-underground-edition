@@ -75,6 +75,12 @@ Operation cleanup snapshots participants before custody, hauling or relocation c
 
 Free Clinic patients remain admitted until the existing healed/60-day discharge condition. Clinic support remains 6 at an ordinary non-LCS site and generates no new treatment bill; university hospitals retain support 16 and law-dependent charges. Sleeper staff at their own clinic workplace are distinguished from admitted patients.
 
+## Development inspection and MCP
+
+`upstream/lib/devtools/` exposes a web bridge only in builds compiled with `LCS_DEVTOOLS=true`. The bridge reads the current console and detached campaign snapshots without input or RNG. Observed action tokens retain their original `ConsoleAction` object, console and revision; dispatch still enters `Console.sendInput`. Reader-scoped acknowledgements match the graphical reader's existing Continue capability. Text entry replays through the original text reader. The shell blocks commands beneath modal inspection, unconfirmed drafts and busy navigation.
+
+`scripts/dev_mcp/` wraps that bridge in a stdio MCP server with an owned loopback web server, fresh browser storage, actual-loaded-script verification and retained action/capture evidence. Ordinary player builds expose no bridge. See [Development MCP](DEV_MCP.md) for preparation, connection and verification. Saved campaign inspection is separate from tactical runtime and is not a restorable RNG checkpoint.
+
 ## Classic keyboard contract
 
 Unmodified game keys, including held-key repeat events, reach the same `Console.keyEvent` and original awaited reader in either view. The journal must not substitute private category-preview commands, a local draft confirmation, or an automatic return to headquarters for a source key. Original menu state, timing, action case and caller hierarchy remain authoritative. Ignored/empty key events leave presentation drafts and navigation unchanged. Modals, explicit read-only inspection, text fields and optional historical reports retain their own input boundaries.

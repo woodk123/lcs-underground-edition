@@ -55,6 +55,7 @@ Windows and browser saves are separate. Use the game's export/import controls to
 - [Development lessons and working practices](docs/DEVELOPMENT_LESSONS.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Testing](docs/TESTING.md)
+- [Development MCP and interactive playtesting](docs/DEV_MCP.md)
 - [Changes and bug fixes](docs/ORIGINAL_CODE_CHANGES.md)
 - [Versioning and releases](docs/VERSIONING.md)
 - [Artwork and assets](docs/ASSETS.md)

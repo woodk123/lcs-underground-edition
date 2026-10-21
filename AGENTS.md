@@ -11,6 +11,7 @@ Follow [development lessons](docs/DEVELOPMENT_LESSONS.md) for the working loop a
 - For UI/routing changes, check the affected journey with retained scroll/selection state, cancellation, revisiting screens and keyboard focus. Include compact/enlarged layouts where affected; an isolated widget pass does not cover the whole interaction.
 - Iterate with focused checks, then verify the integrated result appropriate to the change. Use the pinned SDK, fully restart after engine changes, and identify the exact build served during isolated browser QA. Keep historical test/timing reports distinct from current verification.
 - For changes spanning creation, orders, navigation or saves, use the [shared acceptance journey](docs/TESTING.md#shared-acceptance-journey): `python scripts/shared_acceptance.py`. Preserve its fresh-campaign continuation and explicitly prepared branch coverage when extending it.
+- For interactive engine debugging and exploratory playthroughs, use the [development MCP](docs/DEV_MCP.md). Prepare a current build with `python scripts/prepare_dev_mcp.py`; its cache verifies source and compiled artifacts. Start a disposable session, choose current action IDs with their observed revision, and retain captures/traces for defects. Use ordinary regression/browser checks for the resulting fix; MCP source actions alone do not establish UI layout, focus or pointer behavior.
 
 ## Versioning and changelog decisions
 

@@ -120,6 +120,16 @@ class EvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'hashes differ'):
             ci.verify_evidence(self.root, self.artifacts)
 
+    def test_enabled_development_bridge_check_is_required_on_each_platform(self):
+        for target in ci.PLATFORMS:
+            path = self.artifacts / f'checks-{target}-0/report.json'
+            original = path.read_text()
+            self.mutate(f'checks-{target}-0', lambda info: info.update(
+                steps=[step for step in info['steps'] if step['name'] != 'development-bridge']))
+            with self.subTest(platform=target), self.assertRaises(ValueError):
+                ci.verify_evidence(self.root, self.artifacts)
+            path.write_text(original)
+
     def test_missing_or_modified_windows_redistributables_are_rejected(self):
         for name in WINDOWS_RUNTIME_FILES:
             dll = self.artifacts / 'build-windows/native' / name

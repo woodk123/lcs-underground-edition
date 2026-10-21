@@ -1,8 +1,11 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lcs_new_age/creature/creature.dart';
+import 'package:lcs_new_age/devtools/development_bridge.dart';
 import 'package:lcs_new_age/engine/agenda_context.dart';
+import 'package:lcs_new_age/engine/changelog.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/console_widget.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
@@ -114,6 +117,112 @@ class _ModernGameShellState extends State<ModernGameShell> {
     // A source await may already exist before this shell mounts (for example
     // after restoring a session). Initialise its editor and focus as well.
     _refresh();
+    if (developmentToolsEnabled) {
+      developmentBridge.attachUi(
+        this,
+        blockedReason: _developmentBlockedReason,
+        inputText: _developmentInputText,
+        prepareSourceInput: () {
+          _journalKey.currentState?.prepareForSourceInput();
+          if (!_classic && _journalSection != 0) {
+            setState(() => _journalSection = 0);
+          }
+        },
+      );
+    }
+  }
+
+  String? _developmentBlockedReason({bool allowSending = false}) {
+    if (!mounted) return 'shell_unavailable';
+    if (ChangelogWidget.globalKey.currentState?.showing ?? false) {
+      return 'changelog_open';
+    }
+    if (_helpOpen || ModalRoute.of(context)?.isCurrent == false) {
+      return 'modal_open';
+    }
+    if (_inspectedPersonId != null) return 'inspection_open';
+    if (_sending && !allowSending ||
+        _navigating ||
+        _openingJournalSection ||
+        _organisation.busy) {
+      return 'ui_busy';
+    }
+    if (_journalKey.currentState?.hasUnconfirmedDraft ?? false) {
+      return 'unconfirmed_draft';
+    }
+    if (!console.textInput) {
+      final focused = FocusManager.instance.primaryFocus?.context;
+      if (focused?.widget is EditableText ||
+          focused?.findAncestorStateOfType<EditableTextState>() != null) {
+        return 'text_editor_focused';
+      }
+    }
+    return null;
+  }
+
+  Future<bool> _developmentInputText(String value, String submit) async {
+    if (_developmentBlockedReason() != null || !console.textInput) return false;
+    final inputConsole = console;
+    var expected = inputConsole.textInputValue;
+    setState(() {
+      _sending = true;
+      _entry.text = value;
+      _entry.selection = TextSelection.collapsed(offset: value.length);
+    });
+    Future<bool> character(String key, String next) async {
+      if (_developmentBlockedReason(allowSending: true) != null ||
+          !identical(console, inputConsole) ||
+          !inputConsole.textInput ||
+          inputConsole.textInputValue != expected ||
+          !inputConsole.sendInput(key)) {
+        return false;
+      }
+      for (var attempt = 0; attempt < 100; attempt++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        if (!mounted ||
+            !identical(console, inputConsole) ||
+            !inputConsole.textInput ||
+            _developmentBlockedReason(allowSending: true) != null) {
+          return false;
+        }
+        if (inputConsole.awaitingInput && inputConsole.lastKey == null) {
+          if (inputConsole.textInputValue != next) return false;
+          expected = next;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    try {
+      while (expected.isNotEmpty) {
+        if (!await character(
+          'Backspace',
+          expected.characters.skipLast(1).toString(),
+        )) {
+          return false;
+        }
+      }
+      for (final char in value.characters) {
+        if (!await character(char, expected + char)) return false;
+      }
+      if (_developmentBlockedReason(allowSending: true) != null ||
+          !identical(console, inputConsole) ||
+          !inputConsole.textInput ||
+          inputConsole.textInputValue != expected) {
+        return false;
+      }
+      // A source command has the same presentation reset as physical input.
+      _journalKey.currentState?.prepareForSourceInput();
+      final accepted = inputConsole.sendInput(submit);
+      await Future<void>.delayed(Duration.zero);
+      return accepted;
+    } finally {
+      if (mounted) {
+        setState(() => _sending = false);
+        _keyboard.requestFocus();
+      }
+    }
   }
 
   void _organisationChanged() {
@@ -187,6 +296,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
 
   @override
   void dispose() {
+    if (developmentToolsEnabled) developmentBridge.detachUi(this);
     console.revision.removeListener(_refresh);
     _organisation.removeListener(_organisationChanged);
     _organisation.dispose();
