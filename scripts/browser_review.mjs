@@ -136,6 +136,79 @@ try {
   assert.ok(repaired.portraitId < 250 && Math.floor(repaired.portraitId % 16 / 4) === 0,
     'The repaired ordinary adult face must use the 20–30 painted age row.');
   report.portrait = { characterAge: 22, priorId: 13, priorVisualAge: 68, correctedId: repaired.portraitId, correctedVisualAge: 25 };
+  // Keep the skill paper open while original HQ keys change the actor.
+  // The declared Art12/25XP founder and the bundled second member retain their
+  // actual skill help; inspection and the pane toggle must not change the save.
+  const headerTeam = before.lcs.squads.find(team => team.id === actor.squadId);
+  assert.equal(headerTeam.members[0], actor.id);
+  const secondHeaderActor = before.lcs.pool.find(person => person.id === headerTeam.members[1]);
+  assert.ok(secondHeaderActor);
+  async function hoverSkillHelp(label, level, xpText, captureName) {
+    // Flutter merges the hint, skill label and value into one semantics span.
+    // Hover its observed row, then wait for the separate painted disclosure.
+    const hints = page.locator('flt-semantics span').filter({ hasText: xpText });
+    const count = await hints.count();
+    await page.getByText(new RegExp(`${escape(label)}\\s+${level}$`)).first().locator('..').hover();
+    await page.waitForFunction(({ text, before }) => [...document.querySelectorAll('flt-semantics span')]
+      .filter(node => node.textContent.includes(text)).length > before, { text: xpText, before: count });
+    await waitForUiSettled(page);
+    const bounds = await hints.last().boundingBox();
+    const viewport = page.viewportSize();
+    assert.ok(bounds && bounds.x >= 0 && bounds.y >= 0
+      && bounds.x + bounds.width <= viewport.width && bounds.y + bounds.height <= viewport.height,
+    'Current skill help must fit the supported game area.');
+    await page.screenshot({ path: resolve(output, `${captureName}.png`), fullPage: true });
+    report.screenshots.push(`${captureName}.png`);
+    await page.mouse.move(2, 2);
+    await page.waitForFunction(({ text, before }) => [...document.querySelectorAll('flt-semantics span')]
+      .filter(node => node.textContent.includes(text)).length <= before, { text: xpText, before: count });
+    return bounds;
+  }
+  report.teamSkillsLayouts = [];
+  for (const layout of [
+    { width: 1280, height: 720, reading: '100%' },
+    { width: 1024, height: 720, reading: '150%' },
+  ]) {
+    await click(/^Reading size/);
+    await page.getByRole('menuitem', { name: layout.reading, exact: true }).click();
+    await page.setViewportSize({ width: layout.width, height: layout.height });
+    for (const key of ['0', '1']) {
+      await page.keyboard.press(key);
+      await waitForUiSettled(page);
+    }
+    await wait(new RegExp(`${escape(actor.name)} · Skills|Inspect ${escape(actor.name)}`));
+    await click(/^Toggle crew and skills$/);
+    await wait(new RegExp(`${escape(actor.name)} · Skills`));
+    const artBounds = await hoverSkillHelp('Art', 12, 'XP: 25/220',
+      `00-team-skills-art-help-${layout.width}x${layout.height}`);
+    await capture(`00-team-skills-first-${layout.width}x${layout.height}`);
+    await page.keyboard.press('2');
+    await wait(new RegExp(`${escape(secondHeaderActor.name)} · Skills`));
+    const writingLevel = secondHeaderActor.rawSkill.writing;
+    const writingXp = secondHeaderActor.rawSkillXP.writing;
+    const writingNeeded = 100 + 10 * writingLevel;
+    const writingBounds = await hoverSkillHelp('Writing', writingLevel, `XP: ${writingXp}/${writingNeeded}`,
+      `00-team-skills-writing-help-${layout.width}x${layout.height}`);
+    assert.equal(await page.getByRole('button', {
+      name: new RegExp(`^Inspect ${escape(secondHeaderActor.name)}(?:$|\\s)`),
+    }).count(), 1);
+    await capture(`00-team-skills-second-${layout.width}x${layout.height}`);
+    await page.keyboard.press('1');
+    await wait(new RegExp(`${escape(actor.name)} · Skills`));
+    await click(/^Toggle crew and skills$/);
+    await wait(new RegExp(`Select crew ${escape(actor.name)}`));
+    report.teamSkillsLayouts.push({ ...layout, actors: [actor.name, secondHeaderActor.name],
+      artHelp: artBounds, writingHelp: writingBounds,
+      checks: ['original HQ actor keys', 'current actor heading and portrait', 'fresh skill help', 'crew/skills round-trip'] });
+  }
+  await page.keyboard.press('0');
+  await waitForUiSettled(page);
+  await click(/^Reading size/);
+  await page.getByRole('menuitem', { name: '100%', exact: true }).click();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  assert.deepEqual(await exportGame('after-team-skills'), before,
+    'Header selection, skill help and crew/skills toggles preserve the complete campaign.');
+  report.checks.push('team-header-and-skills-refresh-for-actual-actor-without-campaign-changes');
   await click(new RegExp(`^Inspect ${escape(actor.name)}(?:$|\\s)`));
   assert.match(await uiText(), /Wanted for: Theft ×5 · Breaking and Entering ×1/);
   assert.match(await uiText(), /Zero heat does not clear these offences/);
@@ -175,6 +248,7 @@ try {
   for (const key of ['Tab', 'w', 'Tab', 'a', 'f', 'g']) await page.keyboard.press(key);
   assert.equal(await page.getByRole('alertdialog').count(), 1);
   await click('Close', details);
+  await details.waitFor({ state: 'hidden' });
   assert.doesNotMatch(await uiText(), /Calculation: Daily income/);
   assert.ok(await page.getByRole('button', { name: 'Confirm order', exact: true }).isEnabled());
   report.checks.push('mechanics-modal-keeps-draft-and-blocks-game-shortcuts');
@@ -192,6 +266,7 @@ try {
   assert.ok(close && close.y >= 0 && close.y + close.height <= page.viewportSize().height);
   await capture('06-mechanics-1024x720-at150');
   await page.keyboard.press('Escape');
+  await details.waitFor({ state: 'hidden' });
   assert.ok(await page.getByRole('button', { name: 'Confirm order', exact: true }).isEnabled());
   await click(/^Cancel prepared order$/);
   await click(new RegExp(`^Inspect ${escape(actor.name)}(?:$|\\s)`));

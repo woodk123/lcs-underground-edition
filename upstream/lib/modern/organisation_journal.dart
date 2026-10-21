@@ -38,6 +38,8 @@ import 'package:lcs_new_age/modern/organisation_crew_roster.dart';
 import 'package:lcs_new_age/modern/organisation_order_card.dart';
 import 'package:lcs_new_age/modern/organisation_order_workspace.dart';
 import 'package:lcs_new_age/modern/organisation_reviews.dart';
+import 'package:lcs_new_age/modern/organisation_skills_paper.dart';
+import 'package:lcs_new_age/modern/organisation_team_header.dart';
 import 'package:lcs_new_age/modern/personnel_directory.dart';
 import 'package:lcs_new_age/modern/recruitment_target_picker.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
@@ -1243,173 +1245,45 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         actor?.location?.getName(short: true, includeCity: true) ??
         'Unknown location';
     final wounded = actor?.body.parts.any((part) => part.wounded) == true;
-    return JournalSurface(
-      inset: true,
-      padding: const EdgeInsets.all(5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Tooltip(
-                  message: teamName,
-                  child: Text(
-                    teamName,
-                    key: const ValueKey('journal-team-name'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: JournalPalette.heading.copyWith(
-                      fontSize: 14,
-                      height: 1.15,
-                    ),
-                  ),
-                ),
+    return OrganisationTeamHeaderView(
+      teamName: teamName,
+      showingSkills: _skills,
+      onToggleSkills: () => setState(() => _skills = !_skills),
+      actor: actor == null
+          ? null
+          : OrganisationTeamActorView(
+              personId: actor.id,
+              name: actor.name,
+              location: location,
+              status:
+                  'Juice ${actor.juice} · ${actor.blood}/${actor.maxBlood} blood',
+              statusTooltip:
+                  'Juice ${actor.juice} · ${actor.title} · ${actor.blood}/${actor.maxBlood} blood${wounded ? ' · Injured' : ''}',
+              statusWarning: actor.blood < actor.maxBlood || wounded,
+              portrait: CrewPortrait(
+                person: actor,
+                size: _compact
+                    ? 36
+                    : narrow
+                    ? 46
+                    : 58,
               ),
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: IconButton(
-                  key: const ValueKey('journal-skills'),
-                  tooltip: 'Toggle crew and skills',
-                  onPressed: () => setState(() => _skills = !_skills),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  style: IconButton.styleFrom(
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    minimumSize: const Size(24, 24),
-                  ),
-                  icon: Icon(
-                    _skills ? Icons.groups : Icons.auto_graph,
-                    size: 16,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 3),
-          if (actor != null)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Semantics(
-                  button: true,
-                  label: 'Inspect ${actor.name}',
-                  child: InkWell(
-                    key: ValueKey('hq-portrait:${actor.id}'),
-                    onTap: () => widget.onInspect(actor),
-                    child: CrewPortrait(
-                      person: actor,
-                      size: _compact
-                          ? 36
-                          : narrow
-                          ? 46
-                          : 58,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 7),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Tooltip(
-                        message: actor.name,
-                        child: Text(
-                          actor.name,
-                          key: const ValueKey('journal-selected-person'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: JournalPalette.heading.copyWith(
-                            fontSize: 14,
-                            height: 1.2,
-                          ),
-                        ),
-                      ),
-                      Tooltip(
-                        message: location,
-                        child: Text(
-                          location,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: JournalPalette.small.copyWith(
-                            fontSize: 10.5,
-                            height: 1.15,
-                          ),
-                        ),
-                      ),
-                      Tooltip(
-                        message:
-                            'Juice ${actor.juice} · ${actor.title} · ${actor.blood}/${actor.maxBlood} blood${wounded ? ' · Injured' : ''}',
-                        child: Text(
-                          'Juice ${actor.juice} · ${actor.blood}/${actor.maxBlood} blood',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: JournalPalette.small.copyWith(
-                            fontSize: 10.5,
-                            height: 1.15,
-                            color: actor.blood < actor.maxBlood || wounded
-                                ? JournalPalette.danger
-                                : JournalPalette.ink,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            )
-          else
-            const Text('No active crew selected.', style: JournalPalette.small),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 10,
-            runSpacing: 2,
-            children: [
-              _fact(
-                Icons.people,
-                undercover
-                    ? '${members.length} agents'
-                    : _individualOrderActor != null
-                    ? '1 person'
-                    : '${members.length}/6',
-                undercover
-                    ? 'Undercover agents'
-                    : _individualOrderActor != null
-                    ? 'Individual assignment'
-                    : 'Squad members',
-              ),
-              _fact(
-                Icons.shield_outlined,
-                '${members.where((p) => p.equippedWeapon != null).length}',
-                'Armed members',
-              ),
-              _fact(
-                Icons.directions_car,
-                '${members.map((p) => p.car?.id).nonNulls.toSet().length}',
-                'Assigned cars',
-              ),
-            ],
-          ),
-        ],
-      ),
+              onInspect: () => widget.onInspect(actor),
+            ),
+      memberCount: undercover
+          ? '${members.length} agents'
+          : _individualOrderActor != null
+          ? '1 person'
+          : '${members.length}/6',
+      memberCountLabel: undercover
+          ? 'Undercover agents'
+          : _individualOrderActor != null
+          ? 'Individual assignment'
+          : 'Squad members',
+      armedCount: '${members.where((p) => p.equippedWeapon != null).length}',
+      carCount: '${members.map((p) => p.car?.id).nonNulls.toSet().length}',
     );
   }
-
-  Widget _fact(IconData icon, String value, String name) => Tooltip(
-    message: name,
-    child: Semantics(
-      label: '$name: $value',
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: JournalPalette.brassDark),
-          const SizedBox(width: 4),
-          Text(value, style: JournalPalette.body),
-        ],
-      ),
-    ),
-  );
 
   Widget _innerRail(bool narrow) => SizedBox(
     width: _compact && widget.textScale > 1.1
@@ -1859,50 +1733,17 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   Widget _skillsPaper(Creature? actor) {
     final skills = Skill.values.toList()
       ..sort((a, b) => (actor?.skill(b) ?? 0).compareTo(actor?.skill(a) ?? 0));
-    return JournalSurface(
-      lined: true,
-      inset: true,
-      padding: const EdgeInsets.all(9),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            actor == null ? 'Skills' : '${actor.name} · Skills',
-            style: JournalPalette.heading.copyWith(fontSize: 14),
+    return OrganisationSkillsPaperView(
+      title: actor == null ? 'Skills' : '${actor.name} · Skills',
+      skills: [
+        for (final skill in skills)
+          OrganisationSkillData(
+            id: skill.name,
+            label: skill.displayName,
+            level: actor?.skill(skill) ?? 0,
+            help: skillHelp(skill, actor: actor),
           ),
-          const SizedBox(height: 5),
-          Expanded(
-            child: ListView(
-              children: [
-                for (final skill in skills)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3),
-                    child: SkillTooltip(
-                      key: ValueKey('journal-skill:${skill.name}'),
-                      skill: skill,
-                      actor: actor,
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              skill.displayName,
-                              style: JournalPalette.small,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${actor?.skill(skill) ?? 0}',
-                            style: JournalPalette.body,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 

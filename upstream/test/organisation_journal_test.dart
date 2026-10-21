@@ -31,12 +31,14 @@ import 'package:lcs_new_age/modern/journal_city_plan.dart';
 import 'package:lcs_new_age/modern/journal_ledger.dart';
 import 'package:lcs_new_age/modern/journal_media.dart';
 import 'package:lcs_new_age/modern/journal_navigation_shortcuts.dart';
+import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/organisation_crew_pool.dart';
 import 'package:lcs_new_age/modern/organisation_journal.dart';
 import 'package:lcs_new_age/modern/personnel_directory.dart';
+import 'package:lcs_new_age/modern/skill_help.dart';
 import 'package:lcs_new_age/monthly/lcs_monthly.dart';
 import 'package:lcs_new_age/newspaper/news_story.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
@@ -379,6 +381,139 @@ void main() {
       expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
       expect(tester.takeException(), isNull);
     });
+  }
+
+  for (final large in [false, true]) {
+    testWidgets(
+      'selected header and visible skills follow original HQ actor keys, large=$large',
+      (tester) async {
+        final first = game.squad.first;
+        final second = game.squad[1];
+        // Prepared display differences; no training, injury or earnings are earned.
+        for (final actor in [first, second]) {
+          for (final skill in Skill.values) {
+            actor.rawSkill[skill] = 0;
+          }
+        }
+        first.rawSkill[Skill.art] = 12;
+        first.rawSkill[Skill.music] = 2;
+        first.rawSkillXP[Skill.art] = 25;
+        first.juice = 120;
+        second.rawSkill[Skill.art] = 2;
+        second.rawSkill[Skill.music] = 10;
+        second.rawSkillXP[Skill.art] = 75;
+        second.juice = -3;
+        second.blood = second.maxBlood ~/ 2;
+        final previousPresentation = journalPresentation.value;
+        journalReadingScale.value = large ? 1.5 : 1;
+        journalPresentation.value = JournalPreferenceValues(
+          compact: large,
+          showGuidance: !large,
+        );
+        addTearDown(() {
+          journalReadingScale.value = 1;
+          journalPresentation.value = previousPresentation;
+        });
+        await mount(
+          tester,
+          realHeadquarters: true,
+          size: large ? const Size(1024, 720) : const Size(1280, 720),
+        );
+        final before = campaignSnapshot();
+        reseedRNG(seed: 40261);
+        final rolls = List.generate(12, (_) => lcsRandom(100000));
+        reseedRNG(seed: 40261);
+        await _tap(tester, 'journal-skills');
+        for (final selection in [
+          (first, LogicalKeyboardKey.digit1, '1'),
+          (second, LogicalKeyboardKey.digit2, '2'),
+          (first, LogicalKeyboardKey.digit1, '1'),
+        ]) {
+          final actor = selection.$1;
+          await _focusGame(tester);
+          await tester.sendKeyEvent(selection.$2, character: selection.$3);
+          await _settle(tester);
+          expect(game.activeSquadMember, same(actor));
+          expect(engine.console.screen, 'headquarters');
+          expect(_key('journal-crew-list'), findsNothing);
+          expect(find.text('${actor.name} · Skills'), findsOneWidget);
+          expect(
+            tester.widget<Text>(_key('journal-selected-person')).data,
+            actor.name,
+          );
+          final portrait = _key('hq-portrait:${actor.id}');
+          expect(portrait.hitTestable(), findsOneWidget);
+          final status = find.text(
+            'Juice ${actor.juice} · ${actor.blood}/${actor.maxBlood} blood',
+          );
+          expect(status, findsOneWidget);
+          expect(
+            tester.widget<Text>(status).style!.color,
+            actor == second ? JournalPalette.danger : JournalPalette.ink,
+          );
+          expect(
+            find.byTooltip(
+              actor.location!.getName(short: true, includeCity: true),
+            ),
+            findsOneWidget,
+          );
+          final art = _key('journal-skill:art');
+          final music = _key('journal-skill:music');
+          for (final skill in [Skill.art, Skill.music]) {
+            expect(
+              find.descendant(
+                of: _key('journal-skill:${skill.name}'),
+                matching: find.text('${actor.skill(skill)}'),
+              ),
+              findsOneWidget,
+            );
+          }
+          expect(
+            tester.getTopLeft(art).dy < tester.getTopLeft(music).dy,
+            actor == first,
+            reason: 'The visible level ordering follows the selected actor.',
+          );
+          final revision = engine.console.revision.value;
+          final navigation = engine.console.navigation;
+          final actions = List<ConsoleAction>.of(engine.console.actions);
+          void expectReaderUnchanged() {
+            expect(engine.console.screen, 'headquarters');
+            expect(engine.console.revision.value, revision);
+            expect(engine.console.navigation, same(navigation));
+            expect(engine.console.actions, actions);
+            expect(engine.console.awaitingInput, isTrue);
+            expect(engine.console.lastKey, isNull);
+            expect(engine.console.textInput, isFalse);
+            expect(campaignSnapshot(), before);
+          }
+
+          final hint = find.descendant(of: art, matching: find.byType(Tooltip));
+          final help = skillHelp(Skill.art, actor: actor);
+          expect(tester.widget<Tooltip>(hint).message, help);
+          tester.state<TooltipState>(hint).ensureTooltipVisible();
+          await tester.pump(const Duration(milliseconds: 650));
+          expect(find.text(help), findsOneWidget);
+          expectReaderUnchanged();
+          Tooltip.dismissAllToolTips();
+          await _settle(tester);
+          await _tap(tester, 'journal-skills');
+          await _tap(tester, 'journal-skills');
+          expect(find.text('${actor.name} · Skills'), findsOneWidget);
+          expectReaderUnchanged();
+          await _tap(tester, 'hq-portrait:${actor.id}');
+          expect(
+            tester.widget<CrewInspector>(find.byType(CrewInspector)).person,
+            same(actor),
+          );
+          expectReaderUnchanged();
+          await _tap(tester, 'crew-inspector-close');
+          expect(find.text('${actor.name} · Skills'), findsOneWidget);
+          expectReaderUnchanged();
+        }
+        expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 
   testWidgets('previous visit job is a cancellable draft bound to its actor', (
