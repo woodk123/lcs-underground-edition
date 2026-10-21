@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:lcs_new_age/modern/catalogue_art.dart';
 
 /// Atlas geometry is fractional: the source images do not have to be divisible
 /// by their column count. Insetting each crop avoids neighboring-cell bleed.
@@ -288,9 +289,27 @@ class TacticalArt {
     required this.objects,
     required this.extraObjects,
     required this.hazards,
+    this.lootImage,
+    this.lootAsset,
   });
 
   final ui.Image terrain, objects, extraObjects, hazards;
+  final ui.Image? lootImage;
+  final String? lootAsset;
+
+  /// True only when this exact catalogue atlas has finished loading.
+  bool drawLoot(Canvas canvas, Rect rect, CatalogueArtEntry entry) {
+    final image = lootImage;
+    if (image == null || lootAsset != entry.asset) return false;
+    final fit = applyBoxFit(BoxFit.contain, entry.source.size, rect.size);
+    canvas.drawImageRect(
+      image,
+      entry.source,
+      Alignment.center.inscribe(fit.destination, rect),
+      Paint()..filterQuality = FilterQuality.medium,
+    );
+    return true;
+  }
 
   void drawTerrain(
     Canvas canvas,
@@ -375,9 +394,10 @@ typedef TacticalArtworkBuilder =
 /// all four atlases are available, the builder receives null and can retain
 /// the vector field plan. Missing artwork therefore never blocks play.
 class TacticalArtwork extends StatefulWidget {
-  const TacticalArtwork({super.key, required this.builder});
+  const TacticalArtwork({super.key, required this.builder, this.lootArtwork});
 
   final TacticalArtworkBuilder builder;
+  final CatalogueArtEntry? lootArtwork;
 
   @override
   State<TacticalArtwork> createState() => _TacticalArtworkState();
@@ -479,7 +499,30 @@ class _TacticalArtworkState extends State<TacticalArtwork> {
   }
 
   @override
-  Widget build(BuildContext context) => widget.builder(context, _art);
+  Widget build(BuildContext context) {
+    final entry = widget.lootArtwork;
+    final art = _art;
+    return FutureBuilder<ui.Image?>(
+      future: entry == null ? null : loadCatalogueAtlas(entry.asset),
+      // Preserve the map's widget identity and selected/zoom state when loot
+      // changes. Waiting snapshots may still contain the previous atlas.
+      builder: (context, image) => entry == null || art == null
+          ? widget.builder(context, art)
+          : widget.builder(
+              context,
+              TacticalArt(
+                terrain: art.terrain,
+                objects: art.objects,
+                extraObjects: art.extraObjects,
+                hazards: art.hazards,
+                lootImage: image.connectionState == ConnectionState.done
+                    ? image.data
+                    : null,
+                lootAsset: entry.asset,
+              ),
+            ),
+    );
+  }
 }
 
 class _AtlasImage {

@@ -66,6 +66,10 @@ class _FullSiteMapState extends State<FullSiteMap> {
       _hovered = _selected = null;
     }
     return TacticalArtwork(
+      lootArtwork: snapshot.cells
+          .map((cell) => cell.lootArtwork)
+          .nonNulls
+          .firstOrNull,
       builder: (context, art) => JournalSurface(
         key: const ValueKey('full-floor-field-plan'),
         padding: const EdgeInsets.all(12),

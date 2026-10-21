@@ -139,7 +139,9 @@ CatalogueArtEntry? vehicleArtwork(String? typeId) {
 }
 
 final _atlases = <String, Future<ui.Image?>>{};
-Future<ui.Image?> _loadAtlas(String asset) =>
+
+/// Borrowed cached image; consumers must not dispose it.
+Future<ui.Image?> loadCatalogueAtlas(String asset) =>
     _atlases.putIfAbsent(asset, () async {
       try {
         final data = await rootBundle.load(asset);
@@ -173,7 +175,7 @@ class CatalogueIllustration extends StatelessWidget {
         width: width,
         height: height,
         child: FutureBuilder<ui.Image?>(
-          future: _loadAtlas(art.asset),
+          future: loadCatalogueAtlas(art.asset),
           builder: (context, snapshot) => snapshot.data == null
               ? const SizedBox.shrink()
               : CustomPaint(
