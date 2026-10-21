@@ -34,6 +34,7 @@ import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/order_mechanics_dialog.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/modern/organisation_crew_pool.dart';
+import 'package:lcs_new_age/modern/organisation_crew_roster.dart';
 import 'package:lcs_new_age/modern/organisation_order_card.dart';
 import 'package:lcs_new_age/modern/organisation_order_workspace.dart';
 import 'package:lcs_new_age/modern/organisation_reviews.dart';
@@ -1721,80 +1722,35 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     }
   }
 
-  Widget _crewPaper() => DragTarget<int>(
-    onWillAcceptWithDetails: (details) =>
-        !controller.busy && !members.any((member) => member.id == details.data),
-    onAcceptWithDetails: (details) =>
-        unawaited(controller.assignPerson(details.data)),
-    builder: (context, candidates, rejected) => JournalSurface(
-      lined: true,
-      inset: true,
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.attach_file,
-                size: 19,
-                color: JournalPalette.brassDark,
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  undercover
-                      ? 'Undercover agents · ${members.length}'
-                      : _individualOrderActor != null
-                      ? 'Individual assignment'
-                      : 'Crew · ${members.length}/6',
-                  style: JournalPalette.heading.copyWith(fontSize: 14),
-                ),
-              ),
-              if (allocating)
-                TextButton(
-                  onPressed: controller.busy
-                      ? null
-                      : () async {
-                          if (await controller.finishAllocation() && mounted) {
-                            controller.clearInspection();
-                            setState(() {
-                              _pool = false;
-                              _poolPerson = null;
-                            });
-                          }
-                        },
-                  child: const Text('Done'),
-                ),
-            ],
-          ),
-          if (candidates.isNotEmpty)
-            const Text(
-              'Drop to add to this squad',
-              style: JournalPalette.small,
-            ),
-          Expanded(
-            child: members.isEmpty
-                ? const Center(child: Text('Choose crew from the pool.'))
-                : ListView(
-                    key: const ValueKey('journal-crew-list'),
-                    children: [
-                      for (final member in members) _memberRow(member),
-                    ],
-                  ),
-          ),
-          if (!_hasJob)
-            Text(
-              allocating
-                  ? 'Drag crew between these pages, or use Add / Remove.'
-                  : _showSquadNumberKeys
-                  ? '1–6: select · repeat: profile · 0: clear'
-                  : 'Select a name to inspect. Crew pool changes the team.',
-              style: JournalPalette.small,
-            ),
-        ],
-      ),
-    ),
+  Widget _crewPaper() => OrganisationCrewRosterView(
+    title: undercover
+        ? 'Undercover agents · ${members.length}'
+        : _individualOrderActor != null
+        ? 'Individual assignment'
+        : 'Crew · ${members.length}/6',
+    rows: [for (final member in members) _memberView(member)],
+    showDone: allocating,
+    onDone: controller.busy
+        ? null
+        : () async {
+            if (await controller.finishAllocation() && mounted) {
+              controller.clearInspection();
+              setState(() {
+                _pool = false;
+                _poolPerson = null;
+              });
+            }
+          },
+    canAcceptPerson: (personId) =>
+        !controller.busy && !members.any((member) => member.id == personId),
+    onTransfer: (personId) => unawaited(controller.assignPerson(personId)),
+    hint: _hasJob
+        ? null
+        : allocating
+        ? 'Drag crew between these pages, or use Add / Remove.'
+        : _showSquadNumberKeys
+        ? '1–6: select · repeat: profile · 0: clear'
+        : 'Select a name to inspect. Crew pool changes the team.',
   );
 
   bool get _showSquadNumberKeys =>
@@ -1805,7 +1761,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       !undercover &&
       !allocating;
 
-  Widget _memberRow(Creature member) {
+  OrganisationCrewMemberView _memberView(Creature member) {
     final squadIndex = game.squad.indexOf(member);
     final numberKey = _showSquadNumberKeys && squadIndex >= 0
         ? '${squadIndex + 1}'
@@ -1873,222 +1829,31 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       }
     }
 
-    final nameLabel = Text(
-      member.name,
-      key: ValueKey('journal-member-name:${member.id}'),
-      maxLines: stacked ? 2 : 1,
-      overflow: TextOverflow.ellipsis,
-      style: JournalPalette.body.copyWith(fontSize: 13, height: 1.25),
-    );
-    final contextLabel = Tooltip(
-      message: showingOrders
-          ? 'Current order: ${member.activity.description}\nLocation: $location\nWearing: $clothingSummary'
-          : 'Wearing: $clothingSummary',
-      child: Text(
-        showingOrders
-            ? '${member.activity.description} · $location'
-            : clothingSummary,
-        key: ValueKey(
-          showingOrders
-              ? 'journal-member-order:${member.id}'
-              : 'journal-member-clothing:${member.id}',
-        ),
-        maxLines: stacked ? 2 : 1,
-        overflow: TextOverflow.ellipsis,
-        style: JournalPalette.small.copyWith(
-          fontSize: 11,
-          height: 1.3,
-          color:
-              !showingOrders &&
-                  (clothing == null || clothing.bloody || clothing.damaged)
-              ? JournalPalette.danger
-              : JournalPalette.small.color,
-        ),
+    return OrganisationCrewMemberView(
+      data: OrganisationCrewMemberData(
+        personId: member.id,
+        name: member.name,
+        selected: person?.id == member.id,
+        orderDescription: member.activity.description,
+        location: location,
+        clothingSummary: clothingSummary,
+        clothingWarning:
+            clothing == null || clothing.bloody || clothing.damaged,
+        skillSummary: skillSummary,
+        hasAssignment: member.activity.type != ActivityType.none,
+        numberKey: numberKey,
+        injury: injury,
       ),
+      showingOrders: showingOrders,
+      stacked: stacked,
+      allocating: allocating,
+      juiceBadge: JuiceBadge(person: member, compact: true, showHelp: false),
+      onSelect: canSelect() ? () => unawaited(select()) : null,
+      onInspect: () => widget.onInspect(member),
+      onRemove: controller.busy
+          ? null
+          : () => controller.assignPerson(member.id),
     );
-
-    final row = Material(
-      color: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        decoration: BoxDecoration(
-          color: person?.id == member.id ? JournalPalette.selected : null,
-          border: Border(
-            bottom: BorderSide(
-              color: JournalPalette.rule.withValues(alpha: .4),
-            ),
-          ),
-        ),
-        child: Row(
-          children: [
-            if (numberKey != null) ...[
-              JournalShortcutBadge(shortcut: numberKey),
-              const SizedBox(width: 4),
-            ],
-            Expanded(
-              child: TextButton(
-                key: ValueKey('journal-member:${member.id}'),
-                onPressed: canSelect() ? select : null,
-                style: TextButton.styleFrom(
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.symmetric(vertical: 3),
-                  minimumSize: const Size(24, 24),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: const RoundedRectangleBorder(),
-                ),
-                child: Semantics(
-                  label:
-                      'Select crew ${member.name}\nCurrent order: ${member.activity.description}\nLocation: $location\nStrongest skills: $skillSummary\nWearing: $clothingSummary${injury == null ? '' : '\nCondition: ${injury.details}'}',
-                  excludeSemantics: true,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (stacked) ...[
-                        nameLabel,
-                        contextLabel,
-                      ] else
-                        Row(
-                          children: [
-                            Expanded(flex: 5, child: nameLabel),
-                            const SizedBox(width: 8),
-                            Flexible(flex: 6, child: contextLabel),
-                          ],
-                        ),
-                      LayoutBuilder(
-                        builder: (context, bounds) => Row(
-                          children: [
-                            Expanded(
-                              child: Tooltip(
-                                message: 'Strongest skills: $skillSummary',
-                                child: Text(
-                                  skillSummary,
-                                  key: ValueKey(
-                                    'journal-member-skills:${member.id}',
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: JournalPalette.small.copyWith(
-                                    fontSize: 11,
-                                    height: 1.3,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (injury != null)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 6),
-                                child: Tooltip(
-                                  message: injury.details,
-                                  child: Row(
-                                    key: ValueKey(
-                                      'journal-member-injury:${member.id}',
-                                    ),
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        injury.label == 'Bleeding'
-                                            ? Icons.bloodtype_outlined
-                                            : Icons.healing,
-                                        size: 12,
-                                        color: injury.urgent
-                                            ? JournalPalette.danger
-                                            : JournalPalette.brassDark,
-                                      ),
-                                      if (bounds.maxWidth >= 240) ...[
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          injury.label,
-                                          style: JournalPalette.small.copyWith(
-                                            fontSize: 11,
-                                            height: 1.3,
-                                            color: injury.urgent
-                                                ? JournalPalette.danger
-                                                : JournalPalette.brassDark,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      if (stacked)
-                        JuiceBadge(
-                          person: member,
-                          compact: true,
-                          showHelp: false,
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            if (!stacked)
-              JuiceBadge(person: member, compact: true, showHelp: false),
-            if (!stacked && member.activity.type != ActivityType.none)
-              Tooltip(
-                message: member.activity.description,
-                child: const Icon(
-                  Icons.assignment,
-                  size: 13,
-                  color: JournalPalette.olive,
-                ),
-              ),
-            SizedBox(
-              width: 26,
-              height: 26,
-              child: IconButton(
-                key: ValueKey('hq-dossier:${member.id}'),
-                tooltip: 'Dossier: ${member.name}',
-                onPressed: () => widget.onInspect(member),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                style: IconButton.styleFrom(
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  minimumSize: const Size(24, 24),
-                ),
-                icon: const Icon(Icons.person_search, size: 16),
-              ),
-            ),
-            if (allocating)
-              SizedBox(
-                width: 26,
-                height: 26,
-                child: IconButton(
-                  key: ValueKey('journal-remove-member:${member.id}'),
-                  tooltip: 'Remove ${member.name} from this squad',
-                  onPressed: controller.busy
-                      ? null
-                      : () => controller.assignPerson(member.id),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  style: IconButton.styleFrom(
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    minimumSize: const Size(24, 24),
-                  ),
-                  icon: const Icon(Icons.remove_circle_outline, size: 16),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-    return allocating
-        ? Draggable<int>(
-            data: member.id,
-            feedback: Material(
-              color: JournalPalette.selected,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(member.name, style: JournalPalette.body),
-              ),
-            ),
-            childWhenDragging: Opacity(opacity: .4, child: row),
-            child: row,
-          )
-        : row;
   }
 
   Widget _skillsPaper(Creature? actor) {
