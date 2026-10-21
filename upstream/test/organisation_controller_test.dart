@@ -1,13 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lcs_new_age/basemode/activate_regulars.dart';
 import 'package:lcs_new_age/basemode/activate_sleepers.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
-import 'package:lcs_new_age/basemode/base_mode.dart';
-import 'package:lcs_new_age/basemode/media_overview.dart';
-import 'package:lcs_new_age/basemode/plan_site_visit.dart';
 import 'package:lcs_new_age/basemode/review_mode.dart';
 import 'package:lcs_new_age/common_display/print_creature_info.dart';
 import 'package:lcs_new_age/creature/body.dart';
@@ -22,70 +17,12 @@ import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/location/siege.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/politics/alignment.dart';
-import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 
-import 'test_support.dart';
+import 'support/campaign_fixture.dart';
+import 'support/headquarters_test_harness.dart';
 
-/// Keeps only the original base menu's dispatch boundary. All squad, order,
-/// location and media handlers exercised below are the real source functions.
-class _BaseHarness {
-  _BaseHarness() {
-    done = _loop();
-  }
-  late final Future<void> done;
-  bool stopped = false;
-  bool finished = false;
-
-  Future<void> _loop() async {
-    try {
-      while (!stopped) {
-        engine.erase();
-        final location = game.activeSquad?.site ?? game.activeSafehouse;
-        baseModeSquadSafehouseDisplay(location);
-        baseModeOptionsDisplay(location);
-        final key = await engine.getKey();
-        if (stopped) break;
-        switch (key) {
-          case engine.Key.r:
-            await reviewAssetsAndFormSquads();
-          case engine.Key.a:
-            await activateRegulars();
-          case engine.Key.b:
-            await activateSleepers();
-          case engine.Key.f:
-            await planSiteVisit();
-          case engine.Key.m:
-            await mediaOverview();
-        }
-      }
-    } finally {
-      finished = true;
-    }
-  }
-
-  Future<void> stop() async {
-    stopped = true;
-    for (var step = 0; step < 40 && !finished; step++) {
-      if (engine.console.awaitingInput) {
-        engine.console.sendInput(engine.console.textInput ? 'Enter' : 'Escape');
-      }
-      await Future<void>.delayed(const Duration(milliseconds: 2));
-    }
-    await done.timeout(const Duration(seconds: 2));
-  }
-}
-
-Creature _extraPerson({String? name}) {
-  final person = Creature.fromJson(
-    jsonDecode(jsonEncode(game.pool.first.toJson())),
-  );
-  person.id = game.gameState.nextCreatureId++;
-  person.name = name ?? 'Crew ${person.id}';
-  person.squadId = null;
-  game.pool.add(person);
-  return person;
-}
+Creature _extraPerson({String? name}) => addTestCrewMember(name: name);
 
 Squad _extraSquad() {
   final person = _extraPerson();
@@ -95,24 +32,18 @@ Squad _extraSquad() {
   return squad;
 }
 
-String _snapshot() => jsonEncode(game.gameState.toJson());
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  late String saveContents;
+  late CampaignFixture fixture;
   OrganisationController? controller;
-  _BaseHarness? harness;
+  HeadquartersTestHarness? harness;
   Future<void>? profileReader;
   bool profileFinished = false;
   setUpAll(() async {
-    await ensureGameDataLoaded();
-    saveContents = await File('test/saves/felix_1_0.json').readAsString();
+    fixture = await CampaignFixture.load('test/saves/felix_1_0.json');
   });
   setUp(() {
-    engine.console = Console();
-    game.gameState = decodeSaveContents(saveContents).gameState!;
-    game.mode = GameMode.base;
-    game.activeSquadMember = null;
+    fixture.restoreHeadquarters(console: Console());
   });
   tearDown(() async {
     controller?.dispose();
@@ -135,7 +66,7 @@ void main() {
   });
 
   OrganisationController start() {
-    harness = _BaseHarness();
+    harness = HeadquartersTestHarness();
     return controller = OrganisationController(console: engine.console);
   }
 
@@ -168,12 +99,12 @@ void main() {
       expect(journal.networkReviews.needsReview(person), isFalse);
 
       game.gameState.uniqueGameId = original + 1;
-      final before = _snapshot();
+      final before = campaignSnapshot();
       engine.console.revision.value++;
       expect(journal.networkReviews.loaded, isFalse);
       await journal.networkReviews.load(game.gameState.uniqueGameId);
       expect(journal.networkReviews.needsReview(person), isTrue);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       journal.dispose();
       engine.console.revision.value++;
       expect(journal.networkReviews.needsReview(person), isFalse);
@@ -185,7 +116,7 @@ void main() {
     () async {
       final people = game.activeSquad!.members;
       expect(people.length, greaterThan(2));
-      final before = _snapshot();
+      final before = campaignSnapshot();
       reseedRNG(seed: 40991);
       final rolls = List.generate(8, (_) => lcsRandom(100000));
       reseedRNG(seed: 40991);
@@ -207,7 +138,7 @@ void main() {
           expect(engine.console.journalProfile!.personIds, ids);
         }
       }
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
     },
   );
@@ -235,14 +166,14 @@ void main() {
     () async {
       final outside = _extraPerson();
       final journal = startProfile(fullCreatureInfoScreen(game.squad.first));
-      final before = _snapshot();
+      final before = campaignSnapshot();
       final revision = engine.console.revision.value;
       for (final id in [outside.id, 999999]) {
         expect(journal.canSelectProfilePerson(id), isFalse);
         expect(await journal.selectProfilePerson(id), isFalse);
       }
       expect(engine.console.revision.value, revision);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     },
   );
 
@@ -260,14 +191,14 @@ void main() {
         isTrue,
       );
       await sendProfileKey(journal, 'Down');
-      final before = _snapshot();
+      final before = campaignSnapshot();
       expect(await journal.selectProfilePerson(outside.id), isTrue);
       expect(engine.console.journalProfile!.person, same(outside));
       expect(engine.console.journalProfile!.page, 1);
       expect(journal.selectedPersonId, outside.id);
       expect(journal.selectedSquadId, originalSquadId);
       expect(game.activeSquad!.id, originalSquadId);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     },
   );
 
@@ -282,11 +213,11 @@ void main() {
       await journal.sendAction(open, revision: engine.console.revision.value),
       isTrue,
     );
-    final before = _snapshot();
+    final before = campaignSnapshot();
     expect(await journal.selectProfilePerson(second.id), isTrue);
     expect(journal.selectedPerson, same(second));
     expect(journal.canSelectProfilePerson(game.squad.first.id), isFalse);
-    expect(_snapshot(), before);
+    expect(campaignSnapshot(), before);
   });
 
   test('rename input cannot be consumed by profile selection', () async {
@@ -294,13 +225,13 @@ void main() {
     final journal = startProfile(fullCreatureInfoScreen(people.first));
     await sendProfileKey(journal, 'n');
     expect(engine.console.textInput, isTrue);
-    final before = _snapshot();
+    final before = campaignSnapshot();
     final revision = engine.console.revision.value;
     expect(journal.canSelectProfilePerson(people.last.id), isFalse);
     expect(await journal.selectProfilePerson(people.last.id), isFalse);
     expect(engine.console.revision.value, revision);
     expect(engine.console.textInput, isTrue);
-    expect(_snapshot(), before);
+    expect(campaignSnapshot(), before);
   });
 
   for (final key in ['r', 'k']) {
@@ -323,13 +254,13 @@ void main() {
       expect(engine.console.journalProfile!.confirming, isTrue);
       expect(engine.console.journalProfile!.canSelectPerson, isFalse);
       final target = game.squad.firstWhere((p) => p.id != person.id);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       final revision = engine.console.revision.value;
       expect(journal.canSelectProfilePerson(target.id), isFalse);
       expect(await journal.selectProfilePerson(target.id), isFalse);
       expect(engine.console.revision.value, revision);
       expect(engine.console.journalProfile!.confirming, isTrue);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     });
   }
 
@@ -351,9 +282,9 @@ void main() {
       expect(game.activeSquad, same(target));
       expect(engine.console.screen, 'headquarters');
       expect(journal.assembly, isNull);
-      final selected = _snapshot();
+      final selected = campaignSnapshot();
       expect(await journal.selectSquad(target.id), isTrue);
-      expect(_snapshot(), selected);
+      expect(campaignSnapshot(), selected);
       expect(journal.assembly, isNull);
       expect(game.date, date);
       expect(game.ledger.funds, funds);
@@ -435,7 +366,7 @@ void main() {
         } else {
           expect(w?.label, contains('Wait out the siege'));
         }
-        final before = _snapshot();
+        final before = campaignSnapshot();
         final revision = engine.console.revision.value;
         reseedRNG(seed: 3332);
         final rolls = List.generate(8, (_) => lcsRandom(100000));
@@ -448,7 +379,7 @@ void main() {
           journal.headquartersAction('f');
           journal.headquartersAction('c');
         }
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
         expect(engine.console.revision.value, revision);
         expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
       },
@@ -510,7 +441,7 @@ void main() {
       expect(journal.headquarters, isNull);
       first.location = location;
       expect(journal.headquarters, isNotNull);
-      game.gameState = decodeSaveContents(saveContents).gameState!;
+      fixture.restoreState();
       game.mode = GameMode.base;
       expect(
         journal.headquarters,
@@ -549,11 +480,11 @@ void main() {
     final journal = start();
     expect(await journal.selectSquad(original.id), isTrue);
     game.activeSquad = target;
-    final before = _snapshot();
+    final before = campaignSnapshot();
     engine.console.flush();
     expect(journal.selectedSquad, same(target));
     expect(journal.selectedSquadId, target.id);
-    expect(_snapshot(), before);
+    expect(campaignSnapshot(), before);
   });
 
   test(
@@ -569,10 +500,10 @@ void main() {
       expect(await journal.assignPerson(firstExtra.id), isTrue);
       expect(squad.members, contains(firstExtra));
       expect(firstExtra.squadId, squad.id);
-      final full = _snapshot();
+      final full = campaignSnapshot();
       expect(await journal.assignPerson(secondExtra.id), isFalse);
       expect(journal.message, contains('six members'));
-      expect(_snapshot(), full);
+      expect(campaignSnapshot(), full);
       expect(await journal.assignPerson(originalMember.id), isTrue);
       expect(originalMember.squadId, isNull);
       expect(await journal.assignPerson(secondExtra.id), isTrue);
@@ -631,9 +562,9 @@ void main() {
       expect(journal.assembly?.memberIds, isEmpty);
       expect(journal.allocationPool, local);
       expect(journal.allocationPool, isNot(contains(remote)));
-      final empty = _snapshot();
+      final empty = campaignSnapshot();
       expect(await journal.assignPerson(remote.id), isFalse);
-      expect(_snapshot(), empty);
+      expect(campaignSnapshot(), empty);
       expect(await journal.assignPerson(local.last.id), isTrue);
       expect(squad.members, [local.last]);
       expect(journal.assembly?.memberIds, [local.last.id]);
@@ -652,13 +583,13 @@ void main() {
         expect(person.canWalk, isFalse);
         final journal = start();
         expect(await journal.openAllocation(game.activeSquad!.id), isTrue);
-        final before = _snapshot();
+        final before = campaignSnapshot();
         expect(await journal.assignPerson(person.id), wheelchair);
         if (wheelchair) {
           expect(game.activeSquad!.members, contains(person));
         } else {
           expect(journal.message, contains('wheelchair'));
-          expect(_snapshot(), before);
+          expect(campaignSnapshot(), before);
         }
       },
     );
@@ -676,10 +607,10 @@ void main() {
     expect(journal.allocationPool, isNot(contains(remote)));
     expect(journal.allocationPool, isNot(contains(dead)));
     expect(journal.allocationPool, isNot(contains(away)));
-    final before = _snapshot();
+    final before = campaignSnapshot();
     for (final person in [remote, dead, away]) {
       expect(await journal.assignPerson(person.id), isFalse);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     }
   });
 
@@ -697,14 +628,14 @@ void main() {
       expect(journal.isNewAssembly, isTrue);
       expect(journal.allocationPool, contains(remote));
       expect(await journal.assignPerson(local.id), isTrue);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       expect(await journal.assignPerson(remote.id), isFalse);
       expect(journal.message, contains('same location'));
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(await journal.returnToHeadquarters(), isFalse);
       expect(journal.message, contains('name it'));
       expect(engine.console.screen, 'squad-assembly');
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(await journal.finishAllocation(), isTrue);
       expect(engine.console.textInput, isTrue);
       expect(journal.assembly, isNull);
@@ -744,16 +675,16 @@ void main() {
       other.activity = queued;
       final person = game.pool.first;
       final journal = start();
-      final before = _snapshot();
+      final before = campaignSnapshot();
       expect(await journal.openOrders(person.id), isTrue);
       final confirm = engine.console.actions.singleWhere(
         (a) => a.entityType == 'activity-confirm',
       );
       expect(confirm.entityCategory, person.id.toString());
       expect(other.activity, same(queued));
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(await journal.returnToHeadquarters(), isTrue);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(await journal.openOrders(other.members.single.id), isFalse);
       expect(journal.message, contains('joint operation'));
       expect(other.activity, same(queued));
@@ -769,7 +700,7 @@ void main() {
       }
       target!.activity = Activity(ActivityType.donations);
       final journal = start();
-      final before = _snapshot();
+      final before = campaignSnapshot();
       expect(await journal.openOrders(target.id), isTrue);
       expect(
         engine.console.actions
@@ -778,7 +709,7 @@ void main() {
         target.id.toString(),
       );
       expect(target.activity.type, ActivityType.donations);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     },
   );
 
@@ -789,12 +720,12 @@ void main() {
       final queued = Activity(ActivityType.visit, idString: target.idString);
       game.activeSquad!.activity = queued;
       final journal = start();
-      final before = _snapshot();
+      final before = campaignSnapshot();
       expect(await journal.openSection('f'), isTrue);
       expect(engine.console.navigation?.section, 'operations');
       expect(await journal.returnToHeadquarters(), isTrue);
       expect(game.activeSquad!.activity, same(queued));
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     },
   );
 
@@ -808,7 +739,7 @@ void main() {
       final person = target!;
       person.activity = Activity(ActivityType.sleeperSpy);
       final journal = start();
-      final before = _snapshot();
+      final before = campaignSnapshot();
       expect(await journal.openOrders(person.id), isTrue);
       expect(
         engine.console.actions
@@ -819,9 +750,9 @@ void main() {
         person.id.toString(),
       );
       expect(person.activity.type, ActivityType.sleeperSpy);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(await journal.returnToHeadquarters(), isTrue);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     },
   );
 
@@ -843,14 +774,14 @@ void main() {
         final person = _extraPerson()..sleeperAgent = true;
         state.$2(person);
         final journal = start();
-        final before = _snapshot();
+        final before = campaignSnapshot();
         final revision = engine.console.revision.value;
         final screen = engine.console.screen;
         expect(await journal.openOrders(person.id), isFalse);
         expect(journal.message, sleeperOrderUnavailableReason(person));
         expect(engine.console.revision.value, revision);
         expect(engine.console.screen, screen);
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
       },
     );
   }
@@ -863,7 +794,7 @@ void main() {
       person.activity = order;
       final journal = start();
       expect(await journal.openOrders(person.id), isTrue);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       reseedRNG(seed: 4882);
       final rolls = List.generate(12, (_) => lcsRandom(100000));
       reseedRNG(seed: 4882);
@@ -882,12 +813,12 @@ void main() {
         expect(activityOrderFrame(engine.console)?.selectedCategoryKey, key);
         expect(activityOrderFrame(engine.console)?.actorId, person.id);
         expect(person.activity, same(order));
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
       }
       expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
       expect(await journal.returnToHeadquarters(), isTrue);
       expect(person.activity, same(order));
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     },
   );
 
@@ -899,7 +830,7 @@ void main() {
       person.activity = order;
       final journal = start();
       expect(await journal.openOrders(person.id), isTrue);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       reseedRNG(seed: 9820);
       final rolls = List.generate(12, (_) => lcsRandom(100000));
       reseedRNG(seed: 9820);
@@ -920,12 +851,12 @@ void main() {
         expect(activityOrderFrame(engine.console)?.selectedCategoryKey, key);
         expect(activityOrderFrame(engine.console)?.sleeper, isTrue);
         expect(person.activity, same(order));
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
       }
       expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
       expect(await journal.returnToHeadquarters(), isTrue);
       expect(person.activity, same(order));
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     },
   );
 
@@ -954,7 +885,7 @@ void main() {
             action.entityType == 'activity' && action.entityId == 'donations',
       );
       final oldOrder = person.activity;
-      final before = _snapshot();
+      final before = campaignSnapshot();
       final taskRevision = engine.console.revision.value;
       expect(
         person.activity,
@@ -972,7 +903,7 @@ void main() {
       expect(game.ledger.funds, funds);
       expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
       final expected = jsonDecode(before) as Map<String, dynamic>;
-      final after = jsonDecode(_snapshot()) as Map<String, dynamic>;
+      final after = jsonDecode(campaignSnapshot()) as Map<String, dynamic>;
       final expectedPool =
           (expected['lcs'] as Map<String, dynamic>)['pool'] as List;
       final afterPool = (after['lcs'] as Map<String, dynamic>)['pool'] as List;
@@ -980,9 +911,9 @@ void main() {
       (expectedPool[index] as Map<String, dynamic>)['activity'] =
           (afterPool[index] as Map<String, dynamic>)['activity'];
       expect(after, expected);
-      final committed = _snapshot();
+      final committed = campaignSnapshot();
       expect(await journal.commitOrder(task, revision: taskRevision), isFalse);
-      expect(_snapshot(), committed);
+      expect(campaignSnapshot(), committed);
     },
   );
 
@@ -1055,7 +986,7 @@ void main() {
         (action) =>
             action.entityType == 'activity' && action.entityId == nested,
       );
-      final before = _snapshot();
+      final before = campaignSnapshot();
       final order = person.activity;
       expect(
         await journal.commitOrder(
@@ -1069,9 +1000,9 @@ void main() {
       expect(activityOrderFrame(engine.console), isNull);
       expect(engine.console.navigation, isNull);
       expect(person.activity, same(order));
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(await journal.returnToHeadquarters(), isFalse);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     });
   }
 
@@ -1086,7 +1017,7 @@ void main() {
             action.entityType == 'activity-category' && action.key == 'b',
       );
       final oldRevision = engine.console.revision.value;
-      final before = _snapshot();
+      final before = campaignSnapshot();
       expect(
         await journal.commitOrder(category, revision: oldRevision),
         isFalse,
@@ -1111,7 +1042,7 @@ void main() {
         isFalse,
       );
       expect(await journal.commitOrder(task, revision: oldRevision), isFalse);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     },
   );
 
@@ -1144,7 +1075,7 @@ void main() {
     () async {
       final journal = start();
       expect(await journal.openAllocation(game.activeSquad!.id), isTrue);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       final revision = engine.console.revision.value;
       reseedRNG(seed: 1444);
       final rolls = List.generate(8, (_) => lcsRandom(100000));
@@ -1158,7 +1089,7 @@ void main() {
         expect(journal.canNavigate, isTrue);
       }
       journal.clearInspection();
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(engine.console.revision.value, revision);
       expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
     },
@@ -1168,19 +1099,19 @@ void main() {
     'stale IDs and captured actions never dispatch an unrelated key',
     () async {
       final journal = start();
-      final before = _snapshot();
+      final before = campaignSnapshot();
       expect(await journal.selectSquad(999999), isFalse);
       expect(await journal.assignPerson(999999), isFalse);
       expect(await journal.openOrders(999999), isFalse);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       final action = engine.console.actions.first;
       final revision = engine.console.revision.value;
       expect(await journal.selectSquad(game.activeSquad!.id), isTrue);
-      final overview = _snapshot();
+      final overview = campaignSnapshot();
       expect(await journal.sendAction(action, revision: revision), isFalse);
       expect(journal.message, contains('changed'));
       expect(engine.console.screen, 'headquarters');
-      expect(_snapshot(), overview);
+      expect(campaignSnapshot(), overview);
     },
   );
 
@@ -1189,7 +1120,7 @@ void main() {
     () async {
       final journal = start();
       expect(await journal.openAllocation(game.activeSquad!.id), isTrue);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       final view = engine.console.actions.singleWhere(
         (action) => action.key == 'v',
       );
@@ -1214,11 +1145,11 @@ void main() {
       );
       engine.console.screen = marker;
       expect(await journal.returnToHeadquarters(), isFalse);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(engine.console.sendInput('Escape'), isTrue);
       await Future<void>.delayed(const Duration(milliseconds: 4));
       expect(squadAllocationFrame(engine.console), isNotNull);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     },
   );
 
@@ -1231,7 +1162,7 @@ void main() {
       body.rightLeg.cleanOff = true;
       final journal = start();
       expect(await journal.openAllocation(game.activeSquad!.id), isTrue);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       final action = engine.console.actions.singleWhere(
         (action) =>
             action.entityType == 'person' &&
@@ -1251,11 +1182,11 @@ void main() {
       expect(squadAllocationFrame(engine.console), isNull);
       engine.console.screen = marker;
       expect(await journal.returnToHeadquarters(), isFalse);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(engine.console.sendInput('Escape'), isTrue);
       await Future<void>.delayed(const Duration(milliseconds: 4));
       expect(squadAllocationFrame(engine.console), isNotNull);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     },
   );
 
@@ -1265,7 +1196,7 @@ void main() {
       final journal = start();
       expect(await journal.openOrders(game.pool.first.id), isTrue);
       final frame = activityOrderFrame(engine.console)!;
-      final before = _snapshot();
+      final before = campaignSnapshot();
       engine.console.navigation = ConsoleNavigation(
         section: frame.navigation.section,
         backKey: frame.navigation.backKey,
@@ -1299,7 +1230,7 @@ void main() {
       );
       engine.console.actions[index] = original;
       expect(activityOrderFrame(engine.console), same(frame));
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     },
   );
 
@@ -1324,7 +1255,7 @@ void main() {
         (action) =>
             action.entityType == 'activity' && action.entityId == 'study',
       );
-      final before = _snapshot();
+      final before = campaignSnapshot();
       expect(
         await journal.commitOrder(
           task,
@@ -1345,7 +1276,7 @@ void main() {
       engine.console.navigation = null;
       engine.console.screen = marker;
       expect(await journal.returnToHeadquarters(), isFalse);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
     },
   );
 
@@ -1358,12 +1289,12 @@ void main() {
       final journal = controller = OrganisationController(
         console: engine.console,
       );
-      final before = _snapshot();
+      final before = campaignSnapshot();
       final revision = engine.console.revision.value;
       expect(journal.canNavigate, isFalse);
       expect(await journal.returnToHeadquarters(), isFalse);
       expect(await journal.openAllocation(game.activeSquad!.id), isFalse);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(engine.console.revision.value, revision);
       expect(engine.console.awaitingInput, isTrue);
       engine.console.sendInput('Escape');

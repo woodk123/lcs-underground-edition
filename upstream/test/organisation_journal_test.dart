@@ -1,20 +1,15 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lcs_new_age/basemode/activate_regulars.dart';
-import 'package:lcs_new_age/basemode/activate_sleepers.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/basemode/base_actions.dart';
 import 'package:lcs_new_age/basemode/base_mode.dart';
 import 'package:lcs_new_age/basemode/liberal_agenda.dart';
-import 'package:lcs_new_age/basemode/media_overview.dart';
-import 'package:lcs_new_age/basemode/plan_site_visit.dart';
-import 'package:lcs_new_age/basemode/review_mode.dart';
 import 'package:lcs_new_age/common_actions/equipment.dart';
 import 'package:lcs_new_age/creature/creature.dart';
+import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/daily/shopsnstuff.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
@@ -38,14 +33,15 @@ import 'package:lcs_new_age/modern/journal_navigation_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
+import 'package:lcs_new_age/modern/organisation_crew_pool.dart';
 import 'package:lcs_new_age/modern/organisation_journal.dart';
 import 'package:lcs_new_age/modern/personnel_directory.dart';
 import 'package:lcs_new_age/monthly/lcs_monthly.dart';
 import 'package:lcs_new_age/newspaper/news_story.dart';
-import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 
-import 'test_support.dart';
+import 'support/campaign_fixture.dart';
+import 'support/headquarters_test_harness.dart';
 
 /// The base dispatch boundary with real source-authored options and real
 /// management handlers. It never advances time during these UI tests.
@@ -62,94 +58,69 @@ class _HeadquartersConsole extends Console {
   }
 }
 
-class _JournalHarness {
+class _JournalHarness extends HeadquartersTestHarness {
   _JournalHarness({
     this.monthlyReport = false,
     this.shopVisit = false,
     this.realHeadquarters = false,
-  }) {
-    done = _loop();
-  }
-  late final Future<void> done;
-  bool stopped = false;
-  bool finished = false;
+  }) : super(reader: realHeadquarters ? _runHeadquarters : null);
+
   final bool realHeadquarters;
   final bool monthlyReport;
   final bool shopVisit;
   bool monthReset = false;
-  final dispatched = <int>[];
 
-  Future<void> _loop() async {
+  static Future<void> _runHeadquarters() async {
     try {
-      if (realHeadquarters) {
-        try {
-          await baseMode();
-        } on _StopHeadquarters {
-          return;
-        }
-        return;
-      }
-      while (!stopped) {
-        engine.erase();
-        final location = game.activeSquad?.site ?? game.activeSafehouse;
-        baseModeSquadSafehouseDisplay(location);
-        baseModeOptionsDisplay(location);
-        final key = await engine.getKey();
-        if (stopped) break;
-        dispatched.add(key);
-        switch (key) {
-          case engine.Key.r:
-            await reviewAssetsAndFormSquads();
-          case engine.Key.a:
-            await activateRegulars();
-          case engine.Key.b:
-            await activateSleepers();
-          case engine.Key.f:
-            await planSiteVisit();
-          case engine.Key.c:
-            if (game.squad.isNotEmpty) {
-              game.activeSquad?.activity = Activity.none();
-            }
-          case engine.Key.e:
-            await equip(game.activeSquad?.site?.loot);
-          case engine.Key.v:
-            await setVehicles();
-          case engine.Key.o:
-            await orderparty();
-          case engine.Key.m:
-            await mediaOverview();
-          case engine.Key.l:
-            await liberalAgenda();
-          case engine.Key.w:
-            if (shopVisit) {
-              final team = game.activeSquad!;
-              final destination = team.activity.location!;
-              // This is the original day boundary before a service visit:
-              // its squad order becomes each traveller's activity, then the
-              // actual department-store reader relocates and receives input.
-              for (final person in team.members) {
-                person.activity = team.activity;
-              }
-              await deptstore(destination);
-              team.activity = Activity.none();
-              for (final person in team.members) {
-                person.location = person.base;
-                person.activity = Activity.none();
-              }
-            }
-            if (monthlyReport) {
-              await fundReport(false);
-              game.ledger.resetMonthlyAmounts();
-              monthReset = true;
-            }
-        }
-      }
-    } finally {
-      finished = true;
+      await baseMode();
+    } on _StopHeadquarters {
+      return;
     }
   }
 
-  Future<void> stop(WidgetTester tester) async {
+  @override
+  Future<void> dispatch(int key) async {
+    switch (key) {
+      case engine.Key.c:
+        if (game.squad.isNotEmpty) {
+          game.activeSquad?.activity = Activity.none();
+        }
+      case engine.Key.e:
+        await equip(game.activeSquad?.site?.loot);
+      case engine.Key.v:
+        await setVehicles();
+      case engine.Key.o:
+        await orderparty();
+      case engine.Key.l:
+        await liberalAgenda();
+      case engine.Key.w:
+        if (shopVisit) {
+          final team = game.activeSquad!;
+          final destination = team.activity.location!;
+          // This is the original day boundary before a service visit:
+          // its squad order becomes each traveller's activity, then the
+          // actual department-store reader relocates and receives input.
+          for (final person in team.members) {
+            person.activity = team.activity;
+          }
+          await deptstore(destination);
+          team.activity = Activity.none();
+          for (final person in team.members) {
+            person.location = person.base;
+            person.activity = Activity.none();
+          }
+        }
+        if (monthlyReport) {
+          await fundReport(false);
+          game.ledger.resetMonthlyAmounts();
+          monthReset = true;
+        }
+      default:
+        await super.dispatch(key);
+    }
+  }
+
+  Future<void> stopWidgets(WidgetTester tester) async {
     stopped = true;
     if (realHeadquarters) {
       (engine.console as _HeadquartersConsole).stopped = true;
@@ -167,18 +138,7 @@ class _JournalHarness {
   }
 }
 
-Creature _extraPerson(String name) {
-  final person = Creature.fromJson(
-    jsonDecode(jsonEncode(game.pool.first.toJson())) as Map<String, dynamic>,
-  );
-  person.id = game.gameState.nextCreatureId++;
-  person.name = name;
-  person.squadId = null;
-  game.pool.add(person);
-  return person;
-}
-
-String _snapshot() => jsonEncode(game.gameState.toJson());
+Creature _extraPerson(String name) => addTestCrewMember(name: name);
 
 Finder _key(String value) => find.byKey(ValueKey(value));
 
@@ -276,10 +236,9 @@ void _insideViewport(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  late String fixture;
+  late CampaignFixture fixture;
   setUpAll(() async {
-    await ensureGameDataLoaded();
-    fixture = await File('test/saves/felix_1_0.json').readAsString();
+    fixture = await CampaignFixture.load('test/saves/felix_1_0.json');
     final serif = FontLoader('JournalSerif');
     serif.addFont(
       rootBundle.load('fonts/journal/LibreBaskerville-Variable.ttf'),
@@ -296,10 +255,7 @@ void main() {
   });
   setUp(() {
     journalReadingScale.value = 1;
-    engine.console = _HeadquartersConsole();
-    game.gameState = decodeSaveContents(fixture).gameState!;
-    game.mode = GameMode.base;
-    game.activeSquadMember = null;
+    fixture.restoreHeadquarters(console: _HeadquartersConsole());
     final sixth = _extraPerson('Sixth Crew Member');
     sixth.squad = game.activeSquad;
     for (final person in game.squad) {
@@ -326,7 +282,7 @@ void main() {
     );
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox.shrink());
-      await harness.stop(tester);
+      await harness.stopWidgets(tester);
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
       tester.platformDispatcher.clearAccessibilityFeaturesTestValue();
@@ -353,7 +309,7 @@ void main() {
         realHeadquarters: true,
         size: large ? const Size(800, 600) : const Size(1280, 800),
       );
-      final before = _snapshot();
+      final before = campaignSnapshot();
       reseedRNG(seed: 62401);
       final rolls = List.generate(12, (_) => lcsRandom(100000));
       reseedRNG(seed: 62401);
@@ -418,7 +374,7 @@ void main() {
       await press(LogicalKeyboardKey.escape, 'Escape');
       await press(LogicalKeyboardKey.digit2, '2');
       expect(game.activeSquadMember, same(game.squad[1]));
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
       expect(tester.takeException(), isNull);
     });
@@ -457,7 +413,7 @@ void main() {
     expect(button, findsOneWidget);
     expect(button.hitTestable(), findsOneWidget);
     final retained = tester.widget<TextButton>(button).onPressed!;
-    final before = _snapshot();
+    final before = campaignSnapshot();
     reseedRNG(seed: 23011);
     final roll = lcsRandom(100000);
     reseedRNG(seed: 23011);
@@ -465,9 +421,9 @@ void main() {
     await _settle(tester);
     expect(activityOrderFrame(engine.console)?.actorId, actor.id);
     expect(_key('journal-confirm-order'), findsOneWidget);
-    expect(_snapshot(), before);
+    expect(campaignSnapshot(), before);
     await _tap(tester, 'journal-cancel-order');
-    expect(_snapshot(), before);
+    expect(campaignSnapshot(), before);
     expect(lcsRandom(100000), roll);
     await _tap(tester, 'journal-finish-orders');
     expect(button.hitTestable(), findsOneWidget);
@@ -478,10 +434,10 @@ void main() {
     for (final other in game.squad.where((p) => p != actor)) {
       expect(other.activity.type, ActivityType.sellArt);
     }
-    final confirmed = _snapshot();
+    final confirmed = campaignSnapshot();
     retained();
     await _settle(tester);
-    expect(_snapshot(), confirmed);
+    expect(campaignSnapshot(), confirmed);
     expect(tester.takeException(), isNull);
   });
 
@@ -512,7 +468,7 @@ void main() {
         await tester.tap(find.text('150%'));
         await _settle(tester);
       }
-      final before = _snapshot();
+      final before = campaignSnapshot();
       reseedRNG(seed: 26840);
       final rolls = List.generate(12, (_) => lcsRandom(100000));
       reseedRNG(seed: 26840);
@@ -559,7 +515,7 @@ void main() {
       await _tap(tester, 'journal-profile-action:Enter');
       expect(engine.console.journalProfile, isNull);
       expect(_key('personnel-directory'), findsOneWidget);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
       await _tap(tester, 'journal-equipment');
       expect(
@@ -602,7 +558,7 @@ void main() {
       await _settle(tester);
       await tester.tap(find.text('150%'));
       await _settle(tester);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       await _tap(tester, 'journal-clipboard');
       await _openPersonnel(tester, person.id);
       for (final (key, prompt) in [
@@ -620,7 +576,7 @@ void main() {
           'direct-action:${cancel.y}:${cancel.x}:${cancel.key}',
         );
         expect(engine.console.journalProfile?.confirming, isFalse);
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
       }
       await _tap(tester, 'journal-profile-action:n');
       expect(engine.console.textInput, isTrue);
@@ -628,7 +584,7 @@ void main() {
       await tester.tap(find.text('Confirm text'));
       await _settle(tester);
       expect(engine.console.textInput, isFalse);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(tester.takeException(), isNull);
     },
   );
@@ -654,7 +610,7 @@ void main() {
         }
         await _tap(tester, 'journal-clipboard');
         await _openPersonnel(tester, first.id);
-        final before = _snapshot();
+        final before = campaignSnapshot();
         final dossier = tester.state(find.byType(CrewDossier));
         final scroller = find.descendant(
           of: _key('journal-personnel-profile'),
@@ -725,7 +681,7 @@ void main() {
           );
           expect(engine.console.journalProfile!.page, page);
         }
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
         expect(List.generate(10, (_) => lcsRandom(100000)), rolls);
         expect(tester.takeException(), isNull);
       },
@@ -746,7 +702,7 @@ void main() {
         await _tap(tester, 'journal-equipment');
         expect(_key('journal-confirm-order'), findsNothing);
         final second = game.squad[1];
-        final before = _snapshot();
+        final before = campaignSnapshot();
         final revision = engine.console.revision.value;
         final scroll = find.descendant(
           of: find.byKey(
@@ -793,7 +749,7 @@ void main() {
           revision,
           reason: 'Selection must never send the numbered unequip command.',
         );
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
         expect(List.generate(10, (_) => lcsRandom(100000)), rolls);
         expect(tester.takeException(), isNull);
       },
@@ -815,7 +771,7 @@ void main() {
     final offset = position.maxScrollExtent.clamp(0, 80).toDouble();
     position.jumpTo(offset);
     await _settle(tester);
-    final before = _snapshot();
+    final before = campaignSnapshot();
     final revision = engine.console.revision.value;
     await _showCrewMember(tester, second.id);
     await _tap(tester, 'journal-member:${second.id}');
@@ -832,7 +788,7 @@ void main() {
       closeTo(offset, .01),
     );
     expect(engine.console.revision.value, revision);
-    expect(_snapshot(), before);
+    expect(campaignSnapshot(), before);
     expect(tester.takeException(), isNull);
   });
 
@@ -898,7 +854,7 @@ void main() {
         idString: destination.idString,
       );
       final originalOrders = game.squad.map((p) => p.activity).toList();
-      final before = _snapshot();
+      final before = campaignSnapshot();
       final date = game.date;
       final funds = game.ledger.funds;
       final harness = await mount(tester);
@@ -908,7 +864,7 @@ void main() {
       expect(engine.console.screen, 'planning');
       await _tap(tester, 'journal-order-group:0');
       expect(engine.console.screen, 'headquarters');
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(_key('journal-confirm-order'), findsNothing);
       expect(find.text('Visit ${destination.getName()}'), findsOneWidget);
       expect(
@@ -944,7 +900,7 @@ void main() {
               !site.hidden &&
               !site.isClosed,
         );
-        final before = _snapshot();
+        final before = campaignSnapshot();
         final originalDate = game.date;
         final harness = await mount(tester, size: size);
         if (size.width == 800) {
@@ -965,7 +921,7 @@ void main() {
         );
         await _tap(tester, 'journal-map-place:${destination.idString}');
         expect(engine.console.screen, 'headquarters');
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
         expect(
           tester.widget<Text>(_key('journal-city-map-squad')).data,
           'Squad: ${team.name}',
@@ -993,11 +949,12 @@ void main() {
         expect(game.activeSquad, same(team));
         final expected = jsonDecode(before) as Map<String, dynamic>;
         final expectedSquads =
-            (expected['lcs'] as Map<String, dynamic>)['squads'] as List;
-        (expectedSquads.firstWhere((s) => s['id'] == team.id)
-            as Map<String, dynamic>)['activity'] = team.activity
+            ((expected['lcs'] as Map<String, dynamic>)['squads'] as List)
+                .cast<Map<String, dynamic>>();
+        expectedSquads.firstWhere((s) => s['id'] == team.id)['activity'] = team
+            .activity
             .toJson();
-        expect(jsonDecode(_snapshot()), expected);
+        expect(jsonDecode(campaignSnapshot()), expected);
         expect(game.date, originalDate);
         expect(harness.dispatched, isNot(contains(engine.Key.w)));
         expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
@@ -1067,21 +1024,21 @@ void main() {
       await mount(tester);
       final person = game.squad.first;
       final order = person.activity;
-      final before = _snapshot();
+      final before = campaignSnapshot();
       reseedRNG(seed: 9013);
       final rolls = List.generate(12, (_) => lcsRandom(100000));
       reseedRNG(seed: 9013);
       await business(tester);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(person.activity, same(order));
       for (final group in [1, 2, 3, 0]) {
         await _tap(tester, 'journal-order-group:$group');
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
         expect(person.activity, same(order));
       }
       final revision = engine.console.revision.value;
       await _tap(tester, 'journal-activity:donations');
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(person.activity, same(order));
       expect(
         engine.console.revision.value,
@@ -1092,7 +1049,7 @@ void main() {
       expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
       expect(find.textContaining('Uses: '), findsWidgets);
       await _tap(tester, 'journal-cancel-order');
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(person.activity, same(order));
       expect(_key('journal-confirm-order'), findsNothing);
       expect(find.text('Assigned order'), findsOneWidget);
@@ -1110,7 +1067,7 @@ void main() {
       person.activity = Activity.none();
       await _tap(tester, 'journal-orders');
       await _focusGame(tester);
-      final before = jsonDecode(_snapshot()) as Map<String, dynamic>;
+      final before = jsonDecode(campaignSnapshot()) as Map<String, dynamic>;
       final date = game.date;
       final funds = game.ledger.funds;
       reseedRNG(seed: 81230);
@@ -1132,13 +1089,13 @@ void main() {
       people.singleWhere((entry) => entry['id'] == person.id)['activity'] = {
         'type': 'donations',
       };
-      expect(jsonDecode(_snapshot()), before);
-      final assigned = _snapshot();
+      expect(jsonDecode(campaignSnapshot()), before);
+      final assigned = campaignSnapshot();
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await _settle(tester);
       expect(activityOrderFrame(engine.console), isNull);
       expect(engine.console.navigation?.section, 'assignments');
-      expect(_snapshot(), assigned);
+      expect(campaignSnapshot(), assigned);
       expect(
         game.squad
             .skip(1)
@@ -1180,7 +1137,7 @@ void main() {
         tester.widget<Text>(_key('journal-selected-person')).data,
         selected.name,
       );
-      final before = jsonDecode(_snapshot()) as Map<String, dynamic>;
+      final before = jsonDecode(campaignSnapshot()) as Map<String, dynamic>;
       await business(tester);
       expect(activityOrderFrame(engine.console)?.actorId, selected.id);
       await _tap(tester, 'journal-activity:donations');
@@ -1191,7 +1148,7 @@ void main() {
       for (final person in game.squad.where((p) => p != selected)) {
         expect(person.activity.type, ActivityType.sellArt);
       }
-      final after = jsonDecode(_snapshot()) as Map<String, dynamic>;
+      final after = jsonDecode(campaignSnapshot()) as Map<String, dynamic>;
       final oldPool = (before['lcs'] as Map<String, dynamic>)['pool'] as List;
       final newPool = (after['lcs'] as Map<String, dynamic>)['pool'] as List;
       final index = game.pool.indexOf(selected);
@@ -1211,7 +1168,7 @@ void main() {
     (tester) async {
       await mount(tester);
       final next = game.squad[1];
-      final before = _snapshot();
+      final before = campaignSnapshot();
       await business(tester);
       await _tap(tester, 'journal-activity:donations');
       expect(_key('journal-confirm-order'), findsOneWidget);
@@ -1223,7 +1180,7 @@ void main() {
         tester.widget<Text>(_key('journal-selected-person')).data,
         next.name,
       );
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(tester.takeException(), isNull);
     },
   );
@@ -1246,7 +1203,7 @@ void main() {
         );
         await _settle(tester);
         final next = game.squad[1];
-        final before = _snapshot();
+        final before = campaignSnapshot();
         final districtId = game.activeSquad!.site!.district.idString;
         await _tap(tester, 'journal-orders-map-toggle');
         await _tap(tester, 'journal-map-place:$districtId');
@@ -1302,7 +1259,7 @@ void main() {
         expect(activityOrderFrame(engine.console)?.actorId, third.id);
         expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 't');
         expect(viewer.transformationController!.value.entry(0, 0), 1.7);
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
         expect(tester.takeException(), isNull);
       },
     );
@@ -1349,7 +1306,7 @@ void main() {
       find.widgetWithText(OutlinedButton, 'Illegal Fundraising'),
     );
     await _settle(tester);
-    final before = _snapshot();
+    final before = campaignSnapshot();
     await _tap(tester, 'journal-activity:prostitution');
     final priorConfirm = tester
         .widget<FilledButton>(_key('journal-confirm-order'))
@@ -1366,7 +1323,7 @@ void main() {
     priorConfirm();
     await _settle(tester);
     expect(
-      _snapshot(),
+      campaignSnapshot(),
       before,
       reason:
           'Even a captured confirmation cannot apply the previous actor’s draft.',
@@ -1384,7 +1341,7 @@ void main() {
       await _settle(tester);
       final first = game.squad.first;
       final second = game.squad[1];
-      final before = jsonDecode(_snapshot()) as Map<String, dynamic>;
+      final before = jsonDecode(campaignSnapshot()) as Map<String, dynamic>;
       reseedRNG(seed: 85612);
       final rolls = List.generate(12, (_) => lcsRandom(100000));
       reseedRNG(seed: 85612);
@@ -1402,7 +1359,7 @@ void main() {
         );
         expect(member.activity.type, ActivityType.teachLiberalArts);
       }
-      final after = jsonDecode(_snapshot()) as Map<String, dynamic>;
+      final after = jsonDecode(campaignSnapshot()) as Map<String, dynamic>;
       final oldPool = (before['lcs'] as Map<String, dynamic>)['pool'] as List;
       final newPool = (after['lcs'] as Map<String, dynamic>)['pool'] as List;
       for (final member in [first, second]) {
@@ -1435,10 +1392,10 @@ void main() {
       expect(engine.console.screen, 'headquarters');
       expect(squadAllocationFrame(engine.console), isNull);
       expect(tester.widget<Text>(_key('journal-team-name')).data, team.name);
-      final selected = _snapshot();
+      final selected = campaignSnapshot();
       await _tap(tester, 'journal-squad:${team.id}');
       expect(squadAllocationFrame(engine.console), isNull);
-      expect(_snapshot(), selected);
+      expect(campaignSnapshot(), selected);
       expect(game.date, time);
       expect(game.ledger.funds, funds);
       expect(tester.takeException(), isNull);
@@ -1450,22 +1407,91 @@ void main() {
     (tester) async {
       await mount(tester);
       final person = game.squad.first;
-      final before = _snapshot();
+      final before = campaignSnapshot();
       final revision = engine.console.revision.value;
       await _tap(tester, 'hq-dossier:${person.id}');
       expect(find.byType(CrewInspector), findsOneWidget);
       expect(engine.console.revision.value, revision);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       await business(tester);
       expect(activityOrderFrame(engine.console)?.actorId, person.id);
       expect(find.byType(CrewInspector), findsNothing);
       expect(_key('journal-activity:donations').hitTestable(), findsOneWidget);
       await _tap(tester, 'journal-activity:donations');
       expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(tester.takeException(), isNull);
     },
   );
+
+  for (final large in [false, true]) {
+    testWidgets(
+      'pool inspection survives rebuild and sorting survives revisit, large=$large',
+      (tester) async {
+        final candidate = _extraPerson('Waiting Pool Candidate');
+        journalReadingScale.value = large ? 1.5 : 1;
+        await mount(
+          tester,
+          size: large ? const Size(800, 600) : const Size(1280, 800),
+        );
+        final before = campaignSnapshot();
+        reseedRNG(seed: 41926);
+        final rolls = List.generate(12, (_) => lcsRandom(100000));
+        reseedRNG(seed: 41926);
+        await _tap(tester, 'journal-pool');
+        await _tap(tester, 'journal-pool-person:${candidate.id}');
+
+        final sort = find.descendant(
+          of: find.byType(OrganisationCrewPoolView),
+          matching: find.byType(DropdownButton<Skill>),
+        );
+        await tester.tap(sort);
+        await _settle(tester);
+        final art = find.text('Sort: Art').last;
+        await tester.scrollUntilVisible(
+          find.text('Sort: Art'),
+          -100,
+          scrollable: find.byType(Scrollable).last,
+        );
+        await _settle(tester);
+        await tester.tap(art);
+        await _settle(tester);
+
+        void expectRetainedPreview() {
+          expect(tester.widget<DropdownButton<Skill>>(sort).value, Skill.art);
+          expect(find.text(candidate.name), findsNWidgets(2));
+          expect(
+            find.widgetWithText(FilledButton, 'Add to this squad'),
+            findsOneWidget,
+          );
+        }
+
+        expectRetainedPreview();
+        // Rebuild the surrounding journal without replacing its reader.
+        final revision = engine.console.revision.value;
+        await _tap(tester, 'journal-skills');
+        expect(engine.console.revision.value, revision);
+        expectRetainedPreview();
+        await _tap(tester, 'journal-skills');
+        expectRetainedPreview();
+        await tester.tap(find.widgetWithText(TextButton, 'Done'));
+        await _settle(tester);
+        expect(squadAllocationFrame(engine.console), isNull);
+        await _tap(tester, 'journal-pool');
+        expect(tester.widget<DropdownButton<Skill>>(sort).value, Skill.art);
+        expect(
+          find.widgetWithText(FilledButton, 'Add to this squad'),
+          findsNothing,
+          reason: 'Done clears inspection while retaining the sort choice.',
+        );
+        await _tap(tester, 'journal-pool-person:${candidate.id}');
+        expectRetainedPreview();
+        expect(campaignSnapshot(), before);
+        expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets(
     'pool arrows remove and re-add a real member with no navigation confirmation',
@@ -1563,7 +1589,7 @@ void main() {
     final extra = _extraPerson('Waiting Crew Member');
     await mount(tester);
     await _tap(tester, 'journal-pool');
-    final before = _snapshot();
+    final before = campaignSnapshot();
     final transfer = tester.widget<IconButton>(
       _key('journal-transfer:${extra.id}'),
     );
@@ -1574,7 +1600,7 @@ void main() {
       find.widgetWithText(FilledButton, 'Add to this squad'),
     );
     expect(add.onPressed, isNull);
-    expect(_snapshot(), before);
+    expect(campaignSnapshot(), before);
     expect(tester.takeException(), isNull);
   });
 
@@ -1585,7 +1611,7 @@ void main() {
       final oldOrder = Activity(ActivityType.sleeperLiberal);
       person.activity = oldOrder;
       await mount(tester);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       await _tap(tester, 'journal-more-commands');
       final menu = find.text('Sleeper Agents');
       await tester.ensureVisible(menu);
@@ -1601,10 +1627,10 @@ void main() {
       expect(activityOrderFrame(engine.console)?.sleeper, isTrue);
       await _tap(tester, 'journal-order-group:0');
       expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(person.activity, same(oldOrder));
       await _tap(tester, 'journal-activity:sleeperSpy');
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       await _tap(tester, 'journal-cancel-order');
       expect(person.activity, same(oldOrder));
       await _tap(tester, 'journal-activity:sleeperSpy');
@@ -1677,7 +1703,7 @@ void main() {
           size,
           'Scaled Confirm',
         );
-        final beforeTabScroll = _snapshot();
+        final beforeTabScroll = campaignSnapshot();
         for (var i = 0; i <= basesJournalSection; i++) {
           // Enlarged reading keeps eleven readable tabs in a horizontal strip.
           // Each destination must remain reachable without dispatching it.
@@ -1690,61 +1716,119 @@ void main() {
             'Scaled section $i',
           );
         }
-        expect(_snapshot(), beforeTabScroll);
+        expect(campaignSnapshot(), beforeTabScroll);
         expect(tester.takeException(), isNull);
       },
     );
   }
 
-  testWidgets(
-    'order formulas are disclosed on request without changing assignments, input or RNG',
-    (tester) async {
-      await mount(tester, size: const Size(800, 600));
-      await business(tester);
-      await _tap(tester, 'journal-activity:donations');
-      await tester.tap(find.byTooltip('Reading size'));
-      await _settle(tester);
-      await tester.tap(find.text('150%'));
-      await _settle(tester);
-      final before = _snapshot();
-      final revision = engine.console.revision.value;
-      final help = activityMechanics(
-        ActivityType.donations,
-        actor: game.squad.first,
-      );
-      final formula = 'Calculation: ${help.calculation!.formula}';
-      expect(find.byType(ActivityCalculationView), findsNothing);
-      expect(find.text(formula), findsNothing);
-      expect(_key('journal-order-details').hitTestable(), findsOneWidget);
-      expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
-      reseedRNG(seed: 412);
-      final rolls = List.generate(8, (_) => lcsRandom(100000));
-      reseedRNG(seed: 412);
-      for (final dismissWithEscape in [false, true]) {
-        await _tap(tester, 'journal-order-details');
-        final dialog = _key('journal-order-details-dialog');
-        expect(dialog, findsOneWidget);
-        expect(find.text(formula), findsOneWidget);
-        expect(find.byType(ActivityCalculationView), findsOneWidget);
-        expect(MediaQuery.textScalerOf(tester.element(dialog)).scale(10), 15);
-        expect(_snapshot(), before);
-        expect(engine.console.revision.value, revision);
-        if (dismissWithEscape) {
-          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-        } else {
-          await tester.tap(find.text('Close'));
+  for (final enlarged in [false, true]) {
+    testWidgets(
+      'order formulas retain draft, scroll and focus without changing assignments, input or RNG, enlarged=$enlarged',
+      (tester) async {
+        await mount(
+          tester,
+          size: enlarged ? const Size(800, 600) : const Size(1280, 720),
+        );
+        await business(tester);
+        await _tap(tester, 'journal-activity:donations');
+        if (enlarged) {
+          await tester.tap(find.byTooltip('Reading size'));
+          await _settle(tester);
+          await tester.tap(find.text('150%'));
+          await _settle(tester);
         }
+        final before = campaignSnapshot();
+        final revision = engine.console.revision.value;
+        final actor = game.squad.first;
+        final title = tester.widget<Text>(_key('journal-current-order')).data;
+        final mechanics = find.descendant(
+          of: _key('journal-order-mechanics'),
+          matching: find.byType(Scrollable),
+        );
+        ScrollPosition mechanicsPosition() =>
+            tester.state<ScrollableState>(mechanics).position;
+        expect(mechanicsPosition().maxScrollExtent, greaterThan(0));
+        mechanicsPosition().jumpTo(
+          mechanicsPosition().maxScrollExtent.clamp(0, 24),
+        );
         await _settle(tester);
-        expect(dialog, findsNothing);
+        final offset = mechanicsPosition().pixels;
+        void expectRetainedDraft() {
+          expect(
+            tester.widget<Text>(_key('journal-current-order')).data,
+            title,
+          );
+          expect(
+            tester.widget<Text>(_key('journal-selected-person')).data,
+            actor.name,
+          );
+          expect(find.text('Prepared · awaiting confirmation'), findsOneWidget);
+          expect(mechanicsPosition().pixels, closeTo(offset, .01));
+          expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
+          expect(campaignSnapshot(), before);
+          expect(engine.console.revision.value, revision);
+        }
+
+        final help = activityMechanics(
+          ActivityType.donations,
+          actor: game.squad.first,
+        );
+        final formula = 'Calculation: ${help.calculation!.formula}';
+        expect(find.byType(ActivityCalculationView), findsNothing);
         expect(find.text(formula), findsNothing);
+        expect(_key('journal-order-details').hitTestable(), findsOneWidget);
         expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
-        expect(_snapshot(), before);
+        reseedRNG(seed: 412);
+        final rolls = List.generate(8, (_) => lcsRandom(100000));
+        reseedRNG(seed: 412);
+        for (final dismissWithEscape in [false, true]) {
+          await _tap(tester, 'journal-order-details');
+          final dialog = _key('journal-order-details-dialog');
+          expect(dialog, findsOneWidget);
+          expect(find.text(formula), findsOneWidget);
+          expect(find.byType(ActivityCalculationView), findsOneWidget);
+          expect(
+            MediaQuery.textScalerOf(tester.element(dialog)).scale(10),
+            enlarged ? 15 : 10,
+          );
+          expect(campaignSnapshot(), before);
+          expect(engine.console.revision.value, revision);
+          if (dismissWithEscape) {
+            await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+          } else {
+            await tester.tap(find.text('Close'));
+          }
+          await _settle(tester);
+          expect(dialog, findsNothing);
+          expect(find.text(formula), findsNothing);
+          expectRetainedDraft();
+          final gameFocus = tester
+              .widgetList<Focus>(find.byType(Focus))
+              .singleWhere(
+                (widget) => widget.focusNode?.debugLabel == 'Game keyboard',
+              )
+              .focusNode!;
+          expect(
+            gameFocus.hasPrimaryFocus,
+            isTrue,
+            reason:
+                'Closing mechanics must restore the original game keyboard reader.',
+          );
+          await _tap(tester, 'journal-skills');
+          expectRetainedDraft();
+          await _tap(tester, 'journal-skills');
+          expectRetainedDraft();
+        }
+        await _tap(tester, 'journal-cancel-order');
+        expect(find.text('Prepared · awaiting confirmation'), findsNothing);
+        expect(campaignSnapshot(), before);
         expect(engine.console.revision.value, revision);
-      }
-      expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
-      expect(tester.takeException(), isNull);
-    },
-  );
+        expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets(
     'a prepared personal order blocks day and HQ shortcuts until cancel or confirm',
@@ -1752,7 +1836,7 @@ void main() {
       final harness = await mount(tester);
       final actor = game.squad.first;
       final originalOrder = actor.activity;
-      final before = _snapshot();
+      final before = campaignSnapshot();
       final originalDate = game.date;
       final retainedAdvance = tester
           .widget<FilledButton>(_key('journal-advance-day'))
@@ -1783,7 +1867,7 @@ void main() {
       expect(find.byType(PopupMenuItem<ConsoleAction>), findsNothing);
       expect(_key('journal-confirm-order'), findsOneWidget);
       expect(harness.dispatched, isNot(contains(engine.Key.w)));
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(game.date, originalDate);
       expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
 
@@ -1793,14 +1877,14 @@ void main() {
         tester.widget<FilledButton>(_key('journal-advance-day')).onPressed,
         isNotNull,
       );
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       await _tap(tester, 'journal-activity:donations');
       expect(find.text('Confirm or cancel draft'), findsOneWidget);
       actor.activity = Activity(ActivityType.donations);
-      final confirmed = _snapshot();
+      final confirmed = campaignSnapshot();
       actor.activity = originalOrder;
       await _tap(tester, 'journal-confirm-order');
-      expect(_snapshot(), confirmed);
+      expect(campaignSnapshot(), confirmed);
       expect(game.date, originalDate);
       expect(find.text('Confirm or cancel draft'), findsNothing);
       expect(
@@ -1816,13 +1900,13 @@ void main() {
     (tester) async {
       // Use the unchanged five-person save from the Chrome reproduction rather
       // than the six-person stress fixture used by the surrounding tests.
-      game.gameState = decodeSaveContents(fixture).gameState!;
+      fixture.restoreState();
       game.mode = GameMode.base;
       game.activeSquadMember = null;
       expect(game.squad.length, 5);
       const size = Size(800, 600);
       await mount(tester, size: size);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       await business(tester);
       await _tap(tester, 'journal-activity:donations');
       await tester.tap(find.byTooltip('Reading size'));
@@ -1881,9 +1965,9 @@ void main() {
         size,
         'Prepared order cancellation',
       );
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       await _tap(tester, 'journal-cancel-order');
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(tester.takeException(), isNull);
     },
   );
@@ -1897,7 +1981,7 @@ void main() {
     await _settle(tester);
     await tester.tap(find.text('150%'));
     await _settle(tester);
-    final before = _snapshot();
+    final before = campaignSnapshot();
     await _tap(tester, 'journal-more-commands');
     await tester.ensureVisible(find.text('Reorder'));
     await tester.tap(find.text('Reorder'));
@@ -1924,7 +2008,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await _settle(tester);
     expect(engine.console.screen, 'headquarters');
-    expect(_snapshot(), before);
+    expect(campaignSnapshot(), before);
     expect(tester.takeException(), isNull);
   });
 
@@ -1932,7 +2016,7 @@ void main() {
     'uncommon HQ commands remain reachable and invoke the actual original reader',
     (tester) async {
       final harness = await mount(tester);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       final choices = List<ConsoleAction>.of(engine.console.actions);
       await _tap(tester, 'journal-more-commands');
       final items = tester
@@ -1958,7 +2042,7 @@ void main() {
         isTrue,
       );
       expect(engine.console.navigation, isNull);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       engine.console.sendInput('Enter');
       await _settle(tester);
       expect(engine.console.screen, 'headquarters');
@@ -2018,7 +2102,7 @@ void main() {
     (tester) async {
       game.ledger.income[Income.donations] = 345;
       await mount(tester);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       await _tap(tester, 'journal-section:1');
       expect(ledgerReportFrame(engine.console)?.management, isTrue);
       expect(engine.console.navigation?.section, 'ledger');
@@ -2031,7 +2115,7 @@ void main() {
       expect(mediaOverviewFrame(engine.console), isNotNull);
       expect(find.byType(JournalMediaOverview), findsOneWidget);
       expect(game.ledger.income[Income.donations], 345);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(tester.takeException(), isNull);
     },
   );
@@ -2040,7 +2124,7 @@ void main() {
     'manual ledger Back returns to its original asset-review parent',
     (tester) async {
       await mount(tester);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       await _tap(tester, 'journal-section:1');
       expect(ledgerReportFrame(engine.console)?.management, isTrue);
       await _tap(tester, 'journal-ledger-close');
@@ -2048,7 +2132,7 @@ void main() {
       expect(engine.console.screen, 'organisation');
       expect(engine.console.navigation?.section, 'people');
       expect(engine.console.actions.any((action) => action.key == 'v'), isTrue);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(tester.takeException(), isNull);
     },
   );
@@ -2074,7 +2158,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      final before = _snapshot();
+      final before = campaignSnapshot();
       final revision = engine.console.revision.value;
       final optionTap = find.descendant(
         of: _key('journal-section:7'),
@@ -2087,7 +2171,7 @@ void main() {
       expect(_key('journal-ledger-close').hitTestable(), findsOneWidget);
       expect(ledgerReportFrame(engine.console)?.management, isFalse);
       expect(engine.console.revision.value, revision);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(harness.monthReset, isFalse);
       expect(game.ledger.income[Income.donations], 345);
       expect(find.text('Continue'), findsOneWidget);
@@ -2123,7 +2207,7 @@ void main() {
     tester,
   ) async {
     await mount(tester);
-    final before = _snapshot();
+    final before = campaignSnapshot();
     await _tap(tester, 'journal-section:3');
     expect(engine.console.navigation?.section, 'agenda');
     await _focusGame(tester);
@@ -2134,7 +2218,7 @@ void main() {
       _key('journal-member:${game.squad.first.id}').hitTestable(),
       findsOneWidget,
     );
-    expect(_snapshot(), before);
+    expect(campaignSnapshot(), before);
     expect(tester.takeException(), isNull);
   });
 
@@ -2142,7 +2226,7 @@ void main() {
     'optional Alt routes retain original labels, real readers and campaign state',
     (tester) async {
       await mount(tester);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       reseedRNG(seed: 201017);
       final rolls = List.generate(8, (_) => lcsRandom(100000));
       reseedRNG(seed: 201017);
@@ -2203,7 +2287,7 @@ void main() {
               .label,
           startsWith(name),
         );
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
       }
       await _altShortcut(tester, LogicalKeyboardKey.digit7);
       expect(engine.console.navigation?.section, 'agenda');
@@ -2212,7 +2296,7 @@ void main() {
       expect(engine.console.screen, 'headquarters');
       await _altShortcut(tester, LogicalKeyboardKey.digit1);
       expect(_key('journal-member:${game.squad.first.id}'), findsOneWidget);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
       expect(tester.takeException(), isNull);
     },
@@ -2228,7 +2312,7 @@ void main() {
         final harness = await mount(tester, size: size);
         journalReadingScale.value = reading;
         await _settle(tester);
-        final before = _snapshot();
+        final before = campaignSnapshot();
         reseedRNG(seed: 20261021);
         final rolls = List.generate(8, (_) => lcsRandom(100000));
         reseedRNG(seed: 20261021);
@@ -2281,7 +2365,7 @@ void main() {
         await sourceKey(LogicalKeyboardKey.keyW, 'w');
         expect(engine.console.screen, 'headquarters');
         expect(harness.dispatched, dispatched);
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
 
         await sourceKey(LogicalKeyboardKey.keyM, 'm');
         expect(mediaOverviewFrame(engine.console), isNotNull);
@@ -2311,11 +2395,11 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await _settle(tester);
         expect(engine.console.screen, 'headquarters');
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
         expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
         await sourceKey(LogicalKeyboardKey.keyX, 'x');
         expect(harness.dispatched.last, engine.Key.x);
-        expect(_snapshot(), before);
+        expect(campaignSnapshot(), before);
         expect(tester.takeException(), isNull);
       },
     );
@@ -2325,7 +2409,7 @@ void main() {
     'modified footer commands safely leave Agenda before dispatching HQ keys',
     (tester) async {
       final harness = await mount(tester);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       await _altShortcut(tester, LogicalKeyboardKey.digit7);
       expect(engine.console.navigation?.section, 'agenda');
       final saveBadge = find.descendant(
@@ -2347,7 +2431,7 @@ void main() {
       await _altShortcut(tester, LogicalKeyboardKey.keyX);
       expect(harness.dispatched.last, engine.Key.x);
       expect(engine.console.screen, 'headquarters');
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
 
       await _altShortcut(tester, LogicalKeyboardKey.digit7);
       expect(engine.console.navigation?.section, 'agenda');
@@ -2367,7 +2451,7 @@ void main() {
       expect(harness.dispatched.last, engine.Key.w);
       expect(engine.console.screen, 'headquarters');
       // This harness records the real HQ command without running a daily turn.
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(tester.takeException(), isNull);
     },
   );
@@ -2376,7 +2460,7 @@ void main() {
     'a prepared order blocks Alt day advance and stale footer callbacks',
     (tester) async {
       final harness = await mount(tester);
-      final before = _snapshot();
+      final before = campaignSnapshot();
       await business(tester);
       final retained = tester
           .widget<FilledButton>(_key('journal-advance-day'))
@@ -2392,11 +2476,11 @@ void main() {
       expect(harness.dispatched, dispatched);
       expect(_key('journal-confirm-order'), findsOneWidget);
       expect(engine.console.revision.value, revision);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       await _tap(tester, 'journal-cancel-order');
       await _altShortcut(tester, LogicalKeyboardKey.keyW);
       expect(harness.dispatched.last, engine.Key.w);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(tester.takeException(), isNull);
     },
   );
@@ -2408,7 +2492,7 @@ void main() {
     final harness = await mount(tester, monthlyReport: true);
     await _altShortcut(tester, LogicalKeyboardKey.keyW);
     expect(ledgerReportFrame(engine.console)?.management, isFalse);
-    final before = _snapshot();
+    final before = campaignSnapshot();
     final revision = engine.console.revision.value;
     final dispatched = List<int>.of(harness.dispatched);
     for (final key in [
@@ -2423,7 +2507,7 @@ void main() {
     expect(harness.dispatched, dispatched);
     expect(ledgerReportFrame(engine.console)?.management, isFalse);
     expect(engine.console.revision.value, revision);
-    expect(_snapshot(), before);
+    expect(campaignSnapshot(), before);
     expect(game.ledger.income[Income.donations], 345);
     expect(_key('journal-ledger-close').hitTestable(), findsOneWidget);
     await _tap(tester, 'journal-ledger-close');
@@ -2435,7 +2519,7 @@ void main() {
     tester,
   ) async {
     final harness = await mount(tester, size: const Size(1280, 900));
-    final before = _snapshot();
+    final before = campaignSnapshot();
     await _altShortcut(tester, LogicalKeyboardKey.digit2);
     await tester.enterText(_key('personnel-search'), 'Felix');
     await _settle(tester);
@@ -2469,7 +2553,7 @@ void main() {
     );
     await tester.tap(find.widgetWithText(TextButton, 'Cancel edits'));
     await _settle(tester);
-    expect(_snapshot(), before);
+    expect(campaignSnapshot(), before);
 
     await _altShortcut(tester, LogicalKeyboardKey.digit1);
     await tester.sendKeyEvent(LogicalKeyboardKey.f1);
@@ -2487,7 +2571,7 @@ void main() {
     expect(find.text('A small movement. A long game.'), findsOneWidget);
     expect(engine.console.revision.value, dialogRevision);
     expect(harness.dispatched, dialogCommands);
-    expect(_snapshot(), before);
+    expect(campaignSnapshot(), before);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await _settle(tester);
     expect(tester.takeException(), isNull);
@@ -2590,7 +2674,7 @@ void main() {
       await mount(tester);
       final person = game.squad.first;
       final order = person.activity;
-      final before = _snapshot();
+      final before = campaignSnapshot();
       await _tap(tester, 'journal-orders');
       await _tap(tester, 'journal-order-group:1');
       await tester.tap(
@@ -2613,7 +2697,7 @@ void main() {
         reason: 'A required skill choice stays with its original actor.',
       );
       expect(person.activity, same(order));
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(tester.takeException(), isNull);
     },
   );
@@ -2630,7 +2714,7 @@ void main() {
         )
         ..medicalBills = 1360;
       await mount(tester, size: const Size(1280, 900));
-      final before = _snapshot();
+      final before = campaignSnapshot();
       reseedRNG(seed: 28144);
       final rolls = List.generate(12, (_) => lcsRandom(100000));
       reseedRNG(seed: 28144);
@@ -2662,7 +2746,7 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
       await _settle(tester);
       expect(engine.console.screen, 'personnel-directory');
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
       expect(tester.takeException(), isNull);
     },
@@ -2677,7 +2761,7 @@ void main() {
         last = _extraPerson('Zed ${i.toString().padLeft(2, '0')}');
       }
       await mount(tester, size: const Size(1280, 900));
-      final before = _snapshot();
+      final before = campaignSnapshot();
       await _tap(tester, 'journal-clipboard');
       await tester.enterText(_key('personnel-search'), last!.name);
       await _settle(tester);
@@ -2698,7 +2782,7 @@ void main() {
       await _settle(tester);
       await _openPersonnel(tester, first.id);
       expect(engine.console.journalProfile?.person.id, first.id);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(tester.takeException(), isNull);
     },
   );
@@ -2707,7 +2791,7 @@ void main() {
     'Roster tools retain original sorting and cancelled reorder with a clear return',
     (tester) async {
       await mount(tester, size: const Size(1280, 900));
-      final before = _snapshot();
+      final before = campaignSnapshot();
       await _tap(tester, 'journal-clipboard');
       await _tap(tester, 'personnel-tools');
       expect(find.text('Roster tools'), findsOneWidget);
@@ -2749,7 +2833,7 @@ void main() {
       expect(engine.console.screen, 'personnel-directory');
       await _tap(tester, 'personnel-back-directory');
       expect(_key('personnel-directory'), findsOneWidget);
-      expect(_snapshot(), before);
+      expect(campaignSnapshot(), before);
       expect(tester.takeException(), isNull);
     },
   );

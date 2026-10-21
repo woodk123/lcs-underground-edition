@@ -3,8 +3,57 @@ import { createHash } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
-import { QA_URL, assertQaUrl, chromiumLaunchOptions, observeMainScript,
+import { QA_URL, assertQaUrl, chromiumLaunchOptions, createQaPage, observeMainScript,
   waitForSemantics, waitForUiSettled } from './browser_support.mjs';
+
+test('fresh QA pages close prior storage before creating independent contexts and retain live error metadata', async () => {
+  const contexts = [], events = [];
+  const browser = { async newContext(options) {
+    assert.deepEqual(options, { viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
+    const id = contexts.length;
+    events.push(`create ${id}`);
+    const page = new EventEmitter();
+    page.setDefaultTimeout = value => { page.timeout = value; };
+    const context = { page, async newPage() { return page; }, async close() { events.push(`close ${id}`); } };
+    contexts.push(context);
+    return context;
+  } };
+  const report = { pageErrors: [], consoleErrors: [], failedRequests: [] };
+  let scenario = 'setup';
+  const first = await createQaPage(browser, { report, errorContext: () => ({ scenario }), timeout: 8000 });
+  assert.equal(first.page.timeout, 8000);
+  scenario = 'operation';
+  first.page.emit('pageerror', new Error('reader failed'));
+  first.page.emit('console', { type: () => 'warning', text: () => 'ignored warning' });
+  first.page.emit('console', { type: () => 'error', text: () => 'console failure' });
+  first.page.emit('requestfailed', { url: () => `${QA_URL}asset.webp` });
+  const second = await createQaPage(browser, {
+    previousContext: first.context, report, errorContext: () => ({ scene: 'siege' }), timeout: 10000,
+  });
+  assert.notEqual(second.context, first.context);
+  assert.notEqual(second.page, first.page);
+  assert.equal(second.page.timeout, 10000);
+  assert.deepEqual(events, ['create 0', 'close 0', 'create 1']);
+  second.page.emit('pageerror', new Error('siege failed'));
+  assert.deepEqual(report, {
+    pageErrors: [{ scenario: 'operation', error: 'Error: reader failed' }, { scene: 'siege', error: 'Error: siege failed' }],
+    consoleErrors: [{ scenario: 'operation', error: 'console failure' }],
+    failedRequests: [{ scenario: 'operation', url: `${QA_URL}asset.webp` }],
+  });
+});
+
+test('failed page setup closes its new context without masking the original failure', async () => {
+  const failure = new Error('page creation failed');
+  let closed = false;
+  const browser = { async newContext() { return {
+    async newPage() { throw failure; },
+    async close() { closed = true; throw new Error('context close failed'); },
+  }; } };
+  await assert.rejects(createQaPage(browser, {
+    report: {}, errorContext: () => ({}), timeout: 9000,
+  }), error => error === failure);
+  assert.ok(closed);
+});
 
 test('reader waits reject stale/missing readers and observe labels and editable values', async () => {
   let host = null, disposed = false;

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.2.6 — 2026-10-21
+
+* Keep pursuit controls aligned with their accessibility targets when changing reading size.
+
 ## Underground Edition 0.2.5 — 2026-10-21
 
 * Read consistent skill progress across character profiles, skills pages and summaries, with profile skills ordered by their actual level and experience.
