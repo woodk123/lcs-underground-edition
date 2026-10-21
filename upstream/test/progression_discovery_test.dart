@@ -235,10 +235,10 @@ void main() {
   });
 
   testWidgets(
-    'Agenda exposes the live objective before the law grid at 800x600 / 150%',
+    'Agenda exposes the live objective before the law grid at 1024x720 / 150%',
     (tester) async {
       tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(800, 600);
+      tester.view.physicalSize = const Size(1024, 720);
       addTearDown(tester.view.resetDevicePixelRatio);
       addTearDown(tester.view.resetPhysicalSize);
       final done = liberalAgenda();
@@ -288,7 +288,7 @@ void main() {
     'Bases keeps rent timing and shortfall visible without dispatching input',
     (tester) async {
       tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(800, 600);
+      tester.view.physicalSize = const Size(1024, 720);
       addTearDown(tester.view.resetDevicePixelRatio);
       addTearDown(tester.view.resetPhysicalSize);
       final base = rentedBase();

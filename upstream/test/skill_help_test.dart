@@ -117,7 +117,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     final actor = game.pool.first;
     final help = skillHelp(Skill.firearms, actor: actor);
-    for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+    for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
       tester.view.physicalSize = size;
       var clicks = 0;
       await tester.pumpWidget(

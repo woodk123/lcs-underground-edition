@@ -38,7 +38,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
     testWidgets('hospital admission is a focused journal notice at $size', (
       tester,
     ) async {
@@ -117,7 +117,7 @@ void main() {
     });
   }
 
-  for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
     testWidgets(
       'vote counts retain branch identity with blank President at $size',
       (tester) async {

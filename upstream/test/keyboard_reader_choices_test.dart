@@ -212,7 +212,7 @@ void main() {
       });
       await _mount(
         tester,
-        size: const Size(800, 600),
+        size: const Size(1024, 720),
         compact: true,
         scale: 1.5,
       );
@@ -257,7 +257,7 @@ void main() {
       final buyer = chooseBuyerIndex(0);
       await _mount(
         tester,
-        size: const Size(800, 600),
+        size: const Size(1024, 720),
         compact: true,
         scale: 1.5,
       );

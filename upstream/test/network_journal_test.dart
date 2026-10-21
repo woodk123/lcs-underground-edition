@@ -399,7 +399,7 @@ void main() {
       final expected = nextRngSeed;
       reseedRNG(seed: 897132);
       journalReadingScale.value = 1.5;
-      await mount(tester, size: const Size(800, 600));
+      await mount(tester, size: const Size(1024, 720));
       await tester.ensureVisible(_key('network-dead-drop'));
       await _settle(tester);
       expect(
@@ -589,7 +589,7 @@ void main() {
 
   for (final layout in [
     (const Size(1280, 800), 1.0),
-    (const Size(800, 600), 1.5),
+    (const Size(1024, 720), 1.5),
   ]) {
     testWidgets(
       'compact Network labels retain source keys and immediate roles at $layout',
@@ -830,13 +830,12 @@ void main() {
     },
   );
 
-  testWidgets('800 by 600 at 150 percent keeps orders and dossier reachable', (
+  testWidgets('1024 by 720 at 150 percent keeps orders and dossier reachable', (
     tester,
   ) async {
     final person = _sleeper('Readable Agent');
     journalReadingScale.value = 1.5;
-    await mount(tester, size: const Size(800, 600));
-    expect(_key('network-stacked-scroll'), findsOneWidget);
+    await mount(tester, size: const Size(1024, 720));
     await _tap(tester, 'network-keep-order');
     await _tap(tester, 'network-espionage');
     await _tap(tester, 'network-task:sleeperSpy');
@@ -848,13 +847,7 @@ void main() {
     await _settle(tester);
     expect(_key('crew-inspector'), findsOneWidget);
     await _tap(tester, 'crew-inspector-close');
-    final outer = find
-        .descendant(
-          of: _key('network-stacked-scroll'),
-          matching: find.byType(Scrollable),
-        )
-        .first;
-    tester.state<ScrollableState>(outer).position.jumpTo(0);
+    await tester.ensureVisible(_key('network-agent:${person.id}'));
     await _settle(tester);
     expect(_key('network-agent:${person.id}'), findsOneWidget);
     expect(tester.takeException(), isNull);

@@ -568,7 +568,7 @@ void main() {
 
   for (final layout in [
     (const Size(1280, 800), 1.0),
-    (const Size(800, 600), 1.5),
+    (const Size(1024, 720), 1.5),
   ]) {
     testWidgets(
       'compact Bases exposes source labels and pointer drafts without spending at $layout',

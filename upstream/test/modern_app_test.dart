@@ -106,7 +106,7 @@ void main() {
     game.mode = GameMode.base;
   });
 
-  for (final size in [const Size(1280, 800), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 800), const Size(1024, 720)]) {
     final viewport = '${size.width.toInt()}x${size.height.toInt()}';
 
     testWidgets('modern title is readable and fits $viewport', (tester) async {
@@ -453,7 +453,7 @@ void main() {
     );
     String? received;
     final input = engine.console.getkey().then((value) => received = value);
-    await mountApp(tester, const Size(800, 600));
+    await mountApp(tester, const Size(1024, 720));
     expect(engine.console.actions, isNotEmpty);
     expect(find.text('Continue'), findsOneWidget);
     expect(find.text('Continue').hitTestable(), findsOneWidget);
@@ -482,7 +482,7 @@ void main() {
       engine.mvaddstr(0, 0, 'Original floor map');
       String? received;
       final input = engine.console.getkey().then((value) => received = value);
-      await mountApp(tester, const Size(800, 600));
+      await mountApp(tester, const Size(1024, 720));
       expect(find.text('Back to operation').hitTestable(), findsOneWidget);
       expect(find.text('Continue'), findsNothing);
       expect(find.byKey(const ValueKey('section:0')), findsNothing);

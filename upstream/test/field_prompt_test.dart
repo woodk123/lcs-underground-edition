@@ -40,7 +40,7 @@ void main() {
     levelMap[36][11][0].known = true;
   });
 
-  for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
     testWidgets(
       'field conversation choices appear once and remain usable at $size',
       (tester) async {

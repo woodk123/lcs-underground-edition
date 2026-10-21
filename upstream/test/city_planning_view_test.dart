@@ -184,7 +184,7 @@ void main() {
   for (final size in [
     const Size(1280, 800),
     const Size(1280, 720),
-    const Size(800, 600),
+    const Size(1024, 720),
     const Size(480, 700),
   ]) {
     testWidgets(
@@ -373,7 +373,7 @@ void main() {
       final console = planningFixture();
       final received = <String>[];
       final semantics = tester.ensureSemantics();
-      await mountBoard(tester, console, const Size(800, 600), received.add);
+      await mountBoard(tester, console, const Size(1024, 720), received.add);
       final factory = console.actions.singleWhere((a) => a.key == 'b');
       final node = tester.getSemantics(building(factory));
       expect(node.label, 'Inspect Factory');

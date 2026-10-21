@@ -49,7 +49,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
     testWidgets(
       'processing buffers wait for the next source reader at $size / 150%',
       (tester) async {

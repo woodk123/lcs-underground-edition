@@ -38,7 +38,7 @@ const report = {
   pageErrors: [], consoleErrors: [], failedRequests: [], externalFontRequests: [],
 };
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
-const context = await browser.newContext({ viewport: large ? { width: 800, height: 600 } : { width: 1440, height: 1000 }, acceptDownloads: true });
+const context = await browser.newContext({ viewport: large ? { width: 1024, height: 720 } : { width: 1440, height: 1000 }, acceptDownloads: true });
 const page = await context.newPage();
 page.setDefaultTimeout(12000);
 const verify = observeMainScript(page, report);

@@ -337,10 +337,10 @@ void main() {
   );
 
   testWidgets(
-    'attack response is usable at 800x600 with 150 percent reading size',
+    'attack response is usable at 1024x720 with 150 percent reading size',
     (tester) async {
       warehouse.siege.underAttack = true;
-      await mount(tester, size: const Size(800, 600), scale: 1.5);
+      await mount(tester, size: const Size(1024, 720), scale: 1.5);
       expect(find.text('Safehouse under attack'), findsOneWidget);
       for (final key in ['f', 'g']) {
         expect(_key('journal-siege-action:$key').hitTestable(), findsOneWidget);
@@ -362,13 +362,13 @@ void main() {
     },
   );
 
-  for (final size in [const Size(1200, 800), const Size(800, 600)]) {
+  for (final size in [const Size(1200, 800), const Size(1024, 720)]) {
     testWidgets(
       'actual police surrender has one current journal Continue at $size',
       (tester) async {
         tester.view.devicePixelRatio = 1;
         tester.view.physicalSize = size;
-        journalReadingScale.value = size.width == 800 ? 1.5 : 1;
+        journalReadingScale.value = size.width == 1024 ? 1.5 : 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
         final crew = game.squad.toList();

@@ -2,6 +2,12 @@
 
 Run commands from the repository root unless noted otherwise. Install the [pinned toolchain](BUILDING.md) and resolve dependencies/generate serializers using [Development mode](BUILDING.md#development-mode) first. A release build is not required for unit tests.
 
+## Supported window sizes
+
+The minimum supported game area is **1024×720 logical pixels**; the Windows startup default remains **1280×720**. Browser dimensions refer to the usable page viewport, excluding browser chrome. Use 1024×720 with 150% reading size for compact acceptance checks, alongside the normal desktop case. Keep controls reachable through scrolling and keyboard focus when enlarged text needs more space.
+
+Smaller windows, including 800×600 and phone-sized viewports, are outside the supported layout target. Existing narrower component tests are optional overflow and robustness checks, not additional supported resolutions. They must not dictate the normal desktop layout. Historical captures and reports retain the dimensions at which they were recorded; rerun current helpers for evidence against the new minimum.
+
 ## Automated regressions
 
 For exploratory gameplay and stuck-reader investigation, use the [development MCP](DEV_MCP.md). It records the actual loaded build and source-action trace in disposable storage. Turn discovered defects into the focused regressions and browser journeys below; structured engine actions do not certify graphical interaction.
@@ -24,7 +30,7 @@ Organisation tests share campaign fixture and headquarters-reader helpers under 
 
 Order mechanics regressions exercise desktop and enlarged layouts through help dismissal, presentation rebuilds and cancellation, retaining the selected actor, draft, mechanics scroll, source revision and campaign/RNG state. They inspect restored game keyboard focus directly. Pursuit regressions cover live reading-size reflow and keyboard traversal into overflowing commands; the car browser review separately checks actual web accessibility bounds and the original surrender/custody/save journey.
 
-Nested squad-choice regressions in `remaining_screens_playtest_test.dart` exercise actual equipment, reordering, kidnapping and hostage-release readers at desktop and 800×600/150%. They check initially reachable controls, stale-command removal, second-stage cancellation, target-key validation, disabled empty-handed carriers and releasing only the selected hostage. These are declared prepared scenarios, separate from earned campaign play.
+Nested squad-choice regressions in `remaining_screens_playtest_test.dart` exercise actual equipment, reordering, kidnapping and hostage-release readers at desktop and 1024×720/150%. They check initially reachable controls, stale-command removal, second-stage cancellation, target-key validation, disabled empty-handed carriers and releasing only the selected hostage. These are declared prepared scenarios, separate from earned campaign play.
 
 Fresh-campaign flow regressions include pending recruitment readiness compared with the original meeting menu, new recruit/custody/ended-visit follow-ups across restarts, live victory counts compared with `winCheck`, original rent exemptions and eviction timing, and draft guards for personal orders, Network, visits and Bases purchases. Retained callbacks are exercised after cancellation and replacement; read-only views preserve full campaign snapshots and gameplay RNG. The small-screen checks retain visible first-row actions and order timing at enlarged reading sizes.
 
@@ -76,7 +82,7 @@ Install the pinned SDK and resolve dependencies as described in [Building](BUILD
 | Fresh opening week | Imports that unchanged manual founder, confirms Science practice, advances seven actual days, checks accounting/training/identity, and transfers the complete result through a fresh browser profile. No people or rewards are supplied. |
 | Prepared recruitment week | The existing Felix fixture with cleared wanted crimes and one explicitly ready prospect; real recruitment acceptance, squad formation, equipment transfer, orders, a local visit, seven days and exact save transfer. This does not claim to earn the prospect's persuasion. |
 | Organisation | Existing dossier, draft/cancel, repeated assignment, travel, equipment and personnel journeys, including enlarged layouts and mechanics-dialog keyboard isolation. |
-| Keyboard interface | The unmodified Felix fixture, the identical original keyboard assignment sequence in Classic and graphical desktop/compact 800×600/150%, with immediate task choices and original Back behaviour, exact actor-only campaign changes, modal isolation and persistent display preferences. Fixture import/export and preference changes are setup outside the measured task sequences. |
+| Keyboard interface | The unmodified Felix fixture, the identical original keyboard assignment sequence in Classic and graphical desktop/compact 1024×720/150%, with immediate task choices and original Back behaviour, exact actor-only campaign changes, modal isolation and persistent display preferences. Fixture import/export and preference changes are setup outside the measured task sequences. |
 | Personnel | Existing declared mixed-status fixture, including a hospitalized person; finding absent crew, retained search/category, dossiers and complete campaign preservation. |
 
 The focused tests cover source creation/rewards, order routing and retained scroll/selection, page-storage isolation, current Network orders and modal shortcuts, personnel, and save load/round-trip/recovery. This is the shared integration check; the full suite, rare gameplay branches, offline acceptance and native GUI checks retain their separate scopes below.
@@ -87,7 +93,7 @@ The runner reserves **18879 and 18882** by default and fails if either is occupi
 
 Every stage must pass and report the exact browser-loaded JavaScript hash. The aggregate also records source commit, uncommitted state, source-content fingerprint, pinned toolchain, per-stage logs and complete web-file hashes. A source or artifact change during the run fails acceptance. A supplied build may be reused with `--web-root <directory> --expected-hash <main.dart.js SHA-256>`; the report labels it as supplied rather than claiming it was compiled from the current source. The default command builds its own artifact.
 
-Journal-header regressions in `organisation_journal_test.dart` exercise original L/M/R/V/0/X journeys, source-first badges and explicit HQ scope, every optional Alt route, footer routing back from Agenda, pending-draft and required-report guards, modal/search/name isolation, unchanged campaign/RNG during navigation, and reachable labels at desktop and 800×600/150%. The keyboard browser helper checks original L opens Agenda, W returns from that reader without advancing a day, and X saves from headquarters. It also navigates by optional Alt chords, saves through Alt+X, and checks Alt+W cannot advance a prepared order. Bare source keys retain their current-reader meanings.
+Journal-header regressions in `organisation_journal_test.dart` exercise original L/M/R/V/0/X journeys, source-first badges and explicit HQ scope, every optional Alt route, footer routing back from Agenda, pending-draft and required-report guards, modal/search/name isolation, unchanged campaign/RNG during navigation, and reachable labels at desktop and 1024×720/150%. The keyboard browser helper checks original L opens Agenda, W returns from that reader without advancing a day, and X saves from headquarters. It also navigates by optional Alt chords, saves through Alt+X, and checks Alt+W cannot advance a prepared order. Bare source keys retain their current-reader meanings.
 
 ## Classic keyboard parity
 
@@ -101,7 +107,7 @@ The contract and audited reader families are recorded in [Classic keyboard audit
 
 ### Equipment and vehicle artwork
 
-`catalogue_art_qa_test.dart` checks all 32 equipment paintings and all 11 vehicle types against the retained PNGs, runtime manifests and provenance. It checks complete transparent crops, decoded row/detail paintings, legacy item IDs, exact passenger/driver action metadata, disabled controls, and unchanged campaign state/RNG. Its shared application-cache journey covers guides and rows at desktop, 800×600/150% and 360×640/200%, followed by the actual weapon-shop and dealership purchase handlers. Set `LCS_CAPTURE_SCREENS=1` to retain the contact sheet and source-handler screenshots under ignored `reports/catalogue-art-qa/`.
+`catalogue_art_qa_test.dart` checks all 32 equipment paintings and all 11 vehicle types against the retained PNGs, runtime manifests and provenance. It checks complete transparent crops, decoded row/detail paintings, legacy item IDs, exact passenger/driver action metadata, disabled controls, and unchanged campaign state/RNG. Its shared application-cache journey covers guides and rows at desktop, 1024×720/150% and 360×640/200%, followed by the actual weapon-shop and dealership purchase handlers. Set `LCS_CAPTURE_SCREENS=1` to retain the contact sheet and source-handler screenshots under ignored `reports/catalogue-art-qa/`.
 
 `scripts/catalogue_browser_review.mjs` requires its own isolated origin, **http://127.0.0.1:18883/**, and an exact compiled `main.dart.js` SHA-256. Build into a separate absolute output directory and inject its service worker once, as described below; keep existing player and QA servers separate. Start that directory with `scripts/launch.ps1 -Port 18883 -NoBrowser -WebRoot $qaWeb`, then run `node scripts/catalogue_browser_review.mjs --expected-hash $expected`. The helper imports a declared disposable copy of the bundled campaign with stored items and eleven vehicles, exposes actual inventory choices, all three guides and dossier equipment at desktop and 150%, and compares complete exports before/after inspection. Asset responses and loaded JavaScript hashes are checked. Prepared possessions are not earned gameplay outcomes; native Windows GUI acceptance remains separate.
 
@@ -115,7 +121,7 @@ The contract and audited reader families are recorded in [Classic keyboard audit
 
 `tactical_snapshot_layers_test.dart` checks occupied-tile features, hazards, restrictions, action guidance and isolation from unknown neighbors. `tactical_legend_test.dart` checks the complete scrollable key at enlarged text sizes. `full_site_map_inspection_test.dart` checks passive inspection after transformed zoom/pan, floor changes and short panes. The tactical layout tests require readable default cells and initially visible current-tile guidance, without scrolling to make the assertion pass.
 
-`tactical_shell_acceptance_test.dart` exercises twelve full-shell scenarios in one application-cache lifetime at desktop and 800×600/150%. It deliberately restores background game focus while presentation dialogs and menus are open, then tests F/U/G and arrow keys against the same pending reader and complete campaign/map/RNG state. Optional captures under `reports/tactical-acceptance/shell/` are explicitly synthetic. `tactical_actions_flow_test.dart` runs the actual `siteMode` loop against declared synthetic geometry: stairs change floor, G transfers real loot and clears its marker, safe refusal returns to the field, and passive fixtures disable manual Use. The door journey declares Security 50 to guarantee an unlock, checks the standing marker during cancellation and success, then enters through the opened door. Other field fixtures retain the original skills and RNG. `safe_retry_test.dart` supplies Security 1 and then 50 to deterministically test failed attempts, successful retries and one-time rewards for all four safe types. Bulk pawn journeys cover mouse confirmation, cancellation, keyboard Escape and revisiting at both desktop and enlarged layouts. Shop buyer journeys verify initially visible crew choices, cancellation and reopening, then two purchases going only to the selected buyer.
+`tactical_shell_acceptance_test.dart` exercises twelve full-shell scenarios in one application-cache lifetime at desktop and 1024×720/150%. It deliberately restores background game focus while presentation dialogs and menus are open, then tests F/U/G and arrow keys against the same pending reader and complete campaign/map/RNG state. Optional captures under `reports/tactical-acceptance/shell/` are explicitly synthetic. `tactical_actions_flow_test.dart` runs the actual `siteMode` loop against declared synthetic geometry: stairs change floor, G transfers real loot and clears its marker, safe refusal returns to the field, and passive fixtures disable manual Use. The door journey declares Security 50 to guarantee an unlock, checks the standing marker during cancellation and success, then enters through the opened door. Other field fixtures retain the original skills and RNG. `safe_retry_test.dart` supplies Security 1 and then 50 to deterministically test failed attempts, successful retries and one-time rewards for all four safe types. Bulk pawn journeys cover mouse confirmation, cancellation, keyboard Escape and revisiting at both desktop and enlarged layouts. Shop buyer journeys verify initially visible crew choices, cancellation and reopening, then two purchases going only to the selected buyer.
 
 `scripts/mission_browser_review.mjs --only tactical --expected-hash $expected --out reports/tactical-acceptance/browser-final` checks the rebuilt game on isolated port 18879. It follows actual building entry, door opening, combat, retreat and exit using the original fixture's capabilities, plus full-map return, map-key keyboard isolation, compact focus/fit/pan recovery, safe inspection and exact save/reload/reimport continuity. This option stops after the tactical journey; the broader `operation` option also follows any resulting medical treatment.
 
@@ -125,7 +131,7 @@ The contract and audited reader families are recorded in [Classic keyboard audit
 
 `juice_status_test.dart` checks negative and positive rank boundaries, alignment exemptions, recruitment limits, stage progress, verified activity caps and pure inspection. `juice_indicator_test.dart` checks current benefits, next milestones, help on pointer/keyboard/touch, enlarged/mobile layouts, accessible Juice sorting and unchanged live-reader/campaign/RNG state. Existing dossier, crew, recovery and recruitment suites also cover the shared indicators.
 
-`scripts/juice_browser_review.mjs --expected-hash $expected` uses a fresh Edge context and the dedicated QA origin `http://127.0.0.1:18883/`. Prepared characters cover Juice 160 and a mix of higher/lower ranks. The journey checks identities, the report inspector and dossier, click/tap help, directory sorting, 800×600/150% reading and complete before/after campaign export equality. Build into a separate ignored directory and serve it with `scripts/launch.ps1 -Port 18883 -NoBrowser -WebRoot $qaWeb`.
+`scripts/juice_browser_review.mjs --expected-hash $expected` uses a fresh Edge context and the dedicated QA origin `http://127.0.0.1:18883/`. Prepared characters cover Juice 160 and a mix of higher/lower ranks. The journey checks identities, the report inspector and dossier, click/tap help, directory sorting, 1024×720/150% reading and complete before/after campaign export equality. Build into a separate ignored directory and serve it with `scripts/launch.ps1 -Port 18883 -NoBrowser -WebRoot $qaWeb`.
 
 ### Personnel directory
 
@@ -135,7 +141,7 @@ The contract and audited reader families are recorded in [Classic keyboard audit
 
 ### Injury status
 
-The dossier's medical plate is a read-only view of existing body state. `injury_status_test.dart` checks every special injury, actual modifier and treatment distinction, all wound flags, nonhuman anatomy, and unchanged campaign/RNG. `crew_injury_panel_test.dart` checks hover previews, pinned selection, keyboard activation, named touch controls, simultaneous organ callouts, deceased records, and dossier layouts at 1280×800, 800×600/150%, and 390×844/200%.
+The dossier's medical plate is a read-only view of existing body state. `injury_status_test.dart` checks every special injury, actual modifier and treatment distinction, all wound flags, nonhuman anatomy, and unchanged campaign/RNG. `crew_injury_panel_test.dart` checks hover previews, pinned selection, keyboard activation, named touch controls, simultaneous organ callouts, deceased records, and dossier layouts at 1280×800, 1024×720/150%, and 390×844/200%.
 
 ```powershell
 Push-Location upstream
@@ -162,13 +168,13 @@ node scripts/screen_browser_review.mjs --expected-hash $expected --out reports/s
 node scripts/screen_browser_review.mjs --expected-hash $expected --large --out reports/screens-large
 ```
 
-`--large` uses 800×600 and 150% journal reading size. Each observed screen records
+`--large` uses 1024×720 and 150% journal reading size. Each observed screen records
 its controls, text and screenshot; failed routes remain in the report and fail
 the command. The helper requires the same isolated port as the other browser checks.
 
 `remaining_screens_playtest_test.dart` and
 `orders_social_screens_playtest_test.dart` additionally render real source handlers
-through `MainApp` at desktop and 800×600/150%. They exercise safehouse upgrades,
+through `MainApp` at desktop and 1024×720/150%. They exercise safehouse upgrades,
 flags, promotions, all seven roster categories, sleeper orders, shops, selective
 pawning and quantities, vehicle purchase/sale and buyer selection, crafting,
 practice/classes, dating and hostage release. These are rendered widget
@@ -215,7 +221,7 @@ node scripts/creation_browser_review.mjs --url http://127.0.0.1:18879/ --expecte
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop.ps1 -Port 18879
 ```
 
-The first helper uses installed Microsoft Edge. The creation helper checks portrait rerolls, continuity through creation/headquarters/save reload, projected answer-bonus help and click-through, and public-name placement below the question. It covers manual and random backgrounds at normal size and 800×600 with 150% text. Unit regressions cover all 50 source bonuses, untouched state/RNG/ID counters during previews, and the birthday/cohort edge case. Use only the isolated QA port when stopping a test server.
+The first helper uses installed Microsoft Edge. The creation helper checks portrait rerolls, continuity through creation/headquarters/save reload, projected answer-bonus help and click-through, and public-name placement below the question. It covers manual and random backgrounds at normal size and 1024×720 with 150% text. Unit regressions cover all 50 source bonuses, untouched state/RNG/ID counters during previews, and the birthday/cohort edge case. Use only the isolated QA port when stopping a test server.
 
 ### Mission, recovery and custody
 
@@ -232,7 +238,7 @@ The mission helper travels into an actual police building, moves through its ent
 
 If an earned police siege blocks day advancement during actual-injury care, the helper records the siege and still-admitted patients explicitly and preserves that campaign snapshot. It does not claim discharge or resolve the siege by altering state. The separate prepared care scenarios continue to check discharge; siege resolution is outside this helper's coverage.
 
-Each resolved scenario saves and exports through the original menu, reloads the browser, and imports into a fresh storage context. Whole-campaign equality covers character condition, portrait identities, equipment/ammunition, squads, orders, funds and campaign progress. Hospital/court pages are also exercised at 800×600 with 150% reading size. Screenshots, decision frames, synthetic inputs and exported saves remain under ignored `reports/`. `--only operation|conversation|paid-care|unpaid-care|custody` helps investigate one scenario; the full acceptance run omits this filter.
+Each resolved scenario saves and exports through the original menu, reloads the browser, and imports into a fresh storage context. Whole-campaign equality covers character condition, portrait identities, equipment/ammunition, squads, orders, funds and campaign progress. Hospital/court pages are also exercised at 1024×720 with 150% reading size. Screenshots, decision frames, synthetic inputs and exported saves remain under ignored `reports/`. `--only operation|conversation|paid-care|unpaid-care|custody` helps investigate one scenario; the full acceptance run omits this filter.
 
 The helpers locate installed Edge/Chrome in standard Windows directories and accept `--browser-executable <path>` for another installation. They never download a browser, reuse a player profile or clear player storage. Field-input regressions cover retries, source identity/revision checks, the original movement exception and keyboard isolation while inspecting. Recovery regressions cover billing, affordability, conviction records, exact persistence, responsive journal routes and read-only details. These checks do not certify every injury, pursuit, siege, trial outcome or native Windows path.
 
@@ -243,7 +249,7 @@ $expected = (Get-FileHash (Join-Path $qaWeb 'main.dart.js') -Algorithm SHA256).H
 node scripts/street_clinic_browser_review.mjs --expected-hash $expected
 ```
 
-This helper closes the earlier street-arrest and Free Clinic coverage gaps. It starts a healthy campaign copy with no wanted charges, removes a non-founder's clothing through the actual equipment controls, assigns donation collection, and advances the original daily checks until police accost the member. The normal indecency check and gameplay RNG remain unchanged. The browser inspects the pursuit dossier, retries an invalid key and surrenders through the current source action at 800×600/150% text. State observations verify the new charge, interrupted income, police custody, confiscated weapon/ammunition, cleared order, original squad cleanup and founder remaining at headquarters. The arrest is produced during play rather than inserted into a fixture.
+This helper closes the earlier street-arrest and Free Clinic coverage gaps. It starts a healthy campaign copy with no wanted charges, removes a non-founder's clothing through the actual equipment controls, assigns donation collection, and advances the original daily checks until police accost the member. The normal indecency check and gameplay RNG remain unchanged. The browser inspects the pursuit dossier, retries an invalid key and surrenders through the current source action at 1024×720/150% text. State observations verify the new charge, interrupted income, police custody, confiscated weapon/ammunition, cleared order, original squad cleanup and founder remaining at headquarters. The arrest is produced during play rather than inserted into a fixture.
 
 A separate declared wounded campaign visits the actual Free Clinic, admits its patient and advances treatment through discharge. The browser verifies that care persists on subsequent days, restores blood, charges no new fee and retains equipment/portrait identity. Exports are used to observe the resulting engine state; this helper does not add a save-transfer journey. `--only street|clinic` runs one path. `--baseline` records known defects on an older compiled build for comparison; normal acceptance omits it.
 

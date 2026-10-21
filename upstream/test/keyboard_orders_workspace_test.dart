@@ -148,7 +148,7 @@ void main() {
 
   for (final layout in [
     (const Size(1280, 800), 1.0, false),
-    (const Size(800, 600), 1.5, true),
+    (const Size(1024, 720), 1.5, true),
     (const Size(720, 600), 1.5, true),
   ]) {
     testWidgets(
@@ -340,7 +340,7 @@ void main() {
     await _settle(tester);
     expect(find.byTooltip('Show city plan'), findsOneWidget);
     journalReadingScale.value = 1.5;
-    tester.view.physicalSize = const Size(800, 600);
+    tester.view.physicalSize = const Size(1024, 720);
     await _settle(tester);
     expect(tester.state(find.byType(JournalCityPlan)), same(mapState));
     expect(

@@ -18,6 +18,8 @@ The build script verifies the pin. Initial setup and dependency downloads need i
 
 ## Build and play
 
+The minimum supported game area is **1024×720 logical pixels**. The Windows player starts at **1280×720**; browser players use the available page viewport. Smaller windows are best effort. See [supported window sizes](TESTING.md#supported-window-sizes) for layout acceptance checks.
+
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build_release.ps1
 ```

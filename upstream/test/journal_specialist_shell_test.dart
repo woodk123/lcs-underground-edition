@@ -36,7 +36,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
     testWidgets('field plan and commands share the journal at $size/150%', (
       tester,
     ) async {
@@ -113,7 +113,7 @@ void main() {
       engine.addOptionText(7, 0, 'a', 'A - Original choice');
       String? received;
       final reader = engine.console.getkey().then((value) => received = value);
-      await mount(tester, const Size(800, 600));
+      await mount(tester, const Size(1024, 720));
       expect(
         find.byKey(const ValueKey('journal-specialist-shell')),
         findsOneWidget,
@@ -143,7 +143,7 @@ void main() {
       engine.addOptionText(13, 0, 'n', 'N - Start a New Game');
       String? received;
       final reader = engine.console.getkey().then((value) => received = value);
-      await mount(tester, const Size(800, 600));
+      await mount(tester, const Size(1024, 720));
       journalReadingScale.value = 1.5;
       ChangelogWidget.globalKey.currentState!.show(
         '# Update\n\n${'A complete change entry.\n\n' * 30}',

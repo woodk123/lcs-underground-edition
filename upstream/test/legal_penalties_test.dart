@@ -156,7 +156,7 @@ void main() {
       final reader = engine.getKey().then((value) => received = value);
       for (final (size, scale) in [
         (const Size(1280, 800), 1.0),
-        (const Size(800, 600), 1.5),
+        (const Size(1024, 720), 1.5),
         (const Size(390, 844), 2.0),
       ]) {
         tester.view.physicalSize = size;
@@ -232,7 +232,7 @@ void main() {
       final before = jsonEncode(game.gameState.toJson());
       for (final (size, scale) in [
         (const Size(1280, 800), 1.0),
-        (const Size(800, 600), 1.5),
+        (const Size(1024, 720), 1.5),
         (const Size(390, 844), 2.0),
       ]) {
         tester.view.physicalSize = size;

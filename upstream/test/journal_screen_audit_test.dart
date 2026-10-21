@@ -160,7 +160,7 @@ void main() {
     });
   }
 
-  for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
     testWidgets('crew summaries replace status furniture at $size / 150%', (
       tester,
     ) async {

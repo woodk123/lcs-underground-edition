@@ -157,7 +157,7 @@ void main() {
     game.activeSquadMember = null;
   });
 
-  for (final size in [const Size(1280, 800), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 800), const Size(1024, 720)]) {
     final viewport = '${size.width.toInt()}x${size.height.toInt()}';
     testWidgets(
       'central roster assigns and confirms donations through original engine at $viewport',

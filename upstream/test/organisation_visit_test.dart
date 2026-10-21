@@ -351,12 +351,12 @@ void main() {
     },
   );
 
-  for (final size in [const Size(1280, 720), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
     testWidgets('location guide is readable and passive at $size', (
       tester,
     ) async {
       final harness = await mount(tester, size: size);
-      if (size.width == 800) {
+      if (size.width == 1024) {
         await tester.tap(find.byTooltip('Reading size'));
         await _settle(tester);
         await tester.tap(find.text('150%'));
@@ -740,9 +740,9 @@ void main() {
   );
 
   testWidgets(
-    '800x600 at 150 percent keeps destination action and useful map space',
+    '1024x720 at 150 percent keeps destination action and useful map space',
     (tester) async {
-      await mount(tester, size: const Size(800, 600));
+      await mount(tester, size: const Size(1024, 720));
       await tester.tap(find.byTooltip('Reading size'));
       await _settle(tester);
       await tester.tap(find.text('150%'));

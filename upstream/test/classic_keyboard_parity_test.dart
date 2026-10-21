@@ -485,7 +485,7 @@ void main() {
           _Step('Enter'),
           _Step('Enter', screen: 'headquarters'),
         ],
-        size: compact ? const Size(800, 600) : const Size(1440, 1000),
+        size: compact ? const Size(1024, 720) : const Size(1440, 1000),
         scale: compact ? 1.5 : 1,
       ),
     const _Journey('sleeper category defaults and immediate numeric choices', [

@@ -251,10 +251,10 @@ try {
       await click('Close map key');
       await wait(/Squad & orders/);
       check('map-key dialog explains symbols and keeps game shortcuts passive');
-      await page.setViewportSize({ width: 800, height: 600 });
+      await page.setViewportSize({ width: 1024, height: 720 });
       await click(/^Reading size$/);
       await page.getByRole('menuitem', { name: '150%', exact: true }).click();
-      await capture('compact-800x600-at150');
+      await capture('compact-1024x720-at150');
       await click('Map controls');
       await page.getByRole('menuitem', { name: 'Fit area', exact: true }).click();
       await capture('compact-fit-area');
@@ -459,9 +459,9 @@ try {
     assert.match(await uiText(), /Visit in progress/);
     assert.doesNotMatch(await uiText(), /Visit queued · advance the day to travel/);
     await capture('hospital-menu');
-    await page.setViewportSize({ width: 800, height: 600 });
+    await page.setViewportSize({ width: 1024, height: 720 });
     await click(/^Reading size/); await page.getByRole('menuitem', { name: '150%', exact: true }).click();
-    await capture('hospital-menu-800x600-at150');
+    await capture('hospital-menu-1024x720-at150');
     await click(/^Admit injured squad members$/);
     await reports();
     let current = (await exportGame('admitted')).state;
@@ -507,7 +507,7 @@ try {
     await importLoad(await fixture('custody', state,
       ['Separate January 31 custody fixture: one defendant awaiting trial with two theft charges, one police detainee with a loitering charge, one prisoner with one month remaining. Their weapons/ammo and squad membership are already removed. Starting arrests and incarceration were prepared, not earned in browser play. The next actual daily/monthly turn must transfer the detainee, conduct the trial, and release the prisoner.']));
     const before = (await exportGame('baseline')).state;
-    await page.setViewportSize({ width: 800, height: 600 });
+    await page.setViewportSize({ width: 1024, height: 720 });
     await click(/^Reading size/); await page.getByRole('menuitem', { name: '150%', exact: true }).click();
     await day({ defense: true });
     const after = (await exportGame('resolved')).state;

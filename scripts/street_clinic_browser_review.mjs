@@ -116,7 +116,7 @@ async function decision() {
   return text;
 }
 async function enlarged() {
-  await page.setViewportSize({ width: 800, height: 600 });
+  await page.setViewportSize({ width: 1024, height: 720 });
   await click(/^Reading size/); await page.getByRole('menuitem', { name: '150%', exact: true }).click();
   await page.waitForTimeout(250);
 }
@@ -139,8 +139,8 @@ async function settle({ street = false } = {}) {
       await page.keyboard.press('z'); await page.waitForTimeout(150);
       assert.ok(await available(/Give up/), 'Retry must retain the source surrender choice.');
       const bounds = await button(/Give up/).boundingBox();
-      assert.ok(bounds && bounds.y >= 0 && bounds.y + bounds.height <= 600);
-      await capture('pursuit-800x600-at150');
+      assert.ok(bounds && bounds.y >= 0 && bounds.y + bounds.height <= page.viewportSize().height);
+      await capture('pursuit-1024x720-at150');
       await click(/Give up/); surrendered = true;
       check('actual police pursuit accepts its current surrender control at enlarged text');
     } else if (await available(/^Continue$/)) {

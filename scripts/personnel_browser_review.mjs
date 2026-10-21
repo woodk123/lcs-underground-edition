@@ -140,12 +140,12 @@ try {
   await click(/^Clear search$/); await wait(/All personnel/);
   await click(/^Hospital \(/); await capture('03-hospital-filter');
   report.checks.push('Empty search explains recovery; clear restores roster');
-  await page.setViewportSize({ width: 800, height: 600 });
+  await page.setViewportSize({ width: 1024, height: 720 });
   await click(/^Reading size$/); await page.getByRole('menuitem', { name: '150%', exact: true }).click(); await wait(/Personnel directory/);
-  await capture('04-800x600-at150-directory');
-  await row('Chaz Reasoner', '05-800x600-at150-patient'); await wait(/Back to directory/);
+  await capture('04-1024x720-at150-directory');
+  await row('Chaz Reasoner', '05-1024x720-at150-patient'); await wait(/Back to directory/);
   await click(/^Back to directory$/); await wait(/people.*Hospital/);
-  report.checks.push('800x600 at 150 percent retains readable controls and patient profile navigation');
+  report.checks.push('1024x720 at 150 percent retains readable controls and patient profile navigation');
   await page.setViewportSize({ width: 1440, height: 1100 });
   // The global directory remains open until another top section is chosen.
   await click(/^Organisation(?:$|\s)/);

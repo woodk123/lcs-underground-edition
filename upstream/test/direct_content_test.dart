@@ -88,7 +88,7 @@ void main() {
     game.activeSquadMember = null;
   });
 
-  for (final size in [const Size(1280, 800), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 800), const Size(1024, 720)]) {
     testWidgets(
       'custody roster preserves location and pending sentence at $size',
       (tester) async {
@@ -163,7 +163,7 @@ void main() {
     engine.mvaddstr(0, 0, 'Status report');
     engine.mvaddstr(3, 1, 'Jose\u0301👩🏽‍💻  Ready to work');
     final flow = engine.getKey();
-    await mountContent(tester, const Size(800, 600), flow.then((_) {}));
+    await mountContent(tester, const Size(1024, 720), flow.then((_) {}));
     expect(find.text('Jose\u0301👩🏽‍💻', findRichText: true), findsOneWidget);
     expect(find.text('Ready to work', findRichText: true), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -186,7 +186,7 @@ void main() {
     expect(await flow, engine.Key.f);
   });
 
-  for (final size in [const Size(1280, 800), const Size(800, 600)]) {
+  for (final size in [const Size(1280, 800), const Size(1024, 720)]) {
     final viewport = '${size.width.toInt()}x${size.height.toInt()}';
     testWidgets(
       'real roster renders visible proportional table columns at $viewport',

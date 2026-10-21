@@ -20,7 +20,7 @@ const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const decode = save => typeof save.saveData === 'string' ? JSON.parse(save.saveData) : save.saveData;
 const report = {
   status: 'running', url,
-  scope: 'Unmodified bundled Felix save in disposable profiles. Original LCS L/M/Escape/W/X menu meanings and source-first labels, optional modified journal-tab and Save exit shortcuts, modal isolation, and the identical immediate A/A/B/1 assignment and source Back keys in graphical desktop, graphical compact 800x600/150%, and Classic. Pointer task previews retain separate draft cancellation and day-advance protection. Import/export and preference changes are setup. No day advances, outcomes or skill values are supplied.',
+  scope: 'Unmodified bundled Felix save in disposable profiles. Original LCS L/M/Escape/W/X menu meanings and source-first labels, optional modified journal-tab and Save exit shortcuts, modal isolation, and the identical immediate A/A/B/1 assignment and source Back keys in graphical desktop, graphical compact 1024x720/150%, and Classic. Pointer task previews retain separate draft cancellation and day-advance protection. Import/export and preference changes are setup. No day advances, outcomes or skill values are supplied.',
   checks: [], screenshots: [], sequences: [], pageErrors: [], consoleErrors: [], failedRequests: [],
 };
 const expected = value('--expected-hash', null);
@@ -201,7 +201,7 @@ async function runScenario({ name, viewport, compact, classic }) {
 
 try {
   const desktop = await runScenario({ name: 'graphical-desktop', viewport: { width: 1440, height: 1000 }, compact: false, classic: false });
-  const compact = await runScenario({ name: 'graphical-compact', viewport: { width: 800, height: 600 }, compact: true, classic: false });
+  const compact = await runScenario({ name: 'graphical-compact', viewport: { width: 1024, height: 720 }, compact: true, classic: false });
   const classic = await runScenario({ name: 'classic-reference', viewport: { width: 1440, height: 1000 }, compact: false, classic: true });
   assert.deepEqual(desktop.before, classic.before, 'Graphical and Classic start from the same complete campaign.');
   assert.deepEqual(compact.before, classic.before, 'Compact graphical and Classic start from the same complete campaign.');

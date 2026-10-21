@@ -181,16 +181,16 @@ try {
   await click(/^Cancel prepared order$/); // Explicit pointer cancellation preserves this source menu.
   await click(/^Reading size/);
   await page.getByRole('menuitem', { name: '150%', exact: true }).click();
-  await page.setViewportSize({ width: 800, height: 600 });
+  await page.setViewportSize({ width: 1024, height: 720 });
   await click(/^Prepare Solicit Donations(?:$|\s)/);
-  await capture('05-order-brief-800x600-at150');
+  await capture('05-order-brief-1024x720-at150');
   await click(/^Order mechanics(?:$|\s)/);
   details = page.getByRole('alertdialog');
   await details.waitFor();
   await wait(/Calculation: Daily income/);
   const close = await details.getByRole('button', { name: 'Close', exact: true }).boundingBox();
-  assert.ok(close && close.y >= 0 && close.y + close.height <= 600);
-  await capture('06-mechanics-800x600-at150');
+  assert.ok(close && close.y >= 0 && close.y + close.height <= page.viewportSize().height);
+  await capture('06-mechanics-1024x720-at150');
   await page.keyboard.press('Escape');
   assert.ok(await page.getByRole('button', { name: 'Confirm order', exact: true }).isEnabled());
   await click(/^Cancel prepared order$/);
@@ -201,7 +201,7 @@ try {
   await (await revealDossierText(dossier, 'Prepared insurance operation', true)).click();
   await revealDossierText(dossier, 'New wanted counts at the time: Theft ×1');
   await wait(/New wanted counts at the time: Theft ×1/);
-  await capture('06-operation-history-800x600-at150');
+  await capture('06-operation-history-1024x720-at150');
   await page.keyboard.press('Escape');
   const after = await exportGame('after-ui-review');
   assert.deepEqual(after, before, 'Dossiers, mechanics disclosures and cancelled drafts must preserve the exported campaign exactly.');
@@ -227,11 +227,11 @@ try {
   await capture('07-member-switch-keeps-category-and-map');
   await click(/^Reading size/);
   await page.getByRole('menuitem', { name: '150%', exact: true }).click();
-  await page.setViewportSize({ width: 800, height: 600 });
+  await page.setViewportSize({ width: 1024, height: 720 });
   const retainedMapIndex = page.getByRole('button', { name: /^Show city plan/ });
   await retainedMapIndex.waitFor({ state: 'visible' });
   assert.equal(await retainedMapIndex.count(), 1, 'The optional map keeps its location index at enlarged reading size.');
-  await capture('07-member-switch-map-800x600-at150');
+  await capture('07-member-switch-map-1024x720-at150');
   await click(/^Tasks$/);
   assert.equal(await page.getByRole('button', { name: /^Show city plan/ }).count(), 0,
     'Hidden map controls must leave the accessible task pane.');
@@ -316,13 +316,13 @@ try {
   await capture('14-equipment-as-journal-ledger');
   await click(/^Reading size/);
   await page.getByRole('menuitem', { name: '150%', exact: true }).click();
-  await page.setViewportSize({ width: 800, height: 600 });
-  await capture('15-equipment-800x600-at150');
+  await page.setViewportSize({ width: 1024, height: 720 });
+  await capture('15-equipment-1024x720-at150');
   await click(/^People(?:$|[.\s])/);
   await wait(/Personnel directory/);
   await (await revealPersonnelDossier(page, crew[0].name)).click();
   await wait(/Campaign record/);
-  await capture('16-people-dossier-800x600-at150');
+  await capture('16-people-dossier-1024x720-at150');
   await click(/^Back to directory/);
   await click(/^Reading size/);
   await page.getByRole('menuitem', { name: '100%', exact: true }).click();
