@@ -31,8 +31,10 @@ import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/location_details.dart';
 import 'package:lcs_new_age/modern/location_help.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
+import 'package:lcs_new_age/modern/order_mechanics_dialog.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/modern/organisation_crew_pool.dart';
+import 'package:lcs_new_age/modern/organisation_order_card.dart';
 import 'package:lcs_new_age/modern/organisation_reviews.dart';
 import 'package:lcs_new_age/modern/personnel_directory.dart';
 import 'package:lcs_new_age/modern/recruitment_target_picker.dart';
@@ -44,6 +46,9 @@ import 'package:lcs_new_age/modern/travel_help.dart';
 const networkJournalSection = 8;
 const peopleJournalSection = 9;
 const basesJournalSection = 10;
+
+/// A local pointer draft retains the exact source action and its revision.
+typedef _PreparedOrder = ({ConsoleAction action, int revision});
 
 typedef _JournalFooterCommand = ({
   String label,
@@ -125,17 +130,16 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   int _group = 0;
   int? _poolPerson;
   String? _areaId, _targetId, _categoryId;
-  ConsoleAction? _pendingOrder;
+  _PreparedOrder? _pendingOrder;
   List<ConsoleAction> _orderBrowseActions = const [];
-  int? _pendingRevision;
   int? _targetSquadId;
   bool _visitRouting = false;
   String? _visitMessage;
   int _visitRequest = 0;
   bool get hasPreparedOrder =>
       _pendingOrder != null &&
-      _pendingRevision == console.revision.value &&
-      console.actions.contains(_pendingOrder) &&
+      _pendingOrder!.revision == console.revision.value &&
+      console.actions.contains(_pendingOrder!.action) &&
       activityFrame;
 
   bool get _hasUnconfirmedDraft =>
@@ -281,7 +285,6 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   void prepareForSourceInput() {
     setState(() {
       _pendingOrder = null;
-      _pendingRevision = null;
       _targetId = null;
       _ordersMap = false;
       _showReports = false;
@@ -990,8 +993,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         .firstOrNull;
     if (action != null && action.enabled) {
       setState(() {
-        _pendingOrder = action;
-        _pendingRevision = console.revision.value;
+        _pendingOrder = (action: action, revision: console.revision.value);
       });
     }
   }
@@ -1695,8 +1697,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     final section = widget.section;
     controller.inspectPerson(actorId);
     if (!await controller.commitOrder(
-          _pendingOrder!,
-          revision: _pendingRevision!,
+          _pendingOrder!.action,
+          revision: _pendingOrder!.revision,
         ) ||
         !mounted) {
       return;
@@ -2139,57 +2141,15 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         data: MediaQuery.of(
           context,
         ).copyWith(textScaler: TextScaler.linear(widget.textScale)),
-        child: AlertDialog(
-          key: const ValueKey('journal-order-details-dialog'),
-          title: Text(help.title),
-          content: SizedBox(
-            width: 560,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(help.summary),
-                  const SizedBox(height: 8),
-                  Text(help.timing),
-                  if (help.factors.isNotEmpty) Text('Uses: ${help.factors}'),
-                  if (help.cost.isNotEmpty) Text('Cost: ${help.cost}'),
-                  if (help.requirements.isNotEmpty)
-                    Text('Needs: ${help.requirements}'),
-                  if (help.risk.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(help.risk),
-                  ],
-                  if (help.type == ActivityType.visit) ...[
-                    const SizedBox(height: 8),
-                    SquadReadinessView(readiness: SquadReadiness(members)),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Members: ${members.map((member) => member.name).join(', ')}',
-                      key: const ValueKey('journal-visit-members'),
-                    ),
-                    const Text(
-                      'Travel to another area needs a car; intercity travel also needs enough cash. '
-                      'The site must be open and free of siege.',
-                    ),
-                  ],
-                  if (help.calculation case final calculation?) ...[
-                    const SizedBox(height: 12),
-                    ActivityCalculationView(calculation: calculation),
-                  ],
-                  if (help.details.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Text(help.details),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Close'),
-            ),
-          ],
+        child: OrderMechanicsDialog(
+          help: help,
+          visitReadiness: help.type == ActivityType.visit
+              ? SquadReadiness(members)
+              : null,
+          visitMemberNames: help.type == ActivityType.visit
+              ? members.map((member) => member.name).toList()
+              : const [],
+          onClose: () => Navigator.of(dialogContext).pop(),
         ),
       ),
     );
@@ -2224,7 +2184,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ? squad!.activity
         : actor?.activity;
     final type = prepared
-        ? activityTypeForAction(_pendingOrder!)!
+        ? activityTypeForAction(_pendingOrder!.action)!
         : planning
         ? ActivityType.visit
         : actual?.type ?? ActivityType.none;
@@ -2261,22 +2221,20 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         actual?.type == ActivityType.visit &&
         squad?.id == game.activeSquad?.id &&
         (hospitalVisit || atVisitDestination);
-    final heading = <Widget>[
-      Text(
-        planning
+    final calculation = type == ActivityType.visit ? null : help.calculation;
+    return OrganisationOrderCard(
+      data: OrganisationOrderCardData(
+        scope: type == ActivityType.visit
+            ? 'Squad order · ${squad?.name ?? 'Squad'}'
+            : actor?.name ?? squad?.name ?? 'Squad order',
+        title: planning
             ? target == null
                   ? 'Visit a location'
                   : 'Visit ${target.getName()}'
             : !prepared && actual?.type == ActivityType.visit
             ? 'Visit ${actual?.location?.getName() ?? 'a location'}'
             : help.title,
-        key: const ValueKey('journal-current-order'),
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: JournalPalette.heading.copyWith(fontSize: 14),
-      ),
-      Text(
-        planning && (target == null || visit?.enabled != true)
+        stateLabel: planning && (target == null || visit?.enabled != true)
             ? target == null
                   ? 'Choose a building on the map'
                   : 'Destination unavailable'
@@ -2287,250 +2245,88 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   ? 'Visit in progress'
                   : 'Visit queued · advance the day to travel'
             : 'Assigned order',
-        key: const ValueKey('journal-order-state'),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: JournalPalette.small.copyWith(
-          fontSize: 9.5,
-          height: 1.1,
-          color: prepared ? JournalPalette.binding : JournalPalette.olive,
-        ),
+        prepared: prepared,
+        previousOrder:
+            !prepared &&
+                !activityFrame &&
+                !planning &&
+                actual?.type == ActivityType.none &&
+                actor != null &&
+                previousOrder != null
+            ? _previousOrderButton(actor, previousOrder)
+            : null,
+        timing: visitInProgress
+            ? hospitalVisit
+                  ? 'Choose care or return to headquarters.'
+                  : 'Use the location’s services or leave to finish this visit.'
+            : help.timing,
+        currentAssignment: prepared && actor != null
+            ? 'Currently assigned: ${actual?.description ?? ActivityType.none.label}'
+            : null,
+        showAssignedOrderHint: activityFrame && !prepared && _showGuidance,
+        juiceHint: actor != null && _showGuidance
+            ? JuiceActivityHint(person: actor, activity: type)
+            : null,
+        travelNotice:
+            !visitInProgress && type == ActivityType.visit && notices.isNotEmpty
+            ? travelSuffix(notices).trim()
+            : null,
+        readinessSummary: type == ActivityType.visit
+            ? SquadReadiness(members).summary
+            : null,
+        calculationResult: calculation == null
+            ? null
+            : estimatedIncome != null
+            ? 'Estimated \$${estimatedIncome.round()}/day'
+            : calculation.result,
+        factors: type != ActivityType.visit && help.factors.isNotEmpty
+            ? help.factors
+            : null,
+        cost:
+            type != ActivityType.visit &&
+                help.cost.isNotEmpty &&
+                help.cost != 'No activity fee'
+            ? help.cost
+            : null,
+        risk: type != ActivityType.visit && help.risk.isNotEmpty
+            ? help.risk
+            : null,
+        unavailableReason: help.unavailableReason,
+        destinationUnavailableReason:
+            planning && visit != null && !visit.enabled && notices.isEmpty
+            ? _locationDetails(visit).join(' · ')
+            : null,
       ),
-      const SizedBox(height: 2),
-    ];
-    return JournalSurface(
-      key: const ValueKey('journal-job-card'),
-      lined: true,
-      padding: const EdgeInsets.all(6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.push_pin,
-                size: 18,
-                color: JournalPalette.brassDark,
-              ),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text(
-                  type == ActivityType.visit
-                      ? 'Squad order · ${squad?.name ?? 'Squad'}'
-                      : actor?.name ?? squad?.name ?? 'Squad order',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: JournalPalette.heading.copyWith(fontSize: 11),
-                ),
-              ),
-              IconButton(
-                key: const ValueKey('journal-order-details'),
-                tooltip: 'Order mechanics',
-                onPressed: () => _showOrderMechanics(help),
-                icon: const Icon(Icons.info_outline, size: 18),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                style: IconButton.styleFrom(
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          if (!scrollHeading) ...heading,
-          Expanded(
-            child: SingleChildScrollView(
-              key: const ValueKey('journal-order-mechanics'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (scrollHeading) ...heading,
-                  if (!prepared &&
-                      !activityFrame &&
-                      !planning &&
-                      actual?.type == ActivityType.none &&
-                      actor != null &&
-                      previousOrder != null)
-                    _previousOrderButton(actor, previousOrder),
-                  Text(
-                    visitInProgress
-                        ? hospitalVisit
-                              ? 'Choose care or return to headquarters.'
-                              : 'Use the location’s services or leave to finish this visit.'
-                        : help.timing,
-                    style: JournalPalette.small,
-                  ),
-                  if (prepared && actor != null)
-                    Text(
-                      'Currently assigned: ${actual?.description ?? ActivityType.none.label}',
-                      key: const ValueKey('journal-assigned-order'),
-                      style: JournalPalette.small,
-                    ),
-                  if (activityFrame && !prepared && _showGuidance)
-                    const Text(
-                      'This describes the assigned order. Prepare a choice to review it.',
-                      style: JournalPalette.small,
-                    ),
-                  if (actor != null && _showGuidance)
-                    JuiceActivityHint(person: actor, activity: type),
-                  if (!visitInProgress &&
-                      type == ActivityType.visit &&
-                      notices.isNotEmpty)
-                    Text(
-                      travelSuffix(notices).trim(),
-                      key: const ValueKey('journal-travel-notices'),
-                      style: JournalPalette.small,
-                    ),
-                  if (type == ActivityType.visit) ...[
-                    Text(
-                      'Readiness: ${SquadReadiness(members).summary}',
-                      key: const ValueKey('journal-readiness-summary'),
-                      style: JournalPalette.small,
-                    ),
-                    TextButton(
-                      key: const ValueKey('journal-review-readiness'),
-                      onPressed: () => _showOrderMechanics(help),
-                      child: const Text(
-                        'Review weapons, ammunition and medical support',
-                      ),
-                    ),
-                  ],
-                  if (help.calculation case final calculation?
-                      when type != ActivityType.visit)
-                    Text(
-                      estimatedIncome != null
-                          ? 'Estimated \$${estimatedIncome.round()}/day'
-                          : calculation.result,
-                      key: const ValueKey('journal-calculation-result'),
-                      style: JournalPalette.small.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  if (type != ActivityType.visit && help.factors.isNotEmpty)
-                    Text('Uses: ${help.factors}', style: JournalPalette.small),
-                  if (type != ActivityType.visit &&
-                      help.cost.isNotEmpty &&
-                      help.cost != 'No activity fee')
-                    Text('Cost: ${help.cost}', style: JournalPalette.small),
-                  if (type != ActivityType.visit && help.risk.isNotEmpty)
-                    Text(
-                      help.risk,
-                      style: JournalPalette.small.copyWith(
-                        color: JournalPalette.danger,
-                      ),
-                    ),
-                  if (help.unavailableReason case final reason?)
-                    Text(
-                      reason,
-                      style: JournalPalette.small.copyWith(
-                        color: JournalPalette.danger,
-                      ),
-                    ),
-                  if (planning &&
-                      visit != null &&
-                      !visit.enabled &&
-                      notices.isEmpty)
-                    Text(
-                      _locationDetails(visit).join(' · '),
-                      style: JournalPalette.small.copyWith(
-                        color: JournalPalette.danger,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              if (prepared || planning)
-                Expanded(
-                  child: FilledButton.icon(
-                    key: const ValueKey('journal-confirm-order'),
-                    onPressed:
-                        controller.busy ||
-                            _visitRouting ||
-                            (planning && visit?.enabled != true)
-                        ? null
-                        : () async {
-                            if (planning) {
-                              await _confirmVisit(visit!);
-                              return;
-                            }
-                            await _commitPreparedOrder();
-                          },
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(44, 34),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      textStyle: JournalPalette.small.copyWith(
-                        fontSize: 11,
-                        height: 1.2,
-                      ),
-                    ),
-                    icon: const Icon(Icons.check, size: 16),
-                    label: const Text('Confirm order'),
-                  ),
-                )
-              else if (confirmation != null)
-                Expanded(
-                  child: OutlinedButton.icon(
-                    key: const ValueKey('journal-finish-orders'),
-                    onPressed: controller.busy
-                        ? null
-                        : () => _dispatch(confirmation!),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(44, 34),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      textStyle: JournalPalette.small.copyWith(
-                        fontSize: 11,
-                        height: 1.2,
-                      ),
-                    ),
-                    icon: const Icon(Icons.check, size: 16),
-                    label: const Text('Finish orders'),
-                  ),
-                ),
-              if (!planning && !prepared && _selectedDestination != null)
-                Expanded(
-                  child: TextButton.icon(
-                    key: const ValueKey('journal-prepare-map-visit'),
-                    onPressed:
-                        controller.canNavigate && !undercover && !_visitRouting
-                        ? _queueSelectedVisit
-                        : null,
-                    icon: const Icon(Icons.place, size: 16),
-                    label: const Text('Queue visit'),
-                  ),
-                ),
-              if (prepared)
-                IconButton(
-                  tooltip: 'Cancel prepared order',
-                  key: const ValueKey('journal-cancel-order'),
-                  onPressed: () => setState(() => _pendingOrder = null),
-                  icon: const Icon(Icons.close, size: 18),
-                )
-              else if (activityFrame || planning)
-                IconButton(
-                  key: planning ? const ValueKey('journal-cancel-order') : null,
-                  tooltip: planning
-                      ? 'Cancel prepared order'
-                      : 'Return to planning; keep assigned orders',
-                  onPressed: controller.canNavigate && !_visitRouting
-                      ? planning
-                            ? _cancelVisit
-                            : controller.returnToHeadquarters
-                      : null,
-                  icon: const Icon(Icons.close, size: 18),
-                ),
-            ],
-          ),
-        ],
-      ),
+      scrollHeading: scrollHeading,
+      onDetails: () => _showOrderMechanics(help),
+      showConfirm: prepared || planning,
+      onConfirm:
+          controller.busy ||
+              _visitRouting ||
+              (planning && visit?.enabled != true)
+          ? null
+          : () async {
+              if (planning) {
+                await _confirmVisit(visit!);
+                return;
+              }
+              await _commitPreparedOrder();
+            },
+      showFinish: confirmation != null,
+      onFinish: controller.busy ? null : () => _dispatch(confirmation!),
+      showQueueVisit: !planning && !prepared && _selectedDestination != null,
+      onQueueVisit: controller.canNavigate && !undercover && !_visitRouting
+          ? _queueSelectedVisit
+          : null,
+      showCancel: prepared || activityFrame || planning,
+      cancelPrepared: prepared || planning,
+      onCancel: prepared
+          ? () => setState(() => _pendingOrder = null)
+          : controller.canNavigate && !_visitRouting
+          ? planning
+                ? _cancelVisit
+                : controller.returnToHeadquarters
+          : null,
     );
   }
 
@@ -2973,7 +2769,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     final type = activityTypeForAction(action)!;
     final help = activityMechanics(type, actor: person);
     final selected = hasPreparedOrder
-        ? activityTypeForAction(_pendingOrder!) == type
+        ? activityTypeForAction(_pendingOrder!.action) == type
         : person?.activity.type == type;
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
@@ -2990,8 +2786,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             key: ValueKey('journal-activity:${action.entityId}'),
             onPressed: action.enabled && !controller.busy
                 ? () => setState(() {
-                    _pendingOrder = action;
-                    _pendingRevision = console.revision.value;
+                    _pendingOrder = (
+                      action: action,
+                      revision: console.revision.value,
+                    );
                     _ordersMap = false;
                   })
                 : null,
@@ -3348,7 +3146,6 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       _visitRouting = true;
       _visitMessage = null;
       _pendingOrder = null;
-      _pendingRevision = null;
       _pool = false;
       _orders = false;
       _showReports = false;

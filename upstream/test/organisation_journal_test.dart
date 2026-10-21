@@ -1722,55 +1722,113 @@ void main() {
     );
   }
 
-  testWidgets(
-    'order formulas are disclosed on request without changing assignments, input or RNG',
-    (tester) async {
-      await mount(tester, size: const Size(800, 600));
-      await business(tester);
-      await _tap(tester, 'journal-activity:donations');
-      await tester.tap(find.byTooltip('Reading size'));
-      await _settle(tester);
-      await tester.tap(find.text('150%'));
-      await _settle(tester);
-      final before = campaignSnapshot();
-      final revision = engine.console.revision.value;
-      final help = activityMechanics(
-        ActivityType.donations,
-        actor: game.squad.first,
-      );
-      final formula = 'Calculation: ${help.calculation!.formula}';
-      expect(find.byType(ActivityCalculationView), findsNothing);
-      expect(find.text(formula), findsNothing);
-      expect(_key('journal-order-details').hitTestable(), findsOneWidget);
-      expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
-      reseedRNG(seed: 412);
-      final rolls = List.generate(8, (_) => lcsRandom(100000));
-      reseedRNG(seed: 412);
-      for (final dismissWithEscape in [false, true]) {
-        await _tap(tester, 'journal-order-details');
-        final dialog = _key('journal-order-details-dialog');
-        expect(dialog, findsOneWidget);
-        expect(find.text(formula), findsOneWidget);
-        expect(find.byType(ActivityCalculationView), findsOneWidget);
-        expect(MediaQuery.textScalerOf(tester.element(dialog)).scale(10), 15);
-        expect(campaignSnapshot(), before);
-        expect(engine.console.revision.value, revision);
-        if (dismissWithEscape) {
-          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-        } else {
-          await tester.tap(find.text('Close'));
+  for (final enlarged in [false, true]) {
+    testWidgets(
+      'order formulas retain draft, scroll and focus without changing assignments, input or RNG, enlarged=$enlarged',
+      (tester) async {
+        await mount(
+          tester,
+          size: enlarged ? const Size(800, 600) : const Size(1280, 720),
+        );
+        await business(tester);
+        await _tap(tester, 'journal-activity:donations');
+        if (enlarged) {
+          await tester.tap(find.byTooltip('Reading size'));
+          await _settle(tester);
+          await tester.tap(find.text('150%'));
+          await _settle(tester);
         }
+        final before = campaignSnapshot();
+        final revision = engine.console.revision.value;
+        final actor = game.squad.first;
+        final title = tester.widget<Text>(_key('journal-current-order')).data;
+        final mechanics = find.descendant(
+          of: _key('journal-order-mechanics'),
+          matching: find.byType(Scrollable),
+        );
+        ScrollPosition mechanicsPosition() =>
+            tester.state<ScrollableState>(mechanics).position;
+        expect(mechanicsPosition().maxScrollExtent, greaterThan(0));
+        mechanicsPosition().jumpTo(
+          mechanicsPosition().maxScrollExtent.clamp(0, 24),
+        );
         await _settle(tester);
-        expect(dialog, findsNothing);
+        final offset = mechanicsPosition().pixels;
+        void expectRetainedDraft() {
+          expect(
+            tester.widget<Text>(_key('journal-current-order')).data,
+            title,
+          );
+          expect(
+            tester.widget<Text>(_key('journal-selected-person')).data,
+            actor.name,
+          );
+          expect(find.text('Prepared · awaiting confirmation'), findsOneWidget);
+          expect(mechanicsPosition().pixels, closeTo(offset, .01));
+          expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
+          expect(campaignSnapshot(), before);
+          expect(engine.console.revision.value, revision);
+        }
+
+        final help = activityMechanics(
+          ActivityType.donations,
+          actor: game.squad.first,
+        );
+        final formula = 'Calculation: ${help.calculation!.formula}';
+        expect(find.byType(ActivityCalculationView), findsNothing);
         expect(find.text(formula), findsNothing);
+        expect(_key('journal-order-details').hitTestable(), findsOneWidget);
         expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
+        reseedRNG(seed: 412);
+        final rolls = List.generate(8, (_) => lcsRandom(100000));
+        reseedRNG(seed: 412);
+        for (final dismissWithEscape in [false, true]) {
+          await _tap(tester, 'journal-order-details');
+          final dialog = _key('journal-order-details-dialog');
+          expect(dialog, findsOneWidget);
+          expect(find.text(formula), findsOneWidget);
+          expect(find.byType(ActivityCalculationView), findsOneWidget);
+          expect(
+            MediaQuery.textScalerOf(tester.element(dialog)).scale(10),
+            enlarged ? 15 : 10,
+          );
+          expect(campaignSnapshot(), before);
+          expect(engine.console.revision.value, revision);
+          if (dismissWithEscape) {
+            await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+          } else {
+            await tester.tap(find.text('Close'));
+          }
+          await _settle(tester);
+          expect(dialog, findsNothing);
+          expect(find.text(formula), findsNothing);
+          expectRetainedDraft();
+          final gameFocus = tester
+              .widgetList<Focus>(find.byType(Focus))
+              .singleWhere(
+                (widget) => widget.focusNode?.debugLabel == 'Game keyboard',
+              )
+              .focusNode!;
+          expect(
+            gameFocus.hasPrimaryFocus,
+            isTrue,
+            reason:
+                'Closing mechanics must restore the original game keyboard reader.',
+          );
+          await _tap(tester, 'journal-skills');
+          expectRetainedDraft();
+          await _tap(tester, 'journal-skills');
+          expectRetainedDraft();
+        }
+        await _tap(tester, 'journal-cancel-order');
+        expect(find.text('Prepared · awaiting confirmation'), findsNothing);
         expect(campaignSnapshot(), before);
         expect(engine.console.revision.value, revision);
-      }
-      expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
-      expect(tester.takeException(), isNull);
-    },
-  );
+        expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets(
     'a prepared personal order blocks day and HQ shortcuts until cancel or confirm',

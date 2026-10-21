@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/engine/console.dart';
@@ -14,6 +15,7 @@ import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/journal_pursuit.dart';
+import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/sitemode/chase_sequence.dart';
@@ -30,11 +32,12 @@ String _snapshot() => jsonEncode(game.gameState.toJson());
 /// Authored reader fixtures exercise presentation without deciding car rules.
 /// Engine regressions separately run the real pursuit and obstacle handlers.
 class _PursuitReaders {
-  _PursuitReaders({this.wholeCrew = false}) {
+  _PursuitReaders({this.wholeCrew = false, this.fullCommands = false}) {
     unawaited(_run());
   }
 
   final bool wholeCrew;
+  final bool fullCommands;
   final commands = <int>[];
   bool obstacle = false, finished = false;
 
@@ -93,6 +96,22 @@ class _PursuitReaders {
         ),
       ],
     ];
+    if (fullCommands) {
+      final status = actions.singleWhere((action) => action.key == '0');
+      actions.remove(status);
+      actions.insert(
+        3,
+        const ConsoleAction(
+          key: 'o',
+          label: 'Squad orders',
+          enabled: false,
+          y: 13,
+          x: 1,
+          width: 14,
+        ),
+      );
+      actions.add(status);
+    }
     engine.console.actions.addAll(actions);
     engine.console.screen = 'pursuit';
     engine.console.pursuit = PursuitContext(
@@ -237,11 +256,15 @@ void main() {
     Size size = const Size(1200, 800),
     double scale = 1,
     bool wholeCrew = false,
+    bool fullCommands = false,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
     journalReadingScale.value = scale;
-    final readers = _PursuitReaders(wholeCrew: wholeCrew);
+    final readers = _PursuitReaders(
+      wholeCrew: wholeCrew,
+      fullCommands: fullCommands,
+    );
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox.shrink());
       await readers.stop(tester);
@@ -291,11 +314,9 @@ void main() {
         findsOneWidget,
       );
       expect(_action('d').hitTestable(), findsOneWidget);
-      final crew = find.byKey(
-        const PageStorageKey('journal-pursuit-crew-expanded'),
-      );
+      final crewHeading = find.text('Crew (${game.squad.length})');
       await tester.scrollUntilVisible(
-        crew,
+        crewHeading,
         180,
         scrollable: find
             .descendant(
@@ -304,9 +325,14 @@ void main() {
             )
             .first,
       );
-      await tester.tap(find.text('Crew (${game.squad.length})'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Crew (${game.squad.length})'));
+      expect(crewHeading.hitTestable(), findsOneWidget);
+      await tester.tap(crewHeading);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(crewHeading);
+      await tester.pumpAndSettle();
+      expect(crewHeading.hitTestable(), findsOneWidget);
+      await tester.tap(crewHeading);
       await tester.pumpAndSettle();
       expect(_snapshot(), before);
       expect(lcsRandom(100000), expected);
@@ -463,6 +489,104 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('pursuit command semantics follows live reading-scale reflow', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await mount(tester, size: const Size(800, 600), fullCommands: true);
+      final frame = pursuitContext(engine.console);
+      final revision = engine.console.revision.value;
+      final before = _snapshot();
+      reseedRNG(seed: 852016);
+      final expected = lcsRandom(100000);
+      reseedRNG(seed: 852016);
+
+      void expectAlignedCommand() {
+        final node = tester.getSemantics(_action('p'));
+        var transform = Matrix4.identity();
+        for (
+          SemanticsNode? current = node;
+          current != null;
+          current = current.parent
+        ) {
+          transform = (current.transform ?? Matrix4.identity()) * transform;
+        }
+        final semanticBounds = MatrixUtils.transformRect(transform, node.rect);
+        final paintedBounds = tester.getRect(_action('p'));
+        expect(semanticBounds.top, closeTo(paintedBounds.top, .01));
+        expect(semanticBounds.bottom, closeTo(paintedBounds.bottom, .01));
+        expect(semanticBounds.bottom, lessThanOrEqualTo(600));
+        expect(_action('p').hitTestable(), findsOneWidget);
+      }
+
+      expectAlignedCommand();
+      journalReadingScale.value = 1.5;
+      await tester.pumpAndSettle();
+      expectAlignedCommand();
+      journalReadingScale.value = 1;
+      await tester.pumpAndSettle();
+      expectAlignedCommand();
+      expect(pursuitContext(engine.console), same(frame));
+      expect(engine.console.revision.value, revision);
+      expect(_snapshot(), before);
+      expect(lcsRandom(100000), expected);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
+  testWidgets('narrow pursuit commands reveal keyboard focus after reflow', (
+    tester,
+  ) async {
+    final readers = await mount(
+      tester,
+      size: const Size(540, 600),
+      fullCommands: true,
+    );
+    final before = _snapshot();
+    final revision = engine.console.revision.value;
+    reseedRNG(seed: 852017);
+    final expected = lcsRandom(100000);
+    reseedRNG(seed: 852017);
+    journalReadingScale.value = 1.5;
+    await tester.pumpAndSettle();
+    final scroller = find
+        .ancestor(of: _action('0'), matching: find.byType(Scrollable))
+        .first;
+    final position = tester.state<ScrollableState>(scroller).position;
+    expect(position.maxScrollExtent, greaterThan(0));
+    FocusNode commandFocus(String key) => Focus.of(
+      tester.element(
+        find.descendant(
+          of: _action(key),
+          matching: find.byType(JournalCommandLabel),
+        ),
+      ),
+    );
+    commandFocus('d').requestFocus();
+    await tester.pumpAndSettle();
+    for (var tab = 0; tab < 4; tab++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+    }
+    final statusFocus = commandFocus('0');
+    expect(statusFocus.hasPrimaryFocus, isTrue);
+    expect(position.pixels, greaterThan(0));
+    expect(_action('0').hitTestable(), findsOneWidget);
+    journalReadingScale.value = 1;
+    await tester.pumpAndSettle();
+    expect(commandFocus('0'), same(statusFocus));
+    expect(statusFocus.hasPrimaryFocus, isTrue);
+    expect(_action('0').hitTestable(), findsOneWidget);
+    expect(readers.commands, isEmpty);
+    expect(engine.console.revision.value, revision);
+    expect(_snapshot(), before);
+    expect(lcsRandom(100000), expected);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'car actions stay reachable at 800x600 and 150 percent reading size',
