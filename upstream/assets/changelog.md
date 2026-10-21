@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.2.4 — 2026-10-21
+
+* Select squad members with 1–6 in the graphical headquarters roster, with visible number hints. Press the selected number again for their profile, or 0 to clear the selection, following Classic controls.
+
 ## Underground Edition 0.2.3 — 2026-10-21
 
 * Recognize dropped loot by its item artwork on tactical maps. Mixed piles show a stack count, and tile details list the dropped items with pictures and quantities. Unsearched caches retain their crate until searched.

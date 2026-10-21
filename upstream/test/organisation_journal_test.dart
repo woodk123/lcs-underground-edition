@@ -49,13 +49,31 @@ import 'test_support.dart';
 
 /// The base dispatch boundary with real source-authored options and real
 /// management handlers. It never advances time during these UI tests.
+class _StopHeadquarters implements Exception {}
+
+class _HeadquartersConsole extends Console {
+  bool stopped = false;
+
+  @override
+  Future<String> getkey() async {
+    final key = await super.getkey();
+    if (stopped) throw _StopHeadquarters();
+    return key;
+  }
+}
+
 class _JournalHarness {
-  _JournalHarness({this.monthlyReport = false, this.shopVisit = false}) {
+  _JournalHarness({
+    this.monthlyReport = false,
+    this.shopVisit = false,
+    this.realHeadquarters = false,
+  }) {
     done = _loop();
   }
   late final Future<void> done;
   bool stopped = false;
   bool finished = false;
+  final bool realHeadquarters;
   final bool monthlyReport;
   final bool shopVisit;
   bool monthReset = false;
@@ -63,6 +81,14 @@ class _JournalHarness {
 
   Future<void> _loop() async {
     try {
+      if (realHeadquarters) {
+        try {
+          await baseMode();
+        } on _StopHeadquarters {
+          return;
+        }
+        return;
+      }
       while (!stopped) {
         engine.erase();
         final location = game.activeSquad?.site ?? game.activeSafehouse;
@@ -125,6 +151,9 @@ class _JournalHarness {
 
   Future<void> stop(WidgetTester tester) async {
     stopped = true;
+    if (realHeadquarters) {
+      (engine.console as _HeadquartersConsole).stopped = true;
+    }
     for (var i = 0; i < 50 && !finished; i++) {
       if (engine.console.awaitingInput) {
         engine.console.sendInput(engine.console.textInput ? 'Enter' : 'Escape');
@@ -267,7 +296,7 @@ void main() {
   });
   setUp(() {
     journalReadingScale.value = 1;
-    engine.console = Console();
+    engine.console = _HeadquartersConsole();
     game.gameState = decodeSaveContents(fixture).gameState!;
     game.mode = GameMode.base;
     game.activeSquadMember = null;
@@ -284,6 +313,7 @@ void main() {
     Size size = const Size(1280, 720),
     bool monthlyReport = false,
     bool shopVisit = false,
+    bool realHeadquarters = false,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -292,6 +322,7 @@ void main() {
     final harness = _JournalHarness(
       monthlyReport: monthlyReport,
       shopVisit: shopVisit,
+      realHeadquarters: realHeadquarters,
     );
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox.shrink());
@@ -310,6 +341,87 @@ void main() {
     await _tap(tester, 'journal-orders');
     await _tap(tester, 'journal-order-group:0');
     expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
+  }
+
+  for (final large in [false, true]) {
+    testWidgets('squad number keys follow the real HQ reader, large=$large', (
+      tester,
+    ) async {
+      journalReadingScale.value = large ? 1.5 : 1;
+      await mount(
+        tester,
+        realHeadquarters: true,
+        size: large ? const Size(800, 600) : const Size(1280, 800),
+      );
+      final before = _snapshot();
+      reseedRNG(seed: 62401);
+      final rolls = List.generate(12, (_) => lcsRandom(100000));
+      reseedRNG(seed: 62401);
+      Future<void> press(LogicalKeyboardKey key, String character) async {
+        await _focusGame(tester);
+        await tester.sendKeyEvent(key, character: character);
+        await _settle(tester);
+      }
+
+      final keys = [
+        LogicalKeyboardKey.digit1,
+        LogicalKeyboardKey.digit2,
+        LogicalKeyboardKey.digit3,
+        LogicalKeyboardKey.digit4,
+        LogicalKeyboardKey.digit5,
+        LogicalKeyboardKey.digit6,
+      ];
+      for (var i = 0; i < keys.length; i++) {
+        await press(keys[i], '${i + 1}');
+        expect(game.activeSquadMember, same(game.squad[i]));
+        expect(
+          tester.widget<Text>(_key('journal-selected-person')).data,
+          game.squad[i].name,
+        );
+        await _showCrewMember(tester, game.squad[i].id);
+        expect(_key('journal-shortcut:${i + 1}'), findsWidgets);
+      }
+      // Pointer inspection and repainting do not silently restore the last key choice.
+      await _showCrewMember(tester, game.squad[1].id);
+      await _tap(tester, 'journal-member:${game.squad[1].id}');
+      engine.console.revision.value++;
+      await _settle(tester);
+      expect(
+        tester.widget<Text>(_key('journal-selected-person')).data,
+        game.squad[1].name,
+      );
+      await press(LogicalKeyboardKey.digit3, '3');
+      expect(
+        tester.widget<Text>(_key('journal-selected-person')).data,
+        game.squad[2].name,
+      );
+      // The selected key opens the original profile; Escape returns to HQ.
+      await press(LogicalKeyboardKey.digit3, '3');
+      expect(engine.console.journalProfile?.person.id, game.squad[2].id);
+      await press(LogicalKeyboardKey.escape, 'Escape');
+      expect(engine.console.screen, 'headquarters');
+      await press(LogicalKeyboardKey.digit0, '0');
+      expect(game.activeSquadMember, isNull);
+      expect(
+        tester.widget<Text>(_key('journal-selected-person')).data,
+        game.squad.first.name,
+      );
+      await press(LogicalKeyboardKey.digit9, '9');
+      expect(game.activeSquadMember, isNull);
+      // Read-only dossiers retain their keyboard boundary.
+      await _showCrewMember(tester, game.squad.first.id);
+      await _tap(tester, 'hq-dossier:${game.squad.first.id}');
+      final revision = engine.console.revision.value;
+      await press(LogicalKeyboardKey.digit2, '2');
+      expect(engine.console.revision.value, revision);
+      expect(game.activeSquadMember, isNull);
+      await press(LogicalKeyboardKey.escape, 'Escape');
+      await press(LogicalKeyboardKey.digit2, '2');
+      expect(game.activeSquadMember, same(game.squad[1]));
+      expect(_snapshot(), before);
+      expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+      expect(tester.takeException(), isNull);
+    });
   }
 
   testWidgets('previous visit job is a cancellable draft bound to its actor', (
