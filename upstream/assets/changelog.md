@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.2.2 — 2026-10-21
+
+* Character legal status explains how wanted offences affect court cases, with Possible penalties help showing base prison time for current charges under current laws.
+
 ## Underground Edition 0.2.1 — 2026-10-21
 
 * Selling a vehicle clears crew assignments to it. Loading an existing campaign also clears assignments to vehicles no longer owned.
