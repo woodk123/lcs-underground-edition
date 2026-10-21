@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lcs_new_age/devtools/development_web.dart';
 import 'package:lcs_new_age/engine/changelog.dart';
 import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
@@ -9,6 +10,7 @@ import 'package:lcs_new_age/title_screen/launch_game.dart';
 
 Future<void> main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
+  installDevelopmentBridge();
   await configureNativeProfile(arguments);
   // Keep semantic controls available for keyboard and assistive technology.
   WidgetsBinding.instance.ensureSemantics();

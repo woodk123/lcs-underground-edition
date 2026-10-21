@@ -143,6 +143,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       (_networkKey.currentState?.hasPreparedOrder ?? false) ||
       (_basesKey.currentState?.hasPreparedPurchase ?? false);
 
+  /// External development actions must respect the same local draft boundary.
+  bool get hasUnconfirmedDraft => _hasUnconfirmedDraft;
+
   void _draftChanged(bool _) {
     if (mounted) setState(() {});
   }

@@ -4,10 +4,12 @@ Run commands from the repository root unless noted otherwise. Install the [pinne
 
 ## Automated regressions
 
+For exploratory gameplay and stuck-reader investigation, use the [development MCP](DEV_MCP.md). It records the actual loaded build and source-action trace in disposable storage. Turn discovered defects into the focused regressions and browser journeys below; structured engine actions do not certify graphical interaction.
+
 ```powershell
 Push-Location upstream
 ..\.tools\flutter\bin\flutter.bat test --no-pub
-..\.tools\flutter\bin\flutter.bat analyze --no-pub lib/modern lib/main.dart lib/engine/console.dart lib/engine/console_widget.dart lib/engine/console_char.dart lib/engine/console_graphic.dart
+..\.tools\flutter\bin\flutter.bat analyze --no-pub lib/modern lib/devtools lib/main.dart lib/engine/console.dart lib/engine/console_widget.dart lib/engine/console_char.dart lib/engine/console_graphic.dart
 ..\.tools\flutter\bin\flutter.bat analyze --no-pub --no-fatal-infos --no-fatal-warnings
 Pop-Location
 ```

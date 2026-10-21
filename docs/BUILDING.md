@@ -4,6 +4,8 @@ For Windows/web release packaging, use Windows PowerShell, Git and Python 3.12+.
 
 ## Toolchain
 
+For interactive engine debugging and assistant playthroughs, [Development MCP](DEV_MCP.md) provides a separate cached development build and disposable browser session. It does not replace the checked player/release workflow below.
+
 The exact Flutter version and revision are pinned in [scripts/toolchain.json](../scripts/toolchain.json). Install that SDK into `.tools/flutter`:
 
 ```powershell

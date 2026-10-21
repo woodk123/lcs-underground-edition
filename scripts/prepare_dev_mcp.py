@@ -1,0 +1,166 @@
+"""Prepare a traceable, cached development-only web player for the game MCP."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import tomllib
+
+from release_common import digest, file_hashes, write_json
+
+ROOT = Path(__file__).resolve().parent.parent
+INPUTS = ('upstream/lib', 'upstream/assets', 'upstream/web',
+          'upstream/pubspec.yaml', 'upstream/pubspec.lock',
+          'upstream/tool/inject_service_worker.dart', 'scripts/toolchain.json')
+
+
+def source_identity(root: Path) -> dict:
+    commit = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
+    names = subprocess.check_output(['git', '-C', str(root), 'ls-files', '-z',
+                                    '--cached', '--others', '--exclude-standard', '--', *INPUTS])
+    checksum = hashlib.sha256()
+    for name in sorted(set(names.decode('utf-8').split('\0')) - {''}):
+        path = root / name
+        checksum.update(f'{name}\0{digest(path) if path.is_file() else "missing"}\0'.encode('utf-8'))
+    return {'commit': commit, 'inputs_sha256': checksum.hexdigest()}
+
+
+def cached_build(path: Path, source: dict, web: Path) -> dict | None:
+    try:
+        info = json.loads(path.read_text(encoding='utf-8'))
+        if (not isinstance(info, dict) or info.get('schema') != 1 or info.get('status') != 'ready'
+                or info.get('source') != source or info.get('web_root') != str(web)
+                or info.get('devtools') is not True):
+            return None
+        if not all((web / name).is_file() for name in ('main.dart.js', 'index.html', 'sw.js')):
+            return None
+        if info.get('payload_hashes') != file_hashes(web):
+            return None
+        if info.get('main_js_sha256') != digest(web / 'main.dart.js'):
+            return None
+        return info
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def output_directory(root: Path, value: str) -> Path:
+    output = (root / value).resolve()
+    if not any(output.is_relative_to(root / parent) and output != root / parent
+               for parent in ('.local', 'reports')):
+        raise ValueError('Development builds must be inside .local/ or reports/.')
+    output.mkdir(parents=True, exist_ok=True)
+    return output
+
+
+def run(command: list[str], cwd: Path) -> None:
+    subprocess.run(command, cwd=cwd, check=True)
+
+
+def install_dependencies(root: Path, output: Path) -> None:
+    npm = shutil.which('npm.cmd' if os.name == 'nt' else 'npm')
+    if not npm:
+        raise ValueError('Install Node.js 20 or later and npm; see docs/DEV_MCP.md.')
+    marker = output / 'dependencies.json'
+    try:
+        previous = json.loads(marker.read_text())
+    except (OSError, ValueError):
+        previous = {}
+    current = {}
+    for package, module in [('offline_test', 'playwright'), ('dev_mcp', '@modelcontextprotocol/server')]:
+        directory = root / 'upstream/tool' / package
+        current[package] = digest(directory / 'package-lock.json')
+        if previous.get(package) != current[package] or not (directory / 'node_modules' / module).is_dir():
+            run([npm, 'ci', '--prefix', str(directory), '--no-audit', '--no-fund'], root)
+    write_json(marker, current)
+
+
+def configure_codex(root: Path) -> Path:
+    """Append only this project's server; retain all existing settings verbatim."""
+    node = shutil.which('node')
+    if not node:
+        raise ValueError('Node.js is required.')
+    path = root / '.codex/config.toml'
+    text = path.read_text(encoding='utf-8') if path.exists() else ''
+    existing = tomllib.loads(text).get('mcp_servers', {}).get('lcs_development')
+    settings = {'command': Path(node).as_posix(),
+                'args': [(root / 'scripts/dev_mcp/server.mjs').as_posix()],
+                'cwd': root.as_posix(), 'startup_timeout_sec': 15, 'tool_timeout_sec': 60}
+    if existing is not None:
+        if any(existing.get(key) != value for key, value in settings.items()):
+            raise ValueError(f'{path} already configures lcs_development differently; review it manually.')
+        return path
+    block = '\n[mcp_servers.lcs_development]\n' + ''.join(
+        f'{key} = {json.dumps(value)}\n' for key, value in settings.items())
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text + ('\n' if text and not text.endswith('\n') else '') + block, encoding='utf-8')
+    return path
+
+
+def prepare(args) -> dict:
+    output = output_directory(ROOT, args.out)
+    install_dependencies(ROOT, output)
+    suffix = '.bat' if os.name == 'nt' else ''
+    flutter = ROOT / f'.tools/flutter/bin/flutter{suffix}'
+    dart = ROOT / f'.tools/flutter/bin/dart{suffix}'
+    if not flutter.is_file() or not dart.is_file():
+        raise ValueError('Install the pinned Flutter SDK; see docs/BUILDING.md.')
+    sdk = json.loads(subprocess.check_output([str(flutter), '--version', '--machine'], text=True))
+    pin = json.loads((ROOT / 'scripts/toolchain.json').read_text())
+    if sdk['frameworkVersion'] != pin['flutter_version'] or sdk['frameworkRevision'] != pin['flutter_revision']:
+        raise ValueError('Flutter SDK does not match scripts/toolchain.json.')
+    source = source_identity(ROOT)
+    web = output / 'web'
+    manifest = output / 'build.json'
+    info = None if args.rebuild else cached_build(manifest, source, web)
+    if info:
+        print(f'Reusing verified development build {info["build_id"]}', flush=True)
+        return info
+    write_json(manifest, {'schema': 1, 'status': 'building', 'source': source})
+    run([str(flutter), 'pub', 'get'], ROOT / 'upstream')
+    run([str(dart), 'run', 'build_runner', 'build'], ROOT / 'upstream')
+    # Generated serializers are compilation inputs too.
+    source = source_identity(ROOT)
+    build_id = f'{source["commit"][:8]}-{source["inputs_sha256"][:8]}'
+    run([str(flutter), 'build', 'web', '--release', '--no-pub', '--no-wasm-dry-run',
+         '--base-href', '/', f'--output={web}', '--dart-define=LCS_DEVTOOLS=true',
+         f'--dart-define=LCS_BUILD={build_id}', '--dart-define=LCS_CHANNEL=Development'], ROOT / 'upstream')
+    run([str(dart), 'run', 'tool/inject_service_worker.dart', str(web)], ROOT / 'upstream')
+    if source_identity(ROOT) != source:
+        raise ValueError('Game source changed during compilation; rerun after edits settle.')
+    info = {'schema': 1, 'status': 'ready', 'devtools': True, 'source': source,
+            'build_id': build_id, 'toolchain': pin, 'web_root': str(web),
+            'main_js_sha256': digest(web / 'main.dart.js'), 'payload_hashes': file_hashes(web)}
+    write_json(manifest, info)
+    return info
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--out', default='.local/dev-mcp')
+    parser.add_argument('--rebuild', action='store_true', help='Rebuild even when source and payload hashes match.')
+    parser.add_argument('--configure-codex', action='store_true', help='Add this MCP to the local project Codex config.')
+    parser.add_argument('--check', action='store_true', help='Read-only freshness check; print JSON or fail without building.')
+    args = parser.parse_args()
+    try:
+        if args.check:
+            output = (ROOT / args.out).resolve()
+            info = cached_build(output / 'build.json', source_identity(ROOT), output / 'web')
+            if not info:
+                raise ValueError('Development MCP build is missing, stale or modified; run python scripts/prepare_dev_mcp.py.')
+            print(json.dumps({key: info[key] for key in ('web_root', 'build_id', 'main_js_sha256', 'source')}))
+            return
+        info = prepare(args)
+        if args.configure_codex:
+            print(f'Configured {configure_codex(ROOT)}; reconnect MCP servers or start a new chat to load it.')
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        parser.exit(1, f'{error}\n')
+    print(json.dumps({key: info[key] for key in ('web_root', 'build_id', 'main_js_sha256')}, indent=2))
+    print('Ready. Start the MCP server with: node scripts/dev_mcp/server.mjs')
+
+
+if __name__ == '__main__':
+    main()

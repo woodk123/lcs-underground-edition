@@ -1,6 +1,7 @@
 # Local SDK, development state and build products
 .tools/
 .local/
+.codex/config.toml
 release/
 .dart_tool/
 build/

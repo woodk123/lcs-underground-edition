@@ -22,7 +22,7 @@ BUILD_OUTPUTS = {
     'windows': {'native': 'windows/x64/runner/Release'},
     'web': {'web': 'web'},
 }
-FOCUSED = ['lib/modern', 'lib/main.dart', 'lib/engine/console.dart',
+FOCUSED = ['lib/modern', 'lib/devtools', 'lib/main.dart', 'lib/engine/console.dart',
            'lib/engine/console_widget.dart', 'lib/engine/console_char.dart', 'lib/engine/console_graphic.dart']
 
 
@@ -35,7 +35,7 @@ def identity(root: Path) -> dict:
 def required_steps(kind: str, target: str, shard: int = 0) -> list[str]:
     common = ['dependencies', 'serialization']
     if kind == 'checks':
-        return common + ['tests'] + (['tooling', 'assets', 'focused-analysis', 'full-analysis'] if shard == 0 else [])
+        return common + ['tests'] + (['development-bridge', 'tooling', 'assets', 'focused-analysis', 'full-analysis'] if shard == 0 else [])
     return common + {'linux': ['linux-release'], 'windows': ['windows-release'],
                      'web': ['web-release', 'offline-manifest']}[target]
 
@@ -76,6 +76,8 @@ def run_worker(root: Path, kind: str, target: str, shard: int) -> None:
                                   *info['test_files']], root / 'upstream'))
         if shard == 0:
             commands.extend([
+                ('development-bridge', [flutter, 'test', '--no-pub', '--dart-define=LCS_DEVTOOLS=true',
+                                        'test/development_bridge_test.dart'], root / 'upstream'),
                 ('tooling', [sys.executable, '-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_*.py', '-v'], root),
                 ('assets', [sys.executable, 'scripts/verify_assets.py'], root),
                 ('focused-analysis', [flutter, 'analyze', '--no-pub', *FOCUSED], root / 'upstream'),
