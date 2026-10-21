@@ -6,6 +6,30 @@ import { resolve } from 'node:path';
 
 export const QA_URL = 'http://127.0.0.1:18879/';
 
+// Each journey owns its navigation and reader waits. Replace only its disposable
+// storage context here, attaching error evidence before any page is loaded.
+export async function createQaPage(browser, {
+  previousContext, report, errorContext, timeout,
+}) {
+  await previousContext?.close();
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1000 }, acceptDownloads: true,
+  });
+  try {
+    const page = await context.newPage();
+    page.setDefaultTimeout(timeout);
+    page.on('pageerror', error => report.pageErrors.push({ ...errorContext(), error: String(error) }));
+    page.on('console', message => {
+      if (message.type() === 'error') report.consoleErrors.push({ ...errorContext(), error: message.text() });
+    });
+    page.on('requestfailed', request => report.failedRequests.push({ ...errorContext(), url: request.url() }));
+    return { context, page };
+  } catch (error) {
+    await context.close().catch(() => {});
+    throw error;
+  }
+}
+
 // Flutter's accessible reader includes labels and editable values that aren't
 // present in innerText. Wait on the same evidence that journey assertions use.
 export async function waitForSemantics(page, pattern, { timeout = 20000 } = {}) {

@@ -20,6 +20,8 @@ For changes to versioning, run the focused [version/save/title checks](VERSIONIN
 
 The suite covers the original engine, command routing, order confirmation/cancellation, saves and migrations, equipment, politics, campaign endings, portraits and responsive UI. Save files under `upstream/test/saves/` are regression fixtures, not disposable player saves.
 
+Organisation tests share campaign fixture and headquarters-reader helpers under `upstream/test/support/`. Keep each scenario's extra crew, orders and outcomes explicit in its test. Reader shutdown must retain the suite's own pumping: widget tests use fake time, while controller tests await real asynchronous completion.
+
 Nested squad-choice regressions in `remaining_screens_playtest_test.dart` exercise actual equipment, reordering, kidnapping and hostage-release readers at desktop and 800×600/150%. They check initially reachable controls, stale-command removal, second-stage cancellation, target-key validation, disabled empty-handed carriers and releasing only the selected hostage. These are declared prepared scenarios, separate from earned campaign play.
 
 Fresh-campaign flow regressions include pending recruitment readiness compared with the original meeting menu, new recruit/custody/ended-visit follow-ups across restarts, live victory counts compared with `winCheck`, original rent exemptions and eviction timing, and draft guards for personal orders, Network, visits and Bases purchases. Retained callbacks are exercised after cancellation and replacement; read-only views preserve full campaign snapshots and gameplay RNG. The small-screen checks retain visible first-row actions and order timing at enlarged reading sizes.
@@ -92,6 +94,8 @@ The contract and audited reader families are recorded in [Classic keyboard audit
 `classic_ledger_keyboard_parity_test.dart` covers every source page and Back alias, one-page any-key acknowledgements, original caller return, pointer-retained focus and isolated history. `classic_base_keyboard_parity_test.dart` compares source investment purchases and Back in Classic, graphical keyboard and pointer-started graphical journeys. `classic_menu_labels_test.dart` checks exact title/creation action keys, case-sensitive badges and profile page hints. These files run through shared acceptance. Pointer previews keep their separate campaign/RNG, stale-action and cancellation checks.
 
 ## Browser regressions
+
+`scripts/browser_support.mjs` supplies `createQaPage` for disposable browser setup. It closes the preceding context, creates a fresh context/page and records page, console and request errors with the current scenario metadata. Each journey still owns navigation, expected-reader waits, fixture declarations and assertions. Use it when extending mission, siege or car-pursuit helpers so setup and failure cleanup stay consistent.
 
 ### Equipment and vehicle artwork
 

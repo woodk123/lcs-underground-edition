@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, createQaPage } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -73,13 +73,9 @@ async function capture(name) {
   await writeFile(resolve(output, `${scenario}-${name}.txt`), await uiText());
 }
 async function fresh() {
-  await context?.close();
-  context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
-  page = await context.newPage();
-  page.setDefaultTimeout(8000);
-  page.on('pageerror', e => report.pageErrors.push({ scenario, error: String(e) }));
-  page.on('console', m => { if (m.type() === 'error') report.consoleErrors.push({ scenario, error: m.text() }); });
-  page.on('requestfailed', r => report.failedRequests.push({ scenario, url: r.url() }));
+  ({ context, page } = await createQaPage(browser, {
+    previousContext: context, report, errorContext: () => ({ scenario }), timeout: 8000,
+  }));
   await page.goto(url, { waitUntil: 'networkidle' });
   await wait(/Start a New Game/);
 }
@@ -404,21 +400,30 @@ try {
     await click('Move down'); await reports();
     await waitEncounter(/^T Talk$/);
     await click(/^T Talk$/);
+    const politics = /^(?:A[-\s]*)?Strike up a conversation/;
     for (let step = 0; step < 8; step++) {
       await reports();
-      if (await available(/^A Strike up a conversation/)) break;
-      const candidates = page.getByRole('button', { name: /^(?:[1-6]|[A-Z]) / });
+      if (await available(politics)) break;
+      // The source speaker picker names each person and their social skills;
+      // shortcut badges are separate from the accessible action name.
+      const prompt = await uiText();
+      const candidates = /Which Liberal will speak\?/.test(prompt)
+        ? page.getByRole('button', { name: new RegExp(
+          `^(?:${state.lcs.pool.map(person => escape(person.name)).join('|')}) Persuasion `) })
+        : /To whom\?/.test(prompt)
+        ? page.getByRole('button', { name: /^.+ \(\d+(?:\?|s), [A-Za-z]+(?:, Trans)?\)$/ })
+        : page.getByRole('button', { name: /^(?:[1-6]|[A-Z]) / });
       let selected = false;
       for (const candidate of await candidates.all()) {
         if (await candidate.isEnabled()) { await candidate.click(); await page.waitForTimeout(150); selected = true; break; }
       }
       assert.ok(selected, `No current conversation participant: ${await uiText()}`);
     }
-    assert.ok(await available(/^A Strike up a conversation/));
+    assert.ok(await available(politics));
     await page.keyboard.press('z'); await page.waitForTimeout(150);
-    assert.ok(await available(/^A Strike up a conversation/));
+    assert.ok(await available(politics));
     await capture('conversation-retry');
-    await click(/^A Strike up a conversation/);
+    await click(politics);
     // Follow real conversation acknowledgements; if persuasion reaches the
     // issue reader, use its own explicit cancellation choice.
     for (let step = 0; step < 50; step++) {

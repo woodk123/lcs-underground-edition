@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, createQaPage } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -112,12 +112,9 @@ function issue(message) {
   console.log(`REPRODUCED ${scene}: ${message}`);
 }
 async function fresh() {
-  await context?.close();
-  context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
-  page = await context.newPage(); page.setDefaultTimeout(9000);
-  page.on('pageerror', error => report.pageErrors.push({ scene, error: String(error) }));
-  page.on('console', message => { if (message.type() === 'error') report.consoleErrors.push({ scene, error: message.text() }); });
-  page.on('requestfailed', request => report.failedRequests.push({ scene, url: request.url() }));
+  ({ context, page } = await createQaPage(browser, {
+    previousContext: context, report, errorContext: () => ({ scene }), timeout: 9000,
+  }));
   await page.goto(url, { waitUntil: 'networkidle' }); await wait(/Start a New Game/);
 }
 async function importLoad(path) {
@@ -208,6 +205,8 @@ async function inspectAndEnlarge() {
   } else issue('Car pursuit has no working read-only crew dossier control.');
   await enlarged(); await decision('enlarged-car-reader');
   const bounds = await button(pullOver).boundingBox();
+  (report.enlargedSurrenderBounds ??= []).push({ scene, attempt: attemptNumber, bounds,
+    viewport: page.viewportSize() });
   if (!bounds || bounds.y < 0 || bounds.y + bounds.height > 600)
     issue('Car surrender control is not reachable at 800x600 with 150 percent reading size.');
   await capture('car-800x600-at150');
