@@ -241,5 +241,5 @@ Set<String> _injuries(Creature p) => {
   ...p.body.allSpecialInjuries(),
   for (final part in p.body.parts)
     if (part.wounded)
-      '${part.name}: ${[if (part.missing) 'missing', if (part.shot) 'shot', if (part.cut) 'cut', if (part.bruised) 'bruised', if (part.burned) 'burned', if (part.torn) 'torn', if (part.bleeding > 0) 'bleeding', if (part.relativeHealth < 1) '${(part.relativeHealth * 100).round()}% tissue health'].join(', ')}',
+      '${part.name}: ${[if (part.missing) 'missing', if (part.shot) 'shot', if (part.cut) 'cut', if (part.bruised) 'bruised', if (part.burned) 'burned', if (part.torn) 'torn', if (part.bleeding > 0) 'bleeding', if (part.relativeHealth < 1) '${(part.relativeHealth.clamp(0, 1) * 100).round()}% tissue health'].join(', ')}',
 };

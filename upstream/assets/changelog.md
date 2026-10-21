@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## Underground Edition 0.2.1 — 2026-10-21
+
+* Selling a vehicle clears crew assignments to it. Loading an existing campaign also clears assignments to vehicles no longer owned.
+* Operation reports show a minimum of 0% tissue health for severely damaged limbs, matching the injury dossier.
+
 ## Underground Edition 0.2.0 — 2026-10-21
 
 Expanded equipment artwork, Orders workspace, display preferences and Classic keyboard flow. Existing campaigns retain save compatibility 1.5.6.

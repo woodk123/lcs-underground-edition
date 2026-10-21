@@ -7,6 +7,20 @@ import 'package:lcs_new_age/vehicles/vehicle_type.dart';
 
 part 'vehicle.g.dart';
 
+/// A disposed vehicle must not remain a current or preferred crew assignment.
+void clearVehicleAssignments(int vehicleId) {
+  for (final person in pool) {
+    if (person.carId == vehicleId) {
+      person.carId = null;
+      person.isDriver = false;
+    }
+    if (person.preferredCarId == vehicleId) {
+      person.preferredCarId = null;
+      person.preferredDriver = false;
+    }
+  }
+}
+
 @JsonSerializable()
 class Vehicle {
   Vehicle(this.typeName, {int? id}) : id = id ?? gameState.nextVehicleId++ {

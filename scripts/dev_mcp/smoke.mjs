@@ -1,6 +1,7 @@
 // Real stdio MCP -> isolated compiled Flutter -> original readers. No fixtures
 // or supplied outcomes in the default fresh-founder journey.
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { dependencyRequire } from './server.mjs';
@@ -35,10 +36,15 @@ async function key(key) {
   return call('lcs_act', { revision: observation.revision, actionId: action.id });
 }
 function passed(name) { report.checks.push(name); console.log(`PASS ${name}`); }
+async function label(pattern, options = {}) {
+  const action = observation.actions.find(action => action.enabled && pattern.test(action.label));
+  assert.ok(action, `No source action matching ${pattern}: ${JSON.stringify(observation.actions)}`);
+  return call('lcs_act', { revision: observation.revision, actionId: action.id, ...options });
+}
 
 try {
   await client.connect(transport);
-  assert.equal((await client.listTools()).tools.length, 8);
+  assert.equal((await client.listTools()).tools.length, 9);
   const started = await call('lcs_start', { webRoot: arg('--web-root', '.local/dev-mcp/web'),
     ...(arg('--expected-hash') ? { expectedHash: arg('--expected-hash') } : {}),
     ...(arg('--out') ? { output: arg('--out') } : {}) });
@@ -53,12 +59,20 @@ try {
   await key('Enter'); // Campaign settings -> founder identity.
   await key('Enter'); // Identity -> manual background.
   for (let question = 1; question <= 10; question++) await key(question === 10 ? 'd' : 'a');
-  await key('Enter'); // Original political briefing acknowledgement.
+  const briefing = observation.actions.find(action => action.kind === 'acknowledgement');
+  assert.ok(briefing && observation.actions.length === 1, 'Original political briefing must expose a sole acknowledgement.');
+  const briefingResult = await call('lcs_continue_reports', { revision: observation.revision, actionId: briefing.id });
+  assert.equal(briefingResult.completedReports, 1);
+  assert.equal(briefingResult.stopReason, 'text_input', 'Bounded continuation must stop at the public-name reader.');
+  report.briefingReports = briefingResult.reports;
+  passed('bounded-source-report-continuation-stops-at-text-entry');
   assert.ok(observation.textInput, 'Original public-name reader should be pending.');
   await call('lcs_input_text', { revision: observation.revision, text: 'MCP Development Founder', submit: 'Enter' });
   assert.ok(currentKey('w') && currentKey('x'), 'Created founder must reach original headquarters actions.');
   const summary = await call('lcs_inspect', { scope: 'summary' });
   assert.ok(summary.people.some(person => person.name === 'MCP Development Founder'));
+  const context = await call('lcs_inspect', { scope: 'context' });
+  assert.ok(context.locations.some(site => site.id === summary.people[0].baseId && site.name));
   await call('lcs_capture', { name: 'fresh-headquarters', includeCampaign: true });
   passed('real-source-creation-and-text-input');
   passed('captured-stale-source-action-rejected');
@@ -77,7 +91,14 @@ try {
     const action = observation.actions.find(action => action.enabled && action.kind === 'acknowledgement')
       ?? observation.actions.find(action => action.enabled && ['Enter', 'Space'].includes(action.key));
     assert.ok(action, `Unexpected required decision during day: ${JSON.stringify(observation)}`);
-    await call('lcs_act', { revision: observation.revision, actionId: action.id });
+    if (action.kind === 'acknowledgement' && observation.actions.length === 1) {
+      const result = await call('lcs_continue_reports', { revision: observation.revision, actionId: action.id, maxReports: 30 });
+      assert.equal(result.stopReason, 'decision');
+      assert.ok(result.completedReports > 0);
+      report.continuedReports = result.reports;
+    } else {
+      await call('lcs_act', { revision: observation.revision, actionId: action.id });
+    }
   }
   const after = await call('lcs_inspect', { scope: 'summary' });
   assert.notEqual(after.date, summary.date, 'A real day must advance.');
@@ -110,8 +131,29 @@ try {
   assert.deepEqual(await call('lcs_inspect', { scope: 'campaign' }), firstLoad);
   await call('lcs_capture', { name: 'saved-and-continued', includeCampaign: true });
   passed('source-save-and-continue-preserve-complete-campaign');
+  await key('x');
+  await label(/Load & Manage Saves/);
+  await key('A');
+  const exported = await label(/Export Save File/, { expectDownload: true });
+  assert.equal(exported.downloads.length, 1);
+  const artifact = exported.downloads[0];
+  const bytes = await readFile(artifact.path);
+  assert.equal(bytes.length, artifact.bytes);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), artifact.sha256);
+  const saved = JSON.parse(bytes);
+  assert.equal(`${saved.gameId}`, `${firstLoad.campaign.uniqueGameId}`);
+  report.export = artifact;
   const closed = await call('lcs_close');
   assert.deepEqual(closed.cleanupErrors, []);
+  assert.deepEqual(await readFile(artifact.path), bytes, 'Original exported bytes must survive context close.');
+  const imported = await call('lcs_start', { fixture: artifact.path,
+    webRoot: arg('--web-root', '.local/dev-mcp/web'),
+    ...(arg('--expected-hash') ? { expectedHash: arg('--expected-hash') } : {}) });
+  report.importEvidenceDirectory = imported.evidenceDirectory;
+  assert.deepEqual(await call('lcs_inspect', { scope: 'campaign' }), firstLoad);
+  await call('lcs_capture', { name: 'fresh-import', includeCampaign: true });
+  await call('lcs_close');
+  passed('retained-native-export-and-fresh-import-preserve-complete-campaign');
   const session = JSON.parse(await readFile(resolve(output, 'session.json'), 'utf8'));
   assert.deepEqual(session.pageErrors, []); assert.deepEqual(session.consoleErrors, []);
   assert.deepEqual(session.failedRequests, []);

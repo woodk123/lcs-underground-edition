@@ -23,7 +23,9 @@ export function createDevelopmentServer(session = new DevelopmentSession()) {
         return { content: [{ type: 'text', text: JSON.stringify(result) }], structuredContent: result };
       } catch (error) {
         const result = { error: { code: error.code ?? 'session_error', message: error.message },
+          ...(error.accepted ? { accepted: true } : {}),
           ...(error.observation ? { observation: error.observation } : {}),
+          ...(error.progress ? { progress: error.progress } : {}),
           ...(session.output ? { evidenceDirectory: session.output } : {}) };
         return { content: [{ type: 'text', text: JSON.stringify(result) }], structuredContent: result, isError: true };
       }
@@ -36,12 +38,16 @@ export function createDevelopmentServer(session = new DevelopmentSession()) {
     width: z.number().int().min(390).max(3840).default(1440), height: z.number().int().min(400).max(2160).default(1000),
   }).strict(), false, params => session.start(params));
   tool('lcs_observe', 'Read the current source reader, input status, exact current actions and revision without consuming input or RNG.', z.object({}).strict(), true, () => session.observe());
-  tool('lcs_inspect', 'Read campaign summary, a person or complete campaign data without making game rolls. Full campaign scope can be large; prefer summary/person while playing.', z.object({
-    scope: z.enum(['summary', 'person', 'campaign']).default('summary'), personId: z.number().int().optional(),
+  tool('lcs_inspect', 'Read campaign summary, compact play context (named locations, prospects, vehicles and encounter), a person or complete campaign data without making game rolls. Prefer summary/context/person while playing.', z.object({
+    scope: z.enum(['summary', 'context', 'person', 'campaign']).default('summary'), personId: z.number().int().optional(),
   }).strict(), true, params => session.inspect(params));
   tool('lcs_act', 'Execute one currently authored source action using its exact ID and observed revision. Rejects stale/disabled/blocked actions. Returns the next input-ready observation and records a trace.', z.object({
-    revision, actionId: z.string().min(1).max(200),
+    revision, actionId: z.string().min(1).max(200), expectDownload: z.boolean().default(false).describe('For Export Save File, wait for the native download and return its retained path, byte count and SHA-256. A timeout may follow an accepted action; inspect before retrying.'),
   }).strict(), false, params => session.command('act', params));
+  tool('lcs_continue_reports', 'Continue only sole, enabled source acknowledgements, starting with the observed ID/revision. Retain each report screenshot/state and trace. Stop at choices, text, blocked input, count/time limits or errors; never select a default or retry a mutation.', z.object({
+    revision, actionId: z.string().min(1).max(200), maxReports: z.number().int().min(1).max(100).default(20),
+    timeoutMs: z.number().int().min(1).max(30000).default(10000),
+  }).strict(), false, params => session.continueReports(params));
   tool('lcs_input_text', 'Submit a source text reader using the observed revision, native text replay and Enter/Escape. Escape preserves the original source cancellation meaning.', z.object({
     revision, text: z.string().max(10000), submit: z.enum(['Enter', 'Escape']).default('Enter'),
   }).strict(), false, params => session.command('input_text', params));

@@ -148,6 +148,7 @@ export class DevelopmentSession {
       this.report = { schema: 1, status: 'starting', started: new Date().toISOString(), webRoot,
         sourceFreshness: currentPrepared ? 'verified_current_checkout' : 'not_checked_custom_build',
         mainJsSha256: expected, loadedMainJsHashes: [], failures: [], pageErrors: [], consoleErrors: [], failedRequests: [],
+        downloads: [], downloadErrors: [],
         preparedFixture: options.fixture ? resolve(this.root, options.fixture) : null,
         scope: 'Disposable browser; source actions only. Any imported fixture is supplied setup, not an earned campaign.' };
       try {
@@ -166,6 +167,13 @@ export class DevelopmentSession {
       assert.ok(!this.disconnected, 'MCP client disconnected.');
       this.context = await this.browser.newContext({ viewport: { width: options.width ?? 1440, height: options.height ?? 1000 }, acceptDownloads: true, serviceWorkers: 'block' });
       this.page = await this.context.newPage();
+      this.pendingDownloads = new Set();
+      this.downloadSequence = 0;
+      this.page.on('download', download => {
+        const pending = this._retainDownload(download, ++this.downloadSequence);
+        this.pendingDownloads.add(pending);
+        void pending.finally(() => this.pendingDownloads.delete(pending));
+      });
       this.page.setDefaultTimeout(20000);
       const verify = observeMainScript(this.page, this.report);
       this.page.on('pageerror', error => this.report.pageErrors.push(String(error)));
@@ -216,14 +224,43 @@ export class DevelopmentSession {
     await this._bridge('act', { revision: observation.revision, actionId: action.id });
   }
 
-  observe() { return this._serial(() => this._bridge('observe')); }
+  async _retainDownload(download, sequence) {
+    try {
+      // Never use a browser-supplied name as a path. Sequence prefixes also
+      // preserve repeated exports instead of overwriting earlier evidence.
+      const suggestedFilename = download.suggestedFilename();
+      const filename = suggestedFilename.replace(/[^A-Za-z0-9._-]/g, '_').slice(-120) || 'download';
+      const directory = resolve(this.output, 'downloads');
+      await mkdir(directory, { recursive: true });
+      const path = resolve(directory, `${sequence}-${filename}`);
+      await download.saveAs(path);
+      const bytes = await readFile(path);
+      const artifact = { path, suggestedFilename, bytes: bytes.length, sha256: hash(bytes) };
+      this.report.downloads.push(artifact);
+      await this._record('download', artifact);
+    } catch (error) {
+      this.report.downloadErrors.push({ sequence, message: error.message });
+      await this._record('download_error', { sequence, message: error.message });
+    }
+  }
+
+  async _drainDownloads() {
+    while (this.pendingDownloads?.size) await Promise.all([...this.pendingDownloads]);
+  }
+
+  observe() { return this._serial(async () => {
+    await this._drainDownloads();
+    const observation = await this._bridge('observe');
+    await this._report();
+    return { ...observation, downloads: this.report.downloads, downloadErrors: this.report.downloadErrors };
+  }); }
   inspect(params = {}) { return this._serial(() => this._bridge('inspect', params)); }
 
   async _wait({ afterRevision, timeoutMs = 10000, screen } = {}) {
     const deadline = Date.now() + timeoutMs;
     let observation;
     do {
-      observation = await this._bridge('observe');
+      observation = await this._bridge('observe', {}, Math.max(1, deadline - Date.now()));
       if (observation.awaitingInput && (afterRevision === undefined || observation.revision !== afterRevision)
         && (screen === undefined || observation.screen === screen)) return observation;
       if (Date.now() >= deadline) break;
@@ -237,14 +274,29 @@ export class DevelopmentSession {
     catch (error) { await this._failure('wait', error, params); throw error; }
   }); }
 
-  command(method, params) { return this._serial(async () => {
+  async _command(method, params, timeoutMs = 30000) {
     const startedAt = performance.now();
-    let before, beforeSummary;
+    const deadline = Date.now() + timeoutMs;
+    const remaining = () => Math.max(1, deadline - Date.now());
+    const { expectDownload = false, ...sourceParams } = params;
+    const downloadCount = this.report?.downloads.length ?? 0;
+    const downloadErrorCount = this.report?.downloadErrors.length ?? 0;
+    // Install the waiter before dispatch; a completed export can race the next
+    // reader. A timeout after dispatch must never cause an automatic retry.
+    const downloaded = expectDownload ? this.page.waitForEvent('download', { timeout: timeoutMs }) : undefined;
+    downloaded?.catch(() => {});
+    let before, beforeSummary, sourceAccepted = false;
     try {
-      before = await this._bridge('observe');
-      beforeSummary = await this._bridge('inspect', { scope: 'summary' });
-      const result = await this._bridge(method, params);
-      const observation = await this._wait({ timeoutMs: 30000 });
+      before = await this._bridge('observe', {}, remaining());
+      beforeSummary = await this._bridge('inspect', { scope: 'summary' }, remaining());
+      const result = await this._bridge(method, sourceParams, remaining());
+      sourceAccepted = true;
+      const observation = await this._wait({ timeoutMs: remaining() });
+      if (downloaded) await downloaded;
+      await this._drainDownloads();
+      if (expectDownload && this.report.downloadErrors.length > downloadErrorCount) {
+        throw new BridgeError({ code: 'download_failed', message: 'The action was accepted but retaining its download failed. Inspect before retrying.' }, observation);
+      }
       const afterSummary = await this._bridge('inspect', { scope: 'summary' });
       const changedFields = [...new Set([...Object.keys(beforeSummary), ...Object.keys(afterSummary)])]
         .filter(key => JSON.stringify(beforeSummary[key]) !== JSON.stringify(afterSummary[key]));
@@ -252,11 +304,54 @@ export class DevelopmentSession {
       await this._record(method, { params, before, result, observation, beforeSummary, afterSummary, changedFields, elapsedMs });
       await this._report();
       const { observation: _alreadyReturned, ...accepted } = result;
-      return { result: accepted, observation, changedFields, elapsedMs };
-    } catch (error) { await this._failure(method, error, { ...params, elapsedMs: Math.round(performance.now() - startedAt) }); throw error; }
+      return { result: accepted, observation, changedFields, elapsedMs,
+        downloads: this.report.downloads.slice(downloadCount), downloadErrors: this.report.downloadErrors.slice(downloadErrorCount) };
+    } catch (error) {
+      error.accepted = sourceAccepted ? true : undefined;
+      await this._failure(method, error, { ...params, accepted: error.accepted, elapsedMs: Math.round(performance.now() - startedAt) });
+      throw error;
+    }
+  }
+
+  command(method, params) { return this._serial(() => this._command(method, params)); }
+
+  continueReports({ revision, actionId, maxReports = 20, timeoutMs = 10000 }) { return this._serial(async () => {
+    assert.ok(Number.isInteger(maxReports) && maxReports >= 1 && maxReports <= 100, 'maxReports must be between 1 and 100.');
+    assert.ok(Number.isInteger(timeoutMs) && timeoutMs >= 1 && timeoutMs <= 30000, 'timeoutMs must be between 1 and 30000.');
+    const deadline = Date.now() + timeoutMs;
+    const reports = [];
+    let observation = await this._bridge('observe');
+    let stopReason;
+    try {
+      // Require the caller's current capability before performing any work.
+      if (observation.revision !== revision || !observation.actions.some(action => action.id === actionId)) {
+        throw new BridgeError({ code: 'stale_action', message: 'Choose the acknowledgement from the latest observation.' }, observation);
+      }
+      while (true) {
+        if (observation.blockedReason || !observation.awaitingInput) { stopReason = 'blocked'; break; }
+        if (observation.textInput) { stopReason = 'text_input'; break; }
+        const action = observation.actions.length === 1 && observation.actions[0];
+        if (!action || !action.enabled || action.kind !== 'acknowledgement') { stopReason = 'decision'; break; }
+        if (reports.length >= maxReports) { stopReason = 'limit'; break; }
+        if (Date.now() >= deadline) { stopReason = 'timeout'; break; }
+        const capture = await this._capture({ name: `report-${reports.length + 1}` });
+        if (Date.now() >= deadline) { stopReason = 'timeout'; break; }
+        const command = await this._command('act', { revision: observation.revision, actionId: action.id }, deadline - Date.now());
+        reports.push({ screenshot: capture.screenshot, snapshot: capture.snapshot,
+          revision: capture.observation.revision, report: capture.observation.report,
+          changedFields: command.changedFields, elapsedMs: command.elapsedMs, downloads: command.downloads });
+        observation = command.observation;
+      }
+      await this._record('continue_reports', { maxReports, timeoutMs, completedReports: reports.length, stopReason, observation });
+      return { completedReports: reports.length, stopReason, reports, observation };
+    } catch (error) {
+      error.progress = { completedReports: reports.length, reports };
+      await this._failure('continue_reports', error, { revision, actionId, maxReports, timeoutMs });
+      throw error;
+    }
   }); }
 
-  capture({ name = 'capture', includeCampaign = false } = {}) { return this._serial(async () => {
+  async _capture({ name = 'capture', includeCampaign = false } = {}) {
     assert.match(name, /^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/, 'Use a short filename without path characters.');
     assert.ok(this.page && this.output, 'Start a development session first.');
     const observation = await this._bridge('observe');
@@ -268,23 +363,25 @@ export class DevelopmentSession {
     await this._record('capture', { screenshot, snapshot });
     await this._report();
     return { screenshot, snapshot, trace: resolve(this.output, 'trace.jsonl'), session: resolve(this.output, 'session.json'), observation };
-  }); }
+  }
+  capture(params) { return this._serial(() => this._capture(params)); }
 
   async _close(status = 'closed') {
     if (!this.context && !this.browser && !this.server && this.report?.closed) {
-      return { status: this.report.status, evidenceDirectory: this.output, cleanupErrors: this.report.cleanupErrors ?? [] };
+      return { status: this.report.status, evidenceDirectory: this.output, downloads: this.report.downloads, downloadErrors: this.report.downloadErrors, cleanupErrors: this.report.cleanupErrors ?? [] };
     }
     const failures = [];
+    await this._drainDownloads();
     for (const [field, close] of [['context', value => value.close()], ['browser', value => value.close()], ['server', value => value.close()]]) {
       if (this[field]) { try { await close(this[field]); } catch (error) { failures.push(error.message); } this[field] = undefined; }
     }
     this.page = undefined;
     if (this.report) {
       this.report.status = status;
-      this.report.hasErrors = Boolean(this.report.failures.length || this.report.pageErrors.length || this.report.consoleErrors.length || failures.length);
+      this.report.hasErrors = Boolean(this.report.failures.length || this.report.pageErrors.length || this.report.consoleErrors.length || this.report.downloadErrors.length || failures.length);
       this.report.closed = new Date().toISOString(); this.report.cleanupErrors = failures; await this._report();
     }
-    return { status, evidenceDirectory: this.output, cleanupErrors: failures };
+    return { status, evidenceDirectory: this.output, downloads: this.report?.downloads ?? [], downloadErrors: this.report?.downloadErrors ?? [], cleanupErrors: failures };
   }
   close() { return this._serial(() => this._close()); }
   // A lost host must release browser/server handles even if an input wait is
