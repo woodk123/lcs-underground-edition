@@ -22,6 +22,8 @@ The journal materials, painted portraits and map illustrations were generated fo
 
 Rejected drafts, partial validations and generated contact sheets are not tracked. Historical edit inputs use `git:<commit>:<path>` references where needed. Asset-review helpers write their review output under `.local/art-review/` by default. Do not renumber shipped atlas cells: saved characters reference portrait IDs. See [PORTRAIT_LIBRARY.md](PORTRAIT_LIBRARY.md) for the mapping.
 
+Already-created dropped loot reuses catalogue paintings on the local and full-floor tactical maps. Single-type piles show their item artwork; mixed or unsupported piles retain a crate, with a badge counting actual dropped stacks. Tile details show frozen item titles, quantities and thumbnails. Unsearched tile loot has no item identity until the original search handler rolls it, so it stays generic and contributes no invented count. These previews neither create items nor change pickup rules.
+
 ## Editing and validation
 
 Keep labels, statistics and controls in Flutter; artwork supplies visual material only. City geometry is illustrative, not a source of gameplay travel rules. Overlay geometry must match the selected atlas and retain transparency.

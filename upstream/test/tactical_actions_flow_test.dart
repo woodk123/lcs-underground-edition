@@ -317,6 +317,16 @@ void main() {
       });
       final beforeCount = game.activeSquad!.loot.length;
       expect(_currentCell().lootAvailable, isTrue);
+      expect(
+        _currentCell().droppedItems.single.typeId,
+        existingLoot.type.idName,
+      );
+      expect(
+        _currentCell().droppedItems.single.title,
+        existingLoot.equipTitle(),
+      );
+      expect(_currentCell().unsearchedLoot, isTrue);
+      expect(_currentCell().lootArtwork, isNull);
       expect(_currentCell().actionHint, contains('press G'));
       expect(_inspectorText(tester), contains('Press G'));
       expect(
@@ -342,6 +352,8 @@ void main() {
       );
       expect(flow.reports.join('\n'), contains('You find:'));
       expect(_currentCell().lootAvailable, isFalse);
+      expect(_currentCell().droppedItems, isEmpty);
+      expect(_currentCell().lootArtwork, isNull);
       expect(_currentCell().objectSprite, isNull);
       expect(TacticalMapSnapshot.capture().currentDescription, 'Open floor');
       expect(_sourceAction('g').enabled, isFalse);
@@ -351,6 +363,67 @@ void main() {
     },
     timeout: const Timeout(Duration(seconds: 25)),
   );
+
+  testWidgets('original G collects an illustrated dropped pile exactly once', (
+    tester,
+  ) async {
+    final existingLoot = Loot(LootTypeIds.microphone, stackSize: 3);
+    final flow = await mount(tester, () {
+      game.groundLoot.add(existingLoot);
+    });
+    final beforeCount = game.activeSquad!.loot.length;
+    expect(_currentCell().lootArtwork, isNotNull);
+    expect(_currentCell().droppedItems.single.quantity, 3);
+    expect(_currentCell().unsearchedLoot, isFalse);
+    final beforeInspection = jsonEncode(game.gameState.toJson());
+    final pending = flow.console.nextKeyEvent;
+    final actions = List<ConsoleAction>.of(flow.console.actions);
+    final readerRevision = flow.console.revision.value;
+    reseedRNG(seed: 271828);
+    final expectedRolls = List.generate(8, (_) => lcsRandom(100000));
+    reseedRNG(seed: 271828);
+    for (var visit = 0; visit < 2; visit++) {
+      await tester.tap(find.byKey(const ValueKey('tactical-tile-details')));
+      await tester.pumpAndSettle();
+      expect(find.text('Dropped here'), findsOneWidget);
+      for (final key in [
+        LogicalKeyboardKey.keyG,
+        LogicalKeyboardKey.keyF,
+        LogicalKeyboardKey.keyU,
+        LogicalKeyboardKey.arrowRight,
+      ]) {
+        await tester.sendKeyEvent(key);
+      }
+      await tester.pumpAndSettle();
+      expect(flow.console.nextKeyEvent, same(pending));
+      expect(flow.console.actions, orderedEquals(actions));
+      expect(flow.console.revision.value, readerRevision);
+      expect(jsonEncode(game.gameState.toJson()), beforeInspection);
+      if (visit == 0) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      } else {
+        await tester.tap(find.text('Close tile details'));
+      }
+      await tester.pumpAndSettle();
+      expect(find.text('Dropped here'), findsNothing);
+    }
+    expect(List.generate(8, (_) => lcsRandom(100000)), expectedRolls);
+    final revision = flow.console.revision.value;
+    await _clickSourceAction(tester, 'g');
+    await _waitForField(tester, flow, afterRevision: revision);
+    expect(game.groundLoot, isEmpty);
+    expect(game.activeSquad!.loot.length, beforeCount + 1);
+    expect(
+      game.activeSquad!.loot.where((item) => identical(item, existingLoot)),
+      hasLength(1),
+    );
+    expect(_currentCell().droppedItems, isEmpty);
+    expect(_currentCell().lootArtwork, isNull);
+    expect(_currentCell().objectSprite, isNull);
+    expect(_sourceAction('g').enabled, isFalse);
+    flow.check();
+    expect(tester.takeException(), isNull);
+  }, timeout: const Timeout(Duration(seconds: 25)));
 
   testWidgets(
     'real safe refusal returns to field and entry fixtures disable U',
