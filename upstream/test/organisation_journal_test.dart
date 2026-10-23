@@ -1063,6 +1063,19 @@ void main() {
           tester.widget<Text>(_key('journal-city-map-squad')).data,
           'Squad: ${team.name}',
         );
+        // Revisit the map in the same app lifetime before queuing. Selection
+        // belongs to the journal, even when its presentation subtree is rebuilt.
+        await tester.ensureVisible(_key('journal-section:0'));
+        await _settle(tester);
+        await _tap(tester, 'journal-section:0');
+        await tester.ensureVisible(_key('journal-section:6'));
+        await _settle(tester);
+        await _tap(tester, 'journal-section:6');
+        expect(
+          tester.widget<Text>(_key('journal-destination-name')).data,
+          destination.getName(),
+        );
+        expect(campaignSnapshot(), before);
         _insideViewport(
           tester,
           _key('journal-city-map-prepare-visit'),

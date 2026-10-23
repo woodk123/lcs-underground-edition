@@ -36,6 +36,7 @@ import 'package:lcs_new_age/modern/order_search.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/modern/organisation_crew_pool.dart';
 import 'package:lcs_new_age/modern/organisation_crew_roster.dart';
+import 'package:lcs_new_age/modern/organisation_map_view.dart';
 import 'package:lcs_new_age/modern/organisation_order_card.dart';
 import 'package:lcs_new_age/modern/organisation_order_workspace.dart';
 import 'package:lcs_new_age/modern/organisation_reviews.dart';
@@ -2641,36 +2642,17 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       }
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (planning)
-          const Text(
-            'Letters browse · Enter queues visit · Esc cancels',
-            key: ValueKey('journal-visit-keys'),
-            style: JournalPalette.small,
-          ),
-        Expanded(
-          child: JournalCityPlan(
-            places: places,
-            onSelect: select,
-            selectedId: _targetId,
-            allowUnavailableInspection: true,
-            showLegend: !_compactMapText,
-            title: planning ? 'Select a destination' : city?.name ?? 'City map',
-          ),
-        ),
-        if (_selectedDestination != null) _destinationCard(),
-        if (_visitMessage != null)
-          Text(
-            _visitMessage!,
-            key: const ValueKey('journal-visit-message'),
-            style: JournalPalette.small.copyWith(color: JournalPalette.danger),
-          ),
-        if (planning)
-          Wrap(
-            spacing: 4,
-            children: [
+    return OrganisationMapView(
+      planning: planning,
+      compact: _compactMapText,
+      places: places,
+      selectedId: _targetId,
+      title: planning ? 'Select a destination' : city?.name ?? 'City map',
+      onSelect: select,
+      destination: _selectedDestination == null ? null : _destinationCard(),
+      message: _visitMessage,
+      commands: planning
+          ? [
               for (final action in console.actions.where(
                 (a) =>
                     !const {
@@ -2681,43 +2663,24 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                     }.contains(a.entityType) &&
                     (a.key != 'Enter' || a.label.contains('Back one step')),
               ))
-                TextButton(
+                (
+                  label: action.key == 'Enter'
+                      ? 'Back one step'
+                      : action.entityType == 'intercity-travel'
+                      ? 'Other cities${travelSuffix(intercityTravelNotices(squad))}'
+                      : _clean(action.label),
                   onPressed: action.enabled && !controller.busy
                       ? () => _dispatch(action)
                       : null,
-                  child: Text(
-                    action.key == 'Enter'
-                        ? 'Back one step'
-                        : action.entityType == 'intercity-travel'
-                        ? 'Other cities${travelSuffix(intercityTravelNotices(squad))}'
-                        : _clean(action.label),
-                    style: JournalPalette.small,
-                  ),
                 ),
-            ],
-          )
-        else if (_areaId != null)
-          TextButton.icon(
-            style: _compactMapText
-                ? TextButton.styleFrom(
-                    minimumSize: const Size(44, 32),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                      vertical: 4,
-                    ),
-                  )
-                : null,
-            onPressed: () => setState(() {
+            ]
+          : const [],
+      onCityOverview: _areaId == null
+          ? null
+          : () => setState(() {
               _areaId = null;
               _targetId = null;
             }),
-            icon: const Icon(Icons.arrow_back, size: 16),
-            label: Text(
-              'City overview',
-              style: _compactMapText ? JournalPalette.small : null,
-            ),
-          ),
-      ],
     );
   }
 
@@ -2797,8 +2760,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       if (!current() || district == null) {
         if (current()) {
           setState(
-            () => _visitMessage =
-                'The original planner does not offer this district to the selected squad.',
+            () => _visitMessage = 'The original planner does not offer this district to the selected squad.',
           );
         }
         return;
@@ -2882,9 +2844,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   }
 
   String _unavailableVisit(ConsoleAction action) {
-    final reason = _locationDetails(
-      action,
-    ).where((text) => text.isNotEmpty).join(' · ');
+    final reason = _locationDetails(action)
+        .where((text) => text.isNotEmpty)
+        .join(' · ');
     return reason.isEmpty
         ? 'Unavailable for this squad in the current visit planner.'
         : reason;
@@ -2933,104 +2895,17 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     final queued =
         squad?.activity.type == ActivityType.visit &&
         squad?.activity.idString == target.idString;
-    return Padding(
-      padding: EdgeInsets.only(top: _compactMapText ? 4 : 7),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: _compactMapText || MediaQuery.sizeOf(context).height < 700
-              ? cityMapVisit
-                    ? 150
-                    : 110
-              : cityMapVisit
-              ? 260
-              : 220,
-        ),
-        child: SingleChildScrollView(
-          child: JournalSurface(
-            key: const ValueKey('journal-selected-destination'),
-            inset: true,
-            padding: EdgeInsets.all(_compactMapText ? 4 : 7),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        target.getName(),
-                        key: const ValueKey('journal-destination-name'),
-                        style: JournalPalette.heading.copyWith(fontSize: 12),
-                      ),
-                    ),
-                    TextButton.icon(
-                      key: const ValueKey('journal-location-details'),
-                      onPressed: () => showLocationDetails(context, target),
-                      icon: const JournalLocationGuideIcon(size: 22),
-                      label: const Text('Location guide'),
-                      style: TextButton.styleFrom(
-                        minimumSize: const Size(44, 30),
-                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                      ),
-                    ),
-                  ],
-                ),
-                if (cityMapVisit) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Squad: ${squad?.name ?? 'No squad selected'}',
-                          key: const ValueKey('journal-city-map-squad'),
-                          style: JournalPalette.small,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton.icon(
-                        key: const ValueKey('journal-city-map-prepare-visit'),
-                        onPressed: canPrepareVisit ? _queueSelectedVisit : null,
-                        icon: const Icon(Icons.place_outlined, size: 17),
-                        label: const Text('Queue visit · Enter'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                ],
-                MechanicsTooltip(
-                  message:
-                      '${locationPurpose(target.type)}\n\n${locationAccess(target)}',
-                  child: Text(
-                    locationPurpose(target.type),
-                    key: const ValueKey('journal-destination-purpose'),
-                    maxLines: _compactMapText ? 2 : 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: JournalPalette.small,
-                  ),
-                ),
-                Text(
-                  locationAccess(target),
-                  key: const ValueKey('journal-destination-access'),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: JournalPalette.small,
-                ),
-                Text(
-                  locationPeopleSummary(target),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: JournalPalette.small,
-                ),
-                if (queued && !planning)
-                  const Text(
-                    'Visit queued',
-                    key: ValueKey('journal-queued-visit'),
-                    style: JournalPalette.small,
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return OrganisationDestinationCard(
+      compact: _compactMapText,
+      cityMapVisit: cityMapVisit,
+      name: target.getName(),
+      squadName: squad?.name ?? 'No squad selected',
+      purpose: locationPurpose(target.type),
+      access: locationAccess(target),
+      peopleSummary: locationPeopleSummary(target),
+      queued: queued && !planning,
+      onDetails: () => showLocationDetails(context, target),
+      onQueueVisit: canPrepareVisit ? _queueSelectedVisit : null,
     );
   }
 
