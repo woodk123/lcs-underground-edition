@@ -2681,6 +2681,56 @@ void main() {
     },
   );
 
+  for (final large in [false, true]) {
+    testWidgets(
+      'day from Newspaper keeps the required report before returning to Organisation, large=$large',
+      (tester) async {
+        journalReadingScale.value = large ? 1.5 : 1;
+        game.ledger.income[Income.donations] = 345;
+        final harness = await mount(
+          tester,
+          monthlyReport: true,
+          size: large ? const Size(1024, 720) : const Size(1280, 800),
+        );
+        await _altShortcut(tester, LogicalKeyboardKey.digit8);
+        expect(find.byType(JournalMediaOverview), findsOneWidget);
+        await _tap(tester, 'journal-advance-day');
+        expect(ledgerReportFrame(engine.console)?.management, isFalse);
+        expect(harness.monthReset, isFalse);
+        final report = campaignSnapshot();
+        final revision = engine.console.revision.value;
+        await _altShortcut(tester, LogicalKeyboardKey.keyO);
+        expect(find.text('Journal options'), findsNothing);
+        expect(engine.console.revision.value, revision);
+        expect(campaignSnapshot(), report);
+        expect(harness.monthReset, isFalse);
+        _insideViewport(
+          tester,
+          _key('journal-ledger-close'),
+          large ? const Size(1024, 720) : const Size(1280, 800),
+          'Required Continue',
+        );
+        await _tap(tester, 'journal-ledger-close');
+        expect(harness.monthReset, isTrue);
+        expect(engine.console.screen, 'headquarters');
+        expect(game.ledger.income[Income.donations], 0);
+        expect(
+          tester
+              .widget<OrganisationJournal>(find.byType(OrganisationJournal))
+              .section,
+          0,
+        );
+        expect(
+          _key('journal-member:${game.squad.first.id}').hitTestable(),
+          findsOneWidget,
+        );
+        expect(find.byType(JournalMediaOverview), findsNothing);
+        expect(FocusManager.instance.primaryFocus?.debugLabel, 'Game keyboard');
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets(
     'Newspaper to Options is one click and leaves no archive covering the settings',
     (tester) async {

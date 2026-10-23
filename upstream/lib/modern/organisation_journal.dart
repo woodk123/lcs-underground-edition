@@ -25,6 +25,7 @@ import 'package:lcs_new_age/modern/journal_network.dart';
 import 'package:lcs_new_age/modern/journal_order_icon.dart';
 import 'package:lcs_new_age/modern/journal_people.dart';
 import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_sections.dart';
 import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
@@ -49,10 +50,8 @@ import 'package:lcs_new_age/modern/skill_help.dart';
 import 'package:lcs_new_age/modern/squad_readiness.dart';
 import 'package:lcs_new_age/modern/travel_help.dart';
 
-// Existing section IDs remain stable for retained journal routes and shortcuts.
-const networkJournalSection = 8;
-const peopleJournalSection = 9;
-const basesJournalSection = 10;
+export 'package:lcs_new_age/modern/journal_sections.dart'
+    show networkJournalSection, peopleJournalSection, basesJournalSection;
 
 /// A local pointer draft retains the exact source action and its revision.
 typedef _PreparedOrder = ({ConsoleAction action, int revision});
@@ -70,7 +69,7 @@ class OrganisationJournal extends StatefulWidget {
     required this.onHelp,
     required this.onClassic,
     required this.onTextScale,
-    this.section = 0,
+    this.section = organisationJournalSection,
     this.onSection,
     this.textScale = 1,
     this.detail,
@@ -382,7 +381,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       _pool = false;
       _poolPerson = null;
       _orders = false;
-      _showReports = widget.section == 5;
+      _showReports = widget.section == JournalSection.reports.id;
     }
     if (_sourceKeyboardInput) _syncSourceCategory();
   }
@@ -469,7 +468,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                             inspectedPerson: widget.inspectedPerson,
                             onDraftChanged: _draftChanged,
                           )
-                        : (widget.section != 0 &&
+                        : (widget.section != JournalSection.organisation.id &&
                                       widget.section != peopleJournalSection ||
                                   widget.fullSpreadDetail) &&
                               !activityFrame &&
@@ -478,7 +477,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                             padding: const EdgeInsets.all(12),
                             child:
                                 widget.detail ??
-                                (widget.section == 5
+                                (widget.section == JournalSection.reports.id
                                     ? _reportsContext(narrow)
                                     : planning
                                     ? Row(
@@ -547,12 +546,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
 
   String? _originalSectionShortcut(int section) {
     if (console.screen == 'organisation' && _sourceKeysPassThrough) {
-      final key = switch (section) {
-        1 => 'v',
-        2 => '4',
-        peopleJournalSection => '0',
-        _ => null,
-      };
+      final key = JournalSection.fromId(section)?.overviewKey;
       if (key != null &&
           console.actions.any(
             (action) => action.key == key && action.enabled,
@@ -573,56 +567,44 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   }
 
   Widget _sectionTabs(bool narrow) {
-    const tabs = <(int, String, JournalIcon)>[
-      (0, 'Organisation', JournalIcon.crew),
-      (peopleJournalSection, 'People', JournalIcon.people),
-      (networkJournalSection, 'Network', JournalIcon.network),
-      (basesJournalSection, 'Bases', JournalIcon.bases),
-      (1, 'Ledger', JournalIcon.accounts),
-      (2, 'Justice', JournalIcon.law),
-      (3, 'Agenda', JournalIcon.diplomacy),
-      (4, 'Newspaper', JournalIcon.newspaper),
-      (5, 'Reports', JournalIcon.reports),
-      (6, 'City maps', JournalIcon.city),
-      (7, 'Options', JournalIcon.options),
-    ];
+    const tabs = JournalSection.values;
     final reviews = controller.networkReviews.count(game.pool);
     final peopleReviews = controller.organisationReviews.notices.length;
-    Widget tab((int, String, JournalIcon) item) => Padding(
+    Widget tab(JournalSection item) => Padding(
       key: _sectionKeys.putIfAbsent(
-        item.$1,
-        () => GlobalKey(debugLabel: 'Journal section ${item.$1}'),
+        item.id,
+        () => GlobalKey(debugLabel: 'Journal section ${item.id}'),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Tooltip(
         excludeFromSemantics: true,
         message: controller.canNavigate
-            ? '${item.$1 == networkJournalSection ? 'Sleeper agents · monthly standing orders' : item.$2}. ${_sectionShortcutHelp(item.$1)}'
-            : '${item.$2}: finish the current decision first.',
+            ? '${item.id == networkJournalSection ? 'Sleeper agents · monthly standing orders' : item.label}. ${_sectionShortcutHelp(item.id)}'
+            : '${item.label}: finish the current decision first.',
         child: Material(
           color: Colors.transparent,
           child: Ink(
-            key: ValueKey('journal-section:${item.$1}'),
+            key: ValueKey('journal-section:${item.id}'),
             decoration: journalTabDecoration(
-              selected: widget.section == item.$1,
+              selected: widget.section == item.id,
               enabled: controller.canNavigate,
             ),
             child: InkWell(
               onTap: controller.canNavigate
-                  ? () => widget.onSection?.call(item.$1)
+                  ? () => widget.onSection?.call(item.id)
                   : null,
               child: Semantics(
                 button: true,
                 enabled: controller.canNavigate,
                 excludeSemantics: true,
-                selected: widget.section == item.$1,
-                label: item.$1 == peopleJournalSection && peopleReviews > 0
+                selected: widget.section == item.id,
+                label: item.id == peopleJournalSection && peopleReviews > 0
                     ? 'People. $peopleReviews changes to review.'
-                    : item.$1 == networkJournalSection && reviews > 0
+                    : item.id == networkJournalSection && reviews > 0
                     ? 'Network. $reviews ${reviews == 1 ? 'role' : 'roles'} to review.'
-                    : item.$2,
+                    : item.label,
                 hint:
-                    '${_sectionShortcutHelp(item.$1)}${item.$1 == networkJournalSection ? ' Sleeper agents · monthly standing orders.' : ''}',
+                    '${_sectionShortcutHelp(item.id)}${item.id == networkJournalSection ? ' Sleeper agents · monthly standing orders.' : ''}',
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 3,
@@ -635,10 +617,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           JournalIllustratedIcon(
-                            icon: item.$3,
+                            icon: item.icon,
                             size: narrow ? 22 : 28,
                           ),
-                          if (_originalSectionShortcut(item.$1)
+                          if (_originalSectionShortcut(item.id)
                               case final shortcut?) ...[
                             const SizedBox(width: 4),
                             JournalShortcutBadge(shortcut: shortcut),
@@ -651,7 +633,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                         children: [
                           Flexible(
                             child: Text(
-                              item.$2,
+                              item.label,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: JournalPalette.small.copyWith(
@@ -661,8 +643,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                               ),
                             ),
                           ),
-                          if (item.$1 == networkJournalSection && reviews > 0 ||
-                              item.$1 == peopleJournalSection &&
+                          if (item.id == networkJournalSection && reviews > 0 ||
+                              item.id == peopleJournalSection &&
                                   peopleReviews > 0)
                             Padding(
                               padding: const EdgeInsets.only(left: 4),
@@ -676,7 +658,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                                     horizontal: 4,
                                   ),
                                   child: Text(
-                                    '${item.$1 == peopleJournalSection ? peopleReviews : reviews}',
+                                    '${item.id == peopleJournalSection ? peopleReviews : reviews}',
                                     style: JournalPalette.small.copyWith(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
@@ -1630,7 +1612,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   bool get _showSquadNumberKeys =>
       controller.isHeadquarters &&
       controller.canNavigate &&
-      widget.section == 0 &&
+      widget.section == JournalSection.organisation.id &&
       widget.inspectedPerson == null &&
       !undercover &&
       !allocating;
@@ -2052,7 +2034,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ? _siegeResponse()
         : _orders || activityFrame || planning
         ? _orderContext(narrow)
-        : _showReports || widget.section == 5
+        : _showReports || widget.section == JournalSection.reports.id
         ? _reportsContext(narrow)
         : _mapContext(),
   );
@@ -2800,7 +2782,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
 
   Widget _destinationCard() {
     final target = _selectedDestination!;
-    final cityMapVisit = widget.section == 6 && !planning;
+    final cityMapVisit =
+        widget.section == JournalSection.cityMaps.id && !planning;
     final canPrepareVisit =
         controller.canNavigate &&
         !_visitRouting &&
