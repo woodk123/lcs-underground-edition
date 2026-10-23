@@ -21,7 +21,7 @@ const decode = save => typeof save.saveData === 'string' ? JSON.parse(save.saveD
 const report = {
   status: 'running', url,
   scope: 'Unmodified bundled Felix save in disposable profiles. Original LCS L/M/Escape/W/X menu meanings and source-first labels, optional modified journal-tab and Save exit shortcuts, modal isolation, and the identical immediate A/A/B/1 assignment and source Back keys in graphical desktop, graphical compact 1024x720/150%, and Classic. Pointer task previews retain separate draft cancellation and day-advance protection. Import/export and preference changes are setup. No day advances, outcomes or skill values are supplied.',
-  checks: [], screenshots: [], sequences: [], pageErrors: [], consoleErrors: [], failedRequests: [],
+  checks: [], screenshots: [], sequences: [], failures: [], pageErrors: [], consoleErrors: [], failedRequests: [],
 };
 const expected = value('--expected-hash', null);
 assert.match(expected ?? '', /^[a-f0-9]{64}$/i, 'An exact compiled build hash is required.');
@@ -32,6 +32,7 @@ const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 async function runScenario({ name, viewport, compact, classic }) {
   const context = await browser.newContext({ viewport, acceptDownloads: true });
   const page = await context.newPage();
+  const operations = [];
   const verifyLoaded = observeMainScript(page, report);
   page.on('pageerror', error => report.pageErrors.push(String(error)));
   page.on('console', message => { if (message.type() === 'error') report.consoleErrors.push(message.text()); });
@@ -40,14 +41,17 @@ async function runScenario({ name, viewport, compact, classic }) {
     ...[...host.querySelectorAll('[aria-label]')].map(node => node.getAttribute('aria-label')),
   ].filter(Boolean).join('\n'));
   async function wait(pattern) {
+    operations.push({ operation: 'wait', target: String(pattern) });
     await waitForSemantics(page, pattern);
   }
   async function click(pattern, locator = page) {
+    operations.push({ operation: 'click', target: String(pattern) });
     await locator.getByRole('button', { name: pattern }).first().click();
     await page.mouse.move(1, 1);
     await waitForUiSettled(page);
   }
   async function key(key) {
+    operations.push({ operation: 'key', target: key });
     await page.keyboard.press(key);
     await waitForUiSettled(page);
   }
@@ -194,6 +198,39 @@ async function runScenario({ name, viewport, compact, classic }) {
     }
     await verifyLoaded(expected.toLowerCase());
     return { before, after };
+  } catch (error) {
+    const failure = { scenario: name, error: String(error.stack ?? error), operations: operations.slice(-20) };
+    try {
+      failure.screenshot = `${name}-failure.png`;
+      await page.screenshot({ path: resolve(output, failure.screenshot), fullPage: true, timeout: 10000 });
+      report.screenshots.push(failure.screenshot);
+    } catch (captureError) { failure.screenshotError = String(captureError); }
+    try {
+      const evidence = await page.evaluate(() => {
+        const host = document.querySelector('flt-semantics-host');
+        const describe = node => node ? {
+          tag: node.tagName, role: node.getAttribute('role'), label: node.getAttribute('aria-label'),
+          text: node.textContent, value: node.value,
+        } : null;
+        return {
+          url: location.href,
+          semantics: host ? [host.innerText,
+            ...[...host.querySelectorAll('[aria-label]')].map(node => node.getAttribute('aria-label')),
+            ...[...host.querySelectorAll('input,textarea')].map(node => node.value),
+          ].filter(Boolean).join('\n') : null,
+          activeElement: describe(document.activeElement),
+          controls: host ? [...host.querySelectorAll('[role="button"],input,textarea')].map(node => {
+            const bounds = node.getBoundingClientRect();
+            return { ...describe(node), bounds: bounds.toJSON(),
+              coveringElement: describe(document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)) };
+          }) : [],
+        };
+      });
+      failure.semantics = `${name}-failure.json`;
+      await writeFile(resolve(output, failure.semantics), JSON.stringify(evidence, null, 2));
+    } catch (captureError) { failure.semanticsError = String(captureError); }
+    report.failures.push(failure);
+    throw error;
   } finally {
     await context.close();
   }
