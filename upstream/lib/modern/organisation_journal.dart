@@ -44,6 +44,7 @@ import 'package:lcs_new_age/modern/organisation_order_workspace.dart';
 import 'package:lcs_new_age/modern/organisation_reviews.dart';
 import 'package:lcs_new_age/modern/organisation_skills_paper.dart';
 import 'package:lcs_new_age/modern/organisation_team_header.dart';
+import 'package:lcs_new_age/modern/organisation_visit_flow.dart';
 import 'package:lcs_new_age/modern/personnel_directory.dart';
 import 'package:lcs_new_age/modern/recruitment_target_picker.dart';
 import 'package:lcs_new_age/modern/skill_help.dart';
@@ -112,11 +113,29 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   final PersonnelDirectoryController _personnel =
       PersonnelDirectoryController();
 
+  late final OrganisationVisitFlow _visitFlow;
+
+  @override
+  void initState() {
+    super.initState();
+    _visitFlow = OrganisationVisitFlow(
+      console: () => console,
+      controller: () => controller,
+      squad: () => squad,
+    )..addListener(_visitChanged);
+  }
+
+  void _visitChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
     _narrowJournalScroll.dispose();
     _sectionScroll.dispose();
     _orderBrowser.dispose();
+    _visitFlow.removeListener(_visitChanged);
+    _visitFlow.dispose();
     _personnel.dispose();
     super.dispose();
   }
@@ -127,12 +146,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   bool _sourceKeyboardInput = false;
   Skill _poolSort = Skill.firearms;
   int? _poolPerson;
-  String? _areaId, _targetId;
   _PreparedOrder? _pendingOrder;
-  int? _targetSquadId;
-  bool _visitRouting = false;
-  String? _visitMessage;
-  int _visitRequest = 0;
   bool get hasPreparedOrder =>
       _pendingOrder != null &&
       _pendingOrder!.revision == console.revision.value &&
@@ -251,20 +265,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       widget.textScale > 1.1 && MediaQuery.sizeOf(context).width < 1000;
   bool get _compact => JournalPreferences.of(context).compact;
   bool get _showGuidance => JournalPreferences.of(context).showGuidance;
-  Site? get _selectedDestination => _targetSquadId == squad?.id
-      ? game.sites
-            .where((site) => site.idString == _targetId && !site.hidden)
-            .firstOrNull
-      : null;
-  ConsoleAction? get _visitAction => planning
-      ? console.actions
-            .where(
-              (action) =>
-                  action.entityType == 'site' &&
-                  action.entityId == _selectedDestination?.idString,
-            )
-            .firstOrNull
-      : null;
+  Site? get _selectedDestination => _visitFlow.selectedDestination;
+  ConsoleAction? get _visitAction => _visitFlow.visitAction;
 
   /// Presentation dialogs keep their own input. Otherwise the original reader
   /// owns every game key, including category defaults, immediate choices and
@@ -283,7 +285,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     _orderBrowser.prepareForSourceInput();
     setState(() {
       _pendingOrder = null;
-      _targetId = null;
+      _visitFlow.clearTarget();
       _showReports = false;
       _pool = false;
       _personnelTools = true;
@@ -375,7 +377,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.section != widget.section) {
       revealSection(widget.section);
-      _visitRequest++;
+      _visitFlow.invalidate();
       _orderBrowser.invalidateSearchRequests();
       _pendingOrder = null;
       _pool = false;
@@ -486,7 +488,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                                           if (console.actions.any(
                                             (a) =>
                                                 a.entityType == 'site' &&
-                                                a.entityId == _targetId,
+                                                a.entityId ==
+                                                    _visitFlow.targetId,
                                           ))
                                             Padding(
                                               padding: const EdgeInsets.only(
@@ -1651,7 +1654,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               .join(' · ');
     bool canSelect() =>
         !controller.busy &&
-        !_visitRouting &&
+        !_visitFlow.routing &&
         (console.journalProfile == null ||
             controller.canSelectProfilePerson(member.id)) &&
         (!(_orders || activityFrame) || controller.canNavigate);
@@ -1888,7 +1891,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         unavailableReason: help.unavailableReason,
         destinationUnavailableReason:
             planning && visit != null && !visit.enabled && notices.isEmpty
-            ? _locationDetails(visit).join(' · ')
+            ? _visitFlow.locationDetails(visit).join(' · ')
             : null,
       ),
       scrollHeading: scrollHeading,
@@ -1896,7 +1899,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       showConfirm: prepared || planning,
       onConfirm:
           controller.busy ||
-              _visitRouting ||
+              _visitFlow.routing ||
               (planning && visit?.enabled != true)
           ? null
           : () async {
@@ -1909,14 +1912,14 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       showFinish: confirmation != null,
       onFinish: controller.busy ? null : () => _dispatch(confirmation!),
       showQueueVisit: !planning && !prepared && _selectedDestination != null,
-      onQueueVisit: controller.canNavigate && !undercover && !_visitRouting
+      onQueueVisit: controller.canNavigate && !undercover && !_visitFlow.routing
           ? _queueSelectedVisit
           : null,
       showCancel: prepared || activityFrame || planning,
       cancelPrepared: prepared || planning,
       onCancel: prepared
           ? () => setState(() => _pendingOrder = null)
-          : controller.canNavigate && !_visitRouting
+          : controller.canNavigate && !_visitFlow.routing
           ? planning
                 ? _cancelVisit
                 : controller.returnToHeadquarters
@@ -2371,10 +2374,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         key: const ValueKey('journal-plan-visit'),
         onPressed: controller.canNavigate && !undercover
             ? () {
-                setState(() {
-                  _targetId = null;
-                  _targetSquadId = null;
-                });
+                _visitFlow.clearTarget(clearSquad: true);
                 unawaited(_prepareMapVisit());
               }
             : null,
@@ -2463,23 +2463,12 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         game.activeSafehouse?.city ??
         game.cities.firstOrNull;
     final district = city?.districts
-        .where((d) => d.idString == _areaId)
+        .where((d) => d.idString == _visitFlow.areaId)
         .firstOrNull;
     if (district != null) {
       return district.sites.where((site) => !site.hidden).toList();
     }
     return city?.districts ?? const [];
-  }
-
-  List<String> _locationDetails(ConsoleAction action) {
-    if (action.y < 0 || action.y >= console.height) return const [];
-    return [
-      console.buffer[action.y]
-          .skip((action.x + action.width).clamp(0, console.width))
-          .map((c) => c.glyph)
-          .join()
-          .trim(),
-    ];
   }
 
   Widget _mapContext() {
@@ -2510,20 +2499,15 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         queued: location.idString == squad?.activity.idString,
         details: [
           if (location is Site) locationPurpose(location.type),
-          if (action != null) ..._locationDetails(action),
+          if (action != null) ..._visitFlow.locationDetails(action),
         ],
       );
     }).toList();
     void select(String id) {
-      if (_visitRouting || controller.busy) return;
+      if (_visitFlow.routing || controller.busy) return;
       final location = locations.where((l) => l.idString == id).firstOrNull;
       if (location == null) return;
-      _visitRequest++;
-      setState(() {
-        _visitMessage = null;
-        _targetId = location is Site ? id : null;
-        _targetSquadId = location is Site ? squad?.id : null;
-      });
+      _visitFlow.selectLocation(location);
       if (location is District || location is City) {
         if (planning) {
           final action = console.actions
@@ -2532,10 +2516,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           if (action?.enabled == true) {
             unawaited(_dispatch(action!));
           } else if (action != null) {
-            setState(() => _visitMessage = _unavailableVisit(action));
+            _visitFlow.showUnavailable(action);
           }
-        } else {
-          setState(() => _areaId = id);
         }
       }
     }
@@ -2544,11 +2526,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       planning: planning,
       compact: _compactMapText,
       places: places,
-      selectedId: _targetId,
+      selectedId: _visitFlow.targetId,
       title: planning ? 'Select a destination' : city?.name ?? 'City map',
       onSelect: select,
       destination: _selectedDestination == null ? null : _destinationCard(),
-      message: _visitMessage,
+      message: _visitFlow.message,
       commands: planning
           ? [
               for (final action in console.actions.where(
@@ -2573,209 +2555,52 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 ),
             ]
           : const [],
-      onCityOverview: _areaId == null
+      onCityOverview: _visitFlow.areaId == null
           ? null
-          : () => setState(() {
-              _areaId = null;
-              _targetId = null;
-            }),
+          : _visitFlow.cityOverview,
     );
   }
 
-  VoidCallback? get _queueSelectedVisit {
-    final targetId = _selectedDestination?.idString;
-    final squadId = squad?.id;
-    final revision = console.revision.value;
-    return targetId == null || squadId == null
-        ? null
-        : () {
-            if (console.revision.value == revision &&
-                _selectedDestination?.idString == targetId &&
-                squad?.id == squadId) {
-              unawaited(_queueMapVisit());
-            }
-          };
-  }
+  VoidCallback? get _queueSelectedVisit =>
+      _visitFlow.queueCallback(_queueMapVisit);
 
-  Future<void> _queueMapVisit() async {
-    final targetId = _selectedDestination?.idString;
-    final squadId = squad?.id;
-    if (targetId == null ||
-        squadId == null ||
-        _visitRouting ||
-        !controller.canNavigate) {
-      return;
-    }
-    final request = _visitRequest + 1;
-    await _prepareMapVisit();
-    if (!mounted ||
-        request != _visitRequest ||
-        squad?.id != squadId ||
-        _selectedDestination?.idString != targetId) {
-      return;
-    }
-    final action = _visitAction;
-    if (action?.enabled == true) await _confirmVisit(action!);
-  }
-
-  Future<void> _prepareMapVisit() async {
-    if (_visitRouting || !controller.canNavigate || undercover) return;
-    final selected = _selectedDestination;
-    final squadId = squad?.id;
-    final request = ++_visitRequest;
+  void _resetVisitUi() {
     setState(() {
-      _visitRouting = true;
-      _visitMessage = null;
       _pendingOrder = null;
       _pool = false;
       _orders = false;
       _showReports = false;
-      if (selected != null) _areaId = selected.district.idString;
     });
-    bool current() =>
-        mounted &&
-        request == _visitRequest &&
-        squad?.id == squadId &&
-        game.activeSquad?.id == squadId &&
-        (selected == null || _targetId == selected.idString);
-    try {
-      if (!await controller.openSection('f') || !current() || !planning) {
-        if (current()) {
-          setState(
-            () => _visitMessage =
-                controller.message ??
-                'Visit planning is unavailable for the selected squad.',
-          );
-        }
-        return;
-      }
-      if (selected == null) return;
-      final district = await _findVisitAction(
-        'district',
-        selected.district.idString,
-        current,
-      );
-      if (!current() || district == null) {
-        if (current()) {
-          setState(
-            () => _visitMessage = 'The original planner does not offer this district to the selected squad.',
-          );
-        }
-        return;
-      }
-      if (!district.enabled) {
-        setState(() => _visitMessage = _unavailableVisit(district));
-        return;
-      }
-      if (!await controller.sendAction(
-            district,
-            revision: console.revision.value,
-          ) ||
-          !current()) {
-        return;
-      }
-      final destination = await _findVisitAction(
-        'site',
-        selected.idString,
-        current,
-      );
-      if (!current()) return;
-      setState(
-        () => _visitMessage = destination == null
-            ? 'The original planner does not offer this building.'
-            : destination.enabled
-            ? null
-            : _unavailableVisit(destination),
-      );
-    } finally {
-      if (mounted) setState(() => _visitRouting = false);
+  }
+
+  Future<void> _prepareMapVisit() => _visitFlow.prepare(
+    undercover: undercover,
+    onPrepare: _resetVisitUi,
+    onPrepared: _restoreInputFocus,
+  );
+
+  Future<void> _queueMapVisit() async {
+    if (await _visitFlow.queue(
+          undercover: undercover,
+          onPrepare: _resetVisitUi,
+          onPrepared: _restoreInputFocus,
+        ) &&
+        mounted) {
+      setState(() => _orders = false);
       _restoreInputFocus();
     }
   }
 
-  Future<ConsoleAction?> _findVisitAction(
-    String type,
-    String id,
-    bool Function() current,
-  ) async {
-    // The original planner retains its page when entering a district. Use its
-    // actual page controls to start at the first page, then locate the entity.
-    final rewind = <String>{};
-    while (current() && planning) {
-      final previous = console.actions
-          .where((a) => a.key == 'PageUp' && a.enabled)
-          .firstOrNull;
-      if (previous == null) break;
-      final signature = console.actions
-          .map((a) => '${a.entityType}:${a.entityId}:${a.key}')
-          .join('|');
-      if (!rewind.add(signature) ||
-          !await controller.sendAction(
-            previous,
-            revision: console.revision.value,
-          )) {
-        return null;
-      }
-    }
-    final visited = <String>{};
-    for (var page = 0; page < 256 && current() && planning; page++) {
-      final action = console.actions
-          .where((a) => a.entityType == type && a.entityId == id)
-          .firstOrNull;
-      if (action != null) return action;
-      final signature = console.actions
-          .map((a) => '${a.entityType}:${a.entityId}:${a.key}')
-          .join('|');
-      if (!visited.add(signature)) break;
-      final next = console.actions
-          .where((a) => a.key == 'PageDown' && a.enabled)
-          .firstOrNull;
-      if (next == null ||
-          !await controller.sendAction(
-            next,
-            revision: console.revision.value,
-          )) {
-        break;
-      }
-    }
-    return null;
-  }
-
-  String _unavailableVisit(ConsoleAction action) {
-    final reason = _locationDetails(action)
-        .where((text) => text.isNotEmpty)
-        .join(' · ');
-    return reason.isEmpty
-        ? 'Unavailable for this squad in the current visit planner.'
-        : reason;
-  }
-
   Future<void> _confirmVisit(ConsoleAction action) async {
-    final target = _selectedDestination;
-    if (_visitRouting ||
-        target == null ||
-        !identical(action, _visitAction) ||
-        !action.enabled) {
-      return;
-    }
-    if (await controller.sendAction(action, revision: console.revision.value) &&
-        mounted) {
-      setState(() {
-        _orders = false;
-        _visitMessage = null;
-      });
+    if (await _visitFlow.confirm(action) && mounted) {
+      setState(() => _orders = false);
       _restoreInputFocus();
     }
   }
 
   Future<void> _cancelVisit() async {
-    if (_visitRouting) return;
-    _visitRequest++;
-    if (await controller.returnToHeadquarters() && mounted) {
-      setState(() {
-        _orders = false;
-        _visitMessage = null;
-      });
+    if (await _visitFlow.cancel() && mounted) {
+      setState(() => _orders = false);
       _restoreInputFocus();
     }
   }
@@ -2786,7 +2611,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         widget.section == JournalSection.cityMaps.id && !planning;
     final canPrepareVisit =
         controller.canNavigate &&
-        !_visitRouting &&
+        !_visitFlow.routing &&
         !undercover &&
         squad?.members.isNotEmpty == true &&
         controller.headquarters?.siege == null &&
