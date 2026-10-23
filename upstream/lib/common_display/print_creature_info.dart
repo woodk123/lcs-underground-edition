@@ -378,7 +378,7 @@ void printSkillValue(
       }
     }
     move(y, x + 6);
-    addstr("{:2d}.00".format(cr.skillCap(skill)));
+    addstr(format("{:2d}.00", cr.skillCap(skill)));
   }
 }
 
@@ -471,7 +471,7 @@ void printFullCreatureStats(Creature cr,
         setColor(darkGray);
       }
       move(6 + skillsShown, 48);
-      addstr("{:2d}.00".format(cr.skillCap(skill)));
+      addstr(format("{:2d}.00", cr.skillCap(skill)));
     }
   }
 
@@ -612,7 +612,7 @@ void printFullCreatureCrimes(Creature cr) {
 
     mvaddstr(5 + i ~/ 2, 40 * (i % 2), "${crime.wantedFor}: ");
     mvaddstr(5 + i ~/ 2, 30 + 40 * (i % 2),
-        "{:02d}".format(cr.wantedForCrimes[crime]!));
+        format("{:02d}", cr.wantedForCrimes[crime]!));
   }
 
   setColor(lightGray);

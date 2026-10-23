@@ -109,7 +109,7 @@ void main() {
     () {
       final equipment = <CatalogueArtEntry>[
         for (final id in itemTypes.keys)
-          if (equipmentArtwork(id) case final art?) art,
+          ?equipmentArtwork(id),
       ];
       final tangibleIds = itemTypes.keys.toSet().difference({
         ..._unillustratedTypes,

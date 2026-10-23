@@ -13,10 +13,10 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Install Linux build dependencies
@@ -37,7 +37,7 @@ jobs:
         run: python scripts/build_linux.py
       - name: Save compiled generator tooling
         if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.flutter.outputs.codegen-cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: |
             upstream/.dart_tool/build/entrypoint
@@ -45,7 +45,7 @@ jobs:
             upstream/.dart_tool/build_resolvers
           key: ${{ steps.flutter.outputs.codegen-cache-key }}
       - name: Retain checked Linux bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: linux-x64-bundle
           path: .local/linux/
@@ -54,7 +54,7 @@ jobs:
           if-no-files-found: error
       - name: Retain Linux logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: linux-build-logs
           path: .local/linux/evidence/

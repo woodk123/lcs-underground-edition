@@ -121,7 +121,7 @@ ActivityCalculation calculationForActivity(
           _beforeDay,
         ],
         quantities: {
-          if (denominator != null) 'muralStartDenominator': denominator,
+          'muralStartDenominator': ?denominator,
           if (denominator != null) 'muralStartPercent': 100 / denominator,
           'muralCompletionDenominator': 3,
           'policeCheckDifficulty': 9,
@@ -193,7 +193,7 @@ ActivityCalculation calculationForActivity(
         ],
         quantities: {
           'awarenessTriggerPercent': chance,
-          if (gain != null) 'juiceGain': gain,
+          'juiceGain': ?gain,
         },
         source: '${_daily}solo_activities.dart',
       );
@@ -451,8 +451,8 @@ ActivityCalculation _fundraising(ActivityType type, Creature? actor) {
       _beforeDay,
     ],
     quantities: {
-      if (roll != null) 'baselineRoll': roll,
-      if (estimate != null) 'estimatedIncome': estimate,
+      'baselineRoll': ?roll,
+      'estimatedIncome': ?estimate,
       if (type == ActivityType.prostitution && estimate != null)
         'workingDayIncomeBaseline': 3 * estimate,
       if (type == ActivityType.sellDrugs) 'lawMultiplier': banMultiplier,
@@ -460,7 +460,7 @@ ActivityCalculation _fundraising(ActivityType type, Creature? actor) {
         'moodMultiplier': moodMultiplier,
       if (type == ActivityType.sellMusic && actor != null)
         'instrumentMultiplier': actor.weapon.type.instrument ? 1 : .25,
-      if (interruptPercent != null) 'policeInterruptPercent': interruptPercent,
+      'policeInterruptPercent': ?interruptPercent,
     },
     estimated: true,
     source: '${_daily}fundraising.dart',
@@ -525,10 +525,10 @@ ActivityCalculation _learning(
       _beforeDay,
     ],
     quantities: {
-      if (level != null) 'skillLevel': level,
-      if (cap != null) 'skillCap': cap,
-      if (requested != null) 'requestedXp': requested,
-      if (gain != null) 'storedXpGain': gain,
+      'skillLevel': ?level,
+      'skillCap': ?cap,
+      'requestedXp': ?requested,
+      'storedXpGain': ?gain,
       if (level != null) 'dayEndLevelThreshold': skillXpNeeded(level),
       if (gain != null && actor != null && skill != null)
         'xpAfterTraining': actor.skillXP(skill) + gain,
@@ -650,7 +650,7 @@ ActivityCalculation _teaching(ActivityType type, Creature? teacher) {
       'workload': workload,
       'learnerCount': learners,
       'dailyFee': cost,
-      if (example != null) 'exampleRequestedXp': example,
+      'exampleRequestedXp': ?example,
     },
     source: '${_daily}teaching.dart',
   );
@@ -808,7 +808,7 @@ ActivityCalculation _guardian(ActivityType type, Creature? actor) {
       if (stream) 'Daily streaming requires a streaming studio at the base.',
       _beforeDay,
     ],
-    quantities: {if (baseline != null) 'baselineInfluencePower': baseline},
+    quantities: {'baselineInfluencePower': ?baseline},
     estimated: true,
     source: '${_daily}guardian.dart',
   );
@@ -882,9 +882,9 @@ ActivityCalculation _crafting(
       _beforeDay,
     ],
     quantities: {
-      if (cost != null) 'supplyCost': cost,
-      if (difficulty != null) 'adjustedDifficulty': difficulty,
-      if (flagChance != null) 'flagSuccessPercent': flagChance,
+      'supplyCost': ?cost,
+      'adjustedDifficulty': ?difficulty,
+      'flagSuccessPercent': ?flagChance,
       if (baseDifficulty != null) 'initialTrainingXp': baseDifficulty * 2 + 1,
     },
     source: flag
@@ -933,8 +933,8 @@ ActivityCalculation _recruiting(Creature? actor, Activity? activity) {
       _beforeDay,
     ],
     quantities: {
-      if (difficulty != null) 'meetingDifficulty': difficulty,
-      if (count != null) 'meetingCount': count,
+      'meetingDifficulty': ?difficulty,
+      'meetingCount': ?count,
     },
     source: '${_daily}recruiting.dart',
   );
@@ -1013,9 +1013,9 @@ ActivityCalculation _sleeperEmbezzlement(Creature? actor) {
     ],
     quantities: {
       'professionTier': tier,
-      if (quiet != null) 'quietIncome': quiet,
-      if (noticed != null) 'noticedIncome': noticed,
-      if (notice != null) 'noticePercent': notice,
+      'quietIncome': ?quiet,
+      'noticedIncome': ?noticed,
+      'noticePercent': ?notice,
     },
     source: _monthly,
   );
@@ -1077,7 +1077,7 @@ ActivityCalculation _sleeperOperation(ActivityType type, Creature? actor) {
               'The current dead-drop camp is missing or besieged; '
                   'the document-leak branch will not run.',
           ],
-    quantities: {if (notice != null) 'noticePercent': notice},
+    quantities: {'noticePercent': ?notice},
     source: _monthly,
   );
 }
@@ -1267,12 +1267,12 @@ ActivityCalculation _sleeperInfluence(Creature? actor) {
       'This assignment does not gain the resting infiltration bonus.',
     ],
     quantities: {
-      if (base != null) 'baseInfluence': base,
+      'baseInfluence': ?base,
       'professionBonus': bonus,
       'professionMultiplier': multiplier,
-      if (rawPower != null) 'professionInfluenceBudget': rawPower,
-      if (nextMediaOpinion != null) 'mediaOpinionAfterEffect': nextMediaOpinion,
-      if (power != null) 'monthlyInfluencePower': power,
+      'professionInfluenceBudget': ?rawPower,
+      'mediaOpinionAfterEffect': ?nextMediaOpinion,
+      'monthlyInfluencePower': ?power,
     },
     source: _monthly,
   );
@@ -1323,7 +1323,7 @@ ActivityCalculation _burial(Creature? actor) {
       _beforeDay,
     ],
     quantities: {
-      if (localBodies != null) 'localBodies': localBodies,
+      'localBodies': ?localBodies,
       'bodiesWithoutSite': noSite,
       'localBuriers': localBuriers.length,
       'checkDifficulty': 7,
@@ -1411,9 +1411,9 @@ ActivityCalculation _interrogation(Creature? actor, Activity? activity) {
       _beforeDay,
     ],
     quantities: {
-      if (actorBase != null) 'actorLeadSelectionBase': actorBase,
+      'actorLeadSelectionBase': ?actorBase,
       if (lead != null) 'leadSelectionBase': bestBase,
-      if (forceBaseline != null) 'demandInformationBaseline': forceBaseline,
+      'demandInformationBaseline': ?forceBaseline,
       'sameLocationTenders': tenders.length,
     },
     estimated: true,

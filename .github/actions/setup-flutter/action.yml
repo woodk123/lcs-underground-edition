@@ -22,20 +22,20 @@ runs:
   steps:
     - name: Restore pinned SDK
       id: sdk
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: .tools/flutter
         key: flutter-v2-${{ runner.os }}-${{ runner.arch }}-${{ inputs.target }}-${{ hashFiles('scripts/toolchain.json', 'scripts/ci_setup.py') }}
     - name: Restore Dart package downloads
       id: pub
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: .local/pub-cache
         key: pub-v1-${{ runner.os }}-${{ hashFiles('scripts/toolchain.json') }}-${{ hashFiles('upstream/pubspec.lock') }}
         restore-keys: pub-v1-${{ runner.os }}-${{ hashFiles('scripts/toolchain.json') }}-
     - name: Restore compiled generator tooling
       id: codegen
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: |
           upstream/.dart_tool/build/entrypoint
@@ -61,13 +61,13 @@ runs:
         echo "CI_SDK_TARGET=${FLUTTER_TARGET}" >> "$GITHUB_ENV"
     - name: Save pinned SDK
       if: inputs.save-sdk-cache == 'true' && github.event_name != 'pull_request' && steps.sdk.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v6
       with:
         path: .tools/flutter
         key: ${{ steps.sdk.outputs.cache-primary-key }}
     - name: Save Dart package downloads
       if: inputs.save-cache == 'true' && github.event_name != 'pull_request' && steps.pub.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v6
       with:
         path: .local/pub-cache
         key: ${{ steps.pub.outputs.cache-primary-key }}

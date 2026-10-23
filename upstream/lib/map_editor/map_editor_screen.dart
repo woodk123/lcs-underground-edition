@@ -132,7 +132,7 @@ class _MapEditorScreenState extends State<MapEditorScreen> {
   }
 
   Widget _live(Widget Function() builder) =>
-      ListenableBuilder(listenable: controller, builder: (_, __) => builder());
+      ListenableBuilder(listenable: controller, builder: (_, _) => builder());
 
   Widget _palette() => TilePalette(controller);
 
@@ -584,13 +584,11 @@ class _MapEditorScreenState extends State<MapEditorScreen> {
   // inferred from the filename suffix (e.g. WhiteHouse2 -> floor 2).
   Future<void> _import() async {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-    final FilePickerResult? result = await FilePicker.platform.pickFiles(
-      allowMultiple: true,
+    final List<PlatformFile> result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: <String>['csv'],
-      withData: true,
     );
-    if (result == null) return;
+    if (result.isEmpty) return;
     final RegExp pattern = RegExp(
       r'^mapCSV_(.+?)(\d*)_(Tiles|Specials)\.csv$',
       caseSensitive: false,
@@ -598,9 +596,8 @@ class _MapEditorScreenState extends State<MapEditorScreen> {
     final Map<int, String> tiles = <int, String>{};
     final Map<int, String> specials = <int, String>{};
     String base = '';
-    for (final PlatformFile file in result.files) {
-      final Uint8List? bytes = file.bytes;
-      if (bytes == null) continue;
+    for (final PlatformFile file in result) {
+      final Uint8List bytes = await file.readAsBytes();
       final Match? match = pattern.firstMatch(file.name);
       if (match == null) continue;
       base = match.group(1)!;
@@ -712,8 +709,7 @@ class _MapEditorScreenState extends State<MapEditorScreen> {
           ),
         );
       }
-      final List<int>? zipped = ZipEncoder().encode(archive);
-      if (zipped == null) throw Exception('Zip encoding produced no data');
+      final List<int> zipped = ZipEncoder().encode(archive);
       await FileSaver.instance.saveFile(
         name: 'mapCSV_$base.zip',
         bytes: Uint8List.fromList(zipped),

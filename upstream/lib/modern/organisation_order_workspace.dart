@@ -78,7 +78,7 @@ class OrganisationOrderWorkspace extends StatelessWidget {
                       style: JournalPalette.small,
                     ),
                   ),
-                  if (search != null) search!,
+                  ?search,
                   if (categories.length > 1)
                     Wrap(spacing: 4, runSpacing: 3, children: categories),
                   if (categories.length > 1) const SizedBox(height: 6),
@@ -89,7 +89,7 @@ class OrganisationOrderWorkspace extends StatelessWidget {
                             controller: taskScrollController,
                             padding: EdgeInsets.zero,
                             children: [
-                              if (leadingTask != null) leadingTask!,
+                              ?leadingTask,
                               ...tasks,
                             ],
                           )

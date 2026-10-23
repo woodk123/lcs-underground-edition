@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
@@ -25,6 +26,44 @@ import 'package:sembast/sembast_io.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'test_support.dart';
+
+final class PickedSaveFile extends PlatformFile {
+  PickedSaveFile(this.contents);
+  final Uint8List contents;
+  int reads = 0;
+
+  @override
+  Future<Uint8List> readAsBytes() async {
+    reads++;
+    return contents;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class SaveFilePicker extends FilePickerPlatform {
+  PlatformFile? selected;
+
+  @override
+  Future<PlatformFile?> pickFile({
+    String? dialogTitle,
+    String? initialDirectory,
+    FileType type = FileType.any,
+    List<String>? allowedExtensions,
+    Function(FilePickerStatus)? onFileLoading,
+    int compressionQuality = 0,
+    AndroidOptions androidOptions = const AndroidOptions(),
+    DarwinOptions darwinOptions = const DarwinOptions(),
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
+  }) async {
+    expect(type, FileType.custom);
+    expect(allowedExtensions, ['json']);
+    return selected;
+  }
+}
 
 final class RecoverySaveDirectory extends IOOverrides {
   RecoverySaveDirectory(this.original, this.isolated);
@@ -87,10 +126,8 @@ Future<RecoveryResult<T>> acknowledge<T>(Future<T> Function() operation) async {
 
   console.revision.addListener(respond);
   try {
-    final result = await Future.any([
-      operation(),
-      failed.future,
-    ]).timeout(const Duration(seconds: 10));
+    final result = await Future.any([operation(), failed.future])
+        .timeout(const Duration(seconds: 10));
     return RecoveryResult(result, frames);
   } finally {
     console.revision.removeListener(respond);
@@ -161,6 +198,31 @@ void main() {
     game.gameState = game.GameState.fromJson(save.saveData);
     applyBugFixes(save.version);
   });
+
+  test(
+    'file picker reads selected save lazily and cancellation preserves state',
+    () async {
+      final originalPicker = FilePickerPlatform.instance;
+      addTearDown(() => FilePickerPlatform.instance = originalPicker);
+      final picker = SaveFilePicker();
+      FilePickerPlatform.instance = picker;
+      final expected = jsonEncode(game.gameState.toJson());
+      expect(await importSave(), isNull);
+      expect(await storage.listGameIds(), isEmpty);
+      expect(jsonEncode(game.gameState.toJson()), expected);
+
+      final selected = PickedSaveFile(
+        utf8.encode(encodeSaveContents(currentSave())),
+      );
+      picker.selected = selected;
+      final imported = await acknowledge(importSave);
+      expect(selected.reads, 1);
+      expect(imported.value, isNotNull);
+      expect(imported.value!.saveData, jsonDecode(expected));
+      expect(await storage.listGameIds(), [imported.value!.gameId]);
+      expect(jsonEncode(game.gameState.toJson()), expected);
+    },
+  );
 
   test(
     'autosaves retain compatibility independently of the Underground version',
@@ -378,62 +440,56 @@ void main() {
     );
   }
 
-  test(
-    'a migration failure rolls back the current campaign instead of replacing it',
-    () async {
-      final before = jsonEncode(game.gameState.toJson());
-      final live = game.gameState;
-      final broken = jsonDecode(before) as Map<String, dynamic>;
-      for (final city in broken['cities'] as List) {
-        for (final district in (city as Map)['districts'] as List) {
-          ((district as Map)['sites'] as List).removeWhere(
-            (site) => (site as Map)['type'] == 'ceoHouse',
-          );
-        }
+  test('a migration failure rolls back the current campaign instead of replacing it', () async {
+    final before = jsonEncode(game.gameState.toJson());
+    final live = game.gameState;
+    final broken = jsonDecode(before) as Map<String, dynamic>;
+    for (final city in broken['cities'] as List) {
+      for (final district in (city as Map)['districts'] as List) {
+        ((district as Map)['sites'] as List).removeWhere(
+          (site) => (site as Map)['type'] == 'ceoHouse',
+        );
       }
-      final result = await acknowledge(
-        () => loadGameFromSave(
-          SaveFile(
-            version: saveCompatibilityVersion,
-            gameId: 'broken-world',
-            saveData: broken,
-            lastPlayed: null,
-          ),
+    }
+    final result = await acknowledge(
+      () => loadGameFromSave(
+        SaveFile(
+          version: saveCompatibilityVersion,
+          gameId: 'broken-world',
+          saveData: broken,
+          lastPlayed: null,
         ),
-      );
-      expect(result.value, isFalse);
-      expect(
-        result.frames.join(),
-        contains('This campaign could not be loaded.'),
-      );
-      expect(identical(game.gameState, live), isTrue);
-      expect(jsonEncode(game.gameState.toJson()), before);
-    },
-  );
+      ),
+    );
+    expect(result.value, isFalse);
+    expect(
+      result.frames.join(),
+      contains('This campaign could not be loaded.'),
+    );
+    expect(identical(game.gameState, live), isTrue);
+    expect(jsonEncode(game.gameState.toJson()), before);
+  });
 
-  test(
-    'a partially corrupt roster cannot mutate the current campaign while decoding',
-    () async {
-      final before = jsonEncode(game.gameState.toJson());
-      final live = game.gameState;
-      final payload = currentSave().toJson();
-      final data = jsonDecode(before) as Map<String, dynamic>;
-      final roster = (data['lcs'] as Map)['pool'] as List;
-      (roster[1] as Map)['body'] = null;
-      payload['saveData'] = data;
-      final result = await acknowledge(
-        () => importSaveBytes(utf8.encode(jsonEncode(payload))),
-      );
-      expect(result.value, isNull);
-      expect(
-        result.frames.join(),
-        contains('campaign data is incomplete or damaged'),
-      );
-      expect(identical(game.gameState, live), isTrue);
-      expect(jsonEncode(game.gameState.toJson()), before);
-      expect(await storage.listGameIds(), isEmpty);
-    },
-  );
+  test('a partially corrupt roster cannot mutate the current campaign while decoding', () async {
+    final before = jsonEncode(game.gameState.toJson());
+    final live = game.gameState;
+    final payload = currentSave().toJson();
+    final data = jsonDecode(before) as Map<String, dynamic>;
+    final roster = (data['lcs'] as Map)['pool'] as List;
+    (roster[1] as Map)['body'] = null;
+    payload['saveData'] = data;
+    final result = await acknowledge(
+      () => importSaveBytes(utf8.encode(jsonEncode(payload))),
+    );
+    expect(result.value, isNull);
+    expect(
+      result.frames.join(),
+      contains('campaign data is incomplete or damaged'),
+    );
+    expect(identical(game.gameState, live), isTrue);
+    expect(jsonEncode(game.gameState.toJson()), before);
+    expect(await storage.listGameIds(), isEmpty);
+  });
 
   for (final scenario in [
     'valid decode',
@@ -444,9 +500,9 @@ void main() {
   ]) {
     test('$scenario preserves the live campaign random stream', () async {
       final valid = currentSave();
-      final data =
-          jsonDecode(jsonEncode(game.gameState.toJson()))
-              as Map<String, dynamic>;
+      final data = jsonDecode(
+        jsonEncode(game.gameState.toJson()),
+      ) as Map<String, dynamic>;
       if (scenario == 'partial import failure') {
         final roster = (data['lcs'] as Map)['pool'] as List;
         (roster[1] as Map)['body'] = null;
@@ -545,30 +601,24 @@ void main() {
     },
   );
 
-  test(
-    'real victory gate records a victory, deletes its save and ends the campaign',
-    () async {
-      for (final law in game.laws.keys.toList()) {
-        game.laws[law] = DeepAlignment.eliteLiberal;
-      }
-      game.court.fillRange(0, game.court.length, DeepAlignment.eliteLiberal);
-      game.house.fillRange(0, game.house.length, DeepAlignment.eliteLiberal);
-      game.senate.fillRange(0, game.senate.length, DeepAlignment.eliteLiberal);
-      for (final office in game.exec.keys.toList()) {
-        game.exec[office] = DeepAlignment.eliteLiberal;
-      }
-      game.ccsState = game.CCSStrength.defeated;
-      expect(await autoSaveGame(), isTrue);
-      await expectLater(
-        acknowledge(winCheck),
-        throwsA(isA<EndGameException>()),
-      );
-      final scores = await loadHighScores();
-      expect(scores.universalVictories, 1);
-      expect(scores.scoreList.single.endType, Ending.victory);
-      expect(await storage.listGameIds(), isEmpty);
-    },
-  );
+  test('real victory gate records a victory, deletes its save and ends the campaign', () async {
+    for (final law in game.laws.keys.toList()) {
+      game.laws[law] = DeepAlignment.eliteLiberal;
+    }
+    game.court.fillRange(0, game.court.length, DeepAlignment.eliteLiberal);
+    game.house.fillRange(0, game.house.length, DeepAlignment.eliteLiberal);
+    game.senate.fillRange(0, game.senate.length, DeepAlignment.eliteLiberal);
+    for (final office in game.exec.keys.toList()) {
+      game.exec[office] = DeepAlignment.eliteLiberal;
+    }
+    game.ccsState = game.CCSStrength.defeated;
+    expect(await autoSaveGame(), isTrue);
+    await expectLater(acknowledge(winCheck), throwsA(isA<EndGameException>()));
+    final scores = await loadHighScores();
+    expect(scores.universalVictories, 1);
+    expect(scores.scoreList.single.endType, Ending.victory);
+    expect(await storage.listGameIds(), isEmpty);
+  });
 
   test(
     'real defeat gate records the loss, deletes its save and ends the campaign',

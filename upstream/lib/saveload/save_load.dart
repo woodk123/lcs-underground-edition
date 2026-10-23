@@ -485,17 +485,13 @@ Future<void> backupSave(SaveFile selectedSave) async {
 
 Future<SaveFile?> importSave() async {
   try {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: ["json"],
-      withData: true,
       dialogTitle: "Select an LCS: New Age Save File",
     );
     if (result == null) return null;
-    final bytes = result.files.single.bytes;
-    if (bytes == null) {
-      throw const FormatException('The selected file could not be read.');
-    }
+    final bytes = await result.readAsBytes();
     return await importSaveBytes(bytes);
   } catch (error) {
     await _showSaveError('The save could not be imported.', error);

@@ -31,10 +31,10 @@ jobs:
       CI_ARTIFACT_RUN_ID: ${{ github.run_id }}
       RELEASE_TAG: ${{ inputs.tag }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Validate tag and release version
@@ -46,7 +46,7 @@ jobs:
           assert os.environ['RELEASE_TAG'] == f'underground-v{version}', 'Tag must match the embedded Underground version'
           assert f'## Underground Edition {version} — ' in pathlib.Path('upstream/assets/changelog.md').read_text(), 'Date the release changelog first'
           PY
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: .local/artifacts
       - name: Verify all checks and package matching players and source
@@ -55,7 +55,7 @@ jobs:
           python scripts/ci_worker.py prepare
           python scripts/package_release.py --root "$PWD" --report "$PWD/.local/reports/ci-release" --tag "$RELEASE_TAG" --linux "$PWD/.local/linux"
       - name: Retain verified release for review and publication
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: named-release-${{ inputs.tag }}
           path: |
@@ -67,7 +67,7 @@ jobs:
           if-no-files-found: error
       - name: Retain packaging evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: named-release-evidence
           path: .local/reports/

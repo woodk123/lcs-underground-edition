@@ -35,10 +35,10 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Test Pages preparation
@@ -56,7 +56,7 @@ jobs:
         run: >-
           python scripts/prepare_pages.py --downloads .local/pages-downloads
           --output .local/pages --base-path "$BASE_PATH" --tag "$RELEASE_TAG"
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -70,7 +70,7 @@ jobs:
           BASE_PATH: /${{ github.event.repository.name }}/
         run: node upstream/tool/offline_test/test_offline.mjs .local/pages "$BASE_PATH"
       - name: Upload verified Pages site
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: .local/pages
 
@@ -87,4 +87,4 @@ jobs:
     steps:
       - name: Deploy checked browser player
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

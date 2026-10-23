@@ -176,8 +176,8 @@ class DevelopmentBridge {
       'screen': current.screen,
       'text': _screenText(current),
       'report': report?['text'] ?? '',
-      if (report != null) 'reportContext': report,
-      if (tacticalObservation(current, actions) case final map?) 'map': map,
+      'reportContext': ?report,
+      'map': ?tacticalObservation(current, actions),
       'awaitingInput': current.awaitingInput && current.lastKey == null,
       'blockedReason': blockedReason,
       'textInput': current.textInput

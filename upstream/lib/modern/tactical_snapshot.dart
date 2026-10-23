@@ -123,7 +123,7 @@ class TacticalMapCell {
     if (kind == TacticalTileKind.unknown) return 'Unexplored';
     final parts = <String>{
       label,
-      if (underlyingLabel != null) underlyingLabel!,
+      ?underlyingLabel,
       if (kind == TacticalTileKind.squad) 'Current position',
       if (visible || kind == TacticalTileKind.squad)
         'In view'

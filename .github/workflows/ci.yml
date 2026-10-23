@@ -29,10 +29,10 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - uses: ./.github/actions/setup-flutter
@@ -42,7 +42,7 @@ jobs:
           save-sdk-cache: ${{ matrix.shard == 0 }}
       - name: Restore incremental test compiler cache
         id: test-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: upstream/build/test_cache
           key: test-kernel-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.shard }}-${{ hashFiles('scripts/toolchain.json', 'upstream/pubspec.lock', 'upstream/pubspec.yaml', 'scripts/ci_worker.py', 'scripts/ci_shards.py', 'scripts/ci_test_weights.json') }}-${{ hashFiles('upstream/lib/**/*.dart', 'upstream/test/**/*.dart') }}
@@ -53,13 +53,13 @@ jobs:
         run: python scripts/ci_worker.py checks --platform ${{ matrix.platform }} --shard ${{ matrix.shard }}
       - name: Save incremental test compiler cache
         if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.test-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: upstream/build/test_cache
           key: ${{ steps.test-cache.outputs.cache-primary-key }}
       - name: Retain shard evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: checks-${{ matrix.platform }}-${{ matrix.shard }}
           path: .local/ci/checks-${{ matrix.platform }}-${{ matrix.shard }}/
@@ -82,10 +82,10 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Install Linux native dependencies
@@ -103,7 +103,7 @@ jobs:
         run: python scripts/ci_worker.py build --platform ${{ matrix.target }}
       - name: Save compiled generator tooling
         if: matrix.target != 'web' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.flutter.outputs.codegen-cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: |
             upstream/.dart_tool/build/entrypoint
@@ -112,7 +112,7 @@ jobs:
           key: ${{ steps.flutter.outputs.codegen-cache-key }}
       - name: Retain build and evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-${{ matrix.target }}
           path: .local/ci/build-${{ matrix.target }}/
@@ -125,13 +125,13 @@ jobs:
     needs: [checks, builds]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: .local/artifacts
       - name: Verify all shards, source identities and runtime hashes

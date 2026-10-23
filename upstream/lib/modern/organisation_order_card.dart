@@ -145,8 +145,7 @@ class OrganisationOrderCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (scrollHeading) ...heading,
-                  if (data.previousOrder case final previousOrder?)
-                    previousOrder,
+                  ?data.previousOrder,
                   Text(data.timing, style: JournalPalette.small),
                   if (data.currentAssignment case final assignment?)
                     Text(
@@ -159,7 +158,7 @@ class OrganisationOrderCard extends StatelessWidget {
                       'This describes the assigned order. Prepare a choice to review it.',
                       style: JournalPalette.small,
                     ),
-                  if (data.juiceHint case final juiceHint?) juiceHint,
+                  ?data.juiceHint,
                   if (data.travelNotice case final notice?)
                     Text(
                       notice,
