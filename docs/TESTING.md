@@ -12,6 +12,31 @@ Smaller windows, including 800×600 and phone-sized viewports, are outside the s
 
 For exploratory gameplay and stuck-reader investigation, use the [development MCP](DEV_MCP.md). It records the actual loaded build and source-action trace in disposable storage. Turn discovered defects into the focused regressions and browser journeys below; structured engine actions do not certify graphical interaction.
 
+### Choose focused checks
+
+Start with the row matching the changed boundary; combine rows when a change crosses boundaries. These are existing regressions, not substitutes for the integrated journeys. File names below are relative to `upstream/test/`.
+
+| Changed area | Focused test files | Integrated verification |
+|---|---|---|
+| Organisation footer, HQ commands or draft guards | `organisation_journal_test.dart`, `organisation_discovery_test.dart`, `network_journal_test.dart` | Shared acceptance: ordinary orders, required Continue, cancellation, HQ routing and keyboard interface. |
+| Orders browsing, search, retained category/map or scroll | `organisation_journal_test.dart`, `keyboard_orders_workspace_test.dart`, `page_storage_isolation_test.dart` | Shared acceptance: search across categories, switch actor, confirm/cancel, help, map toggle and revisit at normal/enlarged reading size. |
+| Shell navigation, shared controls, focus or reading preferences | `section_navigation_test.dart`, `keyboard_navigation_test.dart`, `text_prompt_focus_test.dart`, `journal_preferences_test.dart`, `journal_title_test.dart` | Shared acceptance, plus the screen browser review for shell routes outside its coverage. Check Classic switching and retained controls. |
+| Source action dispatch or order preparation/commit | `action_identity_test.dart`, `organisation_controller_test.dart`, `organisation_visit_test.dart`, `classic_keyboard_parity_test.dart` | Shared acceptance, plus the affected actual source reader; check stale callbacks and required follow-up choices. |
+| Save/version handling | `game_version_test.dart`, `save_load_test.dart`, `save_round_trip_test.dart`, `save_recovery_test.dart`, `journal_title_test.dart` | Shared acceptance save transfers and the [version policy](VERSIONING.md#save-compatibility). |
+| Acceptance runner or browser support | Python `test_shared_acceptance.py`; Node `scripts/browser_support.test.mjs` | Run the shared acceptance entry point against one identified build. |
+
+For example, while changing Orders browsing, run the matching files with the pinned SDK:
+
+```powershell
+Push-Location upstream
+..\.tools\flutter\bin\flutter.bat test --no-pub test/organisation_journal_test.dart test/keyboard_orders_workspace_test.dart test/page_storage_isolation_test.dart
+Pop-Location
+```
+
+Once source is settled, run `python scripts/shared_acceptance.py` for changes spanning creation, orders, navigation or saves. It retains the fresh founder's continuation and separate prepared scenarios. Follow the [browser regressions](#browser-regressions) instructions for supplemental helpers: use isolated origins and the same compiled JavaScript hash. Keep run evidence under ignored `.local/` or `reports/`; do not infer current coverage from old timings or counts.
+
+### Analysis and broader checks
+
 ```powershell
 Push-Location upstream
 ..\.tools\flutter\bin\flutter.bat test --no-pub

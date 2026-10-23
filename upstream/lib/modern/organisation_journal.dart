@@ -32,11 +32,12 @@ import 'package:lcs_new_age/modern/location_details.dart';
 import 'package:lcs_new_age/modern/location_help.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/order_mechanics_dialog.dart';
-import 'package:lcs_new_age/modern/order_search.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/modern/organisation_crew_pool.dart';
 import 'package:lcs_new_age/modern/organisation_crew_roster.dart';
+import 'package:lcs_new_age/modern/organisation_footer.dart';
 import 'package:lcs_new_age/modern/organisation_map_view.dart';
+import 'package:lcs_new_age/modern/organisation_order_browser.dart';
 import 'package:lcs_new_age/modern/organisation_order_card.dart';
 import 'package:lcs_new_age/modern/organisation_order_workspace.dart';
 import 'package:lcs_new_age/modern/organisation_reviews.dart';
@@ -55,14 +56,6 @@ const basesJournalSection = 10;
 
 /// A local pointer draft retains the exact source action and its revision.
 typedef _PreparedOrder = ({ConsoleAction action, int revision});
-
-typedef _JournalFooterCommand = ({
-  String label,
-  String? shortcut,
-  bool continuing,
-  bool detailOwnsContinue,
-  VoidCallback? onPressed,
-});
 
 /// The organiser is one open journal: team and job card on the left, the
 /// selected report, pool, or target map on the right. Changing a portrait or a
@@ -116,9 +109,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   bool _managementDialog = false;
   final ScrollController _narrowJournalScroll = ScrollController();
   final ScrollController _sectionScroll = ScrollController();
-  final ScrollController _orderTaskScroll = ScrollController();
-  final TextEditingController _orderSearch = TextEditingController();
-  int _searchRequest = 0;
+  final _orderBrowser = OrganisationOrderBrowser();
   final PersonnelDirectoryController _personnel =
       PersonnelDirectoryController();
 
@@ -126,25 +117,19 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   void dispose() {
     _narrowJournalScroll.dispose();
     _sectionScroll.dispose();
-    _orderTaskScroll.dispose();
-    _orderSearch.dispose();
+    _orderBrowser.dispose();
     _personnel.dispose();
     super.dispose();
   }
 
   bool _orders = false, _skills = false, _pool = false;
-  bool _ordersMap = false;
   bool _showReports = false;
   bool _personnelTools = false;
   bool _sourceKeyboardInput = false;
   Skill _poolSort = Skill.firearms;
-  int _group = 0;
   int? _poolPerson;
-  String? _areaId, _targetId, _categoryId;
+  String? _areaId, _targetId;
   _PreparedOrder? _pendingOrder;
-  List<ConsoleAction> _orderBrowseActions = const [];
-  List<ActivityOrderCategory> _orderBrowseCatalog = const [];
-  String? _orderBrowseTaskStorageId;
   int? _targetSquadId;
   bool _visitRouting = false;
   String? _visitMessage;
@@ -296,12 +281,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   /// Drop pointer-only drafts before a source key and expose the current source
   /// roster rather than a differently sorted/searchable presentation directory.
   void prepareForSourceInput() {
-    _orderSearch.clear();
-    _searchRequest++;
+    _orderBrowser.prepareForSourceInput();
     setState(() {
       _pendingOrder = null;
       _targetId = null;
-      _ordersMap = false;
       _showReports = false;
       _pool = false;
       _personnelTools = true;
@@ -328,18 +311,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               }.contains(action.entityType),
         )
         .firstOrNull;
-    _categoryId = category?.entityId;
-    _group = category == null
-        ? 3
-        : const {
-            'legal',
-            'illegal',
-            'sleeper-espionage',
-          }.contains(category.entityId)
-        ? 0
-        : const {'activism', 'sleeper-advocacy'}.contains(category.entityId)
-        ? 2
-        : 1;
+    _orderBrowser.syncSourceCategory(category);
   }
 
   /// Global journal commands use the same live controls as pointer activation.
@@ -405,7 +377,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     if (oldWidget.section != widget.section) {
       revealSection(widget.section);
       _visitRequest++;
-      _searchRequest++;
+      _orderBrowser.invalidateSearchRequests();
       _pendingOrder = null;
       _pool = false;
       _poolPerson = null;
@@ -995,7 +967,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       _orders = true;
       _pool = false;
       _showReports = false;
-      _group = group;
+      _orderBrowser.group = group;
     });
     await _openGroup(group, categoryId: categoryId);
     if (!mounted || activity == null) return;
@@ -1314,7 +1286,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   _showReports && !_orders && widget.detail == null,
                   controller.canNavigate
                       ? () async {
-                          _settleOrderTaskScroll();
+                          _orderBrowser.settleTaskScroll();
                           if (await controller.returnToHeadquarters() &&
                               mounted) {
                             widget.onCloseInspection?.call();
@@ -1343,7 +1315,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                             _pool = false;
                             _showReports = false;
                           });
-                          await _openGroup(_group, categoryId: _categoryId);
+                          await _openGroup(
+                            _orderBrowser.group,
+                            categoryId: _orderBrowser.categoryId,
+                          );
                         },
                   key: 'journal-orders',
                 ),
@@ -1358,7 +1333,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                     _railButton(
                       icon,
                       label,
-                      _group == index,
+                      _orderBrowser.group == index,
                       controller.canNavigate ? () => _openGroup(index) : null,
                       key: 'journal-order-group:$index',
                     ),
@@ -1549,12 +1524,12 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   );
 
   Future<void> _openGroup(int group, {String? categoryId}) async {
-    _settleOrderTaskScroll();
+    _orderBrowser.settleTaskScroll();
     widget.onCloseInspection?.call();
     setState(() {
       _orders = true;
       _pool = false;
-      _group = group;
+      _orderBrowser.group = group;
     });
     _pendingOrder = null;
     final selected = person;
@@ -1587,7 +1562,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         categories.where((a) => a.entityId == categoryId).firstOrNull ??
         categories.where((a) => a.entityId == id).firstOrNull;
     if (category != null) {
-      _categoryId = category.entityId;
+      _orderBrowser.categoryId = category.entityId;
       await controller.browseCategory(
         category,
         revision: console.revision.value,
@@ -1598,8 +1573,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   Future<void> _commitPreparedOrder() async {
     if (!hasPreparedOrder) return;
     final actorId = activityOrderFrame(console)!.actorId;
-    final group = _group;
-    final categoryId = _categoryId;
+    final group = _orderBrowser.group;
+    final categoryId = _orderBrowser.categoryId;
     final section = widget.section;
     controller.inspectPerson(actorId);
     if (!await controller.commitOrder(
@@ -1706,10 +1681,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               controller.selectedPersonId == member.id)) {
         return;
       }
-      _settleOrderTaskScroll();
+      _orderBrowser.settleTaskScroll();
       setState(() => _pendingOrder = null);
       final wasOrders = _orders || activityFrame;
-      final categoryId = _categoryId;
+      final categoryId = _orderBrowser.categoryId;
       if (widget.inspectedPerson != null &&
           console.journalProfile == null &&
           !wasOrders) {
@@ -1724,7 +1699,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       }
       controller.inspectPerson(member.id);
       if (wasOrders && await controller.openOrders(member.id)) {
-        await _openGroup(_group, categoryId: categoryId);
+        await _openGroup(_orderBrowser.group, categoryId: categoryId);
       }
     }
 
@@ -1776,9 +1751,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(widget.textScale)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(widget.textScale)),
         child: OrderMechanicsDialog(
           help: help,
           visitReadiness: help.type == ActivityType.visit
@@ -2157,12 +2131,12 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   );
 
   Widget _orderContext(bool narrow) {
-    final showMap = planning || _ordersMap;
+    final showMap = planning || _orderBrowser.showMap;
     final queued = person?.squad?.activity;
     if (!undercover &&
         !planning &&
         !activityFrame &&
-        _group != 3 &&
+        _orderBrowser.group != 3 &&
         queued != null &&
         queued.type != ActivityType.none) {
       return ListView(
@@ -2188,7 +2162,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                     person?.squadId == game.activeSquad?.id
                 ? () async {
                     if (await controller.openSection('c') && mounted) {
-                      await _openGroup(_group);
+                      await _openGroup(_orderBrowser.group);
                     }
                   }
                 : null,
@@ -2198,88 +2172,46 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ],
       );
     }
-    // Keep presentation stable through HQ/person-list awaits while changing
-    // actor or reopening a confirmed order. These cached actions are displayed
-    // only while controls are disabled; dispatch always uses the fresh frame.
-    if (activityFrame && !controller.busy) {
-      _orderBrowseActions = List.of(console.actions);
-      _orderBrowseCatalog = activityOrderFrame(console)!.catalog;
-      _orderBrowseTaskStorageId = 'journal-tasks:$_group:$_categoryId';
-    }
-    final browsingActions = controller.busy
-        ? _orderBrowseActions
-        : console.actions;
-    final categories = browsingActions
-        .where(
-          (a) =>
-              a.entityType == 'activity-category' ||
-              a.entityType == 'sleeper-category' ||
-              a.entityType == 'sleeper-category-selected',
-        )
-        .toList();
-    final categoryIds = undercover
-        ? const {'sleeper-advocacy', 'sleeper-espionage'}
-        : switch (_group) {
-            0 => const {'legal', 'illegal'},
-            1 => const {'acquisition', 'education', 'teaching', 'medical'},
-            2 => const {'activism'},
-            _ => const <String>{},
-          };
-    final visibleCategories = categories
-        .where((a) => categoryIds.contains(a.entityId))
-        .toList();
-    final tasks = browsingActions
-        .where(
-          (a) =>
-              activityTypeForAction(a) != null &&
-              !a.entityType!.endsWith('-confirm') &&
-              (_group == 3 ? a.x < 40 : a.x >= 40),
-        )
-        .toList();
+    final browsing = _orderBrowser.project(
+      actions: console.actions,
+      frame: activityOrderFrame(console),
+      busy: controller.busy,
+      undercover: undercover,
+    );
     final revision = console.revision.value;
-    final catalog = controller.busy
-        ? _orderBrowseCatalog
-        : activityOrderFrame(console)?.catalog ??
-              const <ActivityOrderCategory>[];
-    final searching = _orderSearch.text.trim().isNotEmpty && catalog.isNotEmpty;
-    final results = [
-      for (final category in catalog)
-        for (final task in category.tasks)
-          if (matchesOrderSearch(category, task, _orderSearch.text))
-            (category, task),
-    ];
+    final searching = browsing.searching;
     return OrganisationOrderWorkspace(
       heading: planning
           ? 'Choose a destination'
-          : _ordersMap
+          : _orderBrowser.showMap
           ? 'Browse destinations'
           : 'Choose a task',
       showMap: showMap,
       onToggleMap: planning
           ? null
           : () {
-              _settleOrderTaskScroll();
-              setState(() => _ordersMap = !_ordersMap);
+              _orderBrowser.settleTaskScroll();
+              setState(() => _orderBrowser.showMap = !_orderBrowser.showMap);
             },
-      search: catalog.isEmpty
+      search: browsing.catalog.isEmpty
           ? null
           : Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: TextField(
                 key: const ValueKey('journal-order-search'),
-                controller: _orderSearch,
+                controller: _orderBrowser.search,
                 style: JournalPalette.body,
                 decoration: InputDecoration(
                   isDense: true,
                   labelText: 'Search all tasks',
                   hintText: 'Try money, training, recruit or healing',
                   prefixIcon: const Icon(Icons.search, size: 18),
-                  suffixIcon: _orderSearch.text.isEmpty
+                  suffixIcon: _orderBrowser.search.text.isEmpty
                       ? null
                       : IconButton(
                           tooltip: 'Clear task search',
                           onPressed: () {
-                            _orderSearch.clear();
+                            _orderBrowser.search.clear();
                             _searchChanged('');
                           },
                           icon: const Icon(Icons.clear, size: 18),
@@ -2291,32 +2223,30 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       categories: searching
           ? []
           : [
-              for (final category in visibleCategories)
+              for (final category in browsing.categories)
                 OrganisationOrderCategoryView(
                   label: _clean(category.label),
                   shortcut: category.key,
-                  selected: _categoryId == category.entityId,
+                  selected: _orderBrowser.categoryId == category.entityId,
                   onSelect: category.enabled && !controller.busy
                       ? () => _browseOrderCategory(category, revision: revision)
                       : null,
                 ),
             ],
-      // Cached rows must keep their own storage identity until the new reader
-      // arrives. A short cached category must not clamp another category's
-      // restored offset, including through native web accessibility scrolling.
-      taskStorageId: searching
-          ? 'journal-task-search:${_orderSearch.text.trim()}'
-          : controller.busy && _orderBrowseTaskStorageId != null
-          ? _orderBrowseTaskStorageId!
-          : 'journal-tasks:$_group:$_categoryId',
-      taskScrollController: _orderTaskScroll,
+      taskStorageId: browsing.taskStorageId,
+      taskScrollController: _orderBrowser.taskScroll,
       tasks: searching
           ? [
-              for (final (category, task) in results)
+              for (final (category, task) in browsing.results)
                 _searchTaskView(category, task, revision: revision),
             ]
-          : [for (final task in tasks) _taskView(task, revision: revision)],
-      leadingTask: !searching && _group == 3 ? _visitTaskChoice() : null,
+          : [
+              for (final task in browsing.tasks)
+                _taskView(task, revision: revision),
+            ],
+      leadingTask: !searching && _orderBrowser.group == 3
+          ? _visitTaskChoice()
+          : null,
       emptyMessage: controller.busy
           ? 'Opening current orders…'
           : searching
@@ -2327,10 +2257,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   }
 
   void _searchChanged(String _) {
-    _settleOrderTaskScroll();
+    _orderBrowser.settleTaskScroll();
     setState(() {
       _pendingOrder = null;
-      _searchRequest++;
+      _orderBrowser.invalidateSearchRequests();
     });
   }
 
@@ -2362,7 +2292,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       onPrepare: !task.enabled || controller.busy
           ? null
           : () async {
-              final request = ++_searchRequest;
+              final request = _orderBrowser.beginSearchRequest();
               final actorId = person?.id;
               final action = await controller.resolveOrderSearch(
                 category,
@@ -2370,20 +2300,14 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 revision: revision,
               );
               if (!mounted ||
-                  request != _searchRequest ||
+                  !_orderBrowser.isCurrentSearchRequest(request) ||
                   person?.id != actorId ||
                   action == null) {
                 return;
               }
-              _settleOrderTaskScroll();
+              _orderBrowser.settleTaskScroll();
               setState(() {
-                _categoryId = category.id == 'operations' ? null : category.id;
-                _group = switch (category.id) {
-                  'legal' || 'illegal' => 0,
-                  'activism' => 2,
-                  'operations' => 3,
-                  _ => 1,
-                };
+                _orderBrowser.selectSearchCategory(category);
                 _pendingOrder = (
                   action: action,
                   revision: console.revision.value,
@@ -2393,14 +2317,6 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               _restoreInputFocus();
             },
     );
-  }
-
-  void _settleOrderTaskScroll() {
-    if (_orderTaskScroll.hasClients) {
-      // Ending an in-flight scroll persists its current offset to PageStorage
-      // before a category/reader transition can dispose the scroll position.
-      _orderTaskScroll.jumpTo(_orderTaskScroll.offset);
-    }
   }
 
   // A rendered or cached choice is never authority for a later reader. Capture
@@ -2416,11 +2332,11 @@ class OrganisationJournalState extends State<OrganisationJournal> {
 
   void _browseOrderCategory(ConsoleAction category, {required int revision}) {
     if (!_isCurrentOrderChoice(category, revision: revision)) return;
-    _settleOrderTaskScroll();
+    _orderBrowser.settleTaskScroll();
     setState(() {
-      _categoryId = category.entityId;
+      _orderBrowser.categoryId = category.entityId;
       _pendingOrder = null;
-      _ordersMap = false;
+      _orderBrowser.showMap = false;
     });
     unawaited(controller.browseCategory(category, revision: revision));
   }
@@ -2455,7 +2371,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               if (!_isCurrentOrderChoice(action, revision: revision)) return;
               setState(() {
                 _pendingOrder = (action: action, revision: revision);
-                _ordersMap = false;
+                _orderBrowser.showMap = false;
               });
             }
           : null,
@@ -2951,7 +2867,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     };
   }
 
-  _JournalFooterCommand _footerPrimaryCommand() {
+  JournalFooterCommand _footerPrimaryCommand() {
     final unconfirmedDraft = _hasUnconfirmedDraft;
     final revision = console.revision.value;
     final ledger = ledgerReportFrame(console);
@@ -3056,269 +2972,38 @@ class OrganisationJournalState extends State<OrganisationJournal> {
 
   Widget _footer(bool narrow) {
     final unconfirmedDraft = _hasUnconfirmedDraft;
-    final primary = _footerPrimaryCommand();
     final directHQ = console.screen == 'headquarters';
     final cancel =
         controller.headquartersAction('c') ??
         (directHQ
             ? console.actions.where((action) => action.key == 'c').firstOrNull
             : null);
-    final dateFunds =
-        '${game.day} ${getMonth(game.month).substring(0, 3)} ${game.year}  ·  \$${game.ledger.funds}';
-    final utilities = <Widget>[
-      Tooltip(
-        message: 'More headquarters commands',
-        child: TextButton.icon(
-          key: const ValueKey('journal-more-commands'),
-          onPressed: controller.canNavigate && !unconfirmedDraft
-              ? _headquartersCommands
-              : null,
-          icon: const Icon(
-            Icons.menu_book,
-            color: JournalPalette.brassLight,
-            size: 21,
-          ),
-          label: Text(
-            'HQ commands',
-            style: JournalPalette.small.copyWith(color: JournalPalette.card),
-          ),
-        ),
-      ),
-      Expanded(
-        child: Text(
-          dateFunds,
-          key: const ValueKey('journal-date-funds'),
-          maxLines: 2,
-          style: JournalPalette.small.copyWith(
-            color: JournalPalette.card,
-            height: widget.textScale > 1.1 ? 1 : 1.4,
-          ),
-        ),
-      ),
-      PopupMenuButton<double>(
-        tooltip: 'Reading size',
-        initialValue: widget.textScale,
-        onSelected: widget.onTextScale,
-        icon: const Icon(
-          Icons.text_fields,
-          color: JournalPalette.brassLight,
-          size: 22,
-        ),
-        itemBuilder: (_) => [
-          for (final scale in [1.0, 1.25, 1.5])
-            PopupMenuItem(
-              value: scale,
-              child: Text('${(scale * 100).round()}%'),
-            ),
-        ],
-      ),
-      const JournalPreferencesButton(color: JournalPalette.brassLight),
-      IconButton(
-        tooltip: 'Switch readable / classic view',
-        onPressed: widget.onClassic,
-        icon: const Icon(
-          Icons.terminal,
-          color: JournalPalette.brassLight,
-          size: 21,
-        ),
-      ),
-    ];
-    final commands = <Widget>[
-      OutlinedButton.icon(
-        key: const ValueKey('journal-save-exit'),
-        onPressed: _saveExitCommand,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: JournalPalette.page,
-          minimumSize: const Size(44, 34),
-          padding: const EdgeInsets.symmetric(horizontal: 9),
-        ),
-        icon: const Icon(Icons.save_outlined, size: 17),
-        label: Tooltip(
-          excludeFromSemantics: true,
-          message:
-              'At headquarters: X. '
-              'Optional global shortcut: $journalSaveShortcut.',
-          child: JournalCommandLabel(
-            shortcut: _headquartersShortcut('x'),
-            label: 'Save & exit',
-          ),
-        ),
-      ),
-      if (cancel?.enabled == true)
-        IconButton(
-          tooltip: _clean(cancel!.label),
-          key: const ValueKey('journal-cancel-departure'),
-          onPressed: controller.canNavigate
-              ? () => controller.openSection(cancel.key)
-              : null,
-          icon: const Icon(
-            Icons.cancel_outlined,
-            color: JournalPalette.brassLight,
-          ),
-        ),
-      if (!primary.detailOwnsContinue)
-        ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: narrow ? 230 : 340),
-          child: Tooltip(
-            message: primary.continuing
-                ? primary.label
-                : '${primary.label}. At headquarters: W. '
-                      'Optional global shortcut: $journalAdvanceShortcut.',
-            child: FilledButton.icon(
-              key: const ValueKey('journal-advance-day'),
-              onPressed: primary.onPressed,
-              style: FilledButton.styleFrom(
-                backgroundColor: JournalPalette.binding,
-                minimumSize: const Size(44, 34),
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-              ),
-              icon: Icon(
-                primary.continuing ? Icons.arrow_forward : Icons.play_arrow,
-                size: 18,
-              ),
-              label: primary.shortcut == null
-                  ? Text(
-                      primary.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                  : Semantics(
-                      label: primary.label,
-                      hint:
-                          'Keyboard shortcut: ${journalShortcutSpokenLabel(primary.shortcut!)}',
-                      excludeSemantics: true,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          JournalShortcutBadge(
-                            shortcut: primary.shortcut!,
-                            primary: true,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              primary.label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-            ),
-          ),
-        ),
-    ];
-    return LayoutBuilder(
-      builder: (context, bounds) {
-        final scale = MediaQuery.textScalerOf(context).scale(12) / 12;
-        final theme = Theme.of(context);
-        final saveTextStyle =
-            OutlinedButtonTheme.of(context).style?.textStyle?.resolve({}) ??
-            theme.textTheme.labelLarge!;
-        final advanceTextStyle =
-            FilledButtonTheme.of(context).style?.textStyle?.resolve({}) ??
-            theme.textTheme.labelLarge!;
-        final saveWidth =
-            18 +
-            17 +
-            8 +
-            _shortcutBadgeWidth(context, _headquartersShortcut('x')) +
-            8 +
-            _textWidth(context, 'Save & exit', saveTextStyle);
-        final advanceWidth = primary.detailOwnsContinue
-            ? 0.0
-            : (20 +
-                      18 +
-                      8 +
-                      (primary.shortcut == null
-                          ? 0
-                          : _shortcutBadgeWidth(context, primary.shortcut!) +
-                                8) +
-                      _textWidth(context, primary.label, advanceTextStyle))
-                  .clamp(44.0, narrow ? 230.0 : 340.0);
-        // Four utility buttons plus a readable two-line date/funds label.
-        // Measure the command labels so wider fonts wrap before they overflow.
-        final minimumUtilitiesWidth =
-            3 * kMinInteractiveDimension +
-            60 +
-            _textWidth(context, 'HQ commands', JournalPalette.small) +
-            _textWidth(context, dateFunds, JournalPalette.small) / 2;
-        final requiredWidth =
-            minimumUtilitiesWidth +
-            saveWidth +
-            advanceWidth +
-            (cancel?.enabled == true ? kMinInteractiveDimension : 0) +
-            commands.length * 9;
-        final stacked =
-            bounds.maxWidth < 760 || bounds.maxWidth < requiredWidth;
-        if (stacked) {
-          final utilitiesHeight = bounds.maxWidth < 550
-              ? (scale * 12 * 2.8).clamp(42.0, 70.0)
-              : 42.0;
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                height: utilitiesHeight,
-                child: Row(children: utilities),
-              ),
-              const SizedBox(height: 4),
-              Wrap(
-                alignment: WrapAlignment.end,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 8,
-                runSpacing: 6,
-                children: commands,
-              ),
-            ],
-          );
-        }
-        return SizedBox(
-          height: narrow ? 41 : 45,
-          child: Row(
-            children: [
-              ...utilities,
-              for (final command in commands) ...[
-                const SizedBox(width: 9),
-                command,
-              ],
-            ],
-          ),
-        );
-      },
+    return OrganisationFooterView(
+      narrow: narrow,
+      dateFunds:
+          '${game.day} ${getMonth(game.month).substring(0, 3)} ${game.year}  ·  \$${game.ledger.funds}',
+      textScale: widget.textScale,
+      saveShortcut: _headquartersShortcut('x'),
+      primary: _footerPrimaryCommand(),
+      onHeadquartersCommands: controller.canNavigate && !unconfirmedDraft
+          ? _headquartersCommands
+          : null,
+      onSaveExit: _saveExitCommand,
+      cancelDepartureLabel: cancel?.enabled == true
+          ? _clean(cancel!.label)
+          : null,
+      onCancelDeparture: controller.canNavigate && cancel?.enabled == true
+          ? () => controller.openSection(cancel!.key)
+          : null,
+      onTextScale: widget.onTextScale,
+      onClassic: widget.onClassic,
     );
   }
 
-  double _textWidth(BuildContext context, String text, TextStyle style) {
-    final painter = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: DefaultTextStyle.of(context).style.merge(style),
-      ),
-      textDirection: Directionality.of(context),
-      textScaler: MediaQuery.textScalerOf(context),
-      locale: Localizations.maybeLocaleOf(context),
-      maxLines: 1,
-    )..layout();
-    final width = painter.width;
-    painter.dispose();
-    return width;
-  }
-
-  double _shortcutBadgeWidth(BuildContext context, String shortcut) =>
-      (_textWidth(
-                context,
-                journalShortcutLabel(shortcut),
-                JournalShortcutBadge.textStyle,
-              ) +
-              12)
-          .clamp(24.0, double.infinity);
-
-  String _clean(String label) => stripConsoleColors(
-    label,
-  ).replaceFirst(RegExp(r'^\(?[A-Za-z0-9?]+\s*[-–:]\s*'), '').trim();
+  String _clean(String label) =>
+      stripConsoleColors(label)
+          .replaceFirst(RegExp(r'^\(?[A-Za-z0-9?]+\s*[-–:]\s*'), '')
+          .trim();
 
   void _restoreInputFocus() {
     WidgetsBinding.instance.addPostFrameCallback((_) {

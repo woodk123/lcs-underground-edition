@@ -40,6 +40,7 @@ import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/journal_title.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
+import 'package:lcs_new_age/modern/modern_shell_chrome.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/modern/organisation_journal.dart';
 import 'package:lcs_new_age/modern/tactical_map.dart';
@@ -759,9 +760,8 @@ class _ModernGameShellState extends State<ModernGameShell> {
             autofocus: true,
             onKeyEvent: _onKey,
             child: MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: TextScaler.linear(_textScale)),
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(_textScale)),
               child: console.eventMessage != null && !classic
                   ? journal
                         ? Theme(
@@ -812,7 +812,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
                   ? _journalFallback(compact)
                   : Column(
                       children: [
-                        _topbar(compact),
+                        _topbar(),
                         if (!title && width < 900) _sectionStrip(),
                         Expanded(
                           child: Row(
@@ -868,215 +868,60 @@ class _ModernGameShellState extends State<ModernGameShell> {
     );
   }
 
-  Widget _topbar(bool compact) => LayoutBuilder(
-    builder: (context, bounds) {
-      final narrow = bounds.maxWidth < 650;
-      return Container(
-        height: 60,
-        padding: EdgeInsets.symmetric(horizontal: narrow ? 8 : 18),
-        color: ink,
-        child: Row(
-          children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: vermilion,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Icon(Icons.bolt, color: paper, size: 23),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              narrow ? 'LCS' : 'LIBERAL CRIME SQUAD',
-              style: TextStyle(
-                color: paper,
-                fontSize: narrow ? 13 : 14,
-                fontWeight: FontWeight.w800,
-                letterSpacing: narrow ? 0 : 1,
-              ),
-            ),
-            const Spacer(),
-            if (!title) ...[
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${game.day} ${getMonth(game.month).substring(0, 3)} ${game.year}',
-                    key: const ValueKey('campaign-date'),
-                    style: const TextStyle(color: paper, fontSize: 12),
-                  ),
-                  Text(
-                    '\$${game.ledger.funds}',
-                    key: const ValueKey('campaign-funds'),
-                    style: const TextStyle(
-                      color: Color(0xFFB2C1BA),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(width: narrow ? 4 : 18),
-            ],
-            PopupMenuButton<double>(
-              tooltip: 'Reading size',
-              initialValue: _textScale,
-              onSelected: (value) => setState(() => _textScale = value),
-              icon: const Icon(Icons.text_fields, color: paper, size: 22),
-              itemBuilder: (_) => [
-                for (final scale in [1.0, 1.25, 1.5])
-                  PopupMenuItem(
-                    value: scale,
-                    child: Text('${(scale * 100).round()}%'),
-                  ),
-              ],
-            ),
-            const JournalPreferencesButton(color: paper),
-            IconButton(
-              tooltip: 'Switch readable / classic view',
-              onPressed: () => setState(() => _classic = !_classic),
-              icon: Icon(
-                _classic ? Icons.view_agenda_outlined : Icons.terminal,
-                color: paper,
-                size: 22,
-              ),
-            ),
-            IconButton(
-              tooltip: 'Field guide',
-              onPressed: _help,
-              icon: const Icon(Icons.help_outline, color: paper, size: 22),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-  Widget _sectionStrip() => Container(
-    height: 44,
-    decoration: const BoxDecoration(
-      color: JournalPalette.inset,
-      border: Border(bottom: BorderSide(color: line)),
-    ),
-    child: SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final (index, label, command) in <(int, String, String?)>[
-            (0, 'Headquarters', null),
-            (1, 'People', 'r'),
-            (2, 'Assignments', 'a'),
-            (3, 'Operations', 'f'),
-            (4, 'Agenda', 'l'),
-            (5, 'Media', 'm'),
-            (6, 'Equipment', 'e'),
-          ])
-            TextButton(
-              key: ValueKey('section:$index'),
-              onPressed:
-                  _canSwitchSections &&
-                      (!hq ||
-                          command == null ||
-                          _action(command)?.enabled == true)
-                  ? () => _navigateTo(index, command)
-                  : null,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                foregroundColor: _currentSection() == index ? teal : ink,
-                backgroundColor: _currentSection() == index
-                    ? teal.withValues(alpha: .1)
-                    : null,
-              ),
-              child: Text(label, style: const TextStyle(fontSize: 12)),
-            ),
-        ],
-      ),
-    ),
+  Widget _topbar() => ModernShellTopBar(
+    date: title
+        ? null
+        : '${game.day} ${getMonth(game.month).substring(0, 3)} ${game.year}',
+    funds: title ? null : '\$${game.ledger.funds}',
+    textScale: _textScale,
+    classic: _classic,
+    onTextScale: (value) => setState(() => _textScale = value),
+    onClassic: () => setState(() => _classic = !_classic),
+    onHelp: _help,
   );
 
-  Widget _sidebar() => Container(
-    width: 190,
-    height: double.infinity,
-    decoration: const BoxDecoration(
-      color: JournalPalette.inset,
-      border: Border(right: BorderSide(color: line)),
-    ),
-    padding: const EdgeInsets.fromLTRB(10, 18, 10, 12),
-    child: SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _eyebrow('THE MOVEMENT'),
-          const SizedBox(height: 16),
-          _nav(Icons.grid_view_outlined, 'Headquarters', 0, null),
-          _nav(Icons.people_outline, 'People & squads', 1, 'r'),
-          _nav(Icons.fact_check_outlined, 'Daily assignments', 2, 'a'),
-          _nav(Icons.explore_outlined, 'Operations', 3, 'f'),
-          _nav(Icons.account_balance_outlined, 'Liberal Agenda', 4, 'l'),
-          _nav(Icons.newspaper_outlined, 'Media & impact', 5, 'm'),
-          _nav(Icons.backpack_outlined, 'Equipment', 6, 'e'),
-          const SizedBox(height: 12),
-          const Divider(),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text(
-              _canSwitchSections
-                  ? 'Switch sections directly. Time advances when you end the day.'
-                  : tactical
-                  ? 'Finish or leave the site before returning to the movement.'
-                  : 'Complete this choice before switching sections.',
-              style: const TextStyle(color: muted, fontSize: 11),
-            ),
+  List<ModernShellSection> _shellSections() => [
+    for (final (index, icon, label, shortLabel, command)
+        in <(int, IconData, String, String, String?)>[
+          (0, Icons.grid_view_outlined, 'Headquarters', 'Headquarters', null),
+          (1, Icons.people_outline, 'People & squads', 'People', 'r'),
+          (
+            2,
+            Icons.fact_check_outlined,
+            'Daily assignments',
+            'Assignments',
+            'a',
           ),
-          if (hq)
-            TextButton.icon(
-              onPressed: () => _choose('x'),
-              icon: const Icon(Icons.save_outlined, size: 18),
-              label: const Text('Save & exit'),
-            ),
-        ],
+          (3, Icons.explore_outlined, 'Operations', 'Operations', 'f'),
+          (4, Icons.account_balance_outlined, 'Liberal Agenda', 'Agenda', 'l'),
+          (5, Icons.newspaper_outlined, 'Media & impact', 'Media', 'm'),
+          (6, Icons.backpack_outlined, 'Equipment', 'Equipment', 'e'),
+        ])
+      ModernShellSection(
+        id: index,
+        icon: icon,
+        label: label,
+        shortLabel: shortLabel,
+        selected: _currentSection() == index,
+        onSelect:
+            _canSwitchSections &&
+                (!hq || command == null || _action(command)?.enabled == true)
+            ? () => _navigateTo(index, command)
+            : null,
       ),
-    ),
+  ];
+
+  Widget _sectionStrip() => ModernShellSectionStrip(sections: _shellSections());
+
+  Widget _sidebar() => ModernShellSidebar(
+    sections: _shellSections(),
+    note: _canSwitchSections
+        ? 'Switch sections directly. Time advances when you end the day.'
+        : tactical
+        ? 'Finish or leave the site before returning to the movement.'
+        : 'Complete this choice before switching sections.',
+    onSaveExit: hq ? () => _choose('x') : null,
   );
-  Widget _nav(IconData icon, String text, int index, String? key) {
-    final enabled =
-        _canSwitchSections &&
-        (!hq || key == null || _action(key)?.enabled == true);
-    final active = hq && index == 0 || !hq && _currentSection() == index;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: TextButton(
-        key: ValueKey('section:$index'),
-        onPressed: enabled ? () => _navigateTo(index, key) : null,
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-          backgroundColor: active
-              ? teal.withValues(alpha: .1)
-              : Colors.transparent,
-          foregroundColor: active ? teal : ink,
-          disabledForegroundColor: muted.withValues(alpha: .65),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 19),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _titlePage(bool compact) => LayoutBuilder(
     builder: (context, constraints) => SingleChildScrollView(
@@ -2838,42 +2683,15 @@ class _ModernGameShellState extends State<ModernGameShell> {
       letterSpacing: 1.5,
     ),
   );
-  Widget _statusbar() => Container(
-    height: 24,
-    padding: const EdgeInsets.symmetric(horizontal: 12),
-    decoration: const BoxDecoration(
-      color: JournalPalette.inset,
-      border: Border(top: BorderSide(color: line)),
-    ),
-    child: Row(
-      children: [
-        Container(
-          width: 5,
-          height: 5,
-          decoration: const BoxDecoration(color: teal, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            _navigating
-                ? 'Opening section…'
-                : title
-                ? 'UNDERGROUND  /  $gameVersion'
-                : tactical
-                ? 'OPERATION IN PROGRESS'
-                : hq
-                ? 'PLANNING  ·  Time advances only when you end the day'
-                : console.navigation?.note ?? 'Choose an action on this screen',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 10, color: muted),
-          ),
-        ),
-        const Text(
-          'F1  FIELD GUIDE',
-          style: TextStyle(fontSize: 9, letterSpacing: 1, color: muted),
-        ),
-      ],
-    ),
+  Widget _statusbar() => ModernShellStatusBar(
+    text: _navigating
+        ? 'Opening section…'
+        : title
+        ? 'UNDERGROUND  /  $gameVersion'
+        : tactical
+        ? 'OPERATION IN PROGRESS'
+        : hq
+        ? 'PLANNING  ·  Time advances only when you end the day'
+        : console.navigation?.note ?? 'Choose an action on this screen',
   );
 }
