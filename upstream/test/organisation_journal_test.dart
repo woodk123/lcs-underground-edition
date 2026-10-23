@@ -1063,18 +1063,55 @@ void main() {
           tester.widget<Text>(_key('journal-city-map-squad')).data,
           'Squad: ${team.name}',
         );
-        // Revisit the map in the same app lifetime before queuing. Selection
-        // belongs to the journal, even when its presentation subtree is rebuilt.
-        await tester.ensureVisible(_key('journal-section:0'));
+        final retainedQueue = tester
+            .widget<FilledButton>(_key('journal-city-map-prepare-visit'))
+            .onPressed!;
+        // The map survives rebuilding, but a retained queue callback belongs
+        // to the squad and source revision that originally displayed it.
+        await _altShortcut(tester, LogicalKeyboardKey.digit1);
+        await _tap(tester, 'journal-squad:${other.id}');
+        await _altShortcut(tester, LogicalKeyboardKey.digit0);
+        expect(_key('journal-destination-name'), findsNothing);
+        final otherSelected = campaignSnapshot();
+        final otherRevision = engine.console.revision.value;
+        retainedQueue();
         await _settle(tester);
-        await _tap(tester, 'journal-section:0');
-        await tester.ensureVisible(_key('journal-section:6'));
-        await _settle(tester);
-        await _tap(tester, 'journal-section:6');
+        expect(campaignSnapshot(), otherSelected);
+        expect(engine.console.revision.value, otherRevision);
+        expect(other.activity.type, ActivityType.none);
+        await _altShortcut(tester, LogicalKeyboardKey.digit1);
+        await _tap(tester, 'journal-squad:${team.id}');
+        await _altShortcut(tester, LogicalKeyboardKey.digit0);
         expect(
           tester.widget<Text>(_key('journal-destination-name')).data,
           destination.getName(),
         );
+        expect(campaignSnapshot(), before);
+        // Prepare and cancel through the actual planner before revisiting and
+        // queuing. Nothing travels or advances a day during the local draft.
+        await _altShortcut(tester, LogicalKeyboardKey.digit1);
+        await _tap(tester, 'journal-orders');
+        await _tap(tester, 'journal-order-group:3');
+        await _tap(tester, 'journal-plan-visit');
+        await _tap(
+          tester,
+          'journal-map-place:${destination.district.idString}',
+        );
+        await _tap(tester, 'journal-map-place:${destination.idString}');
+        expect(_key('journal-confirm-order'), findsOneWidget);
+        expect(campaignSnapshot(), before);
+        await _tap(tester, 'journal-cancel-order');
+        expect(engine.console.screen, 'headquarters');
+        expect(campaignSnapshot(), before);
+        expect(FocusManager.instance.primaryFocus?.debugLabel, 'Game keyboard');
+        await _altShortcut(tester, LogicalKeyboardKey.digit0);
+        expect(
+          tester.widget<Text>(_key('journal-destination-name')).data,
+          destination.getName(),
+        );
+        expect(campaignSnapshot(), before);
+        retainedQueue();
+        await _settle(tester);
         expect(campaignSnapshot(), before);
         _insideViewport(
           tester,

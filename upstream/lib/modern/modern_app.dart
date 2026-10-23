@@ -35,12 +35,14 @@ import 'package:lcs_new_age/modern/journal_media_production.dart';
 import 'package:lcs_new_age/modern/journal_navigation_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_navigation_state.dart';
 import 'package:lcs_new_age/modern/journal_preferences.dart';
+import 'package:lcs_new_age/modern/journal_profile_view.dart';
 import 'package:lcs_new_age/modern/journal_pursuit.dart';
 import 'package:lcs_new_age/modern/journal_recovery.dart';
 import 'package:lcs_new_age/modern/journal_sections.dart';
 import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/journal_title.dart';
+import 'package:lcs_new_age/modern/journal_workspace_view.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/modern_shell_chrome.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
@@ -1886,68 +1888,48 @@ class _ModernGameShellState extends State<ModernGameShell> {
     }
     final profile = console.journalProfile;
     if (!classic && profile != null) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: console.textInput
-                ? Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Rename ${profile.person.name}',
-                      style: JournalPalette.heading,
-                    ),
-                  )
-                : CrewDossier(
-                    person: profile.person,
-                    embedded: true,
-                    page: profile.page,
-                    pageShortcuts: [
-                      for (final action in console.actions)
-                        if (action.enabled &&
-                            {'Up', 'Down'}.contains(action.key))
-                          action.key,
-                    ],
-                    onPage: (next) {
-                      final delta = (next - profile.page) % 3;
-                      if (delta != 0) _send(delta == 1 ? 'Down' : 'Up');
-                    },
-                  ),
-          ),
-          const Divider(height: 1, color: JournalPalette.rule),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: profile.confirming
-                ? DirectContent(
-                    console: console,
-                    onAction: _send,
-                    journalPage: true,
-                    hiddenRows: {for (var row = 0; row < 22; row++) row},
-                  )
-                : console.textInput
-                ? _inputBar()
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final action in console.actions)
-                        if (!{'Up', 'Down'}.contains(action.key))
-                          _profileAction(action),
-                    ],
-                  ),
-          ),
-        ],
+      return JournalProfileView(
+        name: profile.person.name,
+        editing: console.textInput,
+        dossier: CrewDossier(
+          person: profile.person,
+          embedded: true,
+          page: profile.page,
+          pageShortcuts: [
+            for (final action in console.actions)
+              if (action.enabled && {'Up', 'Down'}.contains(action.key))
+                action.key,
+          ],
+          onPage: (next) {
+            final delta = (next - profile.page) % 3;
+            if (delta != 0) _send(delta == 1 ? 'Down' : 'Up');
+          },
+        ),
+        controls: profile.confirming
+            ? DirectContent(
+                console: console,
+                onAction: _send,
+                journalPage: true,
+                hiddenRows: {for (var row = 0; row < 22; row++) row},
+              )
+            : console.textInput
+            ? _inputBar()
+            : Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final action in console.actions)
+                    if (!{'Up', 'Down'}.contains(action.key))
+                      _profileAction(action),
+                ],
+              ),
       );
     }
     if (!classic &&
         console.screen == 'generic' &&
         !console.awaitingInput &&
         console.graphics.isNotEmpty) {
-      return JournalSurface(
-        key: const ValueKey('journal-live-graphic'),
-        lined: true,
-        child: Center(child: SingleChildScrollView(child: _sourceGraphics())),
-      );
+      return JournalLiveGraphicView(graphic: _sourceGraphics());
     }
     if (!classic &&
         console.screen == 'generic' &&
@@ -1957,40 +1939,13 @@ class _ModernGameShellState extends State<ModernGameShell> {
         console.eventMessage == null) {
       // Source handlers may paint map generation or other intermediate buffers
       // while the day is still processing. Only an awaited reader is a choice.
-      return JournalSurface(
-        key: const ValueKey('journal-processing'),
-        lined: true,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: const Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.hourglass_top, color: JournalPalette.brassDark),
-                SizedBox(height: 12),
-                Text(
-                  'Preparing the next report',
-                  textAlign: TextAlign.center,
-                  style: JournalPalette.heading,
-                ),
-                SizedBox(height: 10),
-                Text(
-                  'The campaign is still processing. The next report or decision will appear here.',
-                  textAlign: TextAlign.center,
-                  style: JournalPalette.small,
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+      return const JournalProcessingView();
     }
     if (embeddedJournal &&
         console.screen != 'article' &&
         console.screen != 'full_map') {
       return _journalManagementPage();
     }
-    final journal = !classic;
     final planning = !classic && console.screen == 'planning';
     final article =
         !classic && console.screen == 'article' && console.article != null;
@@ -2008,189 +1963,113 @@ class _ModernGameShellState extends State<ModernGameShell> {
         : console.journalPeople.isNotEmpty && console.recruitment == null
         ? 'Crew & choices'
         : _screenHeading(rows);
-    return Padding(
-      padding: EdgeInsets.all(compact ? 12 : 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!planning) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
+    final content = classic
+        ? const SizedBox()
+        : planning
+        ? LayoutBuilder(
+            builder: (context, constraints) => Padding(
+              padding: const EdgeInsets.all(16),
+              child: CityPlanningView(
+                console: console,
+                onAction: _send,
+                viewportHeight: constraints.maxHeight - 32,
+              ),
+            ),
+          )
+        : console.screen == 'article' && console.article != null
+        ? ArticleView(article: console.article!)
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(14),
+            child: rows.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        heading,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 21,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -.6,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if ((article || fullMap) && !embeddedJournal)
-                  TextButton.icon(
-                    key: const ValueKey('specialized-return'),
-                    onPressed: () => _send('Enter'),
-                    icon: Icon(
-                      fullMap ? Icons.arrow_back : Icons.arrow_forward,
-                      size: 18,
-                    ),
-                    label: JournalCommandLabel(
-                      shortcut: 'Enter',
-                      label: fullMap ? 'Back to operation' : 'Continue',
-                    ),
-                  )
-                else if (_action('Escape') != null)
-                  TextButton.icon(
-                    onPressed: () => _send('Escape'),
-                    icon: const Icon(Icons.arrow_back, size: 18),
-                    label: const JournalCommandLabel(
-                      shortcut: 'Escape',
-                      label: 'Back',
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (tactical) ...[_movementStrip(), const SizedBox(height: 14)],
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: classic
-                      ? const SizedBox()
-                      : Material(
-                          color: journal
-                              ? JournalPalette.card
-                              : const Color(0xFFFCFAF5),
-                          shape: RoundedRectangleBorder(
-                            side: BorderSide(
-                              color: journal ? JournalPalette.rule : line,
-                            ),
-                            borderRadius: BorderRadius.circular(
-                              journal ? 2 : 7,
+                      for (final graphic in console.graphics)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: SizedBox(
+                              width: 400,
+                              child: AspectRatio(
+                                aspectRatio:
+                                    (graphic.right - graphic.left) /
+                                    (graphic.bottom - graphic.top) *
+                                    .44,
+                                child: graphic.graphic,
+                              ),
                             ),
                           ),
-                          child: planning
-                              ? LayoutBuilder(
-                                  builder: (context, constraints) => Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: CityPlanningView(
-                                      console: console,
-                                      onAction: _send,
-                                      viewportHeight:
-                                          constraints.maxHeight - 32,
-                                    ),
-                                  ),
-                                )
-                              : console.screen == 'article' &&
-                                    console.article != null
-                              ? ArticleView(article: console.article!)
-                              : SingleChildScrollView(
-                                  padding: const EdgeInsets.all(14),
-                                  child: rows.isEmpty
-                                      ? const Center(
-                                          child: CircularProgressIndicator(),
-                                        )
-                                      : Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            for (final graphic
-                                                in console.graphics)
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                  bottom: 20,
-                                                ),
-                                                child: Align(
-                                                  alignment:
-                                                      Alignment.centerLeft,
-                                                  child: SizedBox(
-                                                    width: 400,
-                                                    child: AspectRatio(
-                                                      aspectRatio:
-                                                          (graphic.right -
-                                                              graphic.left) /
-                                                          (graphic.bottom -
-                                                              graphic.top) *
-                                                          .44,
-                                                      child: graphic.graphic,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            if (tactical &&
-                                                game.activeSite != null) ...[
-                                              TacticalMapView(
-                                                onMove: _send,
-                                                showMovementControls: false,
-                                                movementEnabled:
-                                                    !game.siteAlarm ||
-                                                    !game.encounter.any(
-                                                      (person) =>
-                                                          person.isEnemy,
-                                                    ),
-                                              ),
-                                              const SizedBox(height: 22),
-                                              _eyebrow('OPERATION REPORT'),
-                                              const SizedBox(height: 12),
-                                            ],
-                                            if (console.screen == 'full_map')
-                                              const FullSiteMap()
-                                            else if (console.screen ==
-                                                'planning')
-                                              CityPlanningView(
-                                                console: console,
-                                                onAction: _send,
-                                              )
-                                            else
-                                              DirectContent(
-                                                console: console,
-                                                onAction: _send,
-                                                onInspect: _openDossier,
-                                                textInput: console.textInput,
-                                                hiddenRows: tactical
-                                                    ? {
-                                                        for (
-                                                          var row = 11;
-                                                          row <= 22;
-                                                          row++
-                                                        )
-                                                          row,
-                                                      }
-                                                    : const {},
-                                                maxColumn: tactical ? 54 : 80,
-                                              ),
-                                          ],
-                                        ),
-                                ),
                         ),
-                ),
-                if (classic && !compact) ...[
-                  const SizedBox(width: 22),
-                  SizedBox(width: 286, child: _choicePanel()),
-                ],
-              ],
-            ),
-          ),
-          if (classic && compact) SizedBox(height: 180, child: _choicePanel()),
-          if (!planning &&
+                      if (tactical && game.activeSite != null) ...[
+                        TacticalMapView(
+                          onMove: _send,
+                          showMovementControls: false,
+                          movementEnabled:
+                              !game.siteAlarm ||
+                              !game.encounter.any((person) => person.isEnemy),
+                        ),
+                        const SizedBox(height: 22),
+                        _eyebrow('OPERATION REPORT'),
+                        const SizedBox(height: 12),
+                      ],
+                      if (console.screen == 'full_map')
+                        const FullSiteMap()
+                      else if (console.screen == 'planning')
+                        CityPlanningView(console: console, onAction: _send)
+                      else
+                        DirectContent(
+                          console: console,
+                          onAction: _send,
+                          onInspect: _openDossier,
+                          textInput: console.textInput,
+                          hiddenRows: tactical
+                              ? {for (var row = 11; row <= 22; row++) row}
+                              : const {},
+                          maxColumn: tactical ? 54 : 80,
+                        ),
+                    ],
+                  ),
+          );
+    return JournalWorkspaceView(
+      classic: classic,
+      compact: compact,
+      planning: planning,
+      heading: heading,
+      content: content,
+      returnControl: (article || fullMap) && !embeddedJournal
+          ? TextButton.icon(
+              key: const ValueKey('specialized-return'),
+              onPressed: () => _send('Enter'),
+              icon: Icon(
+                fullMap ? Icons.arrow_back : Icons.arrow_forward,
+                size: 18,
+              ),
+              label: JournalCommandLabel(
+                shortcut: 'Enter',
+                label: fullMap ? 'Back to operation' : 'Continue',
+              ),
+            )
+          : _action('Escape') != null
+          ? TextButton.icon(
+              onPressed: () => _send('Escape'),
+              icon: const Icon(Icons.arrow_back, size: 18),
+              label: const JournalCommandLabel(
+                shortcut: 'Escape',
+                label: 'Back',
+              ),
+            )
+          : null,
+      movement: tactical ? _movementStrip() : null,
+      choices: classic ? _choicePanel() : null,
+      input:
+          !planning &&
               !article &&
               !fullMap &&
-              (console.textInput || console.actions.isEmpty)) ...[
-            const SizedBox(height: 10),
-            _inputBar(),
-          ],
-        ],
-      ),
+              (console.textInput || console.actions.isEmpty)
+          ? _inputBar()
+          : null,
     );
   }
 
@@ -2204,15 +2083,12 @@ class _ModernGameShellState extends State<ModernGameShell> {
       'g' => ('Change gender', Icons.person_outline),
       _ => (_clean(action.label), Icons.chevron_right),
     };
-    return TextButton.icon(
-      key: ValueKey('journal-profile-action:${action.key}'),
+    return JournalProfileActionView(
+      key: ValueKey('journal-profile-control:${action.key}'),
+      shortcut: action.key,
+      label: label,
+      icon: icon,
       onPressed: action.enabled ? () => _send(action.key) : null,
-      icon: Icon(icon, size: 16),
-      label: JournalCommandLabel(shortcut: action.key, label: label),
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        minimumSize: const Size(44, 44),
-      ),
     );
   }
 
@@ -2233,63 +2109,39 @@ class _ModernGameShellState extends State<ModernGameShell> {
             (!squadOnly || game.squad.any((person) => person.id == selected.id))
         ? selected.id
         : game.squad.firstOrNull?.id;
-    return Column(
-      key: const ValueKey('journal-management-page'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(8, 4, 4, 7),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  heading == 'Equip the Squad' ? 'Equipment' : heading,
-                  key: const ValueKey('journal-management-heading'),
-                  style: JournalPalette.heading,
-                ),
+    return JournalManagementView(
+      heading: heading == 'Equip the Squad' ? 'Equipment' : heading,
+      backControl: navigation == null
+          ? null
+          : TextButton.icon(
+              key: const ValueKey('journal-management-back'),
+              onPressed: () => _send(navigation.backKey),
+              icon: const Icon(Icons.arrow_back, size: 16),
+              label: JournalCommandLabel(
+                shortcut: navigation.backKey,
+                label: 'Back',
               ),
-              if (navigation != null)
-                TextButton.icon(
-                  key: const ValueKey('journal-management-back'),
-                  onPressed: () => _send(navigation.backKey),
-                  icon: const Icon(Icons.arrow_back, size: 16),
-                  label: JournalCommandLabel(
-                    shortcut: navigation.backKey,
-                    label: 'Back',
-                  ),
-                  style: TextButton.styleFrom(minimumSize: const Size(40, 34)),
-                ),
-            ],
-          ),
-        ),
-        const Divider(height: 1, color: JournalPalette.rule),
-        Expanded(
-          child: SingleChildScrollView(
-            key: PageStorageKey(
-              console.recruitmentTarget == null
-                  ? 'journal-management-scroll:${navigation?.section ?? 'entry'}'
-                  : 'recruitment-targets:${console.recruitmentTarget!.recruiter.id}:${console.recruitmentTarget!.page}',
+              style: TextButton.styleFrom(minimumSize: const Size(40, 34)),
             ),
-            padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (console.graphics.isNotEmpty) _sourceGraphics(),
-                DirectContent(
-                  console: console,
-                  onAction: _send,
-                  onInspect: _openDossier,
-                  textInput: console.textInput,
-                  journalPage: true,
-                  selectedPersonId: selectedId,
-                  hiddenRows: const {0},
-                ),
-              ],
-            ),
+      scrollStorageId: console.recruitmentTarget == null
+          ? 'journal-management-scroll:${navigation?.section ?? 'entry'}'
+          : 'recruitment-targets:${console.recruitmentTarget!.recruiter.id}:${console.recruitmentTarget!.page}',
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (console.graphics.isNotEmpty) _sourceGraphics(),
+          DirectContent(
+            console: console,
+            onAction: _send,
+            onInspect: _openDossier,
+            textInput: console.textInput,
+            journalPage: true,
+            selectedPersonId: selectedId,
+            hiddenRows: const {0},
           ),
-        ),
-        if (console.textInput) _inputBar(),
-      ],
+        ],
+      ),
+      input: console.textInput ? _inputBar() : null,
     );
   }
 
