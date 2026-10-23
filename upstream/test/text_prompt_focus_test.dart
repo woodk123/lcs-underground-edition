@@ -120,4 +120,67 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  testWidgets('an overlay owns F1 and Escape even with game focus restored', (
+    tester,
+  ) async {
+    final prompt = await mountPrompt(tester);
+    await tester.enterText(find.byType(TextField), 'Avery');
+    final dialog = showDialog<void>(
+      context: MainApp.navigatorKey.currentContext!,
+      builder: (_) => const AlertDialog(title: Text('Read-only overlay')),
+    );
+    await tester.pumpAndSettle();
+    final revision = engine.console.revision.value;
+    final gameFocus = tester
+        .widgetList<Focus>(find.byType(Focus))
+        .singleWhere(
+          (widget) => widget.focusNode?.debugLabel == 'Game keyboard',
+        )
+        .focusNode!;
+    gameFocus.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+    await tester.pumpAndSettle();
+    expect(find.text('A small movement. A long game.'), findsNothing);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(engine.console.textInput, isTrue);
+    expect(engine.console.textInputValue, 'Alice');
+    expect(engine.console.revision.value, revision);
+    expect(engine.console.lastKey, isNull);
+    if (find.text('Read-only overlay').evaluate().isNotEmpty) {
+      MainApp.navigatorKey.currentState!.pop();
+    }
+    await dialog;
+    await tester.pumpAndSettle();
+    gameFocus.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await _finishSubmission(tester);
+    expect(await prompt.result, 'Avery');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('F1 opens help above a focused editor and preserves its edits', (
+    tester,
+  ) async {
+    final prompt = await mountPrompt(tester);
+    await tester.enterText(find.byType(TextField), 'Avery');
+    final revision = engine.console.revision.value;
+    await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+    await tester.pumpAndSettle();
+    expect(find.text('A small movement. A long game.'), findsOneWidget);
+    expect(engine.console.textInputValue, 'Alice');
+    expect(engine.console.revision.value, revision);
+    await tester.tap(find.text('Back to the game'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      'Avery',
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await _finishSubmission(tester);
+    expect(await prompt.result, 'Avery');
+    expect(tester.takeException(), isNull);
+  });
 }
