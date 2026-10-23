@@ -19,6 +19,19 @@ await mkdir(output, { recursive: true });
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const decode = save => typeof save.saveData === 'string' ? JSON.parse(save.saveData) : save.saveData;
 const original = JSON.parse(await readFile(resolve(root, 'upstream/test/saves/felix_1_0.json'), 'utf8'));
+const [basePortraits, expandedPortraits] = await Promise.all([
+  'assets/portraits-v2/manifest.json', 'assets/portraits-v4/manifest.json',
+].map(async path => JSON.parse(await readFile(resolve(root, path), 'utf8'))));
+const ordinaryBackgrounds = new Set([
+  'civilian', 'professional', 'trades', 'academic', 'creative', 'security',
+]);
+const ordinaryPortraits = new Map([
+  ...basePortraits.portraits.map(entry => [entry.index, {
+    ...entry, visualAge: Math.round((entry.ageMin + entry.ageMax) / 2),
+  }]),
+  ...expandedPortraits.portraits.filter(entry => ordinaryBackgrounds.has(entry.professionGroup))
+    .map(entry => [entry.index, entry]),
+]);
 const fixture = decode(original);
 const actor = fixture.lcs.pool[0];
 actor.birthDate = `${Number(fixture.date.slice(0, 4)) - 22}-01-01T00:00:00.000`;
@@ -133,9 +146,11 @@ try {
   const before = await exportGame('before-ui-review');
   const repaired = before.lcs.pool.find(person => person.id === actor.id);
   assert.equal(repaired.portraitAssignedAge, 22);
-  assert.ok(repaired.portraitId < 250 && Math.floor(repaired.portraitId % 16 / 4) === 0,
-    'The repaired ordinary adult face must use the 20–30 painted age row.');
-  report.portrait = { characterAge: 22, priorId: 13, priorVisualAge: 68, correctedId: repaired.portraitId, correctedVisualAge: 25 };
+  const correctedPortrait = ordinaryPortraits.get(repaired.portraitId);
+  assert.ok(correctedPortrait, 'The repaired adult must receive an ordinary human portrait.');
+  assert.ok(Math.abs(correctedPortrait.visualAge - 22) <= 8,
+    'The repaired adult face must stay within eight painted years of age22.');
+  report.portrait = { characterAge: 22, priorId: 13, priorVisualAge: 68, correctedId: repaired.portraitId, correctedVisualAge: correctedPortrait.visualAge };
   // Keep the skill paper open while original HQ keys change the actor.
   // The declared Art12/25XP founder and the bundled second member retain their
   // actual skill help; inspection and the pane toggle must not change the save.
@@ -255,14 +270,24 @@ try {
   await click(/^Cancel prepared order$/); // Explicit pointer cancellation preserves this source menu.
   const searchTasks = async (suffix) => {
     const input = page.getByRole('textbox', { name: /Search all tasks/ });
-    await input.fill('training');
+    const enterQuery = async (query) => {
+      // Let Flutter take editing focus before sending text. A synthetic fill
+      // immediately after draft cancellation can race its editing-state sync.
+      await input.click();
+      await waitForUiSettled(page);
+      await input.press('Control+A');
+      await input.pressSequentially(query);
+      await waitForUiSettled(page);
+      assert.equal(await input.inputValue(), query);
+    };
+    await enterQuery('training');
     await wait(/Prepare Practice a Skill/);
     await click(/^Prepare Practice a Skill/);
     assert.ok(await page.getByRole('button', { name: 'Confirm order', exact: true }).isEnabled());
     await capture(`task-search-${suffix}`);
     await click(/^Cancel prepared order$/);
     assert.equal(await input.inputValue(), 'training');
-    await input.fill('money');
+    await enterQuery('money');
     await wait(/Prepare Solicit Donations/);
     await click(/^Prepare Solicit Donations/);
     await click(/^Cancel prepared order$/);

@@ -30,6 +30,8 @@ Before creating the offline manifest, the injector removes renderer files proven
 
 Each release writes `size-report.json` beside the ZIPs and `release-sizes.json` in its build evidence. These account for compressed and extracted sizes by artwork, portraits, renderer, code and other data. Player size limits are in `scripts/release_sizes.py`; exceeding either download or extracted-size limits fails packaging. Source archives are reported separately without a player-size limit. Review the artwork and report before deliberately raising a budget.
 
+The 23 October 2026 portrait expansion adds 1,024 independently reviewed faces in 64 quality-90 WebP atlases: **16,352,176 additional runtime bytes**, preserving the original 256px cells and image policy. A ZIP measurement of the complete isolated browser QA build is **45,179,024 bytes compressed / 63,987,940 bytes extracted** (before small player-launcher wrappers). Its report is `.local/art-review/portraits-v4/size-report.json`; this is a local QA measurement, not a published player. To accommodate the reviewed artwork, browser budgets are now 50 MB download / 70 MB extracted; native download budgets are 60 MB, with 100 MB extracted on Windows and 110 MB on Linux. Native limits include the same additional artwork and engine headroom; these are limits, not measured native package sizes.
+
 ### Quality 90 size measurements (17 October 2026)
 
 Build `94ef3a09529fa35c0ba8e755c4f526a96987af3f` regenerated all 42 runtime images from their original PNG masters at WebP quality 90. Image dimensions, portrait cells and alpha pixels are unchanged. The shared encoder and regenerated manifests make subsequent builds use the same policy; see [artwork regeneration](ASSETS.md).

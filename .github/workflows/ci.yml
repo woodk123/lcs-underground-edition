@@ -47,6 +47,9 @@ jobs:
           path: upstream/build/test_cache
           key: test-kernel-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.shard }}-${{ hashFiles('scripts/toolchain.json', 'upstream/pubspec.lock', 'upstream/pubspec.yaml', 'scripts/ci_worker.py', 'scripts/ci_shards.py', 'scripts/ci_test_weights.json') }}-${{ hashFiles('upstream/lib/**/*.dart', 'upstream/test/**/*.dart') }}
           restore-keys: test-kernel-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.shard }}-${{ hashFiles('scripts/toolchain.json', 'upstream/pubspec.lock', 'upstream/pubspec.yaml', 'scripts/ci_worker.py', 'scripts/ci_shards.py', 'scripts/ci_test_weights.json') }}-
+      - name: Install artwork test dependencies
+        if: matrix.shard == 0
+        run: python -m pip install -r scripts/requirements-art.txt
       - name: Test and analyze
         env:
           CI_TEST_CACHE_HIT: ${{ steps.test-cache.outputs.cache-hit }}

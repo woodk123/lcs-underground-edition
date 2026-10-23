@@ -7,6 +7,8 @@ import 'package:lcs_new_age/creature/gender.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 
+part 'portrait_expansion.dart';
+
 enum PortraitBackground {
   civilian,
   professional,
@@ -45,6 +47,16 @@ class PortraitEntry {
 
   /// Approximate painted age. New casting stays in a suitable age cohort.
   final int visualAge;
+
+  /// Ordinary human artwork is a semantic class, independent of saved ID era.
+  bool get ordinaryHuman => const {
+    PortraitBackground.civilian,
+    PortraitBackground.professional,
+    PortraitBackground.trades,
+    PortraitBackground.academic,
+    PortraitBackground.creative,
+    PortraitBackground.security,
+  }.contains(background);
   String get asset =>
       'assets/modern/portraits_v2/batch_${(id < 250 ? id ~/ 16 : 16 + (id - 250) ~/ 16).toString().padLeft(2, '0')}.webp';
   int get cell => id < 250 ? id % 16 : (id - 250) % 16;
@@ -92,6 +104,7 @@ final List<PortraitEntry> portraitCatalog = List.unmodifiable([
         _ => 0,
       },
     ),
+  ...expandedPortraitEntries,
 ]);
 
 PortraitBackground _specialistBackground(int cell) => switch (cell ~/ 16) {
@@ -335,7 +348,7 @@ int chooseFounderPortrait({
         ? entry.background == PortraitBackground.teenager &&
               (entry.visualAge - age).abs() <= 2 &&
               (age >= 18 || entry.visualAge < 18)
-        : entry.id < 250 ||
+        : entry.ordinaryHuman ||
               const {
                 PortraitBackground.punk,
                 PortraitBackground.goth,
@@ -388,11 +401,21 @@ bool _canKeepSaved(Creature person) {
   if ((entry.visualAge - age).abs() <= _portraitAgeTolerance(age)) return true;
   // A few specialist banks have limited age coverage. Keep the nearest
   // available face rather than repeatedly attempting the same repair.
-  return _ageCandidates(
+  final current = _ageCandidates(
     person,
     atAge: age,
     matchGender: false,
   ).any((candidate) => candidate.id == entry.id);
+  if (current) return true;
+  // An expanded specialist bank must not invalidate a previously appropriate
+  // nearest-age assignment from the original library.
+  return entry.id < 378 &&
+      _ageCandidates(
+        person,
+        atAge: age,
+        matchGender: false,
+        catalogSize: 378,
+      ).any((candidate) => candidate.id == entry.id);
 }
 
 int _portraitAgeTolerance(int age) => age < 30 ? 8 : 12;
@@ -401,10 +424,12 @@ List<PortraitEntry> _ageCandidates(
   Creature person, {
   int? atAge,
   bool matchGender = true,
+  int? catalogSize,
 }) {
   final age = atAge ?? person.age;
   final gender = person.gender.simplified;
   final compatible = portraitCatalog
+      .take(catalogSize ?? portraitCatalog.length)
       .where((entry) => _appropriate(person, entry, atAge: age))
       .where(
         (entry) =>
@@ -568,5 +593,5 @@ bool _appropriate(Creature person, PortraitEntry entry, {int? atAge}) {
     return true;
   }
   if (age >= 75) return entry.background == PortraitBackground.elderly;
-  return entry.id < 250;
+  return entry.ordinaryHuman;
 }

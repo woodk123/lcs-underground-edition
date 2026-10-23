@@ -101,13 +101,18 @@ def verify(root: Path) -> dict:
 
     ids = []
     atlases = set()
-    for library, first, count in (('portraits-v2', 0, 250), ('portraits-v3', 250, 128)):
+    for library, first, count in (('portraits-v2', 0, 250), ('portraits-v3', 250, 128),
+                                  ('portraits-v4', 378, 1024)):
         metadata = read(f'assets/{library}/manifest.json')
         if (metadata['complete'] is not True or metadata['missingAtlases']
                 or metadata['portraitCount'] != count):
             raise ValueError(f'Incomplete portrait library: {library}')
         assets = set()
+        if library == 'portraits-v4' and metadata.get('unapprovedBatches'):
+            raise ValueError('Portrait expansion contains unapproved artwork')
         for atlas in metadata['atlases']:
+            if library == 'portraits-v4' and atlas.get('sourceReview') != 'passed':
+                raise ValueError('Portrait expansion source review missing')
             file(root / 'assets' / library, atlas['source'], atlas['sourceSha256'])
             file(root / 'upstream', atlas['asset'], atlas['runtimeSha256'])
             assets.add(atlas['asset'])

@@ -1,10 +1,10 @@
 # Portrait library
 
-The library has **378 saved identities**: 250 ordinary adults and 128 specialist/age/body portraits. The paintings use approximate age cues; character age comes from the save, not the image.
+The library has **1,402 saved identities**: the original 378 plus an append-only expansion of 1,024. The expansion adds 640 ordinary adults, 192 profession/subculture portraits, 96 children/teenagers, 64 elderly adults and 32 mutants/dogs. The paintings use approximate age cues; character age comes from the save, not the image.
 
 ## Files and IDs
 
-Original PNG sheets and prompts are under `assets/portraits-v2/` and `assets/portraits-v3/`. Their full manifests record source/runtime hashes and crop rectangles. Runtime WebP atlases are `upstream/assets/modern/portraits_v2/`: quality 90 colour for paintings and appearance overlays, with pixel-exact lossless alpha. Each portrait remains in its original 256px cell; saved IDs and crop geometry are unchanged.
+Original PNG sheets and prompts are under `assets/portraits-v2/`, `assets/portraits-v3/` and `assets/portraits-v4/`. Their full manifests record source/runtime hashes and crop rectangles. Runtime WebP atlases are `upstream/assets/modern/portraits_v2/`: quality 90 colour for paintings and appearance overlays, with pixel-exact lossless alpha. Each portrait occupies a 256px cell; the original 378 IDs and crop geometry are unchanged. Expansion sources have individually reviewed row boundaries recorded in `crop-overrides.json`, avoiding adjacent-row strips in otherwise uneven generated sheets.
 
 | IDs | Source batches | Contents |
 |---|---|---|
@@ -17,6 +17,13 @@ Original PNG sheets and prompts are under `assets/portraits-v2/` and `assets/por
 | 330–345 | 21 | Dogs |
 | 346–361 | 22 | Vehicles and other creatures |
 | 362–377 | 23 | Elderly adults |
+| 378–1017 | 24–63 | Ordinary adult civilian, office, trade, academic and creative banks |
+| 1018–1209 | 64–75 | Subcultures, religious, security, office and creative professions |
+| 1210–1257 | 76–78 | Children |
+| 1258–1305 | 79–81 | Teenagers and young adults |
+| 1306–1369 | 82–85 | Elderly adults |
+| 1370–1385 | 86 | Mutants |
+| 1386–1401 | 87 | Dogs |
 
 Preserve these IDs and append new art rather than inserting it. Base IDs use `batch = id ~/ 16`, `cell = id % 16`; specialist IDs use `batch = 16 + (id - 250) ~/ 16`, `cell = (id - 250) % 16`. Human columns alternate presentation; nonhuman casting ignores gender.
 
@@ -37,6 +44,7 @@ Install the regeneration dependency with `python -m pip install -r scripts/requi
 ```powershell
 python scripts/portrait_library.py --partial
 python scripts/specialist_portrait_library.py --partial
+python scripts/expanded_portrait_library.py --partial --runtime-review
 ```
 
 Partial mode validates available sources and writes contact sheets/reports under ignored `.local/art-review/`; it does not publish runtime atlases. Inspect presentation, age cues, crops and duplicates visually—hashes cannot certify an image's visual meaning.
@@ -52,3 +60,9 @@ Set-Location upstream
 ```
 
 Never change an existing atlas slot to an unrelated face without a deliberate save-migration policy.
+
+The expansion packager requires every source PNG hash, both crop-edge arrays and the saved-ID/role/age signature to match independent passed source-art review. Initial publication uses `--approvals .local/art-review/portraits-v4/source-approvals.json`; subsequent regeneration without that option uses the reviewed hashes/edges/signatures retained in `assets/portraits-v4/manifest.json`. New or changed sources or casting metadata cannot inherit an old approval. Partial mode with `--runtime-review` encodes only ignored WebP previews; it never publishes runtime assets. `prompts.json` is the recorded generation brief, with follow-up edits in `prompt-overrides.json`; the planning script refuses to overwrite it.
+
+For a new expansion, use `portrait_face_frames.py --append-expansion` after packaging to detect its human frames while retaining every original frame. Nonhuman cells are excluded using the expansion manifest. The detector requires `opencv-python-headless<5`; missing face detections remain omitted rather than guessed.
+
+`portrait_expansion_render_test.dart` decodes every new runtime atlas and writes actual native renders under `reports/portraits-v4/appearance/`. Columns show plain art, head/left-eye dressings, right-eye/nose dressings, medical clothing, armour/helmet, uniform/mask and ageing. Four diagonal cells per atlas cover all age rows and both presentations. Source-art approval, runtime/overlay review and integrated browser acceptance are separate evidence; a source pass alone is not final acceptance.
