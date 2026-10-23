@@ -1,8 +1,20 @@
 # Testing
 
-Run commands from the repository root unless noted otherwise. Install the [pinned toolchain](BUILDING.md) and resolve dependencies/generate serializers using [Development mode](BUILDING.md#development-mode) first. A release build is not required for unit tests.
+Run commands from the repository root unless noted otherwise. For Flutter checks, install the [pinned toolchain](BUILDING.md) and resolve dependencies/generate serializers using [Development mode](BUILDING.md#development-mode) first. A release build is not required for unit tests. Documentation checks below need only Python.
 
 Start with [focused checks](#choose-focused-checks) while iterating, then [shared acceptance](#shared-acceptance-journey) when the common player journey is affected. [Isolated browser setup](#prepare-an-isolated-web-build) prepares one build for the supplemental graphical journeys below; [release checks](#release-checks) cover extracted packages and manual acceptance.
+
+## Documentation and skill checks
+
+```powershell
+python scripts/verify_docs.py
+```
+
+This local-only check covers root `AGENTS.md`/`README.md`, Markdown under `docs/`, and repository skills under `.agents/skills/`. It checks relative file, directory and image targets, exact path case, Markdown heading anchors and common reference links. Code examples are excluded from link checks, and external destinations are skipped without network requests. It supports this repository's Markdown conventions; it does not render Markdown or validate commands and external pages.
+
+Add `--powershell` on Windows to parse fenced PowerShell examples without executing them. Requested parsing fails explicitly if its parser is unavailable; default link checks need no PowerShell. Use `--json` for structured diagnostics or `--root <checkout>` to inspect another checkout. When changing the verifier, run `python -m unittest discover -s scripts -p test_verify_docs.py -v`.
+
+Ordinary Python test discovery also checks the maintained links in its own checkout or extracted Source ZIP. Live PowerShell parsing remains opt-in.
 
 ## Supported window sizes
 
@@ -27,6 +39,7 @@ Start with the row matching the changed boundary; combine rows when a change cro
 | Source action dispatch or order preparation/commit | `action_identity_test.dart`, `organisation_controller_test.dart`, `organisation_visit_test.dart`, `classic_keyboard_parity_test.dart` | Shared acceptance, plus the affected actual source reader; check stale callbacks and required follow-up choices. |
 | Visit coordination or workspace/profile layouts | `organisation_visit_flow_test.dart`, `organisation_journal_test.dart`, `organisation_visit_test.dart`, `journal_processing_test.dart`, `classic_keyboard_parity_test.dart`, `journal_screen_audit_test.dart` | Shared acceptance and the screen browser sweep at desktop/enlarged reading size. Check squad changes, prepare/cancel/revisit/queue, profile input, focus and retained scrolling. |
 | Save/version handling | `game_version_test.dart`, `save_load_test.dart`, `save_round_trip_test.dart`, `save_recovery_test.dart`, `journal_title_test.dart` | Shared acceptance save transfers and the [version policy](VERSIONING.md#save-compatibility). |
+| Field map/report layout or tactical reader controls | `field_prompt_test.dart`, `mission_input_test.dart`, `tactical_shell_acceptance_test.dart`, `tactical_actions_flow_test.dart` | Mission browser tactical/conversation journeys: retained map bounds, decisions/text, dossier dismissal, source actions and compact/enlarged layout. |
 | Acceptance runner or browser support | `scripts/test_shared_acceptance.py`, `scripts/browser_support.test.mjs` | Run the shared acceptance entry point against one identified build. |
 
 For example, while changing Orders browsing, run the matching files with the pinned SDK:
@@ -90,6 +103,8 @@ The Node command runs the development-MCP and shared browser-support unit tests 
 The tests exercise archive integrity/tampering, complete source snapshots, local and nightly packaging, release-size accounting and limits, unchanged-input detection and safe publication. Flutter regressions also decode every runtime WebP, check atlas dimensions and native alpha fidelity, and exercise conservative web renderer pruning. No live GitHub release is modified by these tests.
 
 `test_serve.py` exercises real loopback HTTP responses and cold asset connection bursts. The accept queue is deliberately held while 48 clients connect, then every queued request must receive its expected response. MIME/security headers, launcher health, directory listing and path protection are also checked. Content-validator regressions cover older archive timestamps, identical file sizes/timestamps, legacy date-only cache requests, weak/list ETags and HEAD responses. The symlink case skips when Windows does not grant fixture creation privileges; no permission change is requested.
+
+Expected browser disconnects do not print server tracebacks when a page or disposable profile closes during an asset response. Unexpected handler/file errors retain their diagnostics; loopback regressions cover both cases and continued serving afterward.
 
 ## Shared acceptance journey
 
@@ -215,7 +230,7 @@ The launcher checks `/__lcs_launcher_health` and rejects a port serving a differ
 
 `tactical_shell_acceptance_test.dart` exercises twelve full-shell scenarios in one application-cache lifetime at desktop and 1024×720/150%. It deliberately restores background game focus while presentation dialogs and menus are open, then tests F/U/G and arrow keys against the same pending reader and complete campaign/map/RNG state. Optional captures under `reports/tactical-acceptance/shell/` are explicitly synthetic. `tactical_actions_flow_test.dart` runs the actual `siteMode` loop against declared synthetic geometry: stairs change floor, G transfers real loot and clears its marker, safe refusal returns to the field, and passive fixtures disable manual Use. The door journey declares Security 50 to guarantee an unlock, checks the standing marker during cancellation and success, then enters through the opened door. Other field fixtures retain the original skills and RNG. `safe_retry_test.dart` supplies Security 1 and then 50 to deterministically test failed attempts, successful retries and one-time rewards for all four safe types. Bulk pawn journeys cover mouse confirmation, cancellation, keyboard Escape and revisiting at both desktop and enlarged layouts. Shop buyer journeys verify initially visible crew choices, cancellation and reopening, then two purchases going only to the selected buyer.
 
-`scripts/mission_browser_review.mjs --only tactical --expected-hash $expected --out reports/tactical-acceptance/browser-final` checks the rebuilt game on isolated port 18879. It follows actual building entry, door opening, combat, retreat and exit using the original fixture's capabilities, plus full-map return, map-key keyboard isolation, compact focus/fit/pan recovery, safe inspection and exact save/reload/reimport continuity. This option stops after the tactical journey; the broader `operation` option also follows any resulting medical treatment.
+`scripts/mission_browser_review.mjs --only tactical --expected-hash $expected --out reports/tactical-acceptance/browser-final` checks the rebuilt game on isolated port 18879. It follows actual building entry, door opening, combat, retreat and exit using the original fixture's capabilities, plus full-map return, map-key keyboard isolation, compact focus/fit/pan recovery, safe inspection and exact save/reload/reimport continuity. Its 1024×720/150% chapter also opens and closes a crew dossier, checks control bounds and blocks original movement/fight/flee/use keys behind inspection. This option stops after the tactical journey; the broader `operation` option also follows any resulting medical treatment and omits the dedicated compact map chapter.
 
 `tactical_loot_qa_test.dart` independently checks dropped-stack snapshots, unsearched/hidden-content isolation, exact catalogue identity, condition and cash labels, door-origin positioning and unchanged campaign/RNG. It exercises local maps, full-floor inspection and item-detail dialogs at desktop and enlarged/short layouts with the real decoded artwork. Set `LCS_CAPTURE_SCREENS=1` to retain the explicitly prepared presentation captures under ignored `reports/tactical-loot-independent-qa/`. The actual G-reader journeys in `tactical_actions_flow_test.dart` separately check both combined unsearched/dropped loot and an illustrated dropped pile, including transfer and marker removal.
 
@@ -320,7 +335,7 @@ The mission helper travels into an actual police building, moves through its ent
 
 If an earned police siege blocks day advancement during actual-injury care, the helper records the siege and still-admitted patients explicitly and preserves that campaign snapshot. It does not claim discharge or resolve the siege by altering state. The separate prepared care scenarios continue to check discharge; siege resolution is outside this helper's coverage.
 
-Each resolved scenario saves and exports through the original menu, reloads the browser, and imports into a fresh storage context. Whole-campaign equality covers character condition, portrait identities, equipment/ammunition, squads, orders, funds and campaign progress. Hospital/court pages are also exercised at 1024×720 with 150% reading size. Screenshots, decision frames, synthetic inputs and exported saves remain under ignored `reports/`. `--only tactical|operation|conversation|paid-care|unpaid-care|custody` helps investigate one scenario; the full acceptance run omits this filter.
+Each resolved scenario saves and exports through the original menu, reloads the browser, and imports into a fresh storage context. Whole-campaign equality covers character condition, portrait identities, equipment/ammunition, squads, orders, funds and campaign progress. Conversation keeps desktop speaker/participant selection, then exercises political choices, invalid input, acknowledgements and any source-offered cancellation at 1024×720/150%, checking action bounds and return to the operation. Hospital/court pages also use compact enlarged reading. Screenshots, decision frames, declared prepared inputs and exported saves remain under ignored `reports/`. `--only tactical|operation|conversation|paid-care|unpaid-care|custody` helps investigate one scenario; the full acceptance run omits this filter.
 
 The helpers locate installed Edge/Chrome in standard Windows directories and accept `--browser-executable <path>` for another installation. They never download a browser, reuse a player profile or clear player storage. Field-input regressions cover retries, source identity/revision checks, the original movement exception and keyboard isolation while inspecting. Recovery regressions cover billing, affordability, conviction records, exact persistence, responsive journal routes and read-only details. These checks do not certify every injury, pursuit, siege, trial outcome or native Windows path.
 

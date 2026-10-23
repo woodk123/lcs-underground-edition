@@ -103,6 +103,8 @@ class ReleasePackageTests(unittest.TestCase):
         self.assertEqual((source / 'upstream/lib/model.g.dart').read_bytes(), (root / 'upstream/lib/model.g.dart').read_bytes())
         self.assertFalse((source / '.tools').exists())
         self.assertFalse((source / 'upstream/build').exists())
+        self.assertFalse((source / 'AGENTS.md').exists())
+        self.assertFalse((source / '.agents').exists())
         self.assertFalse((player / 'source').exists())
         self.assertTrue((source / 'SOURCE_INFO.md').is_file())
         self.assertIn('(../LCS-Underground-Edition-local-test-Source.zip)',
@@ -198,8 +200,10 @@ class ReleasePackageTests(unittest.TestCase):
             package_release.main()
         self.assertEqual(result.exception.code, 2)
 
-    def git_source_fixture(self):
+    def git_source_fixture(self, *, instructions=None):
         root, report, info = self.source_fixture()
+        for name, contents in (instructions or {}).items():
+            put(root, name, contents)
         put(root, '.gitignore', '.tools/\n.local/\nrelease/\nupstream/build/\n')
         subprocess.run(['git', 'init', '-q', str(root)], check=True, capture_output=True)
         subprocess.run(['git', '-C', str(root), 'add', '.'], check=True, capture_output=True)
@@ -218,6 +222,64 @@ class ReleasePackageTests(unittest.TestCase):
         root, report, _ = self.git_source_fixture()
         result = package_release.package(root, report, None, root / 'release/clean', 'clean', None, 'owner/repo')
         self.assertEqual(len(result['assets']), 4)
+
+    def test_extracted_source_repackage_keeps_repository_instructions_and_skill_resources(self):
+        instructions = {
+            'AGENTS.md': '# Repository guidance\nRead README.md before editing.\n',
+            '.agents/skills/example/SKILL.md': '# Example\n[Rules](references/rules.md)\n',
+            '.agents/skills/example/references/rules.md': '# Rules\nRetain original source actions.\n',
+            '.agents/skills/example/scripts/helper.py': 'print("example helper")\n',
+            '.agents/skills/example/assets/template.txt': 'Reusable skill resource.\n',
+            '.agents/skills/example/agents/openai.yaml': 'interface:\n  display_name: Example\n',
+        }
+        root, report, info = self.git_source_fixture(instructions=instructions)
+        original_output = root / 'release/original'
+        package_release.package(root, report, None, original_output, 'original', None, 'owner/repo')
+        original = original_output / 'LCS-Underground-Edition-original-Source'
+        self.assertEqual(verify_package(original)['status'], 'passed')
+        extracted_parent = self.root / 'extracted-original'
+        with zipfile.ZipFile(original.with_suffix('.zip')) as bundle:
+            bundle.extractall(extracted_parent)
+        extracted = extracted_parent / original.name
+        self.assertFalse((extracted / '.git').exists())
+        for source in (original, extracted):
+            for name, contents in instructions.items():
+                self.assertEqual((source / name).read_text(encoding='utf-8'), contents)
+
+        # An extracted Source ZIP is rebuilt before packaging, with local caches
+        # and private tooling state that must not become corresponding source.
+        caches = (
+            '.agents/node_modules/example/package.json',
+            '.agents/.pytest_cache/state',
+            '.agents/skills/example/scripts/__pycache__/helper.pyc',
+            '.agents/skills/example/scripts/helper.pyo',
+            '.agents/skills/example/build/generated.txt',
+            '.agents/skills/example/review.log',
+        )
+        for name in (*caches, '.codex/config.toml'):
+            put(extracted, name, 'local-only state')
+        for name in ('index.html', 'main.dart.js', 'flutter_bootstrap.js', 'sw.js'):
+            put(extracted / 'upstream/build/web', name)
+        put(extracted, '.tools/flutter/LICENSE')
+        output = self.root / 'repackaged'
+        package_release.package(extracted, extracted / 'build-evidence', None, output,
+                                'repackaged', None, 'owner/repo')
+        repackaged = output / 'LCS-Underground-Edition-repackaged-Source'
+        self.assertEqual(verify_package(repackaged)['status'], 'passed')
+        final_parent = self.root / 'extracted-repackaged'
+        with zipfile.ZipFile(repackaged.with_suffix('.zip')) as bundle:
+            bundle.extractall(final_parent)
+        for source in (repackaged, final_parent / repackaged.name):
+            for name, contents in instructions.items():
+                self.assertEqual((source / name).read_text(encoding='utf-8'), contents)
+            for name in caches:
+                self.assertFalse((source / name).exists(), name)
+            self.assertFalse((source / '.codex').exists())
+            self.assertFalse((source / '.tools').exists())
+            self.assertFalse((source / 'upstream/build').exists())
+            metadata = json.loads((source / 'BUILD_INFO.json').read_text(encoding='utf-8'))
+            self.assertEqual(metadata['source_commit'], info['source_commit'])
+            self.assertEqual(metadata['toolchain'], info['toolchain'])
 
     def test_git_source_modified_or_untracked_after_build_is_rejected(self):
         for name in ('upstream/lib/main.dart', 'upstream/lib/new.dart'):

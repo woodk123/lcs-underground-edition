@@ -36,7 +36,7 @@ See [historical package-size evidence](#historical-package-size-evidence) for da
 
 ### Running and packaging players
 
-Double-click **Play.cmd** in the checkout or extracted browser player. It serves `upstream/build/web` in a checkout, or `web/` in a player package, at **http://127.0.0.1:8765/**. Playing requires Python 3 but no Flutter SDK.
+Double-click **Play.cmd** in the checkout or extracted browser player. It serves `upstream/build/web` in a checkout, or `web/` in a player package, at **http://127.0.0.1:8765/**. Playing requires Python 3.9 or later but no Flutter SDK.
 
 Use the same browser profile and address for existing saves. Export important saves before clearing browser data. Do not open `index.html` directly. The loopback server revalidates files by content ETag rather than archive timestamps, so replacing a build with older-dated files still updates the player without clearing saves or offline caches.
 
@@ -66,7 +66,7 @@ Development does not require a clean checkout or release packaging. Inspect an e
 python scripts/developer_doctor.py
 ```
 
-This read-only inventory checks the pinned SDK checkout/cache and this checkout's resolved Dart package roots, reporting repair commands for missing prerequisites. Add `--browser` for Node/browser-helper packages, `--mcp` for browser and development-MCP packages, `--tooling` for the current Python interpreter's pinned Pillow, or `--json` for machine-readable output. It installs nothing and does not establish serializer freshness, current Dart lock resolution, tests, browser launch or build acceptance.
+This read-only inventory checks the pinned SDK checkout/cache, this checkout's resolved Dart package roots and the presence of `.g.dart` outputs referenced by source-authored `part` directives, reporting repair commands for missing prerequisites. Add `--browser` for Node/browser-helper packages, `--mcp` for browser and development-MCP packages, `--tooling` for the current Python interpreter's pinned Pillow, or `--json` for machine-readable output. It installs or generates nothing and does not establish serializer freshness, current Dart lock resolution, tests, browser launch or build acceptance.
 
 After installing the pinned SDK above, verify it and generate dependencies/serializers from the repository root:
 
@@ -84,7 +84,7 @@ try {
 }
 ```
 
-Regenerate serializers after changing saved model fields or JSON annotations. Then start the development game:
+Fresh worktrees can lack ignored serializers even after package resolution succeeds. The doctor reports missing or non-file generated outputs with the pinned `build_runner` remedy; the generator command above is still required before compiling. Regenerate serializers after changing saved model fields or JSON annotations. Then start the development game:
 
 ```powershell
 Set-Location upstream

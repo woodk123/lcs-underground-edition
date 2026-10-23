@@ -41,7 +41,7 @@ The **[0.1.0 release](https://github.com/woodk123/lcs-underground-edition/releas
 
 - **[Windows player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-v0.1.0/LCS-Underground-Edition-underground-v0.1.0-Windows-x64-Player.zip)** — Windows 10/11 (64-bit). Double-click **lcs_new_age.exe**; no Python or Flutter needed.
 - **[Linux x64 player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-v0.1.0/LCS-Underground-Edition-underground-v0.1.0-Linux-x64-Player.zip)** — Ubuntu 22.04 or compatible, with GTK 3. Run **./lcs_new_age**; keep `lib/` and `data/` alongside it.
-- **[Browser player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-v0.1.0/LCS-Underground-Edition-underground-v0.1.0-Web-Player.zip)** — double-click **Play.cmd**. Requires Python 3; opens **http://127.0.0.1:8765/**.
+- **[Browser player ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-v0.1.0/LCS-Underground-Edition-underground-v0.1.0-Web-Player.zip)** — double-click **Play.cmd**. Requires Python 3.9 or later; opens **http://127.0.0.1:8765/**.
 
 The **[matching source ZIP](https://github.com/woodk123/lcs-underground-edition/releases/download/underground-v0.1.0/LCS-Underground-Edition-underground-v0.1.0-Source.zip)** is a separate download for building or modifying the game. See [build instructions](docs/BUILDING.md). If you redistribute a player ZIP, keep its matching source available alongside it under GPL v2.
 

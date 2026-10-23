@@ -10,10 +10,11 @@ import shutil
 import subprocess
 import tomllib
 
+from developer_doctor import check_node, check_node_packages
 from release_common import digest, file_hashes, write_json
 
 ROOT = Path(__file__).resolve().parent.parent
-INPUTS = ('upstream/lib', 'upstream/assets', 'upstream/web',
+INPUTS = ('upstream/lib', 'upstream/assets', 'upstream/fonts', 'upstream/web',
           'upstream/pubspec.yaml', 'upstream/pubspec.lock',
           'upstream/tool/inject_service_worker.dart', 'scripts/toolchain.json',
           'scripts/prepare_dev_mcp.py', 'scripts/release_common.py')
@@ -23,8 +24,13 @@ def source_identity(root: Path) -> dict:
     commit = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
     names = subprocess.check_output(['git', '-C', str(root), 'ls-files', '-z',
                                     '--cached', '--others', '--exclude-standard', '--', *INPUTS])
+    inputs = set(names.decode('utf-8').split('\0')) - {''}
+    # build_runner outputs are ignored by Git but are real compiler inputs.
+    # Include their bytes so editing/deleting one cannot reuse an older player.
+    inputs.update(path.relative_to(root).as_posix()
+                  for path in (root / 'upstream/lib').rglob('*.g.dart') if path.is_file())
     checksum = hashlib.sha256()
-    for name in sorted(set(names.decode('utf-8').split('\0')) - {''}):
+    for name in sorted(inputs):
         path = root / name
         checksum.update(f'{name}\0{digest(path) if path.is_file() else "missing"}\0'.encode('utf-8'))
     return {'commit': commit, 'inputs_sha256': checksum.hexdigest()}
@@ -65,17 +71,30 @@ def install_dependencies(root: Path, output: Path) -> None:
     npm = shutil.which('npm.cmd' if os.name == 'nt' else 'npm')
     if not npm:
         raise ValueError('Install Node.js 20 or later and npm; see docs/DEV_MCP.md.')
+    node_version = check_node()
     marker = output / 'dependencies.json'
     try:
         previous = json.loads(marker.read_text())
     except (OSError, ValueError):
         previous = {}
+    if not isinstance(previous, dict):
+        previous = {}
     current = {}
-    for package, module in [('offline_test', 'playwright'), ('dev_mcp', '@modelcontextprotocol/server')]:
+    for package in ('offline_test', 'dev_mcp'):
         directory = root / 'upstream/tool' / package
         current[package] = digest(directory / 'package-lock.json')
-        if previous.get(package) != current[package] or not (directory / 'node_modules' / module).is_dir():
-            run([npm, 'ci', '--prefix', str(directory), '--no-audit', '--no-fund'], root)
+        try:
+            check_node_packages(root, package, None)
+        except (OSError, ValueError, TypeError, KeyError):
+            needs_install = True
+        else:
+            # A runtime requirement failure cannot be repaired by reinstalling
+            # healthy packages, including when the marker's lock hash is stale.
+            check_node_packages(root, package, node_version)
+            needs_install = previous.get(package) != current[package]
+        if needs_install:
+            run([npm, 'ci', '--prefix', str(directory), '--include=dev', '--no-audit', '--no-fund'], root)
+            check_node_packages(root, package, node_version)
     write_json(marker, current)
 
 

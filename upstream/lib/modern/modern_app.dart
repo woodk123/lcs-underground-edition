@@ -29,6 +29,7 @@ import 'package:lcs_new_age/modern/game_input_policy.dart';
 import 'package:lcs_new_age/modern/headquarters_view.dart';
 import 'package:lcs_new_age/modern/journal_agenda.dart';
 import 'package:lcs_new_age/modern/journal_creation.dart';
+import 'package:lcs_new_age/modern/journal_field_operation_view.dart';
 import 'package:lcs_new_age/modern/journal_ledger.dart';
 import 'package:lcs_new_age/modern/journal_legislation.dart';
 import 'package:lcs_new_age/modern/journal_media.dart';
@@ -1594,6 +1595,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
         final movementEnabled = actions.any(
           (action) => action.entityType == 'field-direction' && action.enabled,
         );
+        final fieldActor = game.activeSquadMember ?? game.squad.firstOrNull;
         void sendFieldAction(String key) {
           final action = actions
               .where((action) => action.key == key)
@@ -1601,218 +1603,120 @@ class _ModernGameShellState extends State<ModernGameShell> {
           if (action != null) _sendFieldAction(action, revision);
         }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    flex: narrow ? 3 : 5,
-                    child: TacticalMapView(
-                      onMove: sendFieldAction,
-                      showHeading: false,
-                      showMovementControls: false,
-                      movementEnabled: movementEnabled,
-                    ),
-                  ),
-                  JournalBinding(width: narrow ? 16 : 26),
-                  Expanded(
-                    flex: narrow ? 2 : 3,
-                    child: JournalSurface(
-                      key: const ValueKey('journal-operation-report'),
-                      padding: const EdgeInsets.all(10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            child: Scrollbar(
-                              controller: _operationScroll,
-                              thumbVisibility: true,
-                              child: SingleChildScrollView(
-                                controller: _operationScroll,
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            fieldPrompt
-                                                ? console.eventTitle ??
-                                                      'Field decision'
-                                                : 'Squad & orders',
-                                            key: fieldPrompt
-                                                ? const ValueKey(
-                                                    'journal-field-prompt',
-                                                  )
-                                                : null,
-                                            style: JournalPalette.heading,
-                                          ),
-                                        ),
-                                        if (game.activeSquadMember ??
-                                                game.squad.firstOrNull
-                                            case final fieldActor?)
-                                          JuiceBadge(
-                                            person: fieldActor,
-                                            compact: true,
-                                            showHelp: false,
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    if (!fieldPrompt)
-                                      Wrap(
-                                        key: const ValueKey(
-                                          'journal-operation-crew',
-                                        ),
-                                        spacing: 8,
-                                        runSpacing: 6,
-                                        children: [
-                                          for (final person in game.squad)
-                                            Tooltip(
-                                              message:
-                                                  '${person.name} · Juice ${person.juice} · ${person.blood}/${person.maxBlood} blood',
-                                              child: Semantics(
-                                                button: true,
-                                                label:
-                                                    'Inspect ${person.name} dossier',
-                                                child: InkWell(
-                                                  key: ValueKey(
-                                                    'field-inspect:${person.id}',
-                                                  ),
-                                                  onTap: () =>
-                                                      _openDossier(person),
-                                                  child: CrewPortrait(
-                                                    person: person,
-                                                    size: 40,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    const SizedBox(height: 10),
-                                    if (fieldPrompt &&
-                                        console.eventMessage != null)
-                                      Text(
-                                        console.eventMessage!,
-                                        key: const ValueKey(
-                                          'journal-field-announcement',
-                                        ),
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          height: 1.5,
-                                        ),
-                                      )
-                                    else
-                                      DirectContent(
-                                        console: console,
-                                        onAction: sendFieldAction,
-                                        onInspect: _openDossier,
-                                        hiddenRows: {
-                                          if (fieldPrompt) ...{
-                                            for (var row = 0; row < 9; row++)
-                                              row,
-                                            23,
-                                            24,
-                                          },
-                                        },
-                                        leadingActionRows: fieldPrompt
-                                            ? const {}
-                                            : const {23, 24},
-                                        rowMaxColumns: {
-                                          for (var row = 11; row <= 22; row++)
-                                            row: 55,
-                                        },
-                                        showActions: !fieldPrompt,
-                                        hideActionLabels: fieldPrompt,
-                                        excludedActionTypes: const {
-                                          'field-direction',
-                                        },
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ),
+        return JournalFieldOperationView(
+          narrow: narrow,
+          maxHeight: bounds.maxHeight,
+          reportScrollController: _operationScroll,
+          map: TacticalMapView(
+            onMove: sendFieldAction,
+            showHeading: false,
+            showMovementControls: false,
+            movementEnabled: movementEnabled,
+          ),
+          heading: Text(
+            fieldPrompt
+                ? console.eventTitle ?? 'Field decision'
+                : 'Squad & orders',
+            key: fieldPrompt ? const ValueKey('journal-field-prompt') : null,
+            style: JournalPalette.heading,
+          ),
+          actorStatus: fieldActor == null
+              ? null
+              : JuiceBadge(person: fieldActor, compact: true, showHelp: false),
+          crew: !fieldPrompt
+              ? Wrap(
+                  key: const ValueKey('journal-operation-crew'),
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    for (final person in game.squad)
+                      Tooltip(
+                        message:
+                            '${person.name} · Juice ${person.juice} · ${person.blood}/${person.maxBlood} blood',
+                        child: Semantics(
+                          button: true,
+                          label: 'Inspect ${person.name} dossier',
+                          child: InkWell(
+                            key: ValueKey('field-inspect:${person.id}'),
+                            onTap: () => _openDossier(person),
+                            child: CrewPortrait(person: person, size: 40),
                           ),
-                          if (fieldPrompt &&
-                              console.eventMessage == null &&
-                              console.actions.isNotEmpty)
-                            ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxHeight: bounds.maxHeight * .45,
-                              ),
-                              child: SingleChildScrollView(
-                                child: Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
+                        ),
+                      ),
+                  ],
+                )
+              : null,
+          body: fieldPrompt && console.eventMessage != null
+              ? Text(
+                  console.eventMessage!,
+                  key: const ValueKey('journal-field-announcement'),
+                  style: const TextStyle(fontSize: 16, height: 1.5),
+                )
+              : DirectContent(
+                  console: console,
+                  onAction: sendFieldAction,
+                  onInspect: _openDossier,
+                  hiddenRows: {
+                    if (fieldPrompt) ...{
+                      for (var row = 0; row < 9; row++) row,
+                      23,
+                      24,
+                    },
+                  },
+                  leadingActionRows: fieldPrompt ? const {} : const {23, 24},
+                  rowMaxColumns: {for (var row = 11; row <= 22; row++) row: 55},
+                  showActions: !fieldPrompt,
+                  hideActionLabels: fieldPrompt,
+                  excludedActionTypes: const {'field-direction'},
+                ),
+          choices:
+              fieldPrompt &&
+                  console.eventMessage == null &&
+                  console.actions.isNotEmpty
+              ? Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final action in actions)
+                      if (action.entityType != 'field-direction')
+                        OutlinedButton(
+                          onPressed: action.enabled
+                              ? () => _sendFieldAction(action, revision)
+                              : null,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              JournalShortcutBadge(shortcut: action.key),
+                              const SizedBox(width: 10),
+                              Flexible(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    for (final action in actions)
-                                      if (action.entityType !=
-                                          'field-direction')
-                                        OutlinedButton(
-                                          onPressed: action.enabled
-                                              ? () => _sendFieldAction(
-                                                  action,
-                                                  revision,
-                                                )
-                                              : null,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              JournalShortcutBadge(
-                                                shortcut: action.key,
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Flexible(
-                                                child: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(_clean(action.label)),
-                                                    if (action.entityType ==
-                                                            'field-speaker' &&
-                                                        action.intentLabel !=
-                                                            null)
-                                                      Text(
-                                                        action.intentLabel!,
-                                                        style: JournalPalette
-                                                            .small,
-                                                      ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
+                                    Text(_clean(action.label)),
+                                    if (action.entityType == 'field-speaker' &&
+                                        action.intentLabel != null)
+                                      Text(
+                                        action.intentLabel!,
+                                        style: JournalPalette.small,
+                                      ),
                                   ],
                                 ),
                               ),
-                            ),
-                          if (fieldPrompt &&
-                              (console.eventMessage != null ||
-                                  console.textInput ||
-                                  console.actions.isEmpty))
-                            _inputBar(),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            JournalSurface(
-              key: const ValueKey('journal-operation-controls'),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              child: _movementStrip(),
-            ),
-          ],
+                            ],
+                          ),
+                        ),
+                  ],
+                )
+              : null,
+          input:
+              fieldPrompt &&
+                  (console.eventMessage != null ||
+                      console.textInput ||
+                      console.actions.isEmpty)
+              ? _inputBar()
+              : null,
+          movement: _movementStrip(),
         );
       },
     ),

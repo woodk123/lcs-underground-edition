@@ -109,6 +109,53 @@ class DevelopmentBuildTests(unittest.TestCase):
         unrelated.write_text('does not compile the development player')
         self.assertEqual(prepare.source_identity(self.root), original)
 
+    def test_ignored_generated_serializers_are_compilation_inputs(self):
+        subprocess.run(['git', 'init', '-q', str(self.root)], check=True)
+        (self.root / '.gitignore').write_text('*.g.dart\n*.tmp\n.local/\n')
+        source = self.root / 'upstream/lib/model.dart'
+        source.parent.mkdir(parents=True)
+        source.write_text("part 'model.g.dart';\n")
+        generated = source.with_name('model.g.dart')
+        generated.write_text('original generated serializer')
+        subprocess.run(['git', '-C', str(self.root), 'add', '.'], check=True)
+        subprocess.run(['git', '-C', str(self.root), '-c', 'user.name=Test',
+                        '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'fixture'], check=True)
+        ignored = subprocess.check_output(['git', '-C', str(self.root), 'ls-files',
+                                           '--others', '--ignored', '--exclude-standard'], text=True)
+        self.assertIn('upstream/lib/model.g.dart', ignored)
+        self.info['source'] = original = prepare.source_identity(self.root)
+        self.write()
+        self.assertEqual(prepare.cached_build(self.path, original, self.web), self.info)
+        generated.write_text('edited generated serializer')
+        changed = prepare.source_identity(self.root)
+        self.assertEqual(changed['commit'], original['commit'])
+        self.assertNotEqual(changed, original)
+        self.assertIsNone(prepare.cached_build(self.path, changed, self.web))
+        generated.unlink()
+        self.assertIsNone(prepare.cached_build(self.path, prepare.source_identity(self.root), self.web))
+        generated.write_text('original generated serializer')
+        self.assertEqual(prepare.source_identity(self.root), original)
+        unrelated = generated.with_suffix('.tmp')
+        unrelated.write_text('temporary non-source output')
+        self.assertEqual(prepare.source_identity(self.root), original)
+
+    def test_font_edits_additions_and_deletions_change_the_fingerprint(self):
+        subprocess.run(['git', 'init', '-q', str(self.root)], check=True)
+        font = self.root / 'upstream/fonts/journal/example.ttf'
+        font.parent.mkdir(parents=True)
+        font.write_bytes(b'original font fixture')
+        subprocess.run(['git', '-C', str(self.root), 'add', 'upstream'], check=True)
+        subprocess.run(['git', '-C', str(self.root), '-c', 'user.name=Test',
+                        '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'fixture'], check=True)
+        original = prepare.source_identity(self.root)
+        font.write_bytes(b'changed font fixture')
+        self.assertNotEqual(prepare.source_identity(self.root), original)
+        font.unlink()
+        removed = prepare.source_identity(self.root)
+        self.assertNotEqual(removed, original)
+        font.with_name('new.ttf').write_bytes(b'new untracked font')
+        self.assertNotEqual(prepare.source_identity(self.root), removed)
+
     def test_project_connection_preserves_settings_is_idempotent_and_rejects_conflicts(self):
         path = self.root / '.codex/config.toml'
         path.parent.mkdir()

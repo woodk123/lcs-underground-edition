@@ -20,6 +20,8 @@ class DoctorTests(unittest.TestCase):
         self.pin = {'flutter_version': '1.2.3', 'flutter_revision': 'a' * 40}
         self.write('scripts/toolchain.json', self.pin)
         self.write('upstream/pubspec.yaml', 'name: lcs_new_age\n')
+        self.write('upstream/lib/model.dart', "part 'model.g.dart';\n")
+        self.write('upstream/lib/model.g.dart', '// generated fixture\n')
         self.sdk = self.root / '.tools/flutter'
         suffix = '.bat' if os.name == 'nt' else ''
         for name in (f'bin/flutter{suffix}', f'bin/dart{suffix}',
@@ -146,6 +148,55 @@ class DoctorTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 doctor.local_uri(base, value)
 
+    def test_missing_generated_outputs_fail_inventory_with_pinned_generation_remedy(self):
+        (self.root / 'upstream/lib/model.g.dart').unlink()
+        self.write('upstream/lib/second.dart', 'part "second.g.dart";\n')
+        (self.root / 'upstream/lib/second.g.dart').mkdir()
+        before = {path.relative_to(self.root): path.read_bytes() for path in self.root.rglob('*') if path.is_file()}
+        with patch.object(doctor.subprocess, 'check_output', return_value=self.pin['flutter_revision']) as subprocess_call:
+            report = doctor.diagnose(self.root)
+        self.assertEqual(report['status'], 'failed')
+        generated = next(check for check in report['checks'] if check['name'] == 'generated-sources')
+        self.assertEqual(generated['status'], 'failed')
+        self.assertIn('upstream/lib/model.g.dart', generated['detail'])
+        self.assertIn('upstream/lib/second.g.dart', generated['detail'])
+        self.assertIn('non-file', generated['detail'])
+        self.assertIn('build_runner build', generated['remedy'])
+        self.assertIn('.tools', generated['remedy'])
+        self.assertEqual(subprocess_call.call_count, 1, 'Only the existing read-only SDK Git check may run.')
+        self.assertEqual({path.relative_to(self.root): path.read_bytes()
+                          for path in self.root.rglob('*') if path.is_file()}, before)
+
+    def test_generated_presence_skips_generated_contents_and_claims_no_freshness(self):
+        path = self.root / 'upstream/lib/model.g.dart'
+        path.write_bytes(b'\xff generated contents need not be parsed\npart "nested.g.dart";\n')
+        os.utime(path, (1, 1))
+        with patch.object(doctor.subprocess, 'check_output') as run:
+            detail = doctor.check_generated_sources(self.root)
+        run.assert_not_called()
+        self.assertIn('1 referenced .g.dart output', detail)
+        self.assertIn('presence only', detail)
+        self.assertIn('freshness not checked', detail)
+
+    def test_generated_presence_recognizes_source_parts_and_ignores_other_directives(self):
+        self.write('upstream/lib/model.dart',
+                   '// part "commented.g.dart";\n'
+                   'part of "parent.g.dart";\n'
+                   'part "hand_authored.dart";\n'
+                   'part "model.g.dart"; // source-authored serializer reference\n')
+        self.assertIn('1 referenced .g.dart output', doctor.check_generated_sources(self.root))
+
+    def test_generated_presence_rejects_source_directory_missing_or_part_escape(self):
+        (self.root / 'upstream/lib/model.dart').unlink()
+        (self.root / 'upstream/lib/model.g.dart').unlink()
+        (self.root / 'upstream/lib').rmdir()
+        with self.assertRaisesRegex(ValueError, 'source directory'):
+            doctor.check_generated_sources(self.root)
+        self.write('outside.g.dart', 'exists but is not generated source for this library')
+        self.write('upstream/lib/model.dart', "part '../../outside.g.dart';\n")
+        with self.assertRaisesRegex(ValueError, 'escapes upstream/lib'):
+            doctor.check_generated_sources(self.root)
+
     def test_lock_checks_transitive_and_scoped_versions_and_missing_installations(self):
         self.assertIn('2 installed package versions', doctor.check_node_packages(self.root, 'offline_test', 'v20.0.0'))
         path = self.root / 'upstream/tool/offline_test/node_modules/transitive/package.json'
@@ -269,7 +320,7 @@ class DoctorTests(unittest.TestCase):
                 patch.object(doctor, 'check_node') as node, patch.object(doctor, 'check_pillow') as pillow:
             report = doctor.diagnose(self.root)
         self.assertEqual(report['status'], 'passed')
-        self.assertEqual([item['name'] for item in report['checks']], ['flutter', 'dart-packages'])
+        self.assertEqual([item['name'] for item in report['checks']], ['flutter', 'dart-packages', 'generated-sources'])
         node.assert_not_called()
         pillow.assert_not_called()
         self.assertEqual(before, {str(path.relative_to(self.root)): path.read_bytes()
@@ -282,7 +333,7 @@ class DoctorTests(unittest.TestCase):
                 patch.object(doctor, 'check_pillow', side_effect=ValueError('missing pillow')):
             report = doctor.diagnose(self.root, mcp=True, tooling=True)
         self.assertEqual(report['status'], 'failed')
-        self.assertEqual(len(report['checks']), 6)
+        self.assertEqual(len(report['checks']), 7)
         failures = [item for item in report['checks'] if item['status'] == 'failed']
         self.assertEqual(len(failures), 4)
         self.assertTrue(all(item['remedy'] for item in failures))

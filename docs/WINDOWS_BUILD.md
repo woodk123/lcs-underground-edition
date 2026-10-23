@@ -16,6 +16,27 @@ This runs the shared tests/analysis, builds web and Windows, then creates **Wind
 
 Do not mix DLLs or data folders from different builds. `BUILD_INFO.json`, `FILES.sha256` and the ZIP sidecars identify the package. See [TESTING.md](TESTING.md) for verification commands and coverage limits.
 
+## Plugin junction setup without Developer Mode
+
+On a machine without symlink privilege, Flutter can resolve packages and then stop with **Building with plugins requires symlink support**. The resolved plugin metadata remains in ignored `upstream/.flutter-plugins-dependencies`. For this checkout, an opt-in helper can prepare directory junctions without changing Windows settings or the SDK:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare_windows_plugins.ps1
+Push-Location upstream
+try {
+    ..\.tools\flutter\bin\flutter.bat --suppress-analytics pub get --offline
+    if ($LASTEXITCODE -ne 0) { throw 'Flutter dependency setup failed.' }
+} finally {
+    Pop-Location
+}
+```
+
+Run the helper after the failed package resolution has generated current metadata with the pinned SDK. It validates every Windows/Linux plugin name, existing target directory, output parent and existing link before creating missing junctions under `upstream/<platform>/flutter/ephemeral/.plugin_symlinks`. Matching links and plugin contents are preserved. Conflicting files/directories, stale links, unexpected entries and paths escaping those generated directories require manual review; the helper never removes or retargets them.
+
+The pinned Flutter tool accepts these existing links while its plugin list is unchanged. Dependency changes can cause Flutter to recreate its generated link directory and encounter the privilege failure again. In that case, run the helper against the refreshed metadata and retry package setup. The offline retry above uses the packages already resolved into the local cache. Continue with the normal build or development MCP commands after it succeeds.
+
+The helper's isolated Windows regressions run with `python -m unittest discover -s scripts -p test_prepare_windows_plugins.py -v`; they create disposable junctions and check target-data preservation without building a player.
+
 ## Saves
 
 Native saves are stored per Windows user under `%APPDATA%\LCS New Age\lcs_new_age\lcs_new_age.db`. Browser saves belong to their browser profile and origin. Use the game's export/import controls to transfer campaigns.

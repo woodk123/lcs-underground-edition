@@ -109,6 +109,31 @@ def check_dart_packages(root: Path) -> str:
     return f'{len(packages)} resolved package roots exist for this checkout and Flutter version.'
 
 
+def check_generated_sources(root: Path) -> str:
+    """Check source-authored, single-line generated-part references for presence."""
+    root = root.resolve()
+    library = root / 'upstream/lib'
+    if not library.is_dir():
+        raise ValueError('Dart source directory is missing: upstream/lib.')
+    # The repository's serializer declarations use ordinary quoted part URIs
+    # on their own line. This is a presence inventory, not a Dart parser/linter.
+    directive = re.compile(r"""^[ \t]*part[ \t]+(['"])([^'"\r\n]+\.g\.dart)\1[ \t]*;[ \t]*(?://[^\r\n]*)?$""",
+                           re.MULTILINE)
+    outputs = set()
+    for source in sorted(library.rglob('*.dart')):
+        if source.name.endswith('.g.dart') or not source.is_file():
+            continue
+        for match in directive.finditer(source.read_text(encoding='utf-8-sig')):
+            target = source.parent / match[2]
+            if not target.resolve().is_relative_to(library):
+                raise ValueError(f'Generated part escapes upstream/lib: {source.relative_to(root).as_posix()} -> {match[2]}')
+            outputs.add(target)
+    missing = [path.relative_to(root).as_posix() for path in sorted(outputs) if not path.is_file()]
+    if missing:
+        raise ValueError('Missing or non-file generated source outputs: ' + ', '.join(missing))
+    return f'{len(outputs)} referenced .g.dart output{"s" if len(outputs) != 1 else ""} present; presence only, freshness not checked.'
+
+
 def check_node() -> str:
     executable = shutil.which('node')
     if not executable:
@@ -197,6 +222,9 @@ def diagnose(root: Path, *, browser=False, mcp=False, tooling=False) -> dict:
             'Install/initialize the pinned SDK using docs/BUILDING.md#toolchain, then follow Development mode.')
     collect('dart-packages', lambda: check_dart_packages(root),
             'Run the pinned Flutter pub get from upstream/; see docs/BUILDING.md#development-mode.')
+    generator = '..\\.tools\\flutter\\bin\\dart.bat' if os.name == 'nt' else '../.tools/flutter/bin/dart'
+    collect('generated-sources', lambda: check_generated_sources(root),
+            f'From upstream/, run {generator} run build_runner build with the pinned SDK; see docs/BUILDING.md#development-mode.')
     if browser or mcp:
         node = collect('node', check_node, 'Install Node.js matching the engines in the committed npm lockfiles; reopen the shell.')
         collect('browser-packages', lambda: check_node_packages(root, 'offline_test', node),
@@ -209,7 +237,7 @@ def diagnose(root: Path, *, browser=False, mcp=False, tooling=False) -> dict:
                 f'Run python -m pip install -r scripts/requirements-art.txt using {sys.executable}.')
     return {'schema': 1, 'root': str(root), 'python': sys.version.split()[0],
             'status': 'failed' if any(check['status'] == 'failed' for check in checks) else 'passed',
-            'scope': 'Local prerequisite inventory; code checks, generated-source freshness, browser launch and build acceptance remain separate.',
+            'scope': 'Local prerequisite inventory including generated-output presence; code checks, serializer freshness, browser launch and build acceptance remain separate.',
             'checks': checks}
 
 

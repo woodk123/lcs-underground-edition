@@ -28,7 +28,7 @@ If local setup is uncertain, run `python scripts/developer_doctor.py` first. The
 
 For a known defect, reproduce the actual failing boundary and start with its existing focused regression. Keep the original reader and exact observed action/revision authoritative; presentation state and source input have different owners. Check the source calculation before changing explanatory text.
 
-For internal tools or documentation, run the relevant tooling tests or verify the documented commands and references. A Flutter player build is useful only when the affected behavior needs it. Keep generated evidence under ignored `.local/` or `reports/` and distinguish a current run from historical evidence.
+For internal tools or documentation, run the relevant tooling tests or verify the documented commands and references. Use the [local documentation check](../../../docs/TESTING.md#documentation-and-skill-checks) after guide or skill edits; it needs no Flutter build. A Flutter player build is useful only when the affected behavior needs it. Keep generated evidence under ignored `.local/` or `reports/` and distinguish a current run from historical evidence.
 
 For UI or routing work, define the complete interaction before editing: retained selection/scroll, cancellation, revisiting, focus and relevant compact/enlarged layouts. Once source settles, use the shared acceptance journey for changes spanning creation, orders, navigation or saves. Preserve its new founder's continuation and separately declared prepared scenarios. Follow the testing guide for supplemental journeys outside that coverage.
 

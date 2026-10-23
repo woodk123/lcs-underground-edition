@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.4.1 — 2026-10-24
+
+* Launch the browser player with Python 3.9 or 3.10 without file-loading errors.
+
 ## Underground Edition 0.4.0 — 2026-10-23
 
 * Meet 1,024 additional faces across adult professions and subcultures, children, teenagers, elderly people, mutants and dogs. Existing saved characters keep their portraits.

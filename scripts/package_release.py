@@ -105,11 +105,13 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
                 copy_file(root / name, source / name)
     else:
         # A prepared source archive is also a supported rebuild root.
-        for name in ('scripts', 'docs', 'assets', '.github'):
+        for name in ('scripts', 'docs', 'assets', '.github', '.agents'):
             if (root / name).is_dir():
                 shutil.copytree(root / name, source / name, ignore=cache_ignore)
         for name in ('README.md', 'AUTHORS.md', 'LICENSE', 'Play.cmd', '.gitignore'):
             copy_file(root / name, source / name)
+        if (root / 'AGENTS.md').is_file():
+            copy_file(root / 'AGENTS.md', source / 'AGENTS.md')
     # Include build_runner outputs and platform source; omit SDKs and build caches.
     shutil.copytree(root / 'upstream', source / 'upstream', ignore=cache_ignore)
     before = file_hashes(source / 'upstream')
@@ -146,7 +148,7 @@ def package(root: Path, report: Path, runtime: Path | None, output: Path, tag: s
             copy_file(root / 'Play.cmd', player / 'Play.cmd')
             for name in WEB_SCRIPTS:
                 copy_file(root / 'scripts' / name, player / 'scripts' / name)
-            instructions = ('Extract the entire folder, then run Play.cmd. Python 3 is required. '
+            instructions = ('Extract the entire folder, then run Play.cmd. Python 3.9 or later is required. '
                             'Keep the same browser and http://127.0.0.1:8765/ address to retain saves. '
                             'On other systems: python3 scripts/serve.py --directory web --port 8765')
         elif target == 'linux-x64':

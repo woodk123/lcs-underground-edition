@@ -19,6 +19,7 @@ from threading import Thread
 import time
 from urllib.request import urlopen
 
+from developer_doctor import check_node, check_node_packages
 from release_common import digest, file_hashes, write_json
 from serve import GameHandler, GameServer
 
@@ -67,13 +68,15 @@ def output_directory(root: Path, value: str) -> Path:
     return output
 
 
-def run_step(report: dict, output: Path, name: str, command: list[str], cwd: Path, *, env=None) -> None:
+def run_step(report: dict, output: Path, name: str, command: list[str], cwd: Path, *, env=None, checkpoint=None) -> None:
     print(f'RUN {name}', flush=True)
     step = {'name': name, 'command': command, 'log': f'{name}.log', 'status': 'running'}
     step['started'] = datetime.now(timezone.utc).isoformat()
     report['steps'].append(step)
     started = time.monotonic()
     try:
+        if checkpoint:
+            checkpoint()
         with (output / step['log']).open('w', encoding='utf-8') as log:
             result = subprocess.run(command, cwd=cwd, env=env, stdout=log, stderr=subprocess.STDOUT,
                                     timeout=1800, check=False)
@@ -87,6 +90,8 @@ def run_step(report: dict, output: Path, name: str, command: list[str], cwd: Pat
     finally:
         step['seconds'] = round(time.monotonic() - started, 3)
         step['completed'] = datetime.now(timezone.utc).isoformat()
+        if checkpoint:
+            checkpoint()
 
 
 def run_browser_plan(dependencies, execute, workers, completed):
@@ -203,6 +208,9 @@ def run(args) -> Path:
               'steps': [], 'browser_suites': []}
     report_path = output / 'report.json'
     write_json(report_path, report)
+    # Serial setup owns the aggregate; browser workers retain their separate
+    # reports until the coordinator collects each completed journey.
+    serial_step = partial(run_step, report, output, checkpoint=lambda: write_json(report_path, report))
     try:
         supplied = args.web_root is not None
         if supplied != bool(args.expected_hash):
@@ -225,30 +233,38 @@ def run(args) -> Path:
         node = shutil.which('node')
         if not flutter.is_file() or not dart.is_file() or not node:
             raise ValueError('Install the pinned Flutter SDK and Node.js; see docs/BUILDING.md.')
-        if not (ROOT / 'upstream/tool/offline_test/node_modules/playwright').is_dir():
-            raise ValueError('Install locked browser dependencies: npm ci --prefix upstream/tool/offline_test')
+        node_version = check_node()
+        try:
+            check_node_packages(ROOT, 'offline_test', None)
+        except (OSError, ValueError, TypeError, KeyError) as error:
+            raise ValueError(f'Locked browser dependencies are invalid: {error} '
+                             'Run npm ci --prefix upstream/tool/offline_test --no-audit --no-fund.') from error
+        try:
+            check_node_packages(ROOT, 'offline_test', node_version)
+        except ValueError as error:
+            raise ValueError(f'{error} Install Node.js satisfying the committed package engine requirements.') from error
         pin = json.loads((ROOT / 'scripts/toolchain.json').read_text())
         # A cold SDK can print bootstrap progress to stdout even with --machine.
         # Warm only the SDK before reading JSON; do not resolve project packages
         # or regenerate serializers until its exact version/revision is checked.
-        run_step(report, output, 'sdk-bootstrap', [str(flutter), '--suppress-analytics', '--version'], ROOT)
+        serial_step('sdk-bootstrap', [str(flutter), '--suppress-analytics', '--version'], ROOT)
         version = json.loads(subprocess.check_output([str(flutter), '--version', '--machine'], text=True))
         if version['frameworkVersion'] != pin['flutter_version'] or version['frameworkRevision'] != pin['flutter_revision']:
             raise ValueError('Flutter SDK does not match scripts/toolchain.json.')
         report['toolchain'] = pin
         with reserve_servers(web, ports) as owned:
-            run_step(report, output, 'dependencies', [str(flutter), 'pub', 'get'], ROOT / 'upstream')
-            run_step(report, output, 'serialization', [str(dart), 'run', 'build_runner', 'build'], ROOT / 'upstream')
+            serial_step('dependencies', [str(flutter), 'pub', 'get'], ROOT / 'upstream')
+            serial_step('serialization', [str(dart), 'run', 'build_runner', 'build'], ROOT / 'upstream')
             report['source'] = source_identity(ROOT)
-            run_step(report, output, 'acceptance-tests', [str(flutter), 'test', '--no-pub',
+            serial_step('acceptance-tests', [str(flutter), 'test', '--no-pub',
                      '--reporter', 'expanded', *[f'test/{name}' for name in TESTS]], ROOT / 'upstream')
             report['test_files'] = list(TESTS)
             if not supplied:
-                run_step(report, output, 'web-build', [str(flutter), 'build', 'web', '--release',
+                serial_step('web-build', [str(flutter), 'build', 'web', '--release',
                          '--no-pub', '--no-wasm-dry-run', f'--output={web}',
                          f'--dart-define=LCS_BUILD={report["source"]["commit"][:8]}',
                          '--dart-define=LCS_CHANNEL=Development'], ROOT / 'upstream')
-                run_step(report, output, 'offline-manifest', [str(dart), 'run',
+                serial_step('offline-manifest', [str(dart), 'run',
                          'tool/inject_service_worker.dart', str(web)], ROOT / 'upstream')
             expected, payload = validate_web_build(web, args.expected_hash if supplied else None)
             if supplied and payload != supplied_payload:

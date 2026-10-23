@@ -10,7 +10,9 @@ Install the pinned Flutter SDK described in [Building](BUILDING.md), Python 3.11
 python scripts/prepare_dev_mcp.py --configure-codex
 ```
 
-This installs locked Node dependencies, verifies the Flutter pin, generates serializers and compiles a development web player under `.local/dev-mcp/web`. It records source and payload hashes in `.local/dev-mcp/build.json`. Subsequent runs reuse that build only when the game inputs, toolchain pin, preparation recipe and every built file still match. Run it after editing game code or the preparation scripts; use `--rebuild` to force compilation. Close active MCP sessions before rebuilding.
+This verifies the Flutter pin, checks the current Node version and locked package inventory, repairs affected Node tool directories with development dependencies included, generates serializers and compiles a development web player under `.local/dev-mcp/web`. Node must meet the committed packages' engine requirements. It records source and payload hashes in `.local/dev-mcp/build.json`. Subsequent runs reuse that build only when the game inputs (including ignored generated `.g.dart` serializers), toolchain pin, preparation recipe and every built file still match. Run it after editing game code or the preparation scripts; use `--rebuild` to force compilation. Close active MCP sessions before rebuilding.
+
+On Windows, package resolution can stop at plugin link creation when symlink privilege is unavailable. Follow the [project-local plugin junction setup](WINDOWS_BUILD.md#plugin-junction-setup-without-developer-mode), then retry preparation. It uses the generated plugin metadata and preserves existing matching links without changing machine settings.
 
 The default `lcs_start` also checks freshness against the current checkout and refuses stale or modified builds. `python scripts/prepare_dev_mcp.py --check` performs that check without rebuilding. Custom historical artifacts are permitted with an explicit `webRoot`; their result reports that source freshness was not checked, and `expectedHash` can pin the intended artifact.
 
@@ -76,7 +78,7 @@ Structured gameplay control does not certify graphical layout, keyboard focus, s
 ## Verification
 
 ```powershell
-python -m unittest discover -s scripts -p test_prepare_dev_mcp.py -v
+python -m unittest discover -s scripts -p 'test_prepare_dev_mcp*.py' -v
 npm test --prefix upstream/tool/dev_mcp
 node scripts/dev_mcp/smoke.mjs
 Push-Location upstream

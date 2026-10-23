@@ -1,14 +1,19 @@
 """Real loopback requests cover concurrent cold loads and static-file safety."""
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import redirect_stderr
 from functools import partial
 from http.client import HTTPConnection, HTTPResponse
+import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import socket
 import tempfile
 import threading
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from serve import GameHandler, GameServer
 
@@ -30,10 +35,10 @@ class GameServerTests(unittest.TestCase):
         (self.root / "main.dart.js").write_bytes(b"console.log('QA');")
         (self.root / "canvaskit.wasm").write_bytes(b"\x00asmQA")
 
-    def server(self):
+    def server(self, handler=QuietGameHandler):
         server = GameServer(
             ("127.0.0.1", 0),
-            partial(QuietGameHandler, directory=str(self.root)),
+            partial(handler, directory=str(self.root)),
         )
         self.addCleanup(server.server_close)
         return server
@@ -112,6 +117,48 @@ class GameServerTests(unittest.TestCase):
         self.assertEqual(int(headers["Content-Length"]), len(body))
         self.assertEqual(headers["Cache-Control"], "no-cache")
         self.assertEqual(headers["X-Content-Type-Options"], "nosniff")
+
+    def test_client_disconnects_do_not_emit_tracebacks_and_server_keeps_serving(self):
+        failures = {
+            '/broken-pipe': BrokenPipeError('Client closed the response'),
+            '/reset': ConnectionResetError('Client reset the response'),
+            '/aborted': ConnectionAbortedError(10053, 'Browser cancelled the response'),
+        }
+
+        class DisconnectedHandler(QuietGameHandler):
+            def do_GET(self):
+                if self.path in failures:
+                    raise failures[self.path]
+                super().do_GET()
+
+        server = self.server(DisconnectedHandler)
+        self.start(server)
+        errors = io.StringIO()
+        with redirect_stderr(errors):
+            for path in failures:
+                with self.subTest(path=path), self.assertRaises(ConnectionError):
+                    self.request(server, path)
+            status, _, body = self.request(server, '/__lcs_launcher_health')
+        self.assertEqual(errors.getvalue(), '')
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)['directory'], str(self.root.resolve()))
+
+    def test_unexpected_handler_errors_keep_their_traceback(self):
+        class FailingHandler(QuietGameHandler):
+            def do_GET(self):
+                if self.path == '/unexpected':
+                    raise RuntimeError('Unexpected fixture failure')
+                super().do_GET()
+
+        server = self.server(FailingHandler)
+        self.start(server)
+        errors = io.StringIO()
+        with redirect_stderr(errors):
+            with self.assertRaises(ConnectionError):
+                self.request(server, '/unexpected')
+            status, _, _ = self.request(server, '/__lcs_launcher_health')
+        self.assertIn('RuntimeError: Unexpected fixture failure', errors.getvalue())
+        self.assertEqual(status, 200)
 
     def test_flutter_assets_have_browser_usable_mime_types_and_security_headers(self):
         server = self.server()
@@ -200,6 +247,59 @@ class GameServerTests(unittest.TestCase):
             "If-None-Match": changed["ETag"],
         }, method="HEAD")
         self.assertEqual((status, body), (304, b""))
+
+    def test_etags_stream_bounded_reads_without_the_python_311_file_digest_api(self):
+        payload = bytes(range(256)) * 4097  # Larger than the hashing read budget.
+        assets = {self.root / "large.bin": payload, self.root / "empty.bin": b""}
+        for path, contents in assets.items():
+            path.write_bytes(contents)
+        asset_paths = {path.resolve() for path in assets}
+        server = self.server()
+        self.start(server)
+        original_open = Path.open
+        reads = []
+
+        class ObservedFile:
+            def __init__(self, source):
+                self.source = source
+                self.hashing = True
+
+            def read(self, size=-1):
+                if self.hashing:
+                    if not 0 < size <= 1024 * 1024:
+                        raise AssertionError(f"Hashing must use bounded reads, got {size}.")
+                    reads.append(size)
+                return self.source.read(size)
+
+            def seek(self, *args):
+                self.hashing = False
+                return self.source.seek(*args)
+
+            def __getattr__(self, name):
+                return getattr(self.source, name)
+
+        def observed_open(path, mode="r", *args, **kwargs):
+            source = original_open(path, mode, *args, **kwargs)
+            return ObservedFile(source) if path.resolve() in asset_paths and mode == "rb" else source
+
+        # Standalone player servers cannot depend on release_common or on an
+        # API absent from otherwise supported Python 3.9/3.10 installations.
+        legacy_hashlib = SimpleNamespace(sha256=hashlib.sha256)
+        with patch("serve.hashlib", legacy_hashlib), patch.object(Path, "open", observed_open):
+            for path, contents in assets.items():
+                with self.subTest(asset=path.name):
+                    expected = '"' + hashlib.sha256(contents).hexdigest() + '"'
+                    status, headers, body = self.request(server, '/' + path.name)
+                    self.assertEqual((status, body), (200, contents))
+                    self.assertEqual(headers["ETag"], expected)
+                    status, headers, body = self.request(server, '/' + path.name, {"If-None-Match": expected})
+                    self.assertEqual((status, body), (304, b""))
+                    self.assertEqual(headers["ETag"], expected)
+                    status, headers, body = self.request(server, '/' + path.name, method="HEAD")
+                    self.assertEqual((status, body), (200, b""))
+                    self.assertEqual(headers["ETag"], expected)
+                    self.assertEqual(int(headers["Content-Length"]), len(contents))
+        self.assertGreater(len(reads), 1, "The real HTTP requests must exercise bounded streaming.")
 
     def test_symlink_cannot_escape_the_served_build(self):
         secret = Path(self.temporary.name) / "secret.txt"
