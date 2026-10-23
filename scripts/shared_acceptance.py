@@ -34,6 +34,7 @@ TESTS = (
     'keyboard_orders_workspace_test.dart', 'keyboard_reader_choices_test.dart',
     'character_presentation_test.dart', 'classic_status_display_test.dart', 'journal_preferences_test.dart',
     'keyboard_navigation_test.dart', 'text_prompt_focus_test.dart',
+    'game_input_policy_test.dart',
     'classic_keyboard_parity_test.dart', 'classic_ledger_keyboard_parity_test.dart',
     'classic_base_keyboard_parity_test.dart', 'classic_menu_labels_test.dart',
     'base_management_controller_test.dart', 'journal_ledger_test.dart',

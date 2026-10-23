@@ -25,6 +25,7 @@ import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/decision_help.dart';
 import 'package:lcs_new_age/modern/direct_content.dart';
 import 'package:lcs_new_age/modern/full_site_map.dart';
+import 'package:lcs_new_age/modern/game_input_policy.dart';
 import 'package:lcs_new_age/modern/headquarters_view.dart';
 import 'package:lcs_new_age/modern/journal_agenda.dart';
 import 'package:lcs_new_age/modern/journal_creation.dart';
@@ -137,33 +138,42 @@ class _ModernGameShellState extends State<ModernGameShell> {
     }
   }
 
-  String? _developmentBlockedReason({bool allowSending = false}) {
-    if (!mounted) return 'shell_unavailable';
-    if (ChangelogWidget.globalKey.currentState?.showing ?? false) {
-      return 'changelog_open';
+  GameInputState _inputState() {
+    if (!mounted) {
+      return const GameInputState(
+        mounted: false,
+        renderedRevisionCurrent: false,
+      );
     }
-    if (_helpOpen || ModalRoute.of(context)?.isCurrent == false) {
-      return 'modal_open';
-    }
-    if (_inspectedPersonId != null) return 'inspection_open';
-    if (_sending && !allowSending ||
-        _navigating ||
-        _journalNavigation.openingSection ||
-        _organisation.busy) {
-      return 'ui_busy';
-    }
-    if (_journalKey.currentState?.hasUnconfirmedDraft ?? false) {
-      return 'unconfirmed_draft';
-    }
-    if (!console.textInput) {
-      final focused = FocusManager.instance.primaryFocus?.context;
-      if (focused?.widget is EditableText ||
-          focused?.findAncestorStateOfType<EditableTextState>() != null) {
-        return 'text_editor_focused';
-      }
-    }
-    return null;
+    final focused = FocusManager.instance.primaryFocus?.context;
+    return GameInputState(
+      classic: _classic,
+      overlayOpen: ModalRoute.of(context)?.isCurrent == false,
+      changelogOpen: ChangelogWidget.globalKey.currentState?.showing ?? false,
+      inspecting: _inspectedPersonId != null,
+      sourceTextInput: console.textInput,
+      helpOpen: _helpOpen,
+      sending: _sending,
+      navigating: _navigating,
+      controllerBusy: _organisation.busy,
+      openingJournalSection: _journalNavigation.openingSection,
+      hasDraft: _journalKey.currentState?.hasUnconfirmedDraft ?? false,
+      entryFocused: _entryFocus.hasFocus,
+      editableFocused:
+          focused?.widget is EditableText ||
+          focused?.findAncestorStateOfType<EditableTextState>() != null,
+      keyboardTraversal: _keyboardTraversal,
+      gameHasPrimaryFocus: _keyboard.hasPrimaryFocus,
+      journalAvailable: _journalKey.currentState != null,
+      renderedRevisionCurrent: _renderedRevision == console.revision.value,
+    );
   }
+
+  String? _developmentBlockedReason({bool allowSending = false}) =>
+      GameInputPolicy.developmentBlockedReason(
+        _inputState(),
+        allowSending: allowSending,
+      );
 
   Future<bool> _developmentInputText(String value, String submit) async {
     if (_developmentBlockedReason() != null || !console.textInput) return false;
@@ -292,10 +302,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
   }
 
   void _send(String key) {
-    if (!_helpOpen &&
-        !_navigating &&
-        !_organisation.busy &&
-        _renderedRevision == console.revision.value) {
+    if (GameInputPolicy.canSendRenderedAction(_inputState())) {
       final wasTextInput = console.textInput;
       final accepted = console.sendInput(key);
       if (accepted && _inspectedPersonId != null && !wasTextInput) {
@@ -369,101 +376,37 @@ class _ModernGameShellState extends State<ModernGameShell> {
     if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.tab) {
       _keyboardTraversal = true;
     }
-    // Browser focus can return to the game while a presentation dialog or
-    // popup menu is still open. Those keys belong to the overlay route.
-    if (ModalRoute.of(context)?.isCurrent == false) {
-      return KeyEventResult.ignored;
-    }
-    if (!_classic &&
-        _inspectedPersonId != null &&
-        !console.textInput &&
-        event is KeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.escape) {
-      setState(() => _inspectedPersonId = null);
-      return KeyEventResult.handled;
-    }
-    if (!_classic && _inspectedPersonId != null && !console.textInput) {
-      // Inspection keys must not become field orders or a siege surrender.
-      return KeyEventResult.ignored;
-    }
-    if (console.textInput &&
-        event is KeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.escape) {
-      unawaited(_submitText(terminalKey: 'Escape'));
-      return KeyEventResult.handled;
-    }
-    if (event is KeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.f1 &&
-        !_helpOpen &&
-        !_sending &&
-        !_navigating &&
-        !_organisation.busy) {
-      unawaited(_help());
-      return KeyEventResult.handled;
-    }
-    if (_entryFocus.hasFocus) {
-      return KeyEventResult.ignored;
-    }
-    final focusedContext = FocusManager.instance.primaryFocus?.context;
-    if (focusedContext?.widget is EditableText ||
-        focusedContext?.findAncestorStateOfType<EditableTextState>() != null) {
-      // Search fields must receive platform text input before game shortcuts.
-      return KeyEventResult.ignored;
-    }
-    if (_helpOpen ||
-        _sending ||
-        _navigating ||
-        _organisation.busy ||
-        event is! KeyDownEvent && event is! KeyRepeatEvent) {
-      return KeyEventResult.ignored;
-    }
-    if (!_classic &&
-        _journalKey.currentState != null &&
-        HardwareKeyboard.instance.isAltPressed &&
-        !HardwareKeyboard.instance.isControlPressed &&
-        !HardwareKeyboard.instance.isMetaPressed &&
-        !HardwareKeyboard.instance.isShiftPressed) {
-      final section = journalSectionForKey(event.logicalKey);
-      if (section != null) {
+    final decision = GameInputPolicy.keyboard(
+      _inputState(),
+      event,
+      alt: HardwareKeyboard.instance.isAltPressed,
+      control: HardwareKeyboard.instance.isControlPressed,
+      meta: HardwareKeyboard.instance.isMetaPressed,
+      shift: HardwareKeyboard.instance.isShiftPressed,
+    );
+    switch (decision.route) {
+      case GameKeyRoute.ignore:
+        return KeyEventResult.ignored;
+      case GameKeyRoute.closeInspection:
+        setState(() => _inspectedPersonId = null);
+        return KeyEventResult.handled;
+      case GameKeyRoute.submitEditedText:
+        // The editor's existing replay guard handles an already-running submit.
+        unawaited(_submitText(terminalKey: 'Escape'));
+        return KeyEventResult.handled;
+      case GameKeyRoute.openHelp:
+        unawaited(_help());
+        return KeyEventResult.handled;
+      case GameKeyRoute.journalSection:
         if (_canSwitchSections && _organisation.canNavigate) {
-          unawaited(_openJournalSectionFromShortcut(section));
+          unawaited(_openJournalSectionFromShortcut(decision.section!.id));
         }
         return KeyEventResult.handled;
-      }
-      final command = switch (event.logicalKey) {
-        LogicalKeyboardKey.keyX => JournalGlobalCommand.saveAndExit,
-        LogicalKeyboardKey.keyW => JournalGlobalCommand.advanceDay,
-        _ => null,
-      };
-      if (command != null) {
-        _journalKey.currentState!.handleGlobalCommand(command);
+      case GameKeyRoute.journalCommand:
+        _journalKey.currentState!.handleGlobalCommand(decision.command!);
         return KeyEventResult.handled;
-      }
-    }
-    if (_keyboardTraversal &&
-        !_keyboard.hasPrimaryFocus &&
-        (event.logicalKey == LogicalKeyboardKey.enter ||
-            event.logicalKey == LogicalKeyboardKey.space)) {
-      // Deliberate Tab traversal activates controls. A pointer-retained focus
-      // must not replace the original reader's Enter/Space meaning.
-      return KeyEventResult.ignored;
-    }
-    if (const [
-          LogicalKeyboardKey.tab,
-          LogicalKeyboardKey.altLeft,
-          LogicalKeyboardKey.altRight,
-          LogicalKeyboardKey.altGraph,
-          LogicalKeyboardKey.shiftLeft,
-          LogicalKeyboardKey.shiftRight,
-          LogicalKeyboardKey.controlLeft,
-          LogicalKeyboardKey.controlRight,
-          LogicalKeyboardKey.metaLeft,
-          LogicalKeyboardKey.metaRight,
-        ].contains(event.logicalKey) ||
-        HardwareKeyboard.instance.isControlPressed ||
-        HardwareKeyboard.instance.isMetaPressed ||
-        HardwareKeyboard.instance.isAltPressed) {
-      return KeyEventResult.ignored;
+      case GameKeyRoute.readerHandlers:
+        break;
     }
     _keyboardTraversal = false;
     final journalKey = keyEventToString(event);
