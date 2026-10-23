@@ -1,5 +1,7 @@
 # Asset coverage audit
 
+Portrait expansion, 23 October 2026: the current asset verifier passes with **306 verified files, 125 runtime images, 88 portrait atlases and 1,402 portraits**. The original 378 identities and their artwork remain intact; 1,024 new identities append after them. Flags and catalogue coverage remain 25 flags, 156 paintings and five exclusions. The catalogue reconciliation below records its earlier 21 October baseline and completion.
+
 Audit date: 21 October 2026. This inventory bounds “missing assets” against the game's authored catalogues and existing visual systems. A generic future-content fallback is not evidence of missing shipped art. Artwork is decorative; names, quantities, condition, installed armor, prices, input and random streams remain owned by the engine.
 
 ## Completed catalogue coverage
@@ -45,7 +47,7 @@ The 14 `armor_upgrades.xml` IDs are recorded separately in the JSON. They are co
 | Orders | All 36 ActivityTypes have a painting | `journal_order_icon.dart`; Visit uses the city painting; recruiting uses personnel art. Shared paintings represent related activities. |
 | Tactical fixtures | All tangible TileSpecial fixtures map to object sprites | `tactical_snapshot.dart` `_objectSprite`. No fixture sprite for `none`, stairs, club bouncers or CCS boss: stairs use Canvas symbols and encounter/person markers use their authored symbols. Unsearched loot and mixed dropped piles use crates; already-created single-type dropped piles use catalogue artwork. Tile details show actual dropped stacks and their thumbnails without generating unsearched contents. |
 | Tactical surfaces and hazards | Existing terrain/object/hazard atlases retained | `tactical_art.dart`, `tactical_symbols.dart`, `tactical_map.dart`; doors, exits, stairs, units, fog, movement cues and graffiti use Canvas artwork. Unknown tiles intentionally expose no sprite metadata. |
-| Portraits | 378 persistent portrait IDs in 24 atlases | Both portrait manifests are complete and verified. Portrait clothing deliberately uses eight appearance classes and injury/helmet/face-covering overlays; it does not require 63 separate portraits per person. Saved portrait IDs must never be renumbered. |
+| Portraits | 1,402 persistent portrait IDs in 88 atlases | The original 378 identities are preserved; 1,024 new identities append from ID378. Three manifests retain source/runtime provenance. Portrait clothing deliberately uses eight appearance classes and injury/helmet/face-covering overlays; it does not require 63 separate portraits per person. Saved portrait IDs must never be renumbered. |
 | Flags | All 25 catalogue SVGs exist; no orphan SVGs | `verify_assets.py` compares `flags.xml` with shipped files. |
 | Journal, city, medical and platform resources | No broken manifest references found | Existing runtime/source hashes, metadata, fonts and atlases are checked by the asset verifier. Live prose, statistics, controls and notices are not missing sprites. |
 

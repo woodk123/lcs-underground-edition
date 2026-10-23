@@ -36,9 +36,10 @@ Fresh-campaign flow regressions include pending recruitment readiness compared w
 
 Month-end regressions exercise actual sleeper handlers, coherent earnings/exposure and delivery reports, unsupported workplaces, blind-time completion and unchanged valid-operation RNG. Production tests compare daily writing/streaming with original influence accumulation and active publication staffing; source publication choices verify one-copy consumption and refusal retaining evidence. Ledger tests cover period labels, required acknowledgement before history capture, source-total reset, bounded local history across restarts/campaign changes/older saves, pagination, keyboard isolation and enlarged reading sizes. Prepared source scenarios are separate from genuinely earned browser playthrough results.
 
-Release tooling uses Python's standard library:
+Release tooling uses Python's standard library, with pinned Pillow for the portrait packager's image-based approval tests. CI installs it on tooling shards; local checks use the same requirement:
 
 ```powershell
+python -m pip install -r scripts/requirements-art.txt
 python -m unittest discover -s scripts -p 'test_*.py' -v
 python scripts/verify_assets.py
 node --test scripts/browser_support.test.mjs

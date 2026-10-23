@@ -1,2 +1,2 @@
-# Regeneration only. Player builds and asset/hash verification do not need Pillow.
+# Artwork regeneration and image-based tooling tests; not needed by player builds or hash verification.
 Pillow==13.0.0

@@ -9,9 +9,9 @@ from release_common import write_json
 
 
 PLAYER_BUDGETS = {
-    'linux-x64': {'archive_bytes': 48_000_000, 'extracted_bytes': 90_000_000},
-    'windows-x64': {'archive_bytes': 48_000_000, 'extracted_bytes': 80_000_000},
-    'web': {'archive_bytes': 40_000_000, 'extracted_bytes': 60_000_000},
+    'linux-x64': {'archive_bytes': 60_000_000, 'extracted_bytes': 110_000_000},
+    'windows-x64': {'archive_bytes': 60_000_000, 'extracted_bytes': 100_000_000},
+    'web': {'archive_bytes': 50_000_000, 'extracted_bytes': 70_000_000},
 }
 
 

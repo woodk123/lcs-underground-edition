@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.4.0 — 2026-10-23
+
+* Meet 1,024 additional faces across adult professions and subcultures, children, teenagers, elderly people, mutants and dogs. Existing saved characters keep their portraits.
+
 ## Underground Edition 0.3.0 — 2026-10-21
 
 * Search daily orders across every category using task names or goals such as money, training, recruiting and healing. Search results prepare the original order for confirmation, with unavailable choices explained.

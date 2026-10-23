@@ -28,14 +28,18 @@ void main() {
     ..gender = Gender.female
     ..birthDate = DateTime(1985);
 
-  test('378 stable catalog IDs preserve original atlas cells', () {
-    expect(portraitCatalog.length, 378);
-    expect(portraitCatalog.map((entry) => entry.id).toSet().length, 378);
+  test('1402 stable catalog IDs preserve original atlas cells', () {
+    expect(portraitCatalog.length, 1402);
+    expect(portraitCatalog.map((entry) => entry.id).toSet().length, 1402);
+    expect(
+      portraitCatalog.map((entry) => entry.id),
+      List.generate(1402, (id) => id),
+    );
     expect(portraitCatalog[249].asset, endsWith('batch_15.webp'));
     expect(portraitCatalog[249].cell, 9);
     expect(
       portraitCatalog.where((entry) => entry.gender == Gender.female).length,
-      189,
+      693,
     );
   });
 
@@ -55,7 +59,7 @@ void main() {
     expect(ensurePortraitId(clone), portrait);
     expect(ensurePortraitId(person), portrait);
     person.portraitId = 10000;
-    expect(ensurePortraitId(person), inInclusiveRange(0, 377));
+    expect(ensurePortraitId(person), inInclusiveRange(0, 1401));
   });
 
   test(
@@ -100,20 +104,22 @@ void main() {
     game.gameState.datingSessions.clear();
     game.gameState.recruitmentSessions.clear();
     final ids = <int>[];
-    for (var index = 0; index < 125; index++) {
+    final suitable = portraitCatalog
+        .where(
+          (entry) =>
+              entry.ordinaryHuman &&
+              entry.gender == Gender.female &&
+              (entry.visualAge - adult(1).age).abs() <= 12,
+        )
+        .toList();
+    for (var index = 0; index < suitable.length; index++) {
       final person = adult(1000 + index);
       game.pool.add(person);
       ids.add(ensurePortraitId(person));
     }
-    final suitable = portraitCatalog.where(
-      (entry) =>
-          entry.id < 250 &&
-          entry.gender == Gender.female &&
-          (entry.visualAge - adult(1).age).abs() <= 12,
-    );
     expect(ids.toSet().length, suitable.length);
     expect(ids.toSet(), suitable.map((entry) => entry.id).toSet());
-    final next = adult(2000);
+    final next = adult(20000);
     expect(ids, contains(ensurePortraitId(next)));
   });
 
@@ -144,6 +150,69 @@ void main() {
     expect(cast(1), isNot(cast(2)));
   });
 
+  test(
+    'expanded ordinary faces enter founder cycling and persist in saves',
+    () {
+      final seen = <int>{};
+      int? selected;
+      for (var index = 0; index < portraitCatalog.length; index++) {
+        selected = chooseFounderPortrait(
+          gender: Gender.female,
+          age: 22,
+          seed: 44,
+          after: selected,
+        );
+        if (!seen.add(selected)) break;
+      }
+      expect(seen.any((id) => id >= 378), isTrue);
+      final person = adult(99000)
+        ..birthDate = DateTime(game.date.year - 22)
+        ..portraitId = 378
+        ..portraitAssignedAge = 22;
+      final restored = Creature.fromJson(jsonDecode(jsonEncode(person)));
+      expect(ensurePortraitId(restored), 378);
+      restored.birthDate = DateTime(restored.birthDate.year - 1);
+      expect(ensurePortraitId(restored), 378);
+      expect(restored.portraitAssignedAge, 22);
+    },
+  );
+
+  test(
+    'expanding nearest-age specialist artwork preserves legacy saved faces',
+    () {
+      final person = adult(99001)
+        ..typeId = CreatureTypeIds.mutant
+        ..birthDate = DateTime(game.date.year - 100)
+        ..portraitId = 294
+        ..portraitAssignedAge = 100;
+      expect(portraitCatalog[294].visualAge, 68);
+      expect(ensurePortraitId(person), 294);
+      final restored = Creature.fromJson(jsonDecode(jsonEncode(person)));
+      expect(ensurePortraitId(restored), 294);
+      person.portraitId = null;
+      final newer = ensurePortraitId(person);
+      expect(newer, greaterThanOrEqualTo(378));
+      expect(portraitCatalog[newer].visualAge, 73);
+    },
+  );
+
+  test('four-digit teen and nonhuman identities survive JSON round trips', () {
+    final teen = adult(99002)
+      ..birthDate = DateTime(game.date.year - 14)
+      ..portraitId = 1258
+      ..portraitAssignedAge = 14;
+    final dog = adult(99003)
+      ..typeId = CreatureTypeIds.guardDog
+      ..body = dogBody()
+      ..portraitId = 1401
+      ..portraitAssignedAge = 4;
+    for (final person in [teen, dog]) {
+      final restored = Creature.fromJson(jsonDecode(jsonEncode(person)));
+      expect(ensurePortraitId(restored), person.portraitId);
+      expect(restored.portraitAssignedAge, person.portraitAssignedAge);
+    }
+  });
+
   test('profession and age softly weight selection', () {
     game.pool.clear();
     game.encounter.clear();
@@ -162,8 +231,10 @@ void main() {
       greaterThan(260),
     );
     expect(
-      entries.where((entry) => entry.visualAge == 68).length,
-      greaterThan(220),
+      entries.every(
+        (entry) => (entry.visualAge - (game.date.year - 1950)).abs() <= 12,
+      ),
+      isTrue,
     );
   });
 
@@ -200,9 +271,9 @@ void main() {
       game.encounter.clear();
       final young = portraitCatalog.where(
         (entry) =>
-            entry.id < 250 &&
+            entry.ordinaryHuman &&
             entry.gender == Gender.female &&
-            entry.visualAge == 25,
+            (entry.visualAge - 22).abs() <= 8,
       );
       for (final face in young) {
         game.pool.add(
@@ -215,7 +286,10 @@ void main() {
       final newcomer = adult(71000)..birthDate = DateTime(game.date.year - 22);
       final face = ensurePortraitId(newcomer);
       expect(young.map((entry) => entry.id), contains(face));
-      expect(portraitCatalog[face].visualAge, 25);
+      expect(
+        (portraitCatalog[face].visualAge - 22).abs(),
+        lessThanOrEqualTo(8),
+      );
     },
   );
 
@@ -225,9 +299,19 @@ void main() {
       ..birthDate = DateTime(game.date.year - 22);
     final olderPunk = adult(72001)
       ..typeId = CreatureTypeIds.punk
-      ..birthDate = DateTime(game.date.year - 70);
-    expect(portraitCatalog[ensurePortraitId(youngBiker)].visualAge, 25);
-    expect(portraitCatalog[ensurePortraitId(olderPunk)].visualAge, 68);
+      ..birthDate = DateTime(game.date.year - 95);
+    expect(
+      (portraitCatalog[ensurePortraitId(youngBiker)].visualAge - 22).abs(),
+      lessThanOrEqualTo(8),
+    );
+    expect(
+      (portraitCatalog[ensurePortraitId(olderPunk)].visualAge - 95).abs(),
+      lessThanOrEqualTo(12),
+    );
+    expect(
+      portraitCatalog[ensurePortraitId(olderPunk)].background,
+      PortraitBackground.elderly,
+    );
     // A bank with no closer mutant artwork uses its nearest compatible face
     // and retains it, rather than repeatedly rerolling the same saved record.
     final elderMutant = adult(72002)
@@ -235,43 +319,43 @@ void main() {
       ..birthDate = DateTime(game.date.year - 100);
     final mutantFace = ensurePortraitId(elderMutant);
     expect(portraitCatalog[mutantFace].background, PortraitBackground.mutant);
-    expect(portraitCatalog[mutantFace].visualAge, 68);
+    expect(portraitCatalog[mutantFace].visualAge, 73);
     expect(ensurePortraitId(elderMutant), mutantFace);
   });
 
-  test(
-    'migration repairs badly aged saved faces once and keeps appropriate identities',
-    () {
-      game.pool.clear();
-      game.encounter.clear();
-      final mismatch = adult(73000)
-        ..birthDate = DateTime(game.date.year - 22)
-        ..portraitId =
-            12 // Visual age 68 on a character assigned at 22.
-        ..portraitAssignedAge = 22;
-      final appropriate = adult(73001)
-        ..birthDate = DateTime(game.date.year - 22)
-        ..portraitId =
-            0 // Visual age 25.
-        ..portraitAssignedAge = 22;
-      game.pool.addAll([mismatch, appropriate]);
-      reseedRNG(seed: 812);
-      final expectedRolls = List.generate(8, (_) => lcsRandom(100000));
-      reseedRNG(seed: 812);
-      assignKnownPortraits();
-      expect(portraitCatalog[mismatch.portraitId!].visualAge, 25);
-      expect(appropriate.portraitId, 0);
-      expect(List.generate(8, (_) => lcsRandom(100000)), expectedRolls);
-      final corrected = mismatch.portraitId;
-      final restored = Creature.fromJson(jsonDecode(jsonEncode(mismatch)));
-      expect(ensurePortraitId(restored), corrected);
-      appropriate.birthDate = DateTime(appropriate.birthDate.year - 20);
-      expect(ensurePortraitId(appropriate), 0);
-      expect(appropriate.portraitAssignedAge, 22);
-      assignKnownPortraits();
-      expect(mismatch.portraitId, corrected);
-    },
-  );
+  test('migration repairs badly aged saved faces once and keeps appropriate identities', () {
+    game.pool.clear();
+    game.encounter.clear();
+    final mismatch = adult(73000)
+      ..birthDate = DateTime(game.date.year - 22)
+      ..portraitId =
+          12 // Visual age 68 on a character assigned at 22.
+      ..portraitAssignedAge = 22;
+    final appropriate = adult(73001)
+      ..birthDate = DateTime(game.date.year - 22)
+      ..portraitId =
+          0 // Visual age 25.
+      ..portraitAssignedAge = 22;
+    game.pool.addAll([mismatch, appropriate]);
+    reseedRNG(seed: 812);
+    final expectedRolls = List.generate(8, (_) => lcsRandom(100000));
+    reseedRNG(seed: 812);
+    assignKnownPortraits();
+    expect(
+      (portraitCatalog[mismatch.portraitId!].visualAge - 22).abs(),
+      lessThanOrEqualTo(8),
+    );
+    expect(appropriate.portraitId, 0);
+    expect(List.generate(8, (_) => lcsRandom(100000)), expectedRolls);
+    final corrected = mismatch.portraitId;
+    final restored = Creature.fromJson(jsonDecode(jsonEncode(mismatch)));
+    expect(ensurePortraitId(restored), corrected);
+    appropriate.birthDate = DateTime(appropriate.birthDate.year - 20);
+    expect(ensurePortraitId(appropriate), 0);
+    expect(appropriate.portraitAssignedAge, 22);
+    assignKnownPortraits();
+    expect(mismatch.portraitId, corrected);
+  });
 
   test(
     'children, teens and nonhumans receive appropriate specialist faces',
@@ -335,6 +419,10 @@ void main() {
     expect(portraitCatalog[250].cell, 0);
     expect(portraitCatalog[377].asset, endsWith('batch_23.webp'));
     expect(portraitCatalog[377].cell, 15);
+    expect(portraitCatalog[378].asset, endsWith('batch_24.webp'));
+    expect(portraitCatalog[378].cell, 0);
+    expect(portraitCatalog[1401].asset, endsWith('batch_87.webp'));
+    expect(portraitCatalog[1401].cell, 15);
     for (final entry in portraitCatalog) {
       expect(entry.cell, inInclusiveRange(0, 15));
     }
@@ -423,7 +511,17 @@ void main() {
         final variants = seen.putIfAbsent(id, () => <int>{});
         expect(variants.add(person.portraitVariant!), isTrue);
       }
-      expect(seen.length, 2);
+      expect(
+        seen.length,
+        portraitCatalog
+            .where(
+              (entry) =>
+                  entry.background == PortraitBackground.punk &&
+                  entry.gender == Gender.female &&
+                  (entry.visualAge - 22).abs() <= 8,
+            )
+            .length,
+      );
     },
   );
 
@@ -495,6 +593,6 @@ void main() {
   test('negative legacy identity values still produce a valid portrait', () {
     game.gameState.uniqueGameId = -123;
     final person = adult(-1000);
-    expect(ensurePortraitId(person), inInclusiveRange(0, 377));
+    expect(ensurePortraitId(person), inInclusiveRange(0, 1401));
   });
 }

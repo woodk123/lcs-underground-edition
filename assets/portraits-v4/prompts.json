@@ -1,0 +1,841 @@
+{
+  "version": 4,
+  "generator": "built-in image_gen",
+  "targetPortraitCount": 1024,
+  "firstId": 378,
+  "lastId": 1401,
+  "batches": [
+    {
+      "batch": 24,
+      "firstId": 378,
+      "group": "civilian",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain casual shirts, knitwear and lightweight jackets. Row 1: Latino woman, age 22, straight chin-length bob, wide cheekbones; Black man, age 22, short beard and swept hair, prominent rounded nose; Pacific Islander woman, age 22, shoulder-length waves, long narrow face; Southeast Asian man, age 22, short coiled hair, broad square face. Row 2: white woman, age 32, straight chin-length bob, round face; Latino man, age 32, bald head and stubble, prominent rounded nose; Middle Eastern woman, age 32, loose braid, wide cheekbones; mixed Black and white man, age 32, short coiled hair, broad square face. Row 3: mixed Black and white woman, age 47, loose braid, wide cheekbones; Southeast Asian man, age 47, short beard and swept hair, broad square face; Indigenous American woman, age 47, low ponytail, broad square face; white man, age 47, close-cropped hair, round face. Row 4: South Asian woman, age 62, short coils, soft oval face, naturally grey or silver hair and age-appropriate skin; mixed Black and white man, age 62, close-cropped hair, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Latino woman, age 62, tied-back locs, angular cheekbones, naturally grey or silver hair and age-appropriate skin; Pacific Islander man, age 62, neat moustache and short hair, prominent rounded nose, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 25,
+      "firstId": 394,
+      "group": "civilian",
+      "category": "ordinary",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain casual shirts, knitwear and lightweight jackets. Row 1: East Asian woman, age 25, tight bun, long narrow face; Indigenous American man, age 25, wavy fringe, wide cheekbones; white woman, age 25, wavy pixie, wide cheekbones; Black man, age 25, cropped waves, long narrow face. Row 2: Indigenous American woman, age 38, shoulder-length waves, angular cheekbones; mixed Asian and Latino man, age 38, close-cropped hair, broad square face; white woman, age 38, loose braid, angular cheekbones; Southeast Asian man, age 38, cropped waves, narrow chin. Row 3: Indigenous American woman, age 53, tied-back locs, wide cheekbones; Pacific Islander man, age 53, short beard and swept hair, narrow chin; East Asian woman, age 53, shoulder-length waves, narrow chin; South Asian man, age 53, short coiled hair, round face. Row 4: mixed Asian and Latino woman, age 68, short natural curls, long narrow face, naturally grey or silver hair and age-appropriate skin; South Asian man, age 68, receding temples, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Southeast Asian woman, age 68, straight chin-length bob, angular cheekbones, naturally grey or silver hair and age-appropriate skin; Pacific Islander man, age 68, receding temples, narrow chin, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 26,
+      "firstId": 410,
+      "group": "civilian",
+      "category": "ordinary",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain casual shirts, knitwear and lightweight jackets. Row 1: South Asian woman, age 28, loose braid, broad square face; Middle Eastern man, age 28, straight side-part, soft oval face; Latino woman, age 28, straight chin-length bob, long narrow face; Middle Eastern man, age 28, bald head and stubble, prominent rounded nose. Row 2: Black woman, age 44, low ponytail, long narrow face; white man, age 44, receding temples, broad square face; Latino woman, age 44, short coils, round face; Southeast Asian man, age 44, bald head and stubble, round face. Row 3: Southeast Asian woman, age 59, short coils, angular cheekbones; white man, age 59, straight side-part, broad square face; Black woman, age 59, straight chin-length bob, soft oval face; Indigenous American man, age 59, receding temples, broad square face. Row 4: Indigenous American woman, age 73, tied-back locs, broad square face, naturally grey or silver hair and age-appropriate skin; white man, age 73, shaved head, soft oval face, naturally grey or silver hair and age-appropriate skin; Middle Eastern woman, age 73, loose braid, broad square face, naturally grey or silver hair and age-appropriate skin; Southeast Asian man, age 73, shaved head, wide cheekbones, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 27,
+      "firstId": 426,
+      "group": "civilian",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain casual shirts, knitwear and lightweight jackets. Row 1: mixed Black and white woman, age 22, short coils, angular cheekbones; South Asian man, age 22, short curls, wide cheekbones; South Asian woman, age 22, low ponytail, prominent rounded nose; East Asian man, age 22, bald head and stubble, wide cheekbones. Row 2: white woman, age 32, short natural curls, soft oval face; Middle Eastern man, age 32, receding temples, wide cheekbones; Southeast Asian woman, age 32, short coils, long narrow face; white man, age 32, curly crop, broad square face. Row 3: Black woman, age 47, tied-back locs, prominent rounded nose; mixed Asian and Latino man, age 47, close-cropped hair, wide cheekbones; South Asian woman, age 47, close-cropped hair, wide cheekbones; mixed Asian and Latino man, age 47, straight side-part, prominent rounded nose. Row 4: mixed Black and white woman, age 62, swept-back curls, narrow chin, naturally grey or silver hair and age-appropriate skin; South Asian man, age 62, neat moustache and short hair, soft oval face, naturally grey or silver hair and age-appropriate skin; Pacific Islander woman, age 62, loose braid, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Black man, age 62, shaved head, long narrow face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 28,
+      "firstId": 442,
+      "group": "civilian",
+      "category": "ordinary",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain casual shirts, knitwear and lightweight jackets. Row 1: white woman, age 25, close-cropped hair, long narrow face; Southeast Asian man, age 25, straight side-part, soft oval face; North African woman, age 25, short coils, long narrow face; North African man, age 25, wavy fringe, angular cheekbones. Row 2: Indigenous American woman, age 38, low ponytail, angular cheekbones; mixed Asian and Latino man, age 38, short curls, prominent rounded nose; white woman, age 38, cropped side-part, round face; North African man, age 38, short curls, long narrow face. Row 3: mixed Black and white woman, age 53, cropped side-part, long narrow face; Latino man, age 53, straight side-part, long narrow face; North African woman, age 53, tight bun, round face; white man, age 53, short curls, long narrow face. Row 4: South Asian woman, age 68, close-cropped hair, round face, naturally grey or silver hair and age-appropriate skin; Black man, age 68, wavy fringe, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Latino woman, age 68, shoulder-length waves, long narrow face, naturally grey or silver hair and age-appropriate skin; Indigenous American man, age 68, neat moustache and short hair, round face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 29,
+      "firstId": 458,
+      "group": "civilian",
+      "category": "ordinary",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain casual shirts, knitwear and lightweight jackets. Row 1: white woman, age 28, loose braid, angular cheekbones; Middle Eastern man, age 28, short beard and swept hair, angular cheekbones; North African woman, age 28, straight chin-length bob, wide cheekbones; North African man, age 28, short curls, angular cheekbones. Row 2: Latino woman, age 44, tied-back locs, broad square face; South Asian man, age 44, wavy fringe, narrow chin; Indigenous American woman, age 44, short natural curls, prominent rounded nose; Southeast Asian man, age 44, cropped waves, angular cheekbones. Row 3: Indigenous American woman, age 59, shoulder-length waves, broad square face; North African man, age 59, neat moustache and short hair, round face; East Asian woman, age 59, short natural curls, round face; white man, age 59, short coiled hair, angular cheekbones. Row 4: Latino woman, age 73, swept-back curls, narrow chin, naturally grey or silver hair and age-appropriate skin; Latino man, age 73, short curls, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Southeast Asian woman, age 73, shoulder-length waves, narrow chin, naturally grey or silver hair and age-appropriate skin; mixed Black and white man, age 73, close-cropped hair, round face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 30,
+      "firstId": 474,
+      "group": "civilian",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain casual shirts, knitwear and lightweight jackets. Row 1: Latino woman, age 22, short coils, wide cheekbones; Latino man, age 22, short coiled hair, angular cheekbones; Middle Eastern woman, age 22, short natural curls, broad square face; mixed Black and white man, age 22, receding temples, broad square face. Row 2: mixed Asian and Latino woman, age 32, cropped side-part, wide cheekbones; Black man, age 32, bald head and stubble, wide cheekbones; South Asian woman, age 32, tied-back locs, broad square face; North African man, age 32, short coiled hair, long narrow face. Row 3: South Asian woman, age 47, straight chin-length bob, narrow chin; mixed Black and white man, age 47, close-cropped hair, broad square face; Pacific Islander woman, age 47, tied-back locs, round face; Middle Eastern man, age 47, bald head and stubble, soft oval face. Row 4: East Asian woman, age 62, short natural curls, angular cheekbones, naturally grey or silver hair and age-appropriate skin; Latino man, age 62, short curls, long narrow face, naturally grey or silver hair and age-appropriate skin; South Asian woman, age 62, tight bun, round face, naturally grey or silver hair and age-appropriate skin; Middle Eastern man, age 62, curly crop, wide cheekbones, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 31,
+      "firstId": 490,
+      "group": "civilian",
+      "category": "ordinary",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain casual shirts, knitwear and lightweight jackets. Row 1: mixed Black and white woman, age 25, swept-back curls, wide cheekbones; Southeast Asian man, age 25, receding temples, long narrow face; white woman, age 25, swept-back curls, prominent rounded nose; South Asian man, age 25, receding temples, narrow chin. Row 2: Black woman, age 38, tied-back locs, round face; Indigenous American man, age 38, straight side-part, narrow chin; Middle Eastern woman, age 38, low ponytail, wide cheekbones; East Asian man, age 38, wavy fringe, wide cheekbones. Row 3: East Asian woman, age 53, close-cropped hair, prominent rounded nose; Indigenous American man, age 53, curly crop, long narrow face; Pacific Islander woman, age 53, low ponytail, round face; North African man, age 53, shaved head, round face. Row 4: Southeast Asian woman, age 68, tight bun, narrow chin, naturally grey or silver hair and age-appropriate skin; East Asian man, age 68, short beard and swept hair, long narrow face, naturally grey or silver hair and age-appropriate skin; Black woman, age 68, short coils, round face, naturally grey or silver hair and age-appropriate skin; North African man, age 68, short coiled hair, round face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 32,
+      "firstId": 506,
+      "group": "professional",
+      "category": "ordinary",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain office blouses, collars and jackets. Row 1: Black woman, age 28, swept-back curls, broad square face; North African man, age 28, close-cropped hair, wide cheekbones; Middle Eastern woman, age 28, short natural curls, soft oval face; mixed Black and white man, age 28, straight side-part, prominent rounded nose. Row 2: Indigenous American woman, age 44, short coils, broad square face; Middle Eastern man, age 44, wavy fringe, broad square face; Pacific Islander woman, age 44, shoulder-length waves, prominent rounded nose; East Asian man, age 44, receding temples, prominent rounded nose. Row 3: South Asian woman, age 59, loose braid, angular cheekbones; Black man, age 59, curly crop, wide cheekbones; Indigenous American woman, age 59, loose braid, soft oval face; Middle Eastern man, age 59, neat moustache and short hair, long narrow face. Row 4: East Asian woman, age 73, tight bun, soft oval face, naturally grey or silver hair and age-appropriate skin; Indigenous American man, age 73, short beard and swept hair, angular cheekbones, naturally grey or silver hair and age-appropriate skin; mixed Black and white woman, age 73, short natural curls, broad square face, naturally grey or silver hair and age-appropriate skin; Black man, age 73, short coiled hair, soft oval face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 33,
+      "firstId": 522,
+      "group": "professional",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain office blouses, collars and jackets. Row 1: Pacific Islander woman, age 22, straight chin-length bob, narrow chin; Indigenous American man, age 22, short beard and swept hair, angular cheekbones; Black woman, age 22, short natural curls, prominent rounded nose; East Asian man, age 22, cropped waves, broad square face. Row 2: Black woman, age 32, wavy pixie, wide cheekbones; Latino man, age 32, short curls, soft oval face; Black woman, age 32, straight chin-length bob, broad square face; Middle Eastern man, age 32, neat moustache and short hair, round face. Row 3: Black woman, age 47, short natural curls, wide cheekbones; mixed Asian and Latino man, age 47, short beard and swept hair, narrow chin; white woman, age 47, close-cropped hair, narrow chin; white man, age 47, short beard and swept hair, prominent rounded nose. Row 4: East Asian woman, age 62, low ponytail, soft oval face, naturally grey or silver hair and age-appropriate skin; Southeast Asian man, age 62, wavy fringe, round face, naturally grey or silver hair and age-appropriate skin; South Asian woman, age 62, close-cropped hair, soft oval face, naturally grey or silver hair and age-appropriate skin; North African man, age 62, wavy fringe, angular cheekbones, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 34,
+      "firstId": 538,
+      "group": "professional",
+      "category": "ordinary",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain office blouses, collars and jackets. Row 1: white woman, age 25, straight chin-length bob, broad square face; mixed Asian and Latino man, age 25, bald head and stubble, wide cheekbones; East Asian woman, age 25, cropped side-part, narrow chin; South Asian man, age 25, short curls, prominent rounded nose. Row 2: Southeast Asian woman, age 38, short natural curls, soft oval face; South Asian man, age 38, bald head and stubble, round face; mixed Asian and Latino woman, age 38, short natural curls, prominent rounded nose; North African man, age 38, wavy fringe, prominent rounded nose. Row 3: mixed Asian and Latino woman, age 53, low ponytail, round face; Southeast Asian man, age 53, curly crop, angular cheekbones; Pacific Islander woman, age 53, shoulder-length waves, prominent rounded nose; North African man, age 53, close-cropped hair, broad square face. Row 4: North African woman, age 68, short natural curls, round face, naturally grey or silver hair and age-appropriate skin; South Asian man, age 68, bald head and stubble, broad square face, naturally grey or silver hair and age-appropriate skin; Southeast Asian woman, age 68, swept-back curls, soft oval face, naturally grey or silver hair and age-appropriate skin; East Asian man, age 68, close-cropped hair, long narrow face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 35,
+      "firstId": 554,
+      "group": "professional",
+      "category": "ordinary",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain office blouses, collars and jackets. Row 1: Southeast Asian woman, age 28, short coils, prominent rounded nose; Southeast Asian man, age 28, short beard and swept hair, wide cheekbones; Latino woman, age 28, short coils, long narrow face; Southeast Asian man, age 28, neat moustache and short hair, long narrow face. Row 2: East Asian woman, age 44, loose braid, round face; East Asian man, age 44, bald head and stubble, prominent rounded nose; North African woman, age 44, low ponytail, broad square face; South Asian man, age 44, short curls, prominent rounded nose. Row 3: white woman, age 59, shoulder-length waves, prominent rounded nose; South Asian man, age 59, close-cropped hair, wide cheekbones; Indigenous American woman, age 59, straight chin-length bob, broad square face; Latino man, age 59, curly crop, narrow chin. Row 4: Indigenous American woman, age 73, close-cropped hair, soft oval face, naturally grey or silver hair and age-appropriate skin; Pacific Islander man, age 73, receding temples, soft oval face, naturally grey or silver hair and age-appropriate skin; Southeast Asian woman, age 73, shoulder-length waves, round face, naturally grey or silver hair and age-appropriate skin; Pacific Islander man, age 73, short coiled hair, wide cheekbones, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 36,
+      "firstId": 570,
+      "group": "professional",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain office blouses, collars and jackets. Row 1: Latino woman, age 22, short coils, narrow chin; Southeast Asian man, age 22, cropped waves, angular cheekbones; North African woman, age 22, cropped side-part, angular cheekbones; Latino man, age 22, close-cropped hair, narrow chin. Row 2: East Asian woman, age 32, tight bun, narrow chin; white man, age 32, short beard and swept hair, broad square face; South Asian woman, age 32, loose braid, soft oval face; Black man, age 32, shaved head, angular cheekbones. Row 3: Middle Eastern woman, age 47, short coils, broad square face; North African man, age 47, curly crop, round face; Southeast Asian woman, age 47, close-cropped hair, prominent rounded nose; North African man, age 47, bald head and stubble, wide cheekbones. Row 4: mixed Asian and Latino woman, age 62, swept-back curls, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; East Asian man, age 62, straight side-part, long narrow face, naturally grey or silver hair and age-appropriate skin; Southeast Asian woman, age 62, tied-back locs, long narrow face, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 62, short coiled hair, soft oval face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 37,
+      "firstId": 586,
+      "group": "professional",
+      "category": "ordinary",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain office blouses, collars and jackets. Row 1: Indigenous American woman, age 25, close-cropped hair, prominent rounded nose; Pacific Islander man, age 25, curly crop, round face; white woman, age 25, short coils, wide cheekbones; North African man, age 25, straight side-part, soft oval face. Row 2: Southeast Asian woman, age 38, shoulder-length waves, prominent rounded nose; Pacific Islander man, age 38, short coiled hair, wide cheekbones; Middle Eastern woman, age 38, wavy pixie, wide cheekbones; mixed Asian and Latino man, age 38, close-cropped hair, angular cheekbones. Row 3: Latino woman, age 53, low ponytail, wide cheekbones; mixed Black and white man, age 53, bald head and stubble, broad square face; Black woman, age 53, swept-back curls, soft oval face; Middle Eastern man, age 53, receding temples, soft oval face. Row 4: Southeast Asian woman, age 68, loose braid, narrow chin, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 68, receding temples, broad square face, naturally grey or silver hair and age-appropriate skin; Middle Eastern woman, age 68, low ponytail, round face, naturally grey or silver hair and age-appropriate skin; Latino man, age 68, short curls, prominent rounded nose, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 38,
+      "firstId": 602,
+      "group": "professional",
+      "category": "ordinary",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain office blouses, collars and jackets. Row 1: mixed Black and white woman, age 28, cropped side-part, narrow chin; Latino man, age 28, wavy fringe, broad square face; North African woman, age 28, short coils, long narrow face; mixed Black and white man, age 28, shaved head, narrow chin. Row 2: Southeast Asian woman, age 44, loose braid, long narrow face; Indigenous American man, age 44, close-cropped hair, long narrow face; Southeast Asian woman, age 44, cropped side-part, broad square face; Latino man, age 44, short curls, angular cheekbones. Row 3: mixed Asian and Latino woman, age 59, low ponytail, prominent rounded nose; North African man, age 59, cropped waves, angular cheekbones; white woman, age 59, cropped side-part, prominent rounded nose; Black man, age 59, receding temples, soft oval face. Row 4: North African woman, age 73, swept-back curls, narrow chin, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 73, short coiled hair, angular cheekbones, naturally grey or silver hair and age-appropriate skin; Southeast Asian woman, age 73, loose braid, broad square face, naturally grey or silver hair and age-appropriate skin; Latino man, age 73, close-cropped hair, narrow chin, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 39,
+      "firstId": 618,
+      "group": "professional",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain office blouses, collars and jackets. Row 1: mixed Black and white woman, age 22, cropped side-part, prominent rounded nose; Southeast Asian man, age 22, shaved head, narrow chin; South Asian woman, age 22, short coils, soft oval face; mixed Black and white man, age 22, shaved head, long narrow face. Row 2: Black woman, age 32, straight chin-length bob, long narrow face; Latino man, age 32, receding temples, angular cheekbones; Pacific Islander woman, age 32, wavy pixie, long narrow face; Pacific Islander man, age 32, short curls, round face. Row 3: Southeast Asian woman, age 47, low ponytail, angular cheekbones; Southeast Asian man, age 47, wavy fringe, round face; North African woman, age 47, close-cropped hair, prominent rounded nose; Latino man, age 47, receding temples, long narrow face. Row 4: Indigenous American woman, age 62, tied-back locs, round face, naturally grey or silver hair and age-appropriate skin; East Asian man, age 62, receding temples, angular cheekbones, naturally grey or silver hair and age-appropriate skin; Pacific Islander woman, age 62, straight chin-length bob, broad square face, naturally grey or silver hair and age-appropriate skin; Indigenous American man, age 62, bald head and stubble, narrow chin, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 40,
+      "firstId": 634,
+      "group": "trades",
+      "category": "ordinary",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: practical canvas work jackets, cotton shirts, no tools. Row 1: Middle Eastern woman, age 25, loose braid, long narrow face; Middle Eastern man, age 25, wavy fringe, wide cheekbones; mixed Black and white woman, age 25, straight chin-length bob, wide cheekbones; Pacific Islander man, age 25, bald head and stubble, prominent rounded nose. Row 2: Middle Eastern woman, age 38, swept-back curls, round face; Southeast Asian man, age 38, short curls, round face; East Asian woman, age 38, short coils, angular cheekbones; mixed Asian and Latino man, age 38, shaved head, prominent rounded nose. Row 3: mixed Black and white woman, age 53, loose braid, prominent rounded nose; white man, age 53, shaved head, broad square face; Black woman, age 53, close-cropped hair, soft oval face; Southeast Asian man, age 53, cropped waves, soft oval face. Row 4: Southeast Asian woman, age 68, close-cropped hair, wide cheekbones, naturally grey or silver hair and age-appropriate skin; Latino man, age 68, close-cropped hair, wide cheekbones, naturally grey or silver hair and age-appropriate skin; mixed Black and white woman, age 68, straight chin-length bob, wide cheekbones, naturally grey or silver hair and age-appropriate skin; Black man, age 68, receding temples, soft oval face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 41,
+      "firstId": 650,
+      "group": "trades",
+      "category": "ordinary",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: practical canvas work jackets, cotton shirts, no tools. Row 1: Pacific Islander woman, age 28, close-cropped hair, soft oval face; Indigenous American man, age 28, short beard and swept hair, narrow chin; mixed Black and white woman, age 28, shoulder-length waves, prominent rounded nose; white man, age 28, straight side-part, narrow chin. Row 2: Middle Eastern woman, age 44, low ponytail, round face; Pacific Islander man, age 44, straight side-part, soft oval face; Latino woman, age 44, short coils, narrow chin; Indigenous American man, age 44, short curls, wide cheekbones. Row 3: South Asian woman, age 59, swept-back curls, round face; mixed Asian and Latino man, age 59, short coiled hair, soft oval face; mixed Asian and Latino woman, age 59, swept-back curls, angular cheekbones; white man, age 59, neat moustache and short hair, round face. Row 4: East Asian woman, age 73, tight bun, long narrow face, naturally grey or silver hair and age-appropriate skin; Indigenous American man, age 73, close-cropped hair, angular cheekbones, naturally grey or silver hair and age-appropriate skin; Latino woman, age 73, short coils, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Latino man, age 73, neat moustache and short hair, prominent rounded nose, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 42,
+      "firstId": 666,
+      "group": "trades",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: practical canvas work jackets, cotton shirts, no tools. Row 1: Southeast Asian woman, age 22, tight bun, soft oval face; South Asian man, age 22, wavy fringe, broad square face; mixed Black and white woman, age 22, swept-back curls, long narrow face; Black man, age 22, close-cropped hair, round face. Row 2: Latino woman, age 32, shoulder-length waves, long narrow face; white man, age 32, wavy fringe, broad square face; mixed Black and white woman, age 32, loose braid, broad square face; North African man, age 32, short curls, wide cheekbones. Row 3: East Asian woman, age 47, shoulder-length waves, round face; Black man, age 47, close-cropped hair, wide cheekbones; Southeast Asian woman, age 47, tight bun, narrow chin; East Asian man, age 47, short coiled hair, long narrow face. Row 4: Southeast Asian woman, age 62, straight chin-length bob, wide cheekbones, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 62, receding temples, soft oval face, naturally grey or silver hair and age-appropriate skin; East Asian woman, age 62, low ponytail, round face, naturally grey or silver hair and age-appropriate skin; Pacific Islander man, age 62, short beard and swept hair, narrow chin, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 43,
+      "firstId": 682,
+      "group": "trades",
+      "category": "ordinary",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: practical canvas work jackets, cotton shirts, no tools. Row 1: white woman, age 25, straight chin-length bob, broad square face; Middle Eastern man, age 25, shaved head, soft oval face; white woman, age 25, swept-back curls, long narrow face; Southeast Asian man, age 25, receding temples, narrow chin. Row 2: Indigenous American woman, age 38, loose braid, narrow chin; Pacific Islander man, age 38, bald head and stubble, prominent rounded nose; Southeast Asian woman, age 38, low ponytail, narrow chin; North African man, age 38, neat moustache and short hair, angular cheekbones. Row 3: white woman, age 53, straight chin-length bob, prominent rounded nose; Southeast Asian man, age 53, receding temples, prominent rounded nose; Latino woman, age 53, loose braid, angular cheekbones; mixed Black and white man, age 53, cropped waves, soft oval face. Row 4: white woman, age 68, shoulder-length waves, long narrow face, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 68, neat moustache and short hair, angular cheekbones, naturally grey or silver hair and age-appropriate skin; mixed Black and white woman, age 68, short coils, narrow chin, naturally grey or silver hair and age-appropriate skin; East Asian man, age 68, short curls, prominent rounded nose, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 44,
+      "firstId": 698,
+      "group": "trades",
+      "category": "ordinary",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: practical canvas work jackets, cotton shirts, no tools. Row 1: Pacific Islander woman, age 28, close-cropped hair, prominent rounded nose; Middle Eastern man, age 28, short beard and swept hair, round face; mixed Asian and Latino woman, age 28, loose braid, soft oval face; Pacific Islander man, age 28, close-cropped hair, round face. Row 2: Black woman, age 44, low ponytail, wide cheekbones; Black man, age 44, receding temples, soft oval face; mixed Asian and Latino woman, age 44, tied-back locs, narrow chin; Middle Eastern man, age 44, short curls, broad square face. Row 3: East Asian woman, age 59, short coils, prominent rounded nose; white man, age 59, curly crop, wide cheekbones; Latino woman, age 59, close-cropped hair, wide cheekbones; Black man, age 59, short curls, angular cheekbones. Row 4: Indigenous American woman, age 73, swept-back curls, narrow chin, naturally grey or silver hair and age-appropriate skin; Southeast Asian man, age 73, cropped waves, narrow chin, naturally grey or silver hair and age-appropriate skin; Southeast Asian woman, age 73, cropped side-part, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; South Asian man, age 73, straight side-part, wide cheekbones, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 45,
+      "firstId": 714,
+      "group": "trades",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: practical canvas work jackets, cotton shirts, no tools. Row 1: Black woman, age 22, tight bun, angular cheekbones; Pacific Islander man, age 22, bald head and stubble, angular cheekbones; Latino woman, age 22, shoulder-length waves, soft oval face; Black man, age 22, short curls, wide cheekbones. Row 2: mixed Asian and Latino woman, age 32, tied-back locs, long narrow face; Middle Eastern man, age 32, shaved head, wide cheekbones; Indigenous American woman, age 32, tied-back locs, angular cheekbones; East Asian man, age 32, short beard and swept hair, angular cheekbones. Row 3: Indigenous American woman, age 47, shoulder-length waves, prominent rounded nose; Latino man, age 47, neat moustache and short hair, round face; Black woman, age 47, close-cropped hair, wide cheekbones; Black man, age 47, neat moustache and short hair, long narrow face. Row 4: Latino woman, age 62, shoulder-length waves, long narrow face, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 62, bald head and stubble, round face, naturally grey or silver hair and age-appropriate skin; Pacific Islander woman, age 62, loose braid, angular cheekbones, naturally grey or silver hair and age-appropriate skin; Black man, age 62, bald head and stubble, wide cheekbones, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 46,
+      "firstId": 730,
+      "group": "trades",
+      "category": "ordinary",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: practical canvas work jackets, cotton shirts, no tools. Row 1: Southeast Asian woman, age 25, tied-back locs, broad square face; white man, age 25, short coiled hair, long narrow face; Middle Eastern woman, age 25, wavy pixie, wide cheekbones; North African man, age 25, bald head and stubble, wide cheekbones. Row 2: Middle Eastern woman, age 38, tied-back locs, angular cheekbones; Indigenous American man, age 38, shaved head, round face; Southeast Asian woman, age 38, cropped side-part, broad square face; mixed Black and white man, age 38, short curls, angular cheekbones. Row 3: Pacific Islander woman, age 53, shoulder-length waves, prominent rounded nose; white man, age 53, short beard and swept hair, round face; Southeast Asian woman, age 53, short coils, wide cheekbones; Pacific Islander man, age 53, cropped waves, soft oval face. Row 4: mixed Black and white woman, age 68, wavy pixie, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Southeast Asian man, age 68, bald head and stubble, long narrow face, naturally grey or silver hair and age-appropriate skin; white woman, age 68, short coils, round face, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 68, short coiled hair, long narrow face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 47,
+      "firstId": 746,
+      "group": "trades",
+      "category": "ordinary",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: practical canvas work jackets, cotton shirts, no tools. Row 1: North African woman, age 28, loose braid, broad square face; North African man, age 28, receding temples, wide cheekbones; North African woman, age 28, cropped side-part, soft oval face; mixed Black and white man, age 28, cropped waves, round face. Row 2: Middle Eastern woman, age 44, straight chin-length bob, wide cheekbones; mixed Black and white man, age 44, bald head and stubble, soft oval face; Indigenous American woman, age 44, shoulder-length waves, narrow chin; Middle Eastern man, age 44, curly crop, wide cheekbones. Row 3: Black woman, age 59, close-cropped hair, soft oval face; Southeast Asian man, age 59, bald head and stubble, wide cheekbones; Pacific Islander woman, age 59, swept-back curls, long narrow face; white man, age 59, shaved head, wide cheekbones. Row 4: East Asian woman, age 73, shoulder-length waves, wide cheekbones, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 73, close-cropped hair, round face, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino woman, age 73, short coils, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; East Asian man, age 73, straight side-part, soft oval face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 48,
+      "firstId": 762,
+      "group": "academic",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: cardigans, tweed jackets and plain medical coats without props. Row 1: Black woman, age 22, tied-back locs, round face; Southeast Asian man, age 22, shaved head, broad square face; Middle Eastern woman, age 22, straight chin-length bob, long narrow face; Pacific Islander man, age 22, shaved head, long narrow face. Row 2: North African woman, age 32, swept-back curls, prominent rounded nose; mixed Black and white man, age 32, curly crop, narrow chin; white woman, age 32, tight bun, soft oval face; Southeast Asian man, age 32, short beard and swept hair, round face. Row 3: East Asian woman, age 47, loose braid, prominent rounded nose; South Asian man, age 47, cropped waves, angular cheekbones; mixed Black and white woman, age 47, shoulder-length waves, broad square face; Black man, age 47, close-cropped hair, soft oval face. Row 4: Southeast Asian woman, age 62, short natural curls, long narrow face, naturally grey or silver hair and age-appropriate skin; Indigenous American man, age 62, bald head and stubble, long narrow face, naturally grey or silver hair and age-appropriate skin; South Asian woman, age 62, shoulder-length waves, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; white man, age 62, shaved head, angular cheekbones, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 49,
+      "firstId": 778,
+      "group": "academic",
+      "category": "ordinary",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: cardigans, tweed jackets and plain medical coats without props. Row 1: Pacific Islander woman, age 25, short coils, long narrow face; white man, age 25, receding temples, wide cheekbones; Middle Eastern woman, age 25, low ponytail, soft oval face; South Asian man, age 25, neat moustache and short hair, round face. Row 2: mixed Black and white woman, age 38, short natural curls, narrow chin; white man, age 38, shaved head, long narrow face; mixed Asian and Latino woman, age 38, short coils, angular cheekbones; East Asian man, age 38, short beard and swept hair, broad square face. Row 3: Pacific Islander woman, age 53, close-cropped hair, angular cheekbones; Black man, age 53, shaved head, broad square face; mixed Black and white woman, age 53, shoulder-length waves, round face; Pacific Islander man, age 53, short beard and swept hair, angular cheekbones. Row 4: Indigenous American woman, age 68, straight chin-length bob, angular cheekbones, naturally grey or silver hair and age-appropriate skin; Black man, age 68, neat moustache and short hair, round face, naturally grey or silver hair and age-appropriate skin; white woman, age 68, short coils, round face, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 68, short beard and swept hair, narrow chin, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 50,
+      "firstId": 794,
+      "group": "academic",
+      "category": "ordinary",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: cardigans, tweed jackets and plain medical coats without props. Row 1: North African woman, age 28, short natural curls, round face; Indigenous American man, age 28, receding temples, angular cheekbones; mixed Black and white woman, age 28, swept-back curls, prominent rounded nose; East Asian man, age 28, close-cropped hair, prominent rounded nose. Row 2: mixed Asian and Latino woman, age 44, wavy pixie, long narrow face; Southeast Asian man, age 44, shaved head, angular cheekbones; Middle Eastern woman, age 44, shoulder-length waves, narrow chin; Southeast Asian man, age 44, cropped waves, wide cheekbones. Row 3: mixed Black and white woman, age 59, swept-back curls, soft oval face; Latino man, age 59, short beard and swept hair, angular cheekbones; Middle Eastern woman, age 59, cropped side-part, long narrow face; Pacific Islander man, age 59, neat moustache and short hair, long narrow face. Row 4: mixed Black and white woman, age 73, tight bun, broad square face, naturally grey or silver hair and age-appropriate skin; white man, age 73, close-cropped hair, broad square face, naturally grey or silver hair and age-appropriate skin; Black woman, age 73, straight chin-length bob, round face, naturally grey or silver hair and age-appropriate skin; white man, age 73, shaved head, prominent rounded nose, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 51,
+      "firstId": 810,
+      "group": "academic",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: cardigans, tweed jackets and plain medical coats without props. Row 1: Indigenous American woman, age 22, shoulder-length waves, prominent rounded nose; Black man, age 22, curly crop, round face; white woman, age 22, close-cropped hair, angular cheekbones; South Asian man, age 22, wavy fringe, broad square face. Row 2: Indigenous American woman, age 32, swept-back curls, angular cheekbones; North African man, age 32, cropped waves, angular cheekbones; Latino woman, age 32, wavy pixie, broad square face; white man, age 32, short beard and swept hair, wide cheekbones. Row 3: Black woman, age 47, straight chin-length bob, angular cheekbones; East Asian man, age 47, neat moustache and short hair, long narrow face; Latino woman, age 47, short coils, broad square face; mixed Asian and Latino man, age 47, shaved head, wide cheekbones. Row 4: Latino woman, age 62, shoulder-length waves, angular cheekbones, naturally grey or silver hair and age-appropriate skin; white man, age 62, cropped waves, broad square face, naturally grey or silver hair and age-appropriate skin; Black woman, age 62, cropped side-part, round face, naturally grey or silver hair and age-appropriate skin; East Asian man, age 62, bald head and stubble, angular cheekbones, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 52,
+      "firstId": 826,
+      "group": "academic",
+      "category": "ordinary",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: cardigans, tweed jackets and plain medical coats without props. Row 1: East Asian woman, age 25, swept-back curls, long narrow face; mixed Asian and Latino man, age 25, short curls, wide cheekbones; Black woman, age 25, tied-back locs, wide cheekbones; Latino man, age 25, short curls, narrow chin. Row 2: white woman, age 38, tight bun, prominent rounded nose; mixed Asian and Latino man, age 38, neat moustache and short hair, prominent rounded nose; South Asian woman, age 38, short coils, wide cheekbones; East Asian man, age 38, close-cropped hair, narrow chin. Row 3: Latino woman, age 53, shoulder-length waves, soft oval face; Black man, age 53, close-cropped hair, narrow chin; Black woman, age 53, short coils, angular cheekbones; Southeast Asian man, age 53, straight side-part, narrow chin. Row 4: Southeast Asian woman, age 68, low ponytail, wide cheekbones, naturally grey or silver hair and age-appropriate skin; South Asian man, age 68, close-cropped hair, narrow chin, naturally grey or silver hair and age-appropriate skin; South Asian woman, age 68, loose braid, broad square face, naturally grey or silver hair and age-appropriate skin; North African man, age 68, curly crop, angular cheekbones, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 53,
+      "firstId": 842,
+      "group": "academic",
+      "category": "ordinary",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: cardigans, tweed jackets and plain medical coats without props. Row 1: Latino woman, age 28, cropped side-part, long narrow face; white man, age 28, shaved head, soft oval face; Indigenous American woman, age 28, shoulder-length waves, long narrow face; Southeast Asian man, age 28, cropped waves, long narrow face. Row 2: Pacific Islander woman, age 44, close-cropped hair, prominent rounded nose; South Asian man, age 44, neat moustache and short hair, round face; Pacific Islander woman, age 44, low ponytail, soft oval face; East Asian man, age 44, straight side-part, prominent rounded nose. Row 3: Southeast Asian woman, age 59, loose braid, soft oval face; Latino man, age 59, short curls, long narrow face; mixed Asian and Latino woman, age 59, straight chin-length bob, narrow chin; mixed Asian and Latino man, age 59, straight side-part, narrow chin. Row 4: Black woman, age 73, tight bun, long narrow face, naturally grey or silver hair and age-appropriate skin; Indigenous American man, age 73, curly crop, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Latino woman, age 73, cropped side-part, narrow chin, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 73, short curls, soft oval face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 54,
+      "firstId": 858,
+      "group": "academic",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: cardigans, tweed jackets and plain medical coats without props. Row 1: Indigenous American woman, age 22, short coils, angular cheekbones; Indigenous American man, age 22, wavy fringe, long narrow face; Middle Eastern woman, age 22, short natural curls, long narrow face; North African man, age 22, wavy fringe, angular cheekbones. Row 2: East Asian woman, age 32, tied-back locs, broad square face; Black man, age 32, cropped waves, angular cheekbones; North African woman, age 32, wavy pixie, prominent rounded nose; Pacific Islander man, age 32, receding temples, wide cheekbones. Row 3: South Asian woman, age 47, close-cropped hair, prominent rounded nose; Pacific Islander man, age 47, short beard and swept hair, soft oval face; Southeast Asian woman, age 47, swept-back curls, narrow chin; East Asian man, age 47, neat moustache and short hair, prominent rounded nose. Row 4: North African woman, age 62, tight bun, soft oval face, naturally grey or silver hair and age-appropriate skin; mixed Black and white man, age 62, short beard and swept hair, wide cheekbones, naturally grey or silver hair and age-appropriate skin; Black woman, age 62, cropped side-part, soft oval face, naturally grey or silver hair and age-appropriate skin; mixed Black and white man, age 62, short curls, wide cheekbones, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 55,
+      "firstId": 874,
+      "group": "academic",
+      "category": "ordinary",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: cardigans, tweed jackets and plain medical coats without props. Row 1: Middle Eastern woman, age 25, swept-back curls, round face; Latino man, age 25, cropped waves, soft oval face; Indigenous American woman, age 25, loose braid, soft oval face; mixed Black and white man, age 25, short beard and swept hair, prominent rounded nose. Row 2: South Asian woman, age 38, straight chin-length bob, round face; North African man, age 38, cropped waves, narrow chin; East Asian woman, age 38, short natural curls, prominent rounded nose; mixed Black and white man, age 38, shaved head, round face. Row 3: Latino woman, age 53, shoulder-length waves, soft oval face; North African man, age 53, neat moustache and short hair, broad square face; mixed Asian and Latino woman, age 53, shoulder-length waves, angular cheekbones; Indigenous American man, age 53, short curls, soft oval face. Row 4: South Asian woman, age 68, tight bun, angular cheekbones, naturally grey or silver hair and age-appropriate skin; Southeast Asian man, age 68, wavy fringe, broad square face, naturally grey or silver hair and age-appropriate skin; mixed Black and white woman, age 68, straight chin-length bob, wide cheekbones, naturally grey or silver hair and age-appropriate skin; mixed Black and white man, age 68, close-cropped hair, long narrow face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 56,
+      "firstId": 890,
+      "group": "creative",
+      "category": "ordinary",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: individual casual layered clothing, scarves, no props. Row 1: Indigenous American woman, age 28, straight chin-length bob, soft oval face; Black man, age 28, bald head and stubble, prominent rounded nose; South Asian woman, age 28, low ponytail, prominent rounded nose; North African man, age 28, short coiled hair, narrow chin. Row 2: East Asian woman, age 44, short natural curls, round face; Southeast Asian man, age 44, bald head and stubble, long narrow face; Southeast Asian woman, age 44, low ponytail, wide cheekbones; white man, age 44, bald head and stubble, soft oval face. Row 3: North African woman, age 59, straight chin-length bob, broad square face; Pacific Islander man, age 59, close-cropped hair, broad square face; Black woman, age 59, swept-back curls, soft oval face; North African man, age 59, wavy fringe, broad square face. Row 4: South Asian woman, age 73, wavy pixie, broad square face, naturally grey or silver hair and age-appropriate skin; white man, age 73, close-cropped hair, long narrow face, naturally grey or silver hair and age-appropriate skin; Middle Eastern woman, age 73, cropped side-part, broad square face, naturally grey or silver hair and age-appropriate skin; Black man, age 73, close-cropped hair, wide cheekbones, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 57,
+      "firstId": 906,
+      "group": "creative",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: individual casual layered clothing, scarves, no props. Row 1: white woman, age 22, close-cropped hair, narrow chin; white man, age 22, close-cropped hair, prominent rounded nose; North African woman, age 22, shoulder-length waves, soft oval face; Black man, age 22, bald head and stubble, round face. Row 2: North African woman, age 32, shoulder-length waves, wide cheekbones; North African man, age 32, close-cropped hair, wide cheekbones; North African woman, age 32, close-cropped hair, broad square face; Latino man, age 32, close-cropped hair, wide cheekbones. Row 3: Latino woman, age 47, shoulder-length waves, angular cheekbones; mixed Black and white man, age 47, neat moustache and short hair, narrow chin; white woman, age 47, wavy pixie, prominent rounded nose; Southeast Asian man, age 47, shaved head, long narrow face. Row 4: mixed Black and white woman, age 62, wavy pixie, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Latino man, age 62, close-cropped hair, wide cheekbones, naturally grey or silver hair and age-appropriate skin; Pacific Islander woman, age 62, swept-back curls, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; mixed Black and white man, age 62, cropped waves, prominent rounded nose, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 58,
+      "firstId": 922,
+      "group": "creative",
+      "category": "ordinary",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: individual casual layered clothing, scarves, no props. Row 1: Indigenous American woman, age 25, straight chin-length bob, long narrow face; Black man, age 25, short coiled hair, soft oval face; Pacific Islander woman, age 25, shoulder-length waves, long narrow face; white man, age 25, bald head and stubble, soft oval face. Row 2: Black woman, age 38, short coils, long narrow face; East Asian man, age 38, short coiled hair, prominent rounded nose; Indigenous American woman, age 38, swept-back curls, round face; Latino man, age 38, short coiled hair, round face. Row 3: mixed Asian and Latino woman, age 53, short natural curls, wide cheekbones; Middle Eastern man, age 53, short curls, long narrow face; East Asian woman, age 53, tight bun, angular cheekbones; Pacific Islander man, age 53, bald head and stubble, prominent rounded nose. Row 4: Middle Eastern woman, age 68, close-cropped hair, broad square face, naturally grey or silver hair and age-appropriate skin; Indigenous American man, age 68, short beard and swept hair, soft oval face, naturally grey or silver hair and age-appropriate skin; Black woman, age 68, loose braid, narrow chin, naturally grey or silver hair and age-appropriate skin; North African man, age 68, neat moustache and short hair, prominent rounded nose, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 59,
+      "firstId": 938,
+      "group": "creative",
+      "category": "ordinary",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: individual casual layered clothing, scarves, no props. Row 1: Indigenous American woman, age 28, cropped side-part, broad square face; white man, age 28, wavy fringe, prominent rounded nose; Middle Eastern woman, age 28, loose braid, long narrow face; Indigenous American man, age 28, cropped waves, wide cheekbones. Row 2: East Asian woman, age 44, straight chin-length bob, soft oval face; white man, age 44, receding temples, wide cheekbones; Black woman, age 44, cropped side-part, round face; mixed Black and white man, age 44, close-cropped hair, soft oval face. Row 3: North African woman, age 59, close-cropped hair, broad square face; white man, age 59, short beard and swept hair, broad square face; North African woman, age 59, straight chin-length bob, round face; mixed Black and white man, age 59, wavy fringe, soft oval face. Row 4: Latino woman, age 73, straight chin-length bob, narrow chin, naturally grey or silver hair and age-appropriate skin; white man, age 73, close-cropped hair, round face, naturally grey or silver hair and age-appropriate skin; Southeast Asian woman, age 73, tight bun, broad square face, naturally grey or silver hair and age-appropriate skin; South Asian man, age 73, wavy fringe, narrow chin, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 60,
+      "firstId": 954,
+      "group": "creative",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: individual casual layered clothing, scarves, no props. Row 1: Southeast Asian woman, age 22, low ponytail, long narrow face; Southeast Asian man, age 22, close-cropped hair, long narrow face; Indigenous American woman, age 22, short coils, round face; mixed Asian and Latino man, age 22, bald head and stubble, angular cheekbones. Row 2: Southeast Asian woman, age 32, tight bun, broad square face; Indigenous American man, age 32, wavy fringe, wide cheekbones; white woman, age 32, tight bun, narrow chin; Latino man, age 32, bald head and stubble, round face. Row 3: Black woman, age 47, straight chin-length bob, angular cheekbones; Pacific Islander man, age 47, short curls, prominent rounded nose; Pacific Islander woman, age 47, tied-back locs, long narrow face; Black man, age 47, short beard and swept hair, wide cheekbones. Row 4: Southeast Asian woman, age 62, swept-back curls, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; South Asian man, age 62, curly crop, angular cheekbones, naturally grey or silver hair and age-appropriate skin; mixed Black and white woman, age 62, cropped side-part, long narrow face, naturally grey or silver hair and age-appropriate skin; mixed Black and white man, age 62, bald head and stubble, wide cheekbones, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 61,
+      "firstId": 970,
+      "group": "creative",
+      "category": "ordinary",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: individual casual layered clothing, scarves, no props. Row 1: mixed Asian and Latino woman, age 25, loose braid, prominent rounded nose; Indigenous American man, age 25, curly crop, angular cheekbones; South Asian woman, age 25, swept-back curls, angular cheekbones; Middle Eastern man, age 25, short beard and swept hair, narrow chin. Row 2: Southeast Asian woman, age 38, loose braid, prominent rounded nose; South Asian man, age 38, straight side-part, soft oval face; mixed Asian and Latino woman, age 38, straight chin-length bob, broad square face; East Asian man, age 38, straight side-part, soft oval face. Row 3: East Asian woman, age 53, low ponytail, prominent rounded nose; white man, age 53, shaved head, long narrow face; white woman, age 53, swept-back curls, long narrow face; mixed Asian and Latino man, age 53, short coiled hair, soft oval face. Row 4: North African woman, age 68, close-cropped hair, long narrow face, naturally grey or silver hair and age-appropriate skin; Black man, age 68, short coiled hair, broad square face, naturally grey or silver hair and age-appropriate skin; mixed Black and white woman, age 68, close-cropped hair, broad square face, naturally grey or silver hair and age-appropriate skin; Middle Eastern man, age 68, straight side-part, soft oval face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 62,
+      "firstId": 986,
+      "group": "creative",
+      "category": "ordinary",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: individual casual layered clothing, scarves, no props. Row 1: Latino woman, age 28, short natural curls, wide cheekbones; Middle Eastern man, age 28, neat moustache and short hair, angular cheekbones; Latino woman, age 28, tied-back locs, round face; Latino man, age 28, short coiled hair, angular cheekbones. Row 2: mixed Asian and Latino woman, age 44, swept-back curls, broad square face; South Asian man, age 44, curly crop, broad square face; Black woman, age 44, shoulder-length waves, angular cheekbones; Indigenous American man, age 44, straight side-part, prominent rounded nose. Row 3: Black woman, age 59, tied-back locs, broad square face; Pacific Islander man, age 59, wavy fringe, narrow chin; white woman, age 59, swept-back curls, prominent rounded nose; Black man, age 59, close-cropped hair, long narrow face. Row 4: mixed Asian and Latino woman, age 73, loose braid, broad square face, naturally grey or silver hair and age-appropriate skin; Black man, age 73, neat moustache and short hair, narrow chin, naturally grey or silver hair and age-appropriate skin; South Asian woman, age 73, tight bun, narrow chin, naturally grey or silver hair and age-appropriate skin; Black man, age 73, short coiled hair, narrow chin, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 63,
+      "firstId": 1002,
+      "group": "creative",
+      "category": "ordinary",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: individual casual layered clothing, scarves, no props. Row 1: mixed Black and white woman, age 22, tight bun, long narrow face; Latino man, age 22, short coiled hair, long narrow face; Black woman, age 22, shoulder-length waves, long narrow face; Middle Eastern man, age 22, short curls, wide cheekbones. Row 2: Middle Eastern woman, age 32, short coils, soft oval face; Middle Eastern man, age 32, short beard and swept hair, round face; Black woman, age 32, shoulder-length waves, wide cheekbones; Indigenous American man, age 32, curly crop, broad square face. Row 3: North African woman, age 47, close-cropped hair, narrow chin; mixed Black and white man, age 47, close-cropped hair, broad square face; Indigenous American woman, age 47, swept-back curls, angular cheekbones; mixed Black and white man, age 47, neat moustache and short hair, long narrow face. Row 4: white woman, age 62, wavy pixie, round face, naturally grey or silver hair and age-appropriate skin; East Asian man, age 62, receding temples, round face, naturally grey or silver hair and age-appropriate skin; Black woman, age 62, loose braid, narrow chin, naturally grey or silver hair and age-appropriate skin; Pacific Islander man, age 62, receding temples, round face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 64,
+      "firstId": 1018,
+      "group": "punk",
+      "category": "professionSubculture",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: muted punk clothes, modest piercings and short colourful hair. Row 1: Middle Eastern woman, age 25, shoulder-length waves, long narrow face; white man, age 25, short beard and swept hair, angular cheekbones; mixed Asian and Latino woman, age 25, tied-back locs, narrow chin; white man, age 25, shaved head, angular cheekbones. Row 2: Black woman, age 38, short natural curls, angular cheekbones; Middle Eastern man, age 38, short coiled hair, prominent rounded nose; South Asian woman, age 38, loose braid, broad square face; Latino man, age 38, wavy fringe, angular cheekbones. Row 3: Middle Eastern woman, age 53, straight chin-length bob, wide cheekbones; Black man, age 53, curly crop, wide cheekbones; Black woman, age 53, swept-back curls, round face; mixed Black and white man, age 53, close-cropped hair, long narrow face. Row 4: Pacific Islander woman, age 68, loose braid, wide cheekbones, naturally grey or silver hair and age-appropriate skin; white man, age 68, close-cropped hair, wide cheekbones, naturally grey or silver hair and age-appropriate skin; Latino woman, age 68, cropped side-part, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; East Asian man, age 68, close-cropped hair, angular cheekbones, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 65,
+      "firstId": 1034,
+      "group": "goth",
+      "category": "professionSubculture",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: restrained gothic clothes and dark hairstyles. Row 1: Latino woman, age 28, swept-back curls, broad square face; East Asian man, age 28, wavy fringe, wide cheekbones; Indigenous American woman, age 28, cropped side-part, soft oval face; Middle Eastern man, age 28, curly crop, broad square face. Row 2: Southeast Asian woman, age 44, cropped side-part, round face; Indigenous American man, age 44, bald head and stubble, long narrow face; Middle Eastern woman, age 44, loose braid, round face; Southeast Asian man, age 44, shaved head, round face. Row 3: Pacific Islander woman, age 59, tight bun, soft oval face; Pacific Islander man, age 59, close-cropped hair, wide cheekbones; Latino woman, age 59, loose braid, wide cheekbones; Middle Eastern man, age 59, shaved head, wide cheekbones. Row 4: Latino woman, age 73, tight bun, narrow chin, naturally grey or silver hair and age-appropriate skin; mixed Black and white man, age 73, wavy fringe, wide cheekbones, naturally grey or silver hair and age-appropriate skin; North African woman, age 73, close-cropped hair, broad square face, naturally grey or silver hair and age-appropriate skin; South Asian man, age 73, shaved head, broad square face, naturally grey or silver hair and age-appropriate skin."
+    },
+    {
+      "batch": 66,
+      "firstId": 1050,
+      "group": "emo",
+      "category": "professionSubculture",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: subtle emo clothes and swept fringes. Row 1: Latino woman, age 22, shoulder-length waves, narrow chin; North African man, age 22, close-cropped hair, soft oval face; Indigenous American woman, age 22, straight chin-length bob, round face; Indigenous American man, age 22, wavy fringe, wide cheekbones. Row 2: Pacific Islander woman, age 32, tight bun, prominent rounded nose; Middle Eastern man, age 32, neat moustache and short hair, angular cheekbones; Black woman, age 32, short natural curls, angular cheekbones; Pacific Islander man, age 32, wavy fringe, angular cheekbones. Row 3: North African woman, age 47, short coils, long narrow face; Southeast Asian man, age 47, receding temples, angular cheekbones; South Asian woman, age 47, low ponytail, broad square face; Black man, age 47, wavy fringe, long narrow face. Row 4: North African woman, age 62, low ponytail, long narrow face, naturally grey or silver hair and age-appropriate skin; South Asian man, age 62, short beard and swept hair, round face, naturally grey or silver hair and age-appropriate skin; Black woman, age 62, swept-back curls, soft oval face, naturally grey or silver hair and age-appropriate skin; Middle Eastern man, age 62, short beard and swept hair, broad square face, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 67,
+      "firstId": 1066,
+      "group": "biker",
+      "category": "professionSubculture",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain leather jackets, no logos. Row 1: Southeast Asian woman, age 25, loose braid, soft oval face; Latino man, age 25, shaved head, broad square face; Southeast Asian woman, age 25, shoulder-length waves, soft oval face; Pacific Islander man, age 25, short coiled hair, long narrow face. Row 2: mixed Black and white woman, age 38, cropped side-part, broad square face; Pacific Islander man, age 38, short coiled hair, wide cheekbones; East Asian woman, age 38, short coils, prominent rounded nose; North African man, age 38, short curls, long narrow face. Row 3: white woman, age 53, short natural curls, long narrow face; Latino man, age 53, shaved head, angular cheekbones; South Asian woman, age 53, cropped side-part, long narrow face; East Asian man, age 53, short coiled hair, long narrow face. Row 4: East Asian woman, age 68, swept-back curls, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; North African man, age 68, close-cropped hair, broad square face, naturally grey or silver hair and age-appropriate skin; Southeast Asian woman, age 68, wavy pixie, narrow chin, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 68, short beard and swept hair, angular cheekbones, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 68,
+      "firstId": 1082,
+      "group": "religious",
+      "category": "professionSubculture",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: varied modest clerical collars, robes and religious head coverings, no readable symbols. Row 1: mixed Asian and Latino woman, age 28, swept-back curls, narrow chin; mixed Black and white man, age 28, neat moustache and short hair, broad square face; Black woman, age 28, straight chin-length bob, broad square face; Black man, age 28, wavy fringe, broad square face. Row 2: East Asian woman, age 44, low ponytail, prominent rounded nose; South Asian man, age 44, cropped waves, long narrow face; East Asian woman, age 44, tied-back locs, wide cheekbones; Southeast Asian man, age 44, curly crop, soft oval face. Row 3: white woman, age 59, close-cropped hair, round face; Latino man, age 59, short coiled hair, round face; mixed Asian and Latino woman, age 59, straight chin-length bob, long narrow face; North African man, age 59, short curls, narrow chin. Row 4: mixed Black and white woman, age 73, short natural curls, round face, naturally grey or silver hair and age-appropriate skin; white man, age 73, shaved head, round face, naturally grey or silver hair and age-appropriate skin; Latino woman, age 73, straight chin-length bob, narrow chin, naturally grey or silver hair and age-appropriate skin; white man, age 73, bald head and stubble, soft oval face, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 69,
+      "firstId": 1098,
+      "group": "religious",
+      "category": "professionSubculture",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: varied modest clerical collars, robes and religious head coverings, no readable symbols. Row 1: Indigenous American woman, age 22, cropped side-part, prominent rounded nose; North African man, age 22, shaved head, wide cheekbones; Middle Eastern woman, age 22, shoulder-length waves, round face; East Asian man, age 22, shaved head, narrow chin. Row 2: South Asian woman, age 32, short coils, long narrow face; Latino man, age 32, close-cropped hair, long narrow face; white woman, age 32, cropped side-part, narrow chin; Black man, age 32, cropped waves, soft oval face. Row 3: mixed Asian and Latino woman, age 47, close-cropped hair, broad square face; Indigenous American man, age 47, neat moustache and short hair, narrow chin; Southeast Asian woman, age 47, swept-back curls, soft oval face; mixed Black and white man, age 47, bald head and stubble, broad square face. Row 4: mixed Black and white woman, age 62, tied-back locs, narrow chin, naturally grey or silver hair and age-appropriate skin; Southeast Asian man, age 62, straight side-part, narrow chin, naturally grey or silver hair and age-appropriate skin; South Asian woman, age 62, low ponytail, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Black man, age 62, straight side-part, angular cheekbones, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 70,
+      "firstId": 1114,
+      "group": "security",
+      "category": "professionSubculture",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain dark uniform collars without badges, helmets or insignia. Row 1: mixed Black and white woman, age 25, close-cropped hair, soft oval face; Latino man, age 25, close-cropped hair, broad square face; South Asian woman, age 25, short coils, angular cheekbones; mixed Asian and Latino man, age 25, close-cropped hair, round face. Row 2: Black woman, age 38, tight bun, long narrow face; North African man, age 38, short coiled hair, broad square face; North African woman, age 38, loose braid, angular cheekbones; mixed Black and white man, age 38, short coiled hair, narrow chin. Row 3: Black woman, age 53, straight chin-length bob, long narrow face; mixed Asian and Latino man, age 53, short coiled hair, round face; Black woman, age 53, wavy pixie, wide cheekbones; East Asian man, age 53, short curls, long narrow face. Row 4: Pacific Islander woman, age 68, shoulder-length waves, round face, naturally grey or silver hair and age-appropriate skin; Middle Eastern man, age 68, bald head and stubble, wide cheekbones, naturally grey or silver hair and age-appropriate skin; Pacific Islander woman, age 68, loose braid, long narrow face, naturally grey or silver hair and age-appropriate skin; mixed Black and white man, age 68, neat moustache and short hair, broad square face, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 71,
+      "firstId": 1130,
+      "group": "security",
+      "category": "professionSubculture",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain dark uniform collars without badges, helmets or insignia. Row 1: North African woman, age 28, tight bun, round face; South Asian man, age 28, short curls, soft oval face; Middle Eastern woman, age 28, swept-back curls, soft oval face; Latino man, age 28, neat moustache and short hair, wide cheekbones. Row 2: Indigenous American woman, age 44, close-cropped hair, round face; Southeast Asian man, age 44, short coiled hair, long narrow face; Pacific Islander woman, age 44, cropped side-part, narrow chin; mixed Black and white man, age 44, receding temples, soft oval face. Row 3: mixed Asian and Latino woman, age 59, swept-back curls, long narrow face; Middle Eastern man, age 59, short coiled hair, round face; North African woman, age 59, tied-back locs, broad square face; Pacific Islander man, age 59, curly crop, round face. Row 4: Pacific Islander woman, age 73, tied-back locs, long narrow face, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 73, short beard and swept hair, soft oval face, naturally grey or silver hair and age-appropriate skin; East Asian woman, age 73, swept-back curls, long narrow face, naturally grey or silver hair and age-appropriate skin; Black man, age 73, short coiled hair, round face, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 72,
+      "firstId": 1146,
+      "group": "professional",
+      "category": "professionSubculture",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain office blouses, collars and jackets. Row 1: Indigenous American woman, age 22, tied-back locs, wide cheekbones; Middle Eastern man, age 22, wavy fringe, soft oval face; East Asian woman, age 22, shoulder-length waves, angular cheekbones; Black man, age 22, neat moustache and short hair, round face. Row 2: Southeast Asian woman, age 32, short coils, long narrow face; Pacific Islander man, age 32, short coiled hair, long narrow face; white woman, age 32, straight chin-length bob, angular cheekbones; Black man, age 32, close-cropped hair, prominent rounded nose. Row 3: North African woman, age 47, short natural curls, round face; Pacific Islander man, age 47, straight side-part, soft oval face; North African woman, age 47, straight chin-length bob, soft oval face; Middle Eastern man, age 47, curly crop, long narrow face. Row 4: Latino woman, age 62, low ponytail, soft oval face, naturally grey or silver hair and age-appropriate skin; Middle Eastern man, age 62, shaved head, broad square face, naturally grey or silver hair and age-appropriate skin; East Asian woman, age 62, wavy pixie, broad square face, naturally grey or silver hair and age-appropriate skin; white man, age 62, cropped waves, wide cheekbones, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 73,
+      "firstId": 1162,
+      "group": "professional",
+      "category": "professionSubculture",
+      "rowAges": [
+        25,
+        38,
+        53,
+        68
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: plain office blouses, collars and jackets. Row 1: Southeast Asian woman, age 25, tied-back locs, angular cheekbones; Latino man, age 25, curly crop, round face; Black woman, age 25, tight bun, prominent rounded nose; Middle Eastern man, age 25, close-cropped hair, narrow chin. Row 2: Latino woman, age 38, tied-back locs, long narrow face; Black man, age 38, receding temples, prominent rounded nose; Middle Eastern woman, age 38, close-cropped hair, angular cheekbones; South Asian man, age 38, bald head and stubble, angular cheekbones. Row 3: white woman, age 53, loose braid, broad square face; East Asian man, age 53, wavy fringe, prominent rounded nose; Southeast Asian woman, age 53, tight bun, round face; Middle Eastern man, age 53, cropped waves, broad square face. Row 4: mixed Black and white woman, age 68, loose braid, round face, naturally grey or silver hair and age-appropriate skin; Indigenous American man, age 68, bald head and stubble, wide cheekbones, naturally grey or silver hair and age-appropriate skin; Southeast Asian woman, age 68, close-cropped hair, angular cheekbones, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 68, straight side-part, long narrow face, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 74,
+      "firstId": 1178,
+      "group": "creative",
+      "category": "professionSubculture",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: individual casual layered clothing, scarves, no props. Row 1: South Asian woman, age 28, close-cropped hair, angular cheekbones; mixed Asian and Latino man, age 28, straight side-part, prominent rounded nose; white woman, age 28, low ponytail, narrow chin; mixed Black and white man, age 28, bald head and stubble, round face. Row 2: Black woman, age 44, shoulder-length waves, soft oval face; mixed Black and white man, age 44, cropped waves, long narrow face; white woman, age 44, close-cropped hair, narrow chin; mixed Black and white man, age 44, cropped waves, narrow chin. Row 3: Pacific Islander woman, age 59, close-cropped hair, prominent rounded nose; Pacific Islander man, age 59, neat moustache and short hair, broad square face; Latino woman, age 59, cropped side-part, narrow chin; white man, age 59, short beard and swept hair, broad square face. Row 4: Indigenous American woman, age 73, swept-back curls, angular cheekbones, naturally grey or silver hair and age-appropriate skin; South Asian man, age 73, close-cropped hair, wide cheekbones, naturally grey or silver hair and age-appropriate skin; Southeast Asian woman, age 73, low ponytail, narrow chin, naturally grey or silver hair and age-appropriate skin; white man, age 73, cropped waves, broad square face, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 75,
+      "firstId": 1194,
+      "group": "creative",
+      "category": "professionSubculture",
+      "rowAges": [
+        22,
+        32,
+        47,
+        62
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: individual casual layered clothing, scarves, no props. Row 1: Pacific Islander woman, age 22, low ponytail, angular cheekbones; Middle Eastern man, age 22, receding temples, broad square face; mixed Black and white woman, age 22, loose braid, round face; Middle Eastern man, age 22, cropped waves, wide cheekbones. Row 2: Latino woman, age 32, short natural curls, prominent rounded nose; Pacific Islander man, age 32, receding temples, narrow chin; Indigenous American woman, age 32, loose braid, narrow chin; mixed Black and white man, age 32, short curls, round face. Row 3: Latino woman, age 47, shoulder-length waves, prominent rounded nose; South Asian man, age 47, curly crop, soft oval face; mixed Black and white woman, age 47, low ponytail, angular cheekbones; Indigenous American man, age 47, cropped waves, round face. Row 4: North African woman, age 62, wavy pixie, angular cheekbones, naturally grey or silver hair and age-appropriate skin; South Asian man, age 62, wavy fringe, round face, naturally grey or silver hair and age-appropriate skin; Middle Eastern woman, age 62, swept-back curls, broad square face, naturally grey or silver hair and age-appropriate skin; white man, age 62, wavy fringe, long narrow face, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 76,
+      "firstId": 1210,
+      "group": "child",
+      "category": "childTeen",
+      "rowAges": [
+        4,
+        7,
+        10,
+        12
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: age-appropriate everyday shirts, sweaters and fully covered modest clothing. Row 1: Black girl, age 4, swept-back curls, broad square face; East Asian boy, age 4, short hair, soft oval face; Latino girl, age 4, tight bun, wide cheekbones; Indigenous American boy, age 4, shaved head, angular cheekbones. Row 2: Southeast Asian girl, age 7, shoulder-length waves, soft oval face; white boy, age 7, curly crop, broad square face; East Asian girl, age 7, swept-back curls, angular cheekbones; Latino boy, age 7, short coiled hair, narrow chin. Row 3: Middle Eastern girl, age 10, tied-back locs, narrow chin; Southeast Asian boy, age 10, straight side-part, round face; Indigenous American girl, age 10, tied-back locs, broad square face; Black boy, age 10, straight side-part, broad square face. Row 4: Pacific Islander girl, age 12, swept-back curls, narrow chin; South Asian boy, age 12, cropped waves, soft oval face; white girl, age 12, tied-back locs, wide cheekbones; white boy, age 12, straight side-part, soft oval face. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 77,
+      "firstId": 1226,
+      "group": "child",
+      "category": "childTeen",
+      "rowAges": [
+        4,
+        7,
+        10,
+        12
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: age-appropriate everyday shirts, sweaters and fully covered modest clothing. Row 1: Middle Eastern girl, age 4, straight chin-length bob, narrow chin; South Asian boy, age 4, straight side-part, angular cheekbones; Indigenous American girl, age 4, cropped side-part, soft oval face; North African boy, age 4, curly crop, wide cheekbones. Row 2: Indigenous American girl, age 7, tied-back locs, wide cheekbones; Latino boy, age 7, swept hair, wide cheekbones; mixed Asian and Latino girl, age 7, shoulder-length waves, prominent rounded nose; East Asian boy, age 7, wavy fringe, long narrow face. Row 3: North African girl, age 10, wavy pixie, long narrow face; mixed Asian and Latino boy, age 10, wavy fringe, narrow chin; mixed Asian and Latino girl, age 10, wavy pixie, narrow chin; mixed Black and white boy, age 10, short curls, round face. Row 4: Pacific Islander girl, age 12, straight chin-length bob, long narrow face; Southeast Asian boy, age 12, wavy fringe, soft oval face; East Asian girl, age 12, low ponytail, prominent rounded nose; East Asian boy, age 12, short hair, round face. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 78,
+      "firstId": 1242,
+      "group": "child",
+      "category": "childTeen",
+      "rowAges": [
+        4,
+        7,
+        10,
+        12
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: age-appropriate everyday shirts, sweaters and fully covered modest clothing. Row 1: South Asian girl, age 4, swept-back curls, wide cheekbones; East Asian boy, age 4, shaved head, angular cheekbones; East Asian girl, age 4, close-cropped hair, prominent rounded nose; Latino boy, age 4, short curls, broad square face. Row 2: Latino girl, age 7, straight chin-length bob, broad square face; white boy, age 7, short hair, long narrow face; Middle Eastern girl, age 7, loose braid, broad square face; white boy, age 7, wavy fringe, wide cheekbones. Row 3: Indigenous American girl, age 10, loose braid, soft oval face; North African boy, age 10, swept hair, soft oval face; Southeast Asian girl, age 10, close-cropped hair, angular cheekbones; Black boy, age 10, short hair, round face. Row 4: North African girl, age 12, short coils, prominent rounded nose; Latino boy, age 12, wavy fringe, prominent rounded nose; East Asian girl, age 12, shoulder-length waves, long narrow face; North African boy, age 12, swept hair, angular cheekbones. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 79,
+      "firstId": 1258,
+      "group": "teenager",
+      "category": "childTeen",
+      "rowAges": [
+        14,
+        16,
+        18,
+        19
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: age-appropriate ordinary shirts and light jackets, fully clothed. Row 1: mixed Asian and Latino girl, age 14, tied-back locs, soft oval face; East Asian boy, age 14, short curls, wide cheekbones; mixed Asian and Latino girl, age 14, cropped side-part, narrow chin; North African boy, age 14, short straight hair, angular cheekbones. Row 2: East Asian girl, age 16, cropped side-part, narrow chin; mixed Black and white boy, age 16, short straight hair, soft oval face; North African girl, age 16, short natural curls, broad square face; East Asian boy, age 16, straight side-part, broad square face. Row 3: Middle Eastern woman, age 18, short natural curls, round face; Latino man, age 18, wavy fringe, narrow chin; white woman, age 18, short coils, wide cheekbones; North African man, age 18, curly crop, long narrow face. Row 4: Indigenous American woman, age 19, straight chin-length bob, soft oval face; Latino man, age 19, short straight hair, soft oval face; mixed Asian and Latino woman, age 19, wavy pixie, prominent rounded nose; Pacific Islander man, age 19, curly crop, soft oval face. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 80,
+      "firstId": 1274,
+      "group": "teenager",
+      "category": "childTeen",
+      "rowAges": [
+        14,
+        16,
+        18,
+        19
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: age-appropriate ordinary shirts and light jackets, fully clothed. Row 1: Middle Eastern girl, age 14, short coils, round face; Latino boy, age 14, wavy fringe, angular cheekbones; East Asian girl, age 14, swept-back curls, wide cheekbones; mixed Asian and Latino boy, age 14, straight side-part, prominent rounded nose. Row 2: South Asian girl, age 16, low ponytail, broad square face; Black boy, age 16, short curls, narrow chin; Middle Eastern girl, age 16, tight bun, prominent rounded nose; mixed Asian and Latino boy, age 16, shaved head, round face. Row 3: South Asian woman, age 18, straight chin-length bob, soft oval face; Latino man, age 18, short coiled hair, round face; white woman, age 18, shoulder-length waves, prominent rounded nose; North African man, age 18, straight side-part, soft oval face. Row 4: mixed Asian and Latino woman, age 19, swept-back curls, round face; Black man, age 19, straight side-part, prominent rounded nose; Indigenous American woman, age 19, cropped side-part, prominent rounded nose; Indigenous American man, age 19, straight side-part, long narrow face. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 81,
+      "firstId": 1290,
+      "group": "teenager",
+      "category": "childTeen",
+      "rowAges": [
+        14,
+        16,
+        18,
+        19
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: age-appropriate ordinary shirts and light jackets, fully clothed. Row 1: white girl, age 14, straight chin-length bob, broad square face; white boy, age 14, curly crop, round face; Latino girl, age 14, swept-back curls, long narrow face; mixed Asian and Latino boy, age 14, short straight hair, angular cheekbones. Row 2: Southeast Asian girl, age 16, close-cropped hair, wide cheekbones; Pacific Islander boy, age 16, short coiled hair, round face; Middle Eastern girl, age 16, loose braid, prominent rounded nose; North African boy, age 16, short hair, wide cheekbones. Row 3: Black woman, age 18, tied-back locs, narrow chin; Middle Eastern man, age 18, short hair, prominent rounded nose; Southeast Asian woman, age 18, tied-back locs, angular cheekbones; Black man, age 18, short straight hair, long narrow face. Row 4: East Asian woman, age 19, wavy pixie, angular cheekbones; East Asian man, age 19, shaved head, round face; Latino woman, age 19, wavy pixie, round face; mixed Black and white man, age 19, short coiled hair, wide cheekbones. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 82,
+      "firstId": 1306,
+      "group": "elderly",
+      "category": "elderly",
+      "rowAges": [
+        76,
+        82,
+        88,
+        95
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: comfortable ordinary knitwear and collared shirts. Row 1: Indigenous American woman, age 76, wavy pixie, narrow chin, naturally grey or silver hair and age-appropriate skin; Pacific Islander man, age 76, close-cropped hair, long narrow face, naturally grey or silver hair and age-appropriate skin; white woman, age 76, loose braid, round face, naturally grey or silver hair and age-appropriate skin; Latino man, age 76, cropped waves, long narrow face, naturally grey or silver hair and age-appropriate skin. Row 2: white woman, age 82, low ponytail, soft oval face, naturally grey or silver hair and age-appropriate skin; South Asian man, age 82, cropped waves, angular cheekbones, naturally grey or silver hair and age-appropriate skin; white woman, age 82, short natural curls, narrow chin, naturally grey or silver hair and age-appropriate skin; East Asian man, age 82, shaved head, prominent rounded nose, naturally grey or silver hair and age-appropriate skin. Row 3: North African woman, age 88, tied-back locs, long narrow face, naturally grey or silver hair and age-appropriate skin; Indigenous American man, age 88, close-cropped hair, angular cheekbones, naturally grey or silver hair and age-appropriate skin; Pacific Islander woman, age 88, short natural curls, long narrow face, naturally grey or silver hair and age-appropriate skin; East Asian man, age 88, cropped waves, soft oval face, naturally grey or silver hair and age-appropriate skin. Row 4: mixed Asian and Latino woman, age 95, swept-back curls, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Latino man, age 95, cropped waves, long narrow face, naturally grey or silver hair and age-appropriate skin; Middle Eastern woman, age 95, cropped side-part, broad square face, naturally grey or silver hair and age-appropriate skin; white man, age 95, close-cropped hair, narrow chin, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 83,
+      "firstId": 1322,
+      "group": "elderly",
+      "category": "elderly",
+      "rowAges": [
+        76,
+        82,
+        88,
+        95
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: comfortable ordinary knitwear and collared shirts. Row 1: Black woman, age 76, low ponytail, broad square face, naturally grey or silver hair and age-appropriate skin; Southeast Asian man, age 76, short curls, broad square face, naturally grey or silver hair and age-appropriate skin; South Asian woman, age 76, tight bun, round face, naturally grey or silver hair and age-appropriate skin; Pacific Islander man, age 76, receding temples, long narrow face, naturally grey or silver hair and age-appropriate skin. Row 2: mixed Asian and Latino woman, age 82, tied-back locs, round face, naturally grey or silver hair and age-appropriate skin; Middle Eastern man, age 82, short curls, wide cheekbones, naturally grey or silver hair and age-appropriate skin; Pacific Islander woman, age 82, cropped side-part, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Middle Eastern man, age 82, straight side-part, round face, naturally grey or silver hair and age-appropriate skin. Row 3: East Asian woman, age 88, loose braid, narrow chin, naturally grey or silver hair and age-appropriate skin; Pacific Islander man, age 88, close-cropped hair, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Indigenous American woman, age 88, short coils, soft oval face, naturally grey or silver hair and age-appropriate skin; Indigenous American man, age 88, short coiled hair, prominent rounded nose, naturally grey or silver hair and age-appropriate skin. Row 4: South Asian woman, age 95, straight chin-length bob, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 95, neat moustache and short hair, narrow chin, naturally grey or silver hair and age-appropriate skin; mixed Black and white woman, age 95, cropped side-part, long narrow face, naturally grey or silver hair and age-appropriate skin; South Asian man, age 95, neat moustache and short hair, broad square face, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 84,
+      "firstId": 1338,
+      "group": "elderly",
+      "category": "elderly",
+      "rowAges": [
+        76,
+        82,
+        88,
+        95
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: comfortable ordinary knitwear and collared shirts. Row 1: Black woman, age 76, straight chin-length bob, round face, naturally grey or silver hair and age-appropriate skin; East Asian man, age 76, short coiled hair, narrow chin, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino woman, age 76, tied-back locs, wide cheekbones, naturally grey or silver hair and age-appropriate skin; East Asian man, age 76, wavy fringe, soft oval face, naturally grey or silver hair and age-appropriate skin. Row 2: Southeast Asian woman, age 82, straight chin-length bob, wide cheekbones, naturally grey or silver hair and age-appropriate skin; North African man, age 82, shaved head, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Middle Eastern woman, age 82, close-cropped hair, wide cheekbones, naturally grey or silver hair and age-appropriate skin; Southeast Asian man, age 82, wavy fringe, long narrow face, naturally grey or silver hair and age-appropriate skin. Row 3: Pacific Islander woman, age 88, shoulder-length waves, long narrow face, naturally grey or silver hair and age-appropriate skin; North African man, age 88, straight side-part, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; North African woman, age 88, shoulder-length waves, round face, naturally grey or silver hair and age-appropriate skin; Latino man, age 88, close-cropped hair, wide cheekbones, naturally grey or silver hair and age-appropriate skin. Row 4: Latino woman, age 95, shoulder-length waves, angular cheekbones, naturally grey or silver hair and age-appropriate skin; Middle Eastern man, age 95, wavy fringe, narrow chin, naturally grey or silver hair and age-appropriate skin; white woman, age 95, close-cropped hair, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Southeast Asian man, age 95, short coiled hair, wide cheekbones, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 85,
+      "firstId": 1354,
+      "group": "elderly",
+      "category": "elderly",
+      "rowAges": [
+        76,
+        82,
+        88,
+        95
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: comfortable ordinary knitwear and collared shirts. Row 1: East Asian woman, age 76, low ponytail, long narrow face, naturally grey or silver hair and age-appropriate skin; Indigenous American man, age 76, shaved head, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; Southeast Asian woman, age 76, cropped side-part, soft oval face, naturally grey or silver hair and age-appropriate skin; Pacific Islander man, age 76, cropped waves, round face, naturally grey or silver hair and age-appropriate skin. Row 2: Black woman, age 82, tight bun, broad square face, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino man, age 82, short curls, angular cheekbones, naturally grey or silver hair and age-appropriate skin; mixed Asian and Latino woman, age 82, shoulder-length waves, broad square face, naturally grey or silver hair and age-appropriate skin; mixed Black and white man, age 82, receding temples, broad square face, naturally grey or silver hair and age-appropriate skin. Row 3: Southeast Asian woman, age 88, tight bun, angular cheekbones, naturally grey or silver hair and age-appropriate skin; Pacific Islander man, age 88, wavy fringe, round face, naturally grey or silver hair and age-appropriate skin; North African woman, age 88, tied-back locs, narrow chin, naturally grey or silver hair and age-appropriate skin; East Asian man, age 88, short curls, round face, naturally grey or silver hair and age-appropriate skin. Row 4: Pacific Islander woman, age 95, straight chin-length bob, prominent rounded nose, naturally grey or silver hair and age-appropriate skin; North African man, age 95, bald head and stubble, broad square face, naturally grey or silver hair and age-appropriate skin; Latino woman, age 95, short coils, round face, naturally grey or silver hair and age-appropriate skin; East Asian man, age 95, receding temples, wide cheekbones, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 86,
+      "firstId": 1370,
+      "group": "mutant",
+      "category": "mutantNonhuman",
+      "rowAges": [
+        28,
+        44,
+        59,
+        73
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. EACH ROW alternates female/male/female/male presentation. Clothing: ordinary clothing, subtle fictional non-gory mutations such as unusual skin tones and asymmetric brows. Row 1: East Asian woman, age 28, short natural curls, round face; mixed Asian and Latino man, age 28, straight side-part, wide cheekbones; South Asian woman, age 28, cropped side-part, broad square face; Black man, age 28, straight side-part, round face. Row 2: Black woman, age 44, wavy pixie, soft oval face; Pacific Islander man, age 44, wavy fringe, long narrow face; Middle Eastern woman, age 44, tied-back locs, round face; Indigenous American man, age 44, receding temples, wide cheekbones. Row 3: Indigenous American woman, age 59, loose braid, narrow chin; mixed Asian and Latino man, age 59, cropped waves, soft oval face; South Asian woman, age 59, close-cropped hair, narrow chin; mixed Asian and Latino man, age 59, cropped waves, round face. Row 4: East Asian woman, age 73, wavy pixie, narrow chin, naturally grey or silver hair and age-appropriate skin; Pacific Islander man, age 73, neat moustache and short hair, wide cheekbones, naturally grey or silver hair and age-appropriate skin; mixed Black and white woman, age 73, swept-back curls, narrow chin, naturally grey or silver hair and age-appropriate skin; Black man, age 73, neat moustache and short hair, angular cheekbones, naturally grey or silver hair and age-appropriate skin. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    },
+    {
+      "batch": 87,
+      "firstId": 1386,
+      "group": "canine",
+      "category": "mutantNonhuman",
+      "rowAges": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "prompt": "Use case: stylized-concept. ONE SQUARE game portrait atlas, EXACTLY SIXTEEN distinct fictional subjects in a perfectly aligned 4 columns x 4 rows grid. Equal square cells edge-to-edge; NO gutters, borders, grid lines, labels, text or watermark. Restrained realistic hand-painted gouache and fine ink, warm ivory textured parchment background, muted olive charcoal brown dull burgundy, soft even lighting. CRITICAL FRAMING: mid chest up, camera pulled back, entire outer hair silhouette and ears INSIDE its own cell with clear parchment headroom at least 8% of cell height above crown; chin around 62% down each cell. No clipped heads at any row boundary. Consistent scale, plausible individual anatomy, natural neutral expressions. No props, weapons, logos, caricature or glamour. Sixteen distinct dogs, no human bodies. Row 1: German shepherd dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell; Labrador dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell; Doberman dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell; Rottweiler dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell. Row 2: Belgian shepherd dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell; Boxer dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell; mixed shepherd dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell; black retriever dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell. Row 3: brown mastiff dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell; white shepherd dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell; terrier mix dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell; brindle mastiff dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell. Row 4: golden retriever dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell; grey shepherd dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell; black-and-tan hound dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell; collie mix dog, distinct coat and muzzle, head and upper chest, all ears fully inside cell. Identity uniqueness is critical: all sixteen are unrelated people with clearly different eye spacing, nose bridge and width, lip shapes, chin and jaw proportions, builds, ears and brow structure. Never show the same face aged into a later row; different hairstyle alone is insufficient. No idealized repeated facial template."
+    }
+  ]
+}
