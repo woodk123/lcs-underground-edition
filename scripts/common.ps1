@@ -40,6 +40,19 @@ function Get-LcsFlutter {
         throw 'Pinned Flutter SDK missing. Follow docs/BUILDING.md; the browser player package requires Python but no Flutter SDK.'
     }
     $pin = Get-Content -LiteralPath (Join-Path $root 'scripts\toolchain.json') -Raw | ConvertFrom-Json
+    # A cold SDK can print bootstrap progress before --machine JSON. Capture
+    # both streams so this function still returns only the verified tool path.
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $bootstrapOutput = & $flutter --suppress-analytics --version 2>&1
+        $bootstrapCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    if ($bootstrapCode -ne 0) {
+        throw "Flutter SDK bootstrap failed ($bootstrapCode). $($bootstrapOutput -join "`n")"
+    }
     $raw = & $flutter --suppress-analytics --version --machine
     if ($LASTEXITCODE -ne 0) { throw 'Could not query the local Flutter SDK.' }
     $version = ($raw -join "`n") | ConvertFrom-Json

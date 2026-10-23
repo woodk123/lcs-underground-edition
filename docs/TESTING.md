@@ -2,6 +2,8 @@
 
 Run commands from the repository root unless noted otherwise. Install the [pinned toolchain](BUILDING.md) and resolve dependencies/generate serializers using [Development mode](BUILDING.md#development-mode) first. A release build is not required for unit tests.
 
+Start with [focused checks](#choose-focused-checks) while iterating, then [shared acceptance](#shared-acceptance-journey) when the common player journey is affected. [Isolated browser setup](#prepare-an-isolated-web-build) prepares one build for the supplemental graphical journeys below; [release checks](#release-checks) cover extracted packages and manual acceptance.
+
 ## Supported window sizes
 
 The minimum supported game area is **1024×720 logical pixels**; the Windows startup default remains **1280×720**. Browser dimensions refer to the usable page viewport, excluding browser chrome. Use 1024×720 with 150% reading size for compact acceptance checks, alongside the normal desktop case. Keep controls reachable through scrolling and keyboard focus when enlarged text needs more space.
@@ -14,18 +16,18 @@ For exploratory gameplay and stuck-reader investigation, use the [development MC
 
 ### Choose focused checks
 
-Start with the row matching the changed boundary; combine rows when a change crosses boundaries. These are existing regressions, not substitutes for the integrated journeys. File names below are relative to `upstream/test/`.
+Start with the row matching the changed boundary; combine rows when a change crosses boundaries. These are existing regressions, not substitutes for the integrated journeys. Dart file names below are relative to `upstream/test/`; tooling paths are relative to the repository root.
 
 | Changed area | Focused test files | Integrated verification |
 |---|---|---|
 | Organisation footer, HQ commands or draft guards | `organisation_journal_test.dart`, `organisation_discovery_test.dart`, `network_journal_test.dart` | Shared acceptance: ordinary orders, required Continue, cancellation, HQ routing and keyboard interface. |
 | Orders browsing, search, retained category/map or scroll | `organisation_journal_test.dart`, `keyboard_orders_workspace_test.dart`, `page_storage_isolation_test.dart` | Shared acceptance: search across categories, switch actor, confirm/cancel, help, map toggle and revisit at normal/enlarged reading size. |
 | Shell navigation, shared controls, focus or reading preferences | `journal_navigation_state_test.dart`, `organisation_journal_test.dart`, `section_navigation_test.dart`, `keyboard_navigation_test.dart`, `text_prompt_focus_test.dart`, `journal_preferences_test.dart`, `journal_title_test.dart` | Shared acceptance, plus the screen browser review for shell routes outside its coverage. Check Classic switching and retained controls. |
-| Input ownership, keyboard routing or bridge blockers | `game_input_policy_test.dart`, `text_prompt_focus_test.dart`, `keyboard_navigation_test.dart`, `keyboard_orders_workspace_test.dart`, `classic_keyboard_parity_test.dart`, `development_bridge_test.dart` | Follow the [input ownership priorities](INPUT_OWNERSHIP.md), run the bridge suite enabled as well as default-disabled, then shared acceptance and affected modal/keyboard browser journeys. |
+| Input ownership, keyboard routing or bridge blockers | `game_input_policy_test.dart`, `text_prompt_focus_test.dart`, `keyboard_navigation_test.dart`, `keyboard_orders_workspace_test.dart`, `classic_keyboard_parity_test.dart`, `development_bridge_test.dart` | Follow the [input ownership priorities](INPUT_OWNERSHIP.md), run the [bridge suite enabled as well as default-disabled](DEV_MCP.md#verification), then shared acceptance and affected modal/keyboard browser journeys. |
 | Source action dispatch or order preparation/commit | `action_identity_test.dart`, `organisation_controller_test.dart`, `organisation_visit_test.dart`, `classic_keyboard_parity_test.dart` | Shared acceptance, plus the affected actual source reader; check stale callbacks and required follow-up choices. |
 | Visit coordination or workspace/profile layouts | `organisation_visit_flow_test.dart`, `organisation_journal_test.dart`, `organisation_visit_test.dart`, `journal_processing_test.dart`, `classic_keyboard_parity_test.dart`, `journal_screen_audit_test.dart` | Shared acceptance and the screen browser sweep at desktop/enlarged reading size. Check squad changes, prepare/cancel/revisit/queue, profile input, focus and retained scrolling. |
 | Save/version handling | `game_version_test.dart`, `save_load_test.dart`, `save_round_trip_test.dart`, `save_recovery_test.dart`, `journal_title_test.dart` | Shared acceptance save transfers and the [version policy](VERSIONING.md#save-compatibility). |
-| Acceptance runner or browser support | Python `test_shared_acceptance.py`; Node `scripts/browser_support.test.mjs` | Run the shared acceptance entry point against one identified build. |
+| Acceptance runner or browser support | `scripts/test_shared_acceptance.py`, `scripts/browser_support.test.mjs` | Run the shared acceptance entry point against one identified build. |
 
 For example, while changing Orders browsing, run the matching files with the pinned SDK:
 
@@ -40,14 +42,22 @@ Once source is settled, run `python scripts/shared_acceptance.py` for changes sp
 ### Analysis and broader checks
 
 ```powershell
+$analysisTargets = python scripts/analysis_targets.py | ConvertFrom-Json
+if ($LASTEXITCODE -ne 0) { throw 'Could not load the strict analysis scope.' }
 Push-Location upstream
-..\.tools\flutter\bin\flutter.bat test --no-pub
-..\.tools\flutter\bin\flutter.bat analyze --no-pub lib/modern lib/devtools lib/main.dart lib/engine/console.dart lib/engine/console_widget.dart lib/engine/console_char.dart lib/engine/console_graphic.dart
-..\.tools\flutter\bin\flutter.bat analyze --no-pub --no-fatal-infos --no-fatal-warnings
-Pop-Location
+try {
+    ..\.tools\flutter\bin\flutter.bat test --no-pub
+    if ($LASTEXITCODE -ne 0) { throw 'Flutter tests failed.' }
+    ..\.tools\flutter\bin\flutter.bat analyze --no-pub @analysisTargets
+    if ($LASTEXITCODE -ne 0) { throw 'Focused analysis failed.' }
+    ..\.tools\flutter\bin\flutter.bat analyze --no-pub --no-fatal-infos --no-fatal-warnings
+    if ($LASTEXITCODE -ne 0) { throw 'Full-project analysis failed.' }
+} finally {
+    Pop-Location
+}
 ```
 
-These analysis commands match the release/CI policy: focused interface analysis is strict; full-project errors fail while legacy warnings and infos remain visible.
+The strict analysis paths are maintained in [scripts/analysis_targets.json](../scripts/analysis_targets.json), shared by this command, CI and the standalone Windows/Linux builders. Focused interface analysis is strict; full-project errors fail while legacy warnings and infos remain visible.
 
 For changes to versioning, run the focused [version/save/title checks](VERSIONING.md#save-compatibility). These verify that the Underground package and displayed versions agree, autosaves retain their compatibility header, existing campaigns still load, and the longer footer fits at narrow/enlarged layouts.
 
@@ -71,8 +81,11 @@ Release tooling uses Python's standard library, with pinned Pillow for the portr
 python -m pip install -r scripts/requirements-art.txt
 python -m unittest discover -s scripts -p 'test_*.py' -v
 python scripts/verify_assets.py
-node --test scripts/browser_support.test.mjs
+npm ci --prefix upstream/tool/dev_mcp --no-audit --no-fund
+npm test --prefix upstream/tool/dev_mcp
 ```
+
+The Node command runs the development-MCP and shared browser-support unit tests without launching a browser. For a focused browser-support change, use `node --test scripts/browser_support.test.mjs`. Browser journeys below have their own locked dependencies in `upstream/tool/offline_test/`.
 
 The tests exercise archive integrity/tampering, complete source snapshots, local and nightly packaging, release-size accounting and limits, unchanged-input detection and safe publication. Flutter regressions also decode every runtime WebP, check atlas dimensions and native alpha fidelity, and exercise conservative web renderer pruning. No live GitHub release is modified by these tests.
 
@@ -104,7 +117,7 @@ tooltip visibility and daily reader transitions. Scrolling, resizing and ignored
 keyboard commands also wait for stable rendered semantics. These checks replace
 fixed pauses; they do not skip the original actions, layout checks or save comparisons.
 
-Install the pinned SDK and resolve dependencies as described in [Building](BUILDING.md#development-mode). The browser helpers use installed Chrome and Edge, with locked dependencies installed by `npm ci --prefix upstream/tool/offline_test`. The runner verifies the SDK pin, regenerates serializers, runs the focused test files (including legal summaries and operation history), builds a separate release web player and injects its offline manifest. It then runs these existing helpers against that one build:
+Install the pinned SDK and resolve dependencies as described in [Building](BUILDING.md#development-mode). The browser helpers use installed Chrome and Edge, with locked dependencies installed by `npm ci --prefix upstream/tool/offline_test`. The runner bootstraps and verifies the SDK before project dependency resolution or serializer generation, then runs the focused test files (including legal summaries and operation history), builds a separate release web player and injects its offline manifest. Supplied builds must pass their file/hash checks before SDK or server work and remain unchanged through the run. It then runs these existing helpers against that one build:
 
 | Stage | What it establishes |
 |---|---|
@@ -137,11 +150,58 @@ The contract and audited reader families are recorded in [Classic keyboard audit
 
 `scripts/browser_support.mjs` supplies `createQaPage` for disposable browser setup. It closes the preceding context, creates a fresh context/page and records page, console and request errors with the current scenario metadata. Each journey still owns navigation, expected-reader waits, fixture declarations and assertions. Use it when extending mission, siege or car-pursuit helpers so setup and failure cleanup stay consistent.
 
+### Prepare an isolated web build
+
+For the common creation/orders/navigation/save journey, the [shared acceptance runner](#shared-acceptance-journey) already owns compilation, ports and cleanup. Use this setup for a supplemental helper. Install Node.js/npm and the Edge/Chrome browser required by that helper, and complete [Development mode](BUILDING.md#development-mode) first.
+
+`python scripts/developer_doctor.py --browser` inventories the SDK and locked browser-helper dependencies without launching or building anything. It reports missing setup separately from failures in the journey itself.
+
+From the repository root, compile into a new ignored directory and inject its offline manifest once. The absolute output path avoids Windows shader-compilation failures with relative custom output paths. This leaves the player build and server on port 8765 available.
+
+```powershell
+npm ci --prefix upstream/tool/offline_test
+if ($LASTEXITCODE -ne 0) { throw 'Browser dependency installation failed.' }
+. ./scripts/common.ps1
+$flutter = Get-LcsFlutter
+$dart = Join-Path (Split-Path $flutter) 'dart.bat'
+$buildId = (Get-LcsSourceCommit).Substring(0, 8)
+$qaWeb = Join-Path (Get-Location) ('.local/reports/browser-qa-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '/web')
+Push-Location upstream
+try {
+    & $flutter --suppress-analytics build web --release --no-pub --no-wasm-dry-run --base-href / `
+        "--output=$qaWeb" "--dart-define=LCS_BUILD=$buildId" --dart-define=LCS_CHANNEL=Development
+    if ($LASTEXITCODE -ne 0) { throw 'QA web build failed.' }
+    & $dart run tool/inject_service_worker.dart $qaWeb
+    if ($LASTEXITCODE -ne 0) { throw 'Offline manifest injection failed.' }
+} finally {
+    Pop-Location
+}
+$expected = (Get-FileHash (Join-Path $qaWeb 'main.dart.js') -Algorithm SHA256).Hash.ToLowerInvariant()
+```
+
+Choose the helper's standalone port below. Start only an unused port, retain the same `$qaWeb` and `$expected` throughout the run, and run helpers sharing an origin sequentially. Each helper uses disposable storage. The shared acceptance runner manages its own alternative ports; those overrides do not apply to every standalone helper.
+
+| Port on `http://127.0.0.1` | Standalone helpers in `scripts/` |
+|---|---|
+| 18879 | `browser_review.mjs`, `creation_browser_review.mjs`, `first_week_browser_review.mjs`, `recruitment_browser_review.mjs`, `keyboard_interface_browser_review.mjs`, `screen_browser_review.mjs`, `mission_browser_review.mjs`, `street_clinic_browser_review.mjs`, `car_chase_browser_review.mjs`, `siege_browser_review.mjs`, `discord_feedback_browser_review.mjs` |
+| 18881 | `injury_browser_review.mjs` |
+| 18882 | `personnel_browser_review.mjs` |
+| 18883 | `catalogue_browser_review.mjs`, `juice_browser_review.mjs` |
+
+For example, start the 18879 server and run the Organisation journey:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch.ps1 -Port 18879 -NoBrowser -WebRoot $qaWeb
+node scripts/browser_review.mjs --url http://127.0.0.1:18879/ --expected-hash $expected
+```
+
+The launcher checks `/__lcs_launcher_health` and rejects a port serving a different directory; helpers compare the actual browser-loaded JavaScript with the expected hash. Keep the web files unchanged during QA and rebuild after source changes. To check an extracted player, use its `web/` directory as `$qaWeb` and recompute `$expected` instead of compiling another player. When finished, stop only the server started for this task with `scripts/stop.ps1 -Port 18879` (substitute the chosen port). The specialty examples below assume this setup and their matching port.
+
 ### Equipment and vehicle artwork
 
 `catalogue_art_qa_test.dart` checks all 32 equipment paintings and all 11 vehicle types against the retained PNGs, runtime manifests and provenance. It checks complete transparent crops, decoded row/detail paintings, legacy item IDs, exact passenger/driver action metadata, disabled controls, and unchanged campaign state/RNG. Its shared application-cache journey covers guides and rows at desktop, 1024×720/150% and 360×640/200%, followed by the actual weapon-shop and dealership purchase handlers. Set `LCS_CAPTURE_SCREENS=1` to retain the contact sheet and source-handler screenshots under ignored `reports/catalogue-art-qa/`.
 
-`scripts/catalogue_browser_review.mjs` requires its own isolated origin, **http://127.0.0.1:18883/**, and an exact compiled `main.dart.js` SHA-256. Build into a separate absolute output directory and inject its service worker once, as described below; keep existing player and QA servers separate. Start that directory with `scripts/launch.ps1 -Port 18883 -NoBrowser -WebRoot $qaWeb`, then run `node scripts/catalogue_browser_review.mjs --expected-hash $expected`. The helper imports a declared disposable copy of the bundled campaign with stored items and eleven vehicles, exposes actual inventory choices, all three guides and dossier equipment at desktop and 150%, and compares complete exports before/after inspection. Asset responses and loaded JavaScript hashes are checked. Prepared possessions are not earned gameplay outcomes; native Windows GUI acceptance remains separate.
+`scripts/catalogue_browser_review.mjs` requires its own isolated origin, **http://127.0.0.1:18883/**, and an exact compiled `main.dart.js` SHA-256. Use the [isolated web build](#prepare-an-isolated-web-build) above; keep existing player and QA servers separate. Start that directory with `scripts/launch.ps1 -Port 18883 -NoBrowser -WebRoot $qaWeb`, then run `node scripts/catalogue_browser_review.mjs --expected-hash $expected`. The helper imports a declared disposable copy of the bundled campaign with stored items and eleven vehicles, exposes actual inventory choices, all three guides and dossier equipment at desktop and 150%, and compares complete exports before/after inspection. Asset responses and loaded JavaScript hashes are checked. Prepared possessions are not earned gameplay outcomes; native Windows GUI acceptance remains separate.
 
 ### Tactical artwork
 
@@ -226,20 +286,15 @@ Set `LCS_CAPTURE_SCREENS=1` for these three playtest files to save intermediate
 rendered frames under ignored `reports/*-captures/` directories. Widget captures
 and real-browser screenshots remain distinct evidence.
 
-The supported browser helpers use isolated contexts and test fixtures. They require a compiled web build served at `http://127.0.0.1:18879/` and never operate a player's browser profile. Install Node.js/npm and the Edge/Chrome browser required by each helper. Their locked Node dependencies are in `upstream/tool/offline_test/`:
+### Organisation, opening week and creation
 
-```powershell
-npm ci --prefix upstream/tool/offline_test
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch.ps1 -Port 18879 -NoBrowser
-node scripts/browser_review.mjs --url http://127.0.0.1:18879/
-```
+These helpers use the [isolated build](#prepare-an-isolated-web-build) on port 18879. Keep `$expected` tied to the same served directory, including when checking an extracted player.
 
 `browser_review.mjs` checks dossier skill hierarchy, portrait-age repair, mechanics disclosure, retained order categories, repeated assignments, contextual travel labels, Clipboard dossiers and equipment pages at normal and enlarged text. Export comparisons verify that inspections/cancelled drafts preserve the campaign and repeated confirmations change only the intended members' assignments. Screenshots and JSON results are written under ignored `reports/`.
 
 The first-week journey uses a separate synthetic campaign with old wanted crimes cleared and one explicitly ready prospect. It exercises the join decision, squad formation, weapon transfer, assignments, a real free shop visit, seven day advances, earned money/Science training and exact export/reimport continuity in a fresh browser context. It does not claim to earn the prospect's persuasion or manually certify native Windows gameplay.
 
 ```powershell
-$expected = (Get-FileHash upstream/build/web/main.dart.js -Algorithm SHA256).Hash.ToLowerInvariant()
 node scripts/first_week_browser_review.mjs --url http://127.0.0.1:18879/ --expected-hash $expected
 ```
 
@@ -248,21 +303,16 @@ Use the compiled `main.dart.js` hash from the extracted release player when chec
 Founder creation uses an installed Chrome and an exact compiled-build hash:
 
 ```powershell
-$expected = (Get-FileHash upstream/build/web/main.dart.js -Algorithm SHA256).Hash.ToLowerInvariant()
 node scripts/creation_browser_review.mjs --url http://127.0.0.1:18879/ --expected-hash $expected
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop.ps1 -Port 18879
 ```
 
-The first helper uses installed Microsoft Edge. The creation helper checks portrait rerolls, continuity through creation/headquarters/save reload, projected answer-bonus help and click-through, and public-name placement below the question. It covers manual and random backgrounds at normal size and 1024×720 with 150% text. Unit regressions cover all 50 source bonuses, untouched state/RNG/ID counters during previews, and the birthday/cohort edge case. Use only the isolated QA port when stopping a test server.
+The Organisation and first-week helpers use installed Microsoft Edge; creation uses Chrome. The creation helper checks portrait rerolls, continuity through creation/headquarters/save reload, projected answer-bonus help and click-through, and public-name placement below the question. It covers manual and random backgrounds at normal size and 1024×720 with 150% text. Unit regressions cover all 50 source bonuses, untouched state/RNG/ID counters during previews, and the birthday/cohort edge case. Use only the isolated QA port when stopping a test server.
 
 ### Mission, recovery and custody
 
-When a player server is already running, build the QA game into a separate ignored directory. Pass an **absolute** `--output` path to the pinned Flutter `build web --release --no-pub --no-wasm-dry-run --base-href /` command, then run `tool/inject_service_worker.dart` against that directory exactly once. Relative custom output paths can fail Windows shader compilation. Use `scripts/common.ps1` / `Get-LcsFlutter` to verify the pinned SDK before building. Do not replace files served to the player on port 8765.
+Use the [isolated build and server setup](#prepare-an-isolated-web-build) on port 18879. Its `$qaWeb` and `$expected` must describe the same unchanged build.
 
 ```powershell
-$qaWeb = Join-Path (Get-Location) 'reports/mission-qa/web'
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch.ps1 -Port 18879 -NoBrowser -WebRoot $qaWeb
-$expected = (Get-FileHash (Join-Path $qaWeb 'main.dart.js') -Algorithm SHA256).Hash.ToLowerInvariant()
 node scripts/mission_browser_review.mjs --url http://127.0.0.1:18879/ --expected-hash $expected
 ```
 
@@ -270,7 +320,7 @@ The mission helper travels into an actual police building, moves through its ent
 
 If an earned police siege blocks day advancement during actual-injury care, the helper records the siege and still-admitted patients explicitly and preserves that campaign snapshot. It does not claim discharge or resolve the siege by altering state. The separate prepared care scenarios continue to check discharge; siege resolution is outside this helper's coverage.
 
-Each resolved scenario saves and exports through the original menu, reloads the browser, and imports into a fresh storage context. Whole-campaign equality covers character condition, portrait identities, equipment/ammunition, squads, orders, funds and campaign progress. Hospital/court pages are also exercised at 1024×720 with 150% reading size. Screenshots, decision frames, synthetic inputs and exported saves remain under ignored `reports/`. `--only operation|conversation|paid-care|unpaid-care|custody` helps investigate one scenario; the full acceptance run omits this filter.
+Each resolved scenario saves and exports through the original menu, reloads the browser, and imports into a fresh storage context. Whole-campaign equality covers character condition, portrait identities, equipment/ammunition, squads, orders, funds and campaign progress. Hospital/court pages are also exercised at 1024×720 with 150% reading size. Screenshots, decision frames, synthetic inputs and exported saves remain under ignored `reports/`. `--only tactical|operation|conversation|paid-care|unpaid-care|custody` helps investigate one scenario; the full acceptance run omits this filter.
 
 The helpers locate installed Edge/Chrome in standard Windows directories and accept `--browser-executable <path>` for another installation. They never download a browser, reuse a player profile or clear player storage. Field-input regressions cover retries, source identity/revision checks, the original movement exception and keyboard isolation while inspecting. Recovery regressions cover billing, affordability, conviction records, exact persistence, responsive journal routes and read-only details. These checks do not certify every injury, pursuit, siege, trial outcome or native Windows path.
 

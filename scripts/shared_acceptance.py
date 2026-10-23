@@ -149,6 +149,16 @@ def validate_browser_report(path: Path, expected_hash: str) -> dict:
     return data
 
 
+def validate_web_build(web: Path, expected_hash: str | None = None) -> tuple[str, dict[str, str]]:
+    for name in ('index.html', 'main.dart.js', 'sw.js'):
+        if not (web / name).is_file():
+            raise ValueError(f'Incomplete web build: {name}')
+    expected = digest(web / 'main.dart.js')
+    if expected_hash is not None and expected != expected_hash.lower():
+        raise ValueError('Supplied web build does not match --expected-hash.')
+    return expected, file_hashes(web)
+
+
 class AcceptanceHandler(GameHandler):
     def log_message(self, format, *args):
         # Browser/network failures are retained in each helper's report.
@@ -208,6 +218,7 @@ def run(args) -> Path:
         report['browser_workers'] = workers
         report['origins'] = [f'http://127.0.0.1:{port}/' for port in ports]
         web = (ROOT / args.web_root).resolve(strict=True) if supplied else output / 'web'
+        supplied_payload = validate_web_build(web, args.expected_hash)[1] if supplied else None
         suffix = '.bat' if os.name == 'nt' else ''
         flutter = ROOT / f'.tools/flutter/bin/flutter{suffix}'
         dart = ROOT / f'.tools/flutter/bin/dart{suffix}'
@@ -216,14 +227,18 @@ def run(args) -> Path:
             raise ValueError('Install the pinned Flutter SDK and Node.js; see docs/BUILDING.md.')
         if not (ROOT / 'upstream/tool/offline_test/node_modules/playwright').is_dir():
             raise ValueError('Install locked browser dependencies: npm ci --prefix upstream/tool/offline_test')
+        pin = json.loads((ROOT / 'scripts/toolchain.json').read_text())
+        # A cold SDK can print bootstrap progress to stdout even with --machine.
+        # Warm only the SDK before reading JSON; do not resolve project packages
+        # or regenerate serializers until its exact version/revision is checked.
+        run_step(report, output, 'sdk-bootstrap', [str(flutter), '--suppress-analytics', '--version'], ROOT)
+        version = json.loads(subprocess.check_output([str(flutter), '--version', '--machine'], text=True))
+        if version['frameworkVersion'] != pin['flutter_version'] or version['frameworkRevision'] != pin['flutter_revision']:
+            raise ValueError('Flutter SDK does not match scripts/toolchain.json.')
+        report['toolchain'] = pin
         with reserve_servers(web, ports) as owned:
             run_step(report, output, 'dependencies', [str(flutter), 'pub', 'get'], ROOT / 'upstream')
             run_step(report, output, 'serialization', [str(dart), 'run', 'build_runner', 'build'], ROOT / 'upstream')
-            version = json.loads(subprocess.check_output([str(flutter), '--version', '--machine'], text=True))
-            pin = json.loads((ROOT / 'scripts/toolchain.json').read_text())
-            if version['frameworkVersion'] != pin['flutter_version'] or version['frameworkRevision'] != pin['flutter_revision']:
-                raise ValueError('Flutter SDK does not match scripts/toolchain.json.')
-            report['toolchain'] = pin
             report['source'] = source_identity(ROOT)
             run_step(report, output, 'acceptance-tests', [str(flutter), 'test', '--no-pub',
                      '--reporter', 'expanded', *[f'test/{name}' for name in TESTS]], ROOT / 'upstream')
@@ -235,13 +250,9 @@ def run(args) -> Path:
                          '--dart-define=LCS_CHANNEL=Development'], ROOT / 'upstream')
                 run_step(report, output, 'offline-manifest', [str(dart), 'run',
                          'tool/inject_service_worker.dart', str(web)], ROOT / 'upstream')
-            for name in ('index.html', 'main.dart.js', 'sw.js'):
-                if not (web / name).is_file():
-                    raise ValueError(f'Incomplete web build: {name}')
-            expected = digest(web / 'main.dart.js')
-            if supplied and expected != args.expected_hash.lower():
-                raise ValueError('Supplied web build does not match --expected-hash.')
-            payload = file_hashes(web)
+            expected, payload = validate_web_build(web, args.expected_hash if supplied else None)
+            if supplied and payload != supplied_payload:
+                raise ValueError('Supplied web build changed during setup. Rerun on settled input.')
             write_json(output / 'web-hashes.json', payload)
             report['build'] = {'directory': str(web), 'main_js_sha256': expected,
                                'origin': 'supplied artifact' if supplied else 'built by this run',

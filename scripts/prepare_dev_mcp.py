@@ -15,7 +15,8 @@ from release_common import digest, file_hashes, write_json
 ROOT = Path(__file__).resolve().parent.parent
 INPUTS = ('upstream/lib', 'upstream/assets', 'upstream/web',
           'upstream/pubspec.yaml', 'upstream/pubspec.lock',
-          'upstream/tool/inject_service_worker.dart', 'scripts/toolchain.json')
+          'upstream/tool/inject_service_worker.dart', 'scripts/toolchain.json',
+          'scripts/prepare_dev_mcp.py', 'scripts/release_common.py')
 
 
 def source_identity(root: Path) -> dict:
@@ -102,16 +103,22 @@ def configure_codex(root: Path) -> Path:
 
 def prepare(args) -> dict:
     output = output_directory(ROOT, args.out)
-    install_dependencies(ROOT, output)
     suffix = '.bat' if os.name == 'nt' else ''
     flutter = ROOT / f'.tools/flutter/bin/flutter{suffix}'
     dart = ROOT / f'.tools/flutter/bin/dart{suffix}'
     if not flutter.is_file() or not dart.is_file():
         raise ValueError('Install the pinned Flutter SDK; see docs/BUILDING.md.')
-    sdk = json.loads(subprocess.check_output([str(flutter), '--version', '--machine'], text=True))
     pin = json.loads((ROOT / 'scripts/toolchain.json').read_text())
+    # The first SDK invocation can write bootstrap progress to machine stdout.
+    # Warm it without resolving this project's packages or changing source.
+    try:
+        subprocess.check_output([str(flutter), '--suppress-analytics', '--version'], text=True)
+    except subprocess.CalledProcessError as error:
+        raise ValueError(f'Flutter SDK bootstrap failed ({error.returncode}). {(error.output or "").strip()}') from error
+    sdk = json.loads(subprocess.check_output([str(flutter), '--version', '--machine'], text=True))
     if sdk['frameworkVersion'] != pin['flutter_version'] or sdk['frameworkRevision'] != pin['flutter_revision']:
         raise ValueError('Flutter SDK does not match scripts/toolchain.json.')
+    install_dependencies(ROOT, output)
     source = source_identity(ROOT)
     web = output / 'web'
     manifest = output / 'build.json'

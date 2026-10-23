@@ -2,6 +2,8 @@
 
 For Windows/web release packaging, use Windows PowerShell, Git and Python 3.12+. Linux desktop builds use the Linux instructions below. Commands run from the repository root, containing `upstream/` and `scripts/`. A prepared Source ZIP has the same layout and can be rebuilt without a `.git` folder; its `BUILD_INFO.json` records the source identity.
 
+For everyday changes, start with [Development mode](#development-mode) and the [focused-check guide](TESTING.md#choose-focused-checks). Use [shared acceptance](TESTING.md#shared-acceptance-journey) for the common player journey or [isolated browser setup](TESTING.md#prepare-an-isolated-web-build) for a specific graphical regression. The release packaging steps below require committed, clean source.
+
 ## Toolchain
 
 For interactive engine debugging and assistant playthroughs, [Development MCP](DEV_MCP.md) provides a separate cached development build and disposable browser session. It does not replace the checked player/release workflow below.
@@ -30,22 +32,7 @@ Before creating the offline manifest, the injector removes renderer files proven
 
 Each release writes `size-report.json` beside the ZIPs and `release-sizes.json` in its build evidence. These account for compressed and extracted sizes by artwork, portraits, renderer, code and other data. Player size limits are in `scripts/release_sizes.py`; exceeding either download or extracted-size limits fails packaging. Source archives are reported separately without a player-size limit. Review the artwork and report before deliberately raising a budget.
 
-The 23 October 2026 portrait expansion adds 1,024 independently reviewed faces in 64 quality-90 WebP atlases: **16,352,176 additional runtime bytes**, preserving the original 256px cells and image policy. A ZIP measurement of the complete isolated browser QA build is **45,179,024 bytes compressed / 63,987,940 bytes extracted** (before small player-launcher wrappers). Its report is `.local/art-review/portraits-v4/size-report.json`; this is a local QA measurement, not a published player. To accommodate the reviewed artwork, browser budgets are now 50 MB download / 70 MB extracted; native download budgets are 60 MB, with 100 MB extracted on Windows and 110 MB on Linux. Native limits include the same additional artwork and engine headroom; these are limits, not measured native package sizes.
-
-### Quality 90 size measurements (17 October 2026)
-
-Build `94ef3a09529fa35c0ba8e755c4f526a96987af3f` regenerated all 42 runtime images from their original PNG masters at WebP quality 90. Image dimensions, portrait cells and alpha pixels are unchanged. The shared encoder and regenerated manifests make subsequent builds use the same policy; see [artwork regeneration](ASSETS.md).
-
-Actual player sizes, compared with the `underground-preview-2026.10.16` packages:
-
-| Player | Previous ZIP bytes | Quality 90 ZIP bytes | Download reduction | Quality 90 extracted bytes |
-|---|---:|---:|---:|---:|
-| Browser | 34,540,400 | 22,453,164 | 12,087,236 bytes (35.0%) | 38,081,854 |
-| Windows x64 | 42,700,237 | 30,645,529 | 12,054,708 bytes (28.2%) | 54,732,218 |
-
-The artwork payload itself fell from 26,405,232 to 14,322,460 bytes (45.8%). The package comparison includes other code changes since the preview, so the ZIP differences are whole-build measurements rather than an isolated compression benchmark. Quality 90 was selected after comparing qualities 90, 85 and 80: representative faces, icons, buildings and textures remained close to the existing art, with more visible smoothing at the lower qualities. Visual review covered representative samples, not every image in every gameplay view.
-
-The local artifacts are under `release/local-20261017-090800-94ef3a09/`, including player ZIPs, matching source, checksum sidecars and `size-report.json`. Build evidence is under `.local/reports/build-20261017-090455/`. These directories are ignored by Git and are not hosted download links. Validation passed all 736 Flutter tests, both focused and full analysis, asset verification, ZIP integrity and checksum checks, and byte comparisons of all 42 packaged images against the regenerated files. Manual gameplay and clean-machine launch checks remain pending.
+See [historical package-size evidence](#historical-package-size-evidence) for dated artwork and player measurements. Use the report from the current build when assessing current package size or verification.
 
 ### Running and packaging players
 
@@ -67,13 +54,21 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build_release.ps1 -W
 
 Commit source changes first: release builds require a clean Git checkout, including untracked source files, and packaging checks that HEAD still matches the build report. Ignored build outputs and reports are allowed. Rebuilding an extracted Source ZIP still uses its recorded source identity.
 
-Follow [Versioning](VERSIONING.md) when preparing a named preview or release. The game now has an independent Underground version (starting at 0.1.0); ordinary pushes and nightlies keep it unchanged. Builders label the footer Development by default, Preview with `-Tag`, or Nightly with `-Nightly`. Use `-Channel Release` for an explicitly prepared release. CI players are labeled Nightly candidates for reuse by nightly publication; the standalone Linux builder accepts `--channel Preview` or `--channel Release`. The source revision remains visible for bug reports, and save compatibility is independent of the release version.
+Follow [Versioning](VERSIONING.md#before-committing-or-pushing) before every commit or push, including ordinary development pushes and nightlies. Version a completed player-visible batch according to its impact; internal-only maintenance and an already versioned batch keep the current version. A version bump does not publish a release. Builders label the footer Development by default, Preview with `-Tag`, or Nightly with `-Nightly`. Use `-Channel Release` for an explicitly prepared release. CI players are labeled Nightly candidates for reuse by nightly publication; the standalone Linux builder accepts `--channel Preview` or `--channel Release`. The source revision remains visible for bug reports, and save compatibility is independent of the release version.
 
 An explicit `-Tag` prepares absolute Source ZIP links for that tag in `woodk123/lcs-underground-edition`; it does not publish or upload anything. The Python packager's `--tag` behaves the same and accepts `--repository owner/repo` for another fork. Untagged local builds retain relative source links. Keep the players and their matching Source ZIP together on the named release, and use a fresh tag/output directory for each preview. `-Tag` cannot be combined with `-Nightly`.
 
 ## Development mode
 
-Development does not require a clean checkout or release packaging. After installing the pinned SDK above, verify it and generate dependencies/serializers from the repository root:
+Development does not require a clean checkout or release packaging. Inspect an existing setup before running slower commands:
+
+```powershell
+python scripts/developer_doctor.py
+```
+
+This read-only inventory checks the pinned SDK checkout/cache and this checkout's resolved Dart package roots, reporting repair commands for missing prerequisites. Add `--browser` for Node/browser-helper packages, `--mcp` for browser and development-MCP packages, `--tooling` for the current Python interpreter's pinned Pillow, or `--json` for machine-readable output. It installs nothing and does not establish serializer freshness, current Dart lock resolution, tests, browser launch or build acceptance.
+
+After installing the pinned SDK above, verify it and generate dependencies/serializers from the repository root:
 
 ```powershell
 . ./scripts/common.ps1
@@ -128,6 +123,8 @@ Run `./lcs_new_age` from the bundle folder on a graphical Linux desktop. Keep th
 
 [Project checks](../.github/workflows/checks.yml) runs on every push and pull request, and can also be started manually. It calls the shared [checked-player pipeline](../.github/workflows/ci.yml). Four test shards on each of Windows 2022 and Ubuntu 22.04 run alongside three independent release-build workers: native Linux on Ubuntu, native Windows on Windows, and web on Ubuntu. Web compilation and offline-manifest injection no longer delay Windows compilation. Every test file runs once per operating system; shard 0 also runs release-tool tests, asset verification and focused/full-project analysis. Focused analysis is strict; full-project errors fail while legacy warnings and infos remain visible.
 
+Separate Node tooling jobs run the locked development-MCP and shared browser-support unit tests on both operating systems. They need no Flutter build or browser launch; use the [local tooling commands](TESTING.md#analysis-and-broader-checks) for the same entry point.
+
 The shared setup caches the pinned Flutter SDK separately for each operating system and worker target. Test workers download only universal artifacts, including `flutter_tester`; native and web workers add only their own platform artifacts. SDK keys include the toolchain file and setup script. One trusted worker per target/OS saves the SDK cache. Dart package downloads remain shared per OS, keyed by the toolchain and `pubspec.lock`, with one build worker saving them. Cached SDKs still have their version and revision verified. No compiled player or passed-test status is taken from a cache.
 
 Generator tooling has a separate exact-key cache for `.dart_tool/build/entrypoint`, `.dart_tool/pub/bin/build_runner` and `.dart_tool/build_resolvers`. Its key includes the OS/architecture, pinned toolchain, dependency lockfile, package manifest and builder configuration. Successful default-branch build workers populate it after running serialization. Project `.g.dart` files, the build asset graph and generated intermediate outputs are excluded: workers still regenerate serializers and `build_runner` still checks compiled-tool dependencies for freshness. Cache misses run the same full generator command.
@@ -173,3 +170,26 @@ Run **Named release players** (`release.yml`) on the intended committed source w
 Download the `named-release-<tag>` Actions artifact for final package and gameplay review, then publish those exact files with the short notes in `docs/releases/<version>.md`. The workflow prepares artifacts without publishing them. Retain the named release independently of automatic nightlies.
 
 Publishing a numbered `underground-vX.Y.Z` release also starts **Play hosted game**, which deploys that exact browser player and its matching source to GitHub Pages after hosted-path and offline checks. To deploy an already published numbered release, run `pages.yml` manually on `main` with its `tag` input. Leaving `tag` empty deploys the latest managed nightly. The hosted game keeps the same origin for existing browser saves, and its source page identifies the deployed release or nightly.
+
+## Historical package-size evidence
+
+These measurements describe the named source builds and local artifacts below. Their test counts, package sizes and outstanding manual checks are historical evidence, not current verification or published-download claims. Current budgets are enforced by `scripts/release_sizes.py`.
+
+### Portrait expansion (23 October 2026)
+
+The 23 October 2026 portrait expansion adds 1,024 independently reviewed faces in 64 quality-90 WebP atlases: **16,352,176 additional runtime bytes**, preserving the original 256px cells and image policy. A ZIP measurement of the complete isolated browser QA build is **45,179,024 bytes compressed / 63,987,940 bytes extracted** (before small player-launcher wrappers). Its report is `.local/art-review/portraits-v4/size-report.json`; this is a local QA measurement, not a published player. To accommodate the reviewed artwork, browser budgets were raised to 50 MB download / 70 MB extracted; native download budgets to 60 MB, with 100 MB extracted on Windows and 110 MB on Linux. Native limits include the same additional artwork and engine headroom; these are limits, not measured native package sizes.
+
+### Quality 90 size measurements (17 October 2026)
+
+Build `94ef3a09529fa35c0ba8e755c4f526a96987af3f` regenerated all 42 runtime images from their original PNG masters at WebP quality 90. Image dimensions, portrait cells and alpha pixels are unchanged. The shared encoder and regenerated manifests make subsequent builds use the same policy; see [artwork regeneration](ASSETS.md).
+
+Actual player sizes, compared with the `underground-preview-2026.10.16` packages:
+
+| Player | Previous ZIP bytes | Quality 90 ZIP bytes | Download reduction | Quality 90 extracted bytes |
+|---|---:|---:|---:|---:|
+| Browser | 34,540,400 | 22,453,164 | 12,087,236 bytes (35.0%) | 38,081,854 |
+| Windows x64 | 42,700,237 | 30,645,529 | 12,054,708 bytes (28.2%) | 54,732,218 |
+
+The artwork payload itself fell from 26,405,232 to 14,322,460 bytes (45.8%). The package comparison includes other code changes since the preview, so the ZIP differences are whole-build measurements rather than an isolated compression benchmark. Quality 90 was selected after comparing qualities 90, 85 and 80: representative faces, icons, buildings and textures remained close to the existing art, with more visible smoothing at the lower qualities. Visual review covered representative samples, not every image in every gameplay view.
+
+The local artifacts are under `release/local-20261017-090800-94ef3a09/`, including player ZIPs, matching source, checksum sidecars and `size-report.json`. Build evidence is under `.local/reports/build-20261017-090455/`. These directories are ignored by Git and are not hosted download links. Validation passed all 736 Flutter tests, both focused and full analysis, asset verification, ZIP integrity and checksum checks, and byte comparisons of all 42 packaged images against the regenerated files. Manual gameplay and clean-machine launch checks remained pending in that report.

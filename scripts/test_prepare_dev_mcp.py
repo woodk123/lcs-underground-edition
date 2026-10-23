@@ -86,6 +86,29 @@ class DevelopmentBuildTests(unittest.TestCase):
         game_file.unlink()
         self.assertNotEqual(prepare.source_identity(self.root), first)
 
+    def test_compilation_recipe_edits_invalidate_the_compiled_cache(self):
+        subprocess.run(['git', 'init', '-q', str(self.root)], check=True)
+        recipes = [self.root / 'scripts' / name for name in ('prepare_dev_mcp.py', 'release_common.py')]
+        for path in recipes:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('original recipe')
+        subprocess.run(['git', '-C', str(self.root), 'add', 'scripts'], check=True)
+        subprocess.run(['git', '-C', str(self.root), '-c', 'user.name=Test',
+                        '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'fixture'], check=True)
+        self.info['source'] = original = prepare.source_identity(self.root)
+        self.write()
+        self.assertEqual(prepare.cached_build(self.path, original, self.web), self.info)
+        for path in recipes:
+            with self.subTest(recipe=path.name):
+                path.write_text('changed compilation recipe')
+                current = prepare.source_identity(self.root)
+                self.assertIsNone(prepare.cached_build(self.path, current, self.web),
+                                  'An edited build recipe must not reuse its previous compiled player.')
+                path.write_text('original recipe')
+        unrelated = self.root / 'scripts/unrelated_tool.py'
+        unrelated.write_text('does not compile the development player')
+        self.assertEqual(prepare.source_identity(self.root), original)
+
     def test_project_connection_preserves_settings_is_idempotent_and_rejects_conflicts(self):
         path = self.root / '.codex/config.toml'
         path.parent.mkdir()

@@ -2,6 +2,7 @@
 import copy
 from argparse import Namespace
 import json
+import os
 from pathlib import Path
 import socket
 import subprocess
@@ -173,6 +174,219 @@ class AcceptanceTests(unittest.TestCase):
                 report = json.loads((self.root / args.out / 'report.json').read_text())
                 self.assertEqual(report['status'], 'failed')
                 self.assertEqual(report['steps'], [])
+
+
+class AcceptancePreflightTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name).resolve()
+        suffix = '.bat' if os.name == 'nt' else ''
+        self.flutter = self.root / f'.tools/flutter/bin/flutter{suffix}'
+        self.dart = self.flutter.with_name(f'dart{suffix}')
+        self.flutter.parent.mkdir(parents=True)
+        self.flutter.write_text('SDK launcher fixture')
+        self.dart.write_text('Dart launcher fixture')
+        (self.root / 'upstream/tool/offline_test/node_modules/playwright').mkdir(parents=True)
+        (self.root / 'scripts').mkdir()
+        self.pin = {'flutter_version': '1.2.3', 'flutter_revision': 'a' * 40}
+        (self.root / 'scripts/toolchain.json').write_text(json.dumps(self.pin))
+        self.version = {'frameworkVersion': self.pin['flutter_version'],
+                        'frameworkRevision': self.pin['flutter_revision']}
+        self.web = self.root / '.local/supplied/web'
+        self.web.mkdir(parents=True)
+        for name in ('index.html', 'main.dart.js', 'sw.js'):
+            (self.web / name).write_text(name)
+        self.expected = acceptance.digest(self.web / 'main.dart.js')
+        self.bootstrap = [str(self.flutter), '--suppress-analytics', '--version']
+        self.host = patch.object(acceptance, 'ROOT', self.root)
+        self.host.start()
+        self.addCleanup(self.host.stop)
+        node = patch.object(acceptance.shutil, 'which', return_value='node')
+        node.start()
+        self.addCleanup(node.stop)
+
+    def args(self, name, **changes):
+        return Namespace(**{'out': f'.local/{name}', 'web_root': None, 'expected_hash': None,
+                            'port': 18879, 'personnel_port': 18882, 'browser_workers': 1,
+                            'browser_executable': None, **changes})
+
+    def report(self, args):
+        return json.loads((self.root / args.out / 'report.json').read_text())
+
+    def test_wrong_sdk_pin_fails_before_project_setup_or_port_reservation(self):
+        for index, field in enumerate(('frameworkVersion', 'frameworkRevision')):
+            args = self.args(f'wrong-pin-{index}')
+            version = {**self.version, field: 'wrong'}
+            with self.subTest(field=field), \
+                    patch.object(acceptance.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0)) as run, \
+                    patch.object(acceptance.subprocess, 'check_output', return_value=json.dumps(version)), \
+                    patch.object(acceptance, 'reserve_servers') as servers, \
+                    patch.object(acceptance, 'run_browser_plan') as browsers:
+                with self.assertRaisesRegex(ValueError, 'Flutter SDK does not match'):
+                    acceptance.run(args)
+                self.assertEqual([item.args[0] for item in run.call_args_list], [self.bootstrap])
+                servers.assert_not_called()
+                browsers.assert_not_called()
+                report = self.report(args)
+                self.assertEqual(report['status'], 'failed')
+                self.assertEqual([step['name'] for step in report['steps']], ['sdk-bootstrap'])
+                self.assertEqual(report['steps'][0]['status'], 'passed')
+
+    def test_invalid_supplied_build_fails_before_sdk_project_or_browser_work(self):
+        variants = [('absent-root', None), *[(name, name) for name in ('index.html', 'main.dart.js', 'sw.js')],
+                    ('wrong-hash', None)]
+        for index, (name, missing) in enumerate(variants):
+            args = self.args(f'invalid-build-{index}',
+                             web_root=str(self.root / 'absent') if name == 'absent-root' else str(self.web),
+                             expected_hash='0' * 64 if name == 'wrong-hash' else self.expected)
+            if missing:
+                (self.web / missing).unlink()
+            try:
+                with self.subTest(build=name), \
+                        patch.object(acceptance, 'run_step') as steps, \
+                        patch.object(acceptance.subprocess, 'check_output', return_value=json.dumps(self.version)) as query, \
+                        patch.object(acceptance, 'source_identity', return_value={}) as source, \
+                        patch.object(acceptance, 'reserve_servers') as servers, \
+                        patch.object(acceptance, 'run_browser_plan') as browsers:
+                    with self.assertRaises((OSError, ValueError)):
+                        acceptance.run(args)
+                    steps.assert_not_called()
+                    query.assert_not_called()
+                    source.assert_not_called()
+                    servers.assert_not_called()
+                    browsers.assert_not_called()
+                    report = self.report(args)
+                    self.assertEqual(report['status'], 'failed')
+                    self.assertEqual(report['steps'], [])
+            finally:
+                if missing:
+                    (self.web / missing).write_text(missing)
+
+    def test_cold_sdk_bootstraps_before_querying_structured_version(self):
+        args = self.args('cold-sdk')
+        self.assertFalse((self.flutter.parent / 'cache').exists())
+        with patch.object(acceptance.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0)) as run, \
+                patch.object(acceptance.subprocess, 'check_output') as query, \
+                patch.object(acceptance, 'reserve_servers', side_effect=RuntimeError('Reached project setup.')) as servers:
+            def machine_version(command, **kwargs):
+                self.assertEqual([item.args[0] for item in run.call_args_list], [self.bootstrap])
+                self.assertEqual(command, [str(self.flutter), '--version', '--machine'])
+                return json.dumps(self.version)
+            query.side_effect = machine_version
+            with self.assertRaisesRegex(RuntimeError, 'Reached project setup'):
+                acceptance.run(args)
+            servers.assert_called_once()
+            report = self.report(args)
+            self.assertEqual(report['toolchain'], self.pin)
+            self.assertEqual([step['name'] for step in report['steps']], ['sdk-bootstrap'])
+            self.assertTrue((self.root / args.out / 'sdk-bootstrap.log').is_file())
+
+    def test_busy_port_after_valid_preflight_keeps_foreign_listener_and_releases_our_socket(self):
+        with socket.socket() as foreign, socket.socket() as candidate:
+            # Stay in the runner's dedicated QA range, away from fixed helper ports.
+            for port in range(18999, 18882, -1):
+                try:
+                    foreign.bind(('127.0.0.1', port))
+                    break
+                except OSError:
+                    continue
+            else:
+                self.skipTest('No free dedicated QA port for a foreign-listener fixture.')
+            foreign.listen()
+            occupied = foreign.getsockname()[1]
+            for port in range(18999, 18882, -1):
+                try:
+                    candidate.bind(('127.0.0.1', port))
+                    break
+                except OSError:
+                    continue
+            else:
+                self.skipTest('No second dedicated QA port for a reservation fixture.')
+            free = candidate.getsockname()[1]
+            candidate.close()
+            args = self.args('busy-port', port=free, personnel_port=occupied)
+            with patch.object(acceptance.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0)) as run, \
+                    patch.object(acceptance.subprocess, 'check_output', return_value=json.dumps(self.version)), \
+                    patch.object(acceptance, 'run_browser_plan') as browsers:
+                with self.assertRaisesRegex(OSError, 'unavailable'):
+                    acceptance.run(args)
+                self.assertEqual([item.args[0] for item in run.call_args_list], [self.bootstrap])
+                browsers.assert_not_called()
+            with socket.socket() as available:
+                available.bind(('127.0.0.1', free))
+            with socket.create_connection(('127.0.0.1', occupied), timeout=1):
+                self.assertEqual(foreign.getsockname()[1], occupied)
+
+    def test_supplied_payload_changed_during_project_setup_fails_before_browsers(self):
+        args = self.args('changed-build', web_root=str(self.web), expected_hash=self.expected)
+        source = {'commit': 'a' * 40, 'tree_sha256': 'b' * 64, 'working_tree': []}
+        with patch.object(acceptance.subprocess, 'run') as run, \
+                patch.object(acceptance.subprocess, 'check_output', return_value=json.dumps(self.version)), \
+                patch.object(acceptance, 'source_identity', return_value=source), \
+                patch.object(acceptance, 'reserve_servers'), \
+                patch.object(acceptance, 'run_browser_plan') as browsers:
+            def process(command, **kwargs):
+                if command[1:3] == ['pub', 'get']:
+                    (self.web / 'index.html').write_text('changed while dependencies were resolved')
+                return subprocess.CompletedProcess(command, 0)
+            run.side_effect = process
+            with self.assertRaisesRegex(ValueError, 'Supplied web build changed during setup'):
+                acceptance.run(args)
+            browsers.assert_not_called()
+            report = self.report(args)
+            self.assertEqual(report['status'], 'failed')
+            self.assertEqual([step['name'] for step in report['steps']],
+                             ['sdk-bootstrap', 'dependencies', 'serialization', 'acceptance-tests'])
+
+    def test_valid_supplied_build_preserves_journey_and_evidence_contracts(self):
+        args = self.args('accepted-build', web_root=str(self.web), expected_hash=self.expected.upper())
+        source = {'commit': 'a' * 40, 'tree_sha256': 'b' * 64, 'working_tree': []}
+        browser_commands = []
+        founder = b'{"declared":"synthetic exported founder"}'
+        with patch.object(acceptance.subprocess, 'run') as run, \
+                patch.object(acceptance.subprocess, 'check_output', return_value=json.dumps(self.version)), \
+                patch.object(acceptance, 'source_identity', return_value=source), \
+                patch.object(acceptance, 'reserve_servers'):
+            def process(command, **kwargs):
+                if command[0] == 'node':
+                    browser_commands.append(command)
+                    output = Path(command[command.index('--out') + 1])
+                    output.mkdir(parents=True)
+                    if output.name == 'creation':
+                        (output / 'manual-founder.json').write_bytes(founder)
+                    elif output.name == 'fresh-week':
+                        imported = Path(command[command.index('--campaign') + 1])
+                        self.assertEqual(imported, output.parent / 'creation/manual-founder.json')
+                        self.assertEqual(imported.read_bytes(), founder)
+                    elif output.name == 'prepared-week':
+                        self.assertNotIn('--campaign', command)
+                    acceptance.write_json(output / 'report.json', {
+                        'status': 'passed', 'mainJsSha256': self.expected,
+                        'loadedMainJsHashes': [self.expected], 'checks': ['synthetic contract check'],
+                        'pageErrors': [], 'consoleErrors': [], 'failedRequests': [],
+                        'scope': 'Synthetic report for acceptance coordinator contract tests.',
+                    })
+                return subprocess.CompletedProcess(command, 0)
+            run.side_effect = process
+            self.assertEqual(acceptance.run(args), self.root / args.out / 'report.json')
+        report = self.report(args)
+        self.assertEqual(report['status'], 'passed')
+        self.assertEqual(report['schema'], 1)
+        self.assertEqual(report['toolchain'], self.pin)
+        self.assertEqual(report['source'], source)
+        self.assertEqual(report['test_files'], list(acceptance.TESTS))
+        self.assertEqual(report['build']['origin'], 'supplied artifact')
+        self.assertEqual(report['build']['main_js_sha256'], self.expected)
+        self.assertEqual(json.loads((self.root / args.out / 'web-hashes.json').read_text()),
+                         acceptance.file_hashes(self.web))
+        expected_steps = ['sdk-bootstrap', 'dependencies', 'serialization', 'acceptance-tests',
+                          'creation', 'fresh-week', 'prepared-week', 'organisation', 'keyboard-interface', 'personnel']
+        self.assertEqual([step['name'] for step in report['steps']], expected_steps)
+        self.assertTrue(all(step['status'] == 'passed' and step['exit_code'] == 0
+                            and {'log', 'seconds', 'started', 'completed'} <= step.keys() for step in report['steps']))
+        self.assertEqual([suite['name'] for suite in report['browser_suites']], expected_steps[4:])
+        self.assertEqual(len(browser_commands), 6)
 
 
 if __name__ == '__main__':

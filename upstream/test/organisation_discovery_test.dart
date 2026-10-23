@@ -4,15 +4,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lcs_new_age/basemode/activate_regulars.dart';
-import 'package:lcs_new_age/basemode/activate_sleepers.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
-import 'package:lcs_new_age/basemode/base_mode.dart';
 import 'package:lcs_new_age/basemode/invest_in_location.dart';
 import 'package:lcs_new_age/basemode/liberal_agenda.dart';
-import 'package:lcs_new_age/basemode/media_overview.dart';
-import 'package:lcs_new_age/basemode/plan_site_visit.dart';
-import 'package:lcs_new_age/basemode/review_mode.dart';
 import 'package:lcs_new_age/common_actions/equipment.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/engine/base_management_context.dart';
@@ -39,74 +33,51 @@ import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/headquarters_test_harness.dart';
 import 'test_support.dart';
 
 /// The HQ dispatch boundary is controlled here; all order, promotion, profile,
 /// allocation, media, investment and equipment readers are the original ones.
 /// There is deliberately no automatic day advancement or player-save write.
-class _DiscoveryHarness {
-  _DiscoveryHarness({this.onWait}) {
-    done = _loop();
-  }
-  late final Future<void> done;
-  bool stopped = false;
-  bool finished = false;
-  final dispatched = <int>[];
+class _DiscoveryHarness extends HeadquartersTestHarness {
+  _DiscoveryHarness({this.onWait});
+
   final Future<void> Function()? onWait;
 
-  Future<void> _loop() async {
-    try {
-      while (!stopped) {
-        engine.erase();
-        final site = game.activeSquad?.site ?? game.activeSafehouse;
-        baseModeSquadSafehouseDisplay(site);
-        baseModeOptionsDisplay(site);
-        final key = await engine.getKey();
-        if (stopped) break;
-        dispatched.add(key);
-        switch (key) {
-          case engine.Key.w:
-            await onWait?.call();
-          case engine.Key.r:
-            await reviewAssetsAndFormSquads();
-          case engine.Key.a:
-            await activateRegulars();
-          case engine.Key.b:
-            await activateSleepers();
-          case engine.Key.f:
-            await planSiteVisit();
-          case engine.Key.m:
-            await mediaOverview();
-          case engine.Key.l:
-            await liberalAgenda();
-          case engine.Key.e:
-            if (game.activeSquad?.members.isNotEmpty == true &&
-                game.activeSquad?.site != null) {
-              final previous = game.activeSquadMember;
-              game.activeSquadMember = null;
-              await equip(game.activeSquad?.site?.loot);
-              game.activeSquadMember = previous;
-            }
-          case engine.Key.z:
-            final bases = game.sites.where((site) => site.isSafehouse).toList();
-            if (bases.isNotEmpty) {
-              final index = bases.indexOf(game.activeSafehouse ?? bases.first);
-              game.activeSquad = null;
-              game.activeSafehouse = bases[(index + 1) % bases.length];
-            }
-          case engine.Key.i:
-            final base = game.activeSafehouse;
-            if (base != null && base.upgradable && !base.siege.underSiege) {
-              await investInLocation(base);
-            }
+  @override
+  Future<void> dispatch(int key) async {
+    switch (key) {
+      case engine.Key.w:
+        await onWait?.call();
+      case engine.Key.l:
+        await liberalAgenda();
+      case engine.Key.e:
+        if (game.activeSquad?.members.isNotEmpty == true &&
+            game.activeSquad?.site != null) {
+          final previous = game.activeSquadMember;
+          game.activeSquadMember = null;
+          await equip(game.activeSquad?.site?.loot);
+          game.activeSquadMember = previous;
         }
-      }
-    } finally {
-      finished = true;
+      case engine.Key.z:
+        final bases = game.sites.where((site) => site.isSafehouse).toList();
+        if (bases.isNotEmpty) {
+          final index = bases.indexOf(game.activeSafehouse ?? bases.first);
+          game.activeSquad = null;
+          game.activeSafehouse = bases[(index + 1) % bases.length];
+        }
+      case engine.Key.i:
+        final base = game.activeSafehouse;
+        if (base != null && base.upgradable && !base.siege.underSiege) {
+          await investInLocation(base);
+        }
+      default:
+        await super.dispatch(key);
     }
   }
 
-  Future<void> stop(WidgetTester tester) async {
+  /// Widget teardown pumps the source readers in its own fake-time zone.
+  Future<void> stopWidgets(WidgetTester tester) async {
     stopped = true;
     for (var i = 0; i < 60 && !finished; i++) {
       if (engine.console.awaitingInput) {
@@ -253,7 +224,7 @@ void main() {
     final harness = _DiscoveryHarness(onWait: onWait);
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox.shrink());
-      await harness.stop(tester);
+      await harness.stopWidgets(tester);
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
       tester.platformDispatcher.clearAccessibilityFeaturesTestValue();
@@ -684,9 +655,8 @@ void main() {
       final rationAction = engine.console.actions.singleWhere(
         (a) => a.entityType == 'base-supplies' && a.entityId == 'rations',
       );
-      final label = stripConsoleColors(
-        rationAction.label,
-      ).replaceFirst(RegExp(r'^\S+\s*-\s*'), '');
+      final label = stripConsoleColors(rationAction.label)
+          .replaceFirst(RegExp(r'^\S+\s*-\s*'), '');
       await _tapFinder(tester, find.widgetWithText(OutlinedButton, label));
       expect(source.compound.rations, rations);
       expect(game.ledger.funds, funds);
@@ -749,9 +719,8 @@ void main() {
                 true &&
             a.entityId == destination.idString,
       );
-      final destinationLabel = stripConsoleColors(
-        destinationAction.label,
-      ).replaceFirst(RegExp(r'^\S+\s*-\s*'), '');
+      final destinationLabel = stripConsoleColors(destinationAction.label)
+          .replaceFirst(RegExp(r'^\S+\s*-\s*'), '');
       await _tapFinder(
         tester,
         find.widgetWithText(ChoiceChip, destinationLabel),
@@ -831,13 +800,11 @@ void main() {
           .controller;
       expect(controller.organisationReviews.notices, hasLength(3));
       final preferences = await SharedPreferences.getInstance();
-      final saved =
-          jsonDecode(
-                preferences.getString(
-                  'organisationReview.v1.${game.gameState.uniqueGameId}',
-                )!,
-              )
-              as Map<String, dynamic>;
+      final saved = jsonDecode(
+        preferences.getString(
+          'organisationReview.v1.${game.gameState.uniqueGameId}',
+        )!,
+      ) as Map<String, dynamic>;
       expect(saved['notices'], hasLength(3));
       final before = _snapshot();
       reseedRNG(seed: 181008);

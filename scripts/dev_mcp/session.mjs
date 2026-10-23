@@ -82,6 +82,7 @@ export class DevelopmentSession {
       return JSON.parse(stdout);
     });
     this.queue = Promise.resolve();
+    this.reportQueue = Promise.resolve();
   }
 
   _serial(operation) {
@@ -95,7 +96,28 @@ export class DevelopmentSession {
   }
 
   async _report() {
-    if (this.output && this.report) await writeFile(resolve(this.output, 'session.json'), JSON.stringify(this.report, null, 2));
+    if (!this.output || !this.report) return;
+    const output = this.output, report = this.report;
+    // Disconnect can interrupt a command while cleanup finalizes its report.
+    // Keep those writes ordered, with the latest failure/error evidence intact.
+    const pending = this.reportQueue.then(() => {
+      if (report.closed) report.hasErrors = Boolean(report.failures.length || report.pageErrors.length
+        || report.consoleErrors.length || report.downloadErrors.length || report.cleanupErrors.length);
+      return writeFile(resolve(output, 'session.json'), JSON.stringify(report, null, 2));
+    });
+    this.reportQueue = pending.catch(() => {});
+    await pending;
+  }
+
+  async _claimResource(field, pending) {
+    const value = await pending;
+    // A pending launch can finish after shutdown has disposed the resources
+    // already attached to this session. Close that late result locally.
+    if (this.disconnected) {
+      await value.close();
+      throw Error('MCP client disconnected.');
+    }
+    this[field] = value;
   }
 
   async _bridge(method, params = {}, timeoutMs = 30000) {
@@ -130,6 +152,7 @@ export class DevelopmentSession {
     assert.ok(!this.disconnected, 'MCP client disconnected.');
     assert.ok(!this.page && !this.server, 'Close the current session before starting another.');
     this.output = undefined; this.report = undefined;
+    this.closing = undefined;
     try {
       const webRoot = await realpath(resolve(this.root, options.webRoot ?? '.local/dev-mcp/web'));
       await stat(resolve(webRoot, 'index.html'));
@@ -143,8 +166,10 @@ export class DevelopmentSession {
       catch (error) { if (error.code !== 'ENOENT') throw error; }
       const currentPrepared = defaultWebRoot && relative(defaultWebRoot, webRoot) === ''
         ? await this.validatePrepared(webRoot) : undefined;
+      assert.ok(!this.disconnected, 'MCP client disconnected.');
       const requested = options.output ?? `reports/dev-mcp/${new Date().toISOString().replaceAll(':', '-')}-${randomUUID().slice(0, 8)}`;
       this.output = await evidenceDirectory(this.root, requested);
+      assert.ok(!this.disconnected, 'MCP client disconnected.');
       this.report = { schema: 1, status: 'starting', started: new Date().toISOString(), webRoot,
         sourceFreshness: currentPrepared ? 'verified_current_checkout' : 'not_checked_custom_build',
         mainJsSha256: expected, loadedMainJsHashes: [], failures: [], pageErrors: [], consoleErrors: [], failedRequests: [],
@@ -159,14 +184,14 @@ export class DevelopmentSession {
           this.report.preparedBuild = prepared;
         }
       } catch (error) { if (error.code !== 'ENOENT') throw error; }
-      this.server = await serveBuild(webRoot);
+      await this._claimResource('server', serveBuild(webRoot));
       assert.ok(!this.disconnected, 'MCP client disconnected.');
       this.report.url = this.server.url;
       const args = options.browserExecutable ? ['--browser-executable', options.browserExecutable] : [];
-      this.browser = await this.launchBrowser(chromiumLaunchOptions({ args, channel: options.browser ?? 'msedge', headless: !options.headed }));
+      await this._claimResource('browser', this.launchBrowser(chromiumLaunchOptions({ args, channel: options.browser ?? 'msedge', headless: !options.headed })));
       assert.ok(!this.disconnected, 'MCP client disconnected.');
-      this.context = await this.browser.newContext({ viewport: { width: options.width ?? 1440, height: options.height ?? 1000 }, acceptDownloads: true, serviceWorkers: 'block' });
-      this.page = await this.context.newPage();
+      await this._claimResource('context', this.browser.newContext({ viewport: { width: options.width ?? 1440, height: options.height ?? 1000 }, acceptDownloads: true, serviceWorkers: 'block' }));
+      await this._claimResource('page', this.context.newPage());
       this.pendingDownloads = new Set();
       this.downloadSequence = 0;
       this.page.on('download', download => {
@@ -186,6 +211,7 @@ export class DevelopmentSession {
       await verify(expected);
       this.report.build = observation.build;
       if (options.fixture) { await this._importFixture(resolve(this.root, options.fixture)); observation = await this._wait({ timeoutMs: 30000 }); }
+      assert.ok(!this.disconnected, 'MCP client disconnected.');
       this.report.status = 'active';
       this.report.startupElapsedMs = Math.round(performance.now() - startedAt);
       await this._record('session_start', { build: this.report.build, mainJsSha256: expected, fixture: this.report.preparedFixture, observation, elapsedMs: this.report.startupElapsedMs });
@@ -369,22 +395,51 @@ export class DevelopmentSession {
   }
   capture(params) { return this._serial(() => this._capture(params)); }
 
-  async _close(status = 'closed') {
-    if (!this.context && !this.browser && !this.server && this.report?.closed) {
-      return { status: this.report.status, evidenceDirectory: this.output, downloads: this.report.downloads, downloadErrors: this.report.downloadErrors, cleanupErrors: this.report.cleanupErrors ?? [] };
+  _disposeHandles(state) {
+    // Claim each handle before awaiting its close, and share the whole disposal
+    // so graceful close and disconnect can never close the same server twice.
+    return state.disposal ??= Promise.resolve().then(async () => {
+      for (const field of ['context', 'browser', 'server']) {
+        const value = this[field];
+        this[field] = undefined;
+        if (value) { try { await value.close(); } catch (error) { state.failures.push(error.message); } }
+      }
+      this.page = undefined;
+    });
+  }
+
+  _close(status = 'closed') {
+    if (this.closing) {
+      if (!this.closing.finished && status === 'disconnected') {
+        this.closing.status = status;
+        // Escalate immediately: a graceful close may be waiting for a saveAs
+        // that can only settle when its disposable browser context is closed.
+        void this._disposeHandles(this.closing);
+      }
+      return this.closing.promise;
     }
-    const failures = [];
-    await this._drainDownloads();
-    for (const [field, close] of [['context', value => value.close()], ['browser', value => value.close()], ['server', value => value.close()]]) {
-      if (this[field]) { try { await close(this[field]); } catch (error) { failures.push(error.message); } this[field] = undefined; }
-    }
-    this.page = undefined;
-    if (this.report) {
-      this.report.status = status;
-      this.report.hasErrors = Boolean(this.report.failures.length || this.report.pageErrors.length || this.report.consoleErrors.length || this.report.downloadErrors.length || failures.length);
-      this.report.closed = new Date().toISOString(); this.report.cleanupErrors = failures; await this._report();
-    }
-    return { status, evidenceDirectory: this.output, downloads: this.report?.downloads ?? [], downloadErrors: this.report?.downloadErrors ?? [], cleanupErrors: failures };
+    const state = this.closing = { status, failures: [], finished: false };
+    state.promise = Promise.resolve().then(async () => {
+      try {
+        if (state.status !== 'disconnected') await this._drainDownloads();
+      } finally { await this._disposeHandles(state); }
+      await this._drainDownloads();
+      let writtenStatus;
+      do {
+        writtenStatus = state.status;
+        if (this.report) {
+          this.report.status = writtenStatus;
+          this.report.closed ??= new Date().toISOString();
+          this.report.cleanupErrors = state.failures;
+          await this._report();
+        }
+        // A disconnect during the final report write must retain its status.
+      } while (writtenStatus !== state.status);
+      state.finished = true;
+      return { status: writtenStatus, evidenceDirectory: this.output, downloads: this.report?.downloads ?? [],
+        downloadErrors: this.report?.downloadErrors ?? [], cleanupErrors: state.failures };
+    }).finally(() => { state.finished = true; });
+    return state.promise;
   }
   close() { return this._serial(() => this._close()); }
   // A lost host must release browser/server handles even if an input wait is

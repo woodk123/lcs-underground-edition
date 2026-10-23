@@ -2,6 +2,21 @@
 
 The Flutter project is in `upstream/`. Its layout stays close to [New Age](https://github.com/ashley-s-fox/lcs-new-age) so engine changes can be compared with the original project. This is a fork of the Dart game, with a new presentation layer.
 
+## Find the owner of a change
+
+Start at the boundary being changed, then follow its calls into the original handler. These entry points identify ownership; the detailed contracts below explain what must survive a refactor. Use the [focused-check mapping](TESTING.md#choose-focused-checks) to select the corresponding regressions.
+
+| Area | Source entry points | Ownership |
+|---|---|---|
+| Current reader and source actions | [console.dart](../upstream/lib/engine/console.dart), `engine/*_context.dart` | Awaited input, action objects, revisions and reader snapshots. Gameplay handlers author the actions and availability. |
+| Shell, focus and keyboard routing | [modern_app.dart](../upstream/lib/modern/modern_app.dart), [game_input_policy.dart](../upstream/lib/modern/game_input_policy.dart), [modern_shell_chrome.dart](../upstream/lib/modern/modern_shell_chrome.dart) | The shell dispatches and manages focus; the policy classifies ownership; chrome renders supplied values and callbacks. See [input priorities](INPUT_OWNERSHIP.md). |
+| Chapters and return transitions | [journal_sections.dart](../upstream/lib/modern/journal_sections.dart), [journal_navigation_state.dart](../upstream/lib/modern/journal_navigation_state.dart) | Stable section identities, source routes, retained selection and deferred headquarters returns. |
+| Orders and actor selection | [organisation_journal.dart](../upstream/lib/modern/organisation_journal.dart), [organisation_controller.dart](../upstream/lib/modern/organisation_controller.dart), [organisation_order_browser.dart](../upstream/lib/modern/organisation_order_browser.dart) | The journal owns selection/drafts, the controller enters original readers, and the browser retains browsing state. Order card and workspace views render supplied facts and callbacks. |
+| Visits | [organisation_visit_flow.dart](../upstream/lib/modern/organisation_visit_flow.dart), [organisation_map_view.dart](../upstream/lib/modern/organisation_map_view.dart) | The flow coordinates the original planner and invalidates stale requests; the map view renders detached destination facts. |
+| Field, pursuit and recovery views | [tactical_snapshot.dart](../upstream/lib/modern/tactical_snapshot.dart), [journal_pursuit.dart](../upstream/lib/modern/journal_pursuit.dart), [journal_recovery.dart](../upstream/lib/modern/journal_recovery.dart) | Read-only projections and current source actions; outcomes stay in `sitemode/`, `daily/` and `justice/`. |
+| Development inspection | [development_bridge.dart](../upstream/lib/devtools/development_bridge.dart), [development MCP](DEV_MCP.md) | Explicit development builds, observed action identity/revision, disposable sessions and source/build evidence. |
+| Shared test setup | [campaign_fixture.dart](../upstream/test/support/campaign_fixture.dart), [headquarters_test_harness.dart](../upstream/test/support/headquarters_test_harness.dart) | Reusable campaign and headquarters-reader setup; each test still declares its extra state and intended outcomes. |
+
 ## Engine and interface
 
 Completed operations show a source-owned return acknowledgement with newly carried loot, cash received, expenses and injury deltas. Cash is scoped to entry/return; travel, later pawn sales and treatment are not attributed to a raid. Nonzero operation cash is retained in existing squad-result prose, without new save fields. Pawn receipts list actual stock removed and actual sale proceeds separately. Visit readiness reads current weapons, ammunition and per-patient First Aid eligibility without simulating combat or changing orders.

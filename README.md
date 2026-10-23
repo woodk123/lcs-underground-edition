@@ -54,6 +54,7 @@ Windows and browser saves are separate. Use the game's export/import controls to
 ## More information
 
 - [Building and development](docs/BUILDING.md)
+- [Repository development skill for Codex](.agents/skills/lcs-development/SKILL.md)
 - [Development lessons and working practices](docs/DEVELOPMENT_LESSONS.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Testing](docs/TESTING.md)

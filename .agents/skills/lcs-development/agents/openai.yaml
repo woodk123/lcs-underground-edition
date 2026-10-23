@@ -1,0 +1,4 @@
+interface:
+  display_name: "LCS Development"
+  short_description: "Maintain LCS with focused checks and traceable builds"
+  default_prompt: "Use $lcs-development to make and verify the requested LCS improvement."

@@ -42,6 +42,21 @@ function fakeBrowser({ frames, download } = {}) {
   return { browser, context, observation, invalidate: () => current++ };
 }
 
+function deferred() {
+  let resolve, reject;
+  const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+}
+
+async function within(promise, message) {
+  let timer;
+  try {
+    return await Promise.race([promise, new Promise((_, reject) => {
+      timer = setTimeout(() => reject(Error(message)), 5000);
+    })]);
+  } finally { clearTimeout(timer); }
+}
+
 test('owned static server serves exact bytes and rejects writes, directories and escaping symlinks', async t => {
   const root = await fixture(t), server = await serveBuild(resolve(root, 'web'));
   t.after(server.close);
@@ -128,6 +143,270 @@ test('download failure is reported after accepted action without a retry', async
   assert.match((await session.observe()).downloadErrors[0].message, /cancelled/);
   await session.close();
   assert.equal(JSON.parse(await readFile(resolve(root, 'reports/download-failure/session.json'))).hasErrors, true);
+});
+
+test('host disconnect closes owned handles before draining a stalled native download', async t => {
+  const root = await fixture(t), fake = fakeBrowser();
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  const started = await session.start({ webRoot: 'web', output: 'reports/interrupted-download' });
+  let rejectDownload, downloadStarted;
+  const pending = new Promise((_, reject) => { rejectDownload = reject; });
+  const retaining = new Promise(resolve => { downloadStarted = resolve; });
+  const contextClose = fake.context.close;
+  fake.context.close = async () => {
+    rejectDownload(Error('Download interrupted by disposable context close.'));
+    await contextClose();
+  };
+  session.page.emit('download', {
+    suggestedFilename: () => 'unfinished.json',
+    saveAs: () => { downloadStarted(); return pending; },
+  });
+  await retaining;
+  const closing = session.shutdown();
+  let timer;
+  try {
+    const result = await Promise.race([closing, new Promise((_, reject) => {
+      timer = setTimeout(() => reject(Error('Disconnect waited for a stalled download before closing its context.')), 1000);
+    })]);
+    assert.ok(fake.context.closed && fake.browser.closed);
+    assert.equal(session.server, undefined);
+    assert.equal(result.status, 'disconnected');
+    assert.match(result.downloadErrors[0].message, /interrupted/);
+    const report = JSON.parse(await readFile(resolve(started.evidenceDirectory, 'session.json')));
+    assert.equal(report.status, 'disconnected');
+    assert.equal(report.hasErrors, true);
+    assert.equal(report.downloadErrors.length, 1);
+  } finally {
+    clearTimeout(timer);
+    // The guard also lets the regression release its fixture on the old code.
+    rejectDownload(Error('Test cleanup.'));
+    await closing;
+  }
+});
+
+test('disconnect escalates an active graceful close without disposing delayed handles twice', async t => {
+  const root = await fixture(t), fake = fakeBrowser();
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  const started = await session.start({ webRoot: 'web', output: 'reports/escalated-close' });
+  const download = deferred(), retaining = deferred(), contextClosing = deferred(), contextClosed = deferred();
+  let contexts = 0, browsers = 0, servers = 0;
+  const closeContext = fake.context.close, closeBrowser = fake.browser.close, closeServer = session.server.close;
+  fake.context.close = async () => {
+    contexts++;
+    download.reject(Error('Export interrupted by disconnect.'));
+    contextClosing.resolve();
+    await contextClosed.promise;
+    await closeContext();
+  };
+  fake.browser.close = async () => { browsers++; await closeBrowser(); };
+  session.server.close = async () => { servers++; await closeServer(); };
+  session.page.emit('download', {
+    suggestedFilename: () => 'unfinished.json',
+    saveAs: () => { retaining.resolve(); return download.promise; },
+  });
+  await retaining.promise;
+  const graceful = session.close();
+  await new Promise(resolve => setImmediate(resolve));
+  const disconnected = session.shutdown();
+  try {
+    await within(contextClosing.promise, 'Disconnect did not interrupt graceful export retention.');
+    assert.equal(contexts, 1);
+    assert.equal(browsers, 0, 'Wait for the owned context to finish closing.');
+    contextClosed.resolve();
+    const results = await within(Promise.all([graceful, disconnected]), 'Overlapping close calls did not settle.');
+    assert.deepEqual(results.map(result => result.status), ['disconnected', 'disconnected']);
+    assert.ok(results.every(result => result.cleanupErrors.length === 0));
+    assert.deepEqual([contexts, browsers, servers], [1, 1, 1]);
+    const report = JSON.parse(await readFile(resolve(started.evidenceDirectory, 'session.json')));
+    assert.equal(report.status, 'disconnected');
+    assert.equal(report.hasErrors, true);
+    assert.equal(report.downloadErrors.length, 1);
+    assert.deepEqual(report.cleanupErrors, []);
+  } finally {
+    download.reject(Error('Test cleanup.')); contextClosed.resolve();
+    await Promise.allSettled([graceful, disconnected]);
+  }
+});
+
+test('disconnect interrupts an accepted export with queued lcs_close and one resource owner', async t => {
+  const root = await fixture(t), download = deferred(), retaining = deferred();
+  const fake = fakeBrowser({ download: {
+    suggestedFilename: () => 'accepted-export.json',
+    saveAs: () => { retaining.resolve(); return download.promise; },
+  } });
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  const started = await session.start({ webRoot: 'web', output: 'reports/queued-export-close' });
+  const contextClosing = deferred(), contextClosed = deferred(), queuedClosing = deferred();
+  let contexts = 0, browsers = 0, servers = 0;
+  const closeContext = fake.context.close, closeBrowser = fake.browser.close, closeServer = session.server.close;
+  fake.context.close = async () => {
+    contexts++;
+    download.reject(Error('Accepted export cancelled when host disconnected.'));
+    contextClosing.resolve();
+    await contextClosed.promise;
+    await closeContext();
+  };
+  fake.browser.close = async () => { browsers++; await closeBrowser(); };
+  session.server.close = async () => { servers++; await closeServer(); };
+  const close = session._close.bind(session);
+  session._close = status => {
+    if (status === undefined) queuedClosing.resolve();
+    return close(status);
+  };
+  const command = session.command('act', { revision: 0, actionId: '0:0', expectDownload: true })
+    .then(result => ({ result }), error => ({ error }));
+  await retaining.promise;
+  const graceful = session.close(), disconnected = session.shutdown();
+  try {
+    await within(contextClosing.promise, 'Shutdown waited behind the accepted export.');
+    const outcome = await within(command, 'Interrupted source action did not retain its failure evidence.');
+    assert.equal(outcome.error.code, 'download_failed');
+    assert.equal(outcome.error.accepted, true);
+    await within(queuedClosing.promise, 'Queued lcs_close did not join disconnect cleanup.');
+    assert.equal(contexts, 1);
+    contextClosed.resolve();
+    const results = await within(Promise.all([graceful, disconnected]), 'Queued close/disconnect did not settle.');
+    assert.ok(results.every(result => result.status === 'disconnected' && result.cleanupErrors.length === 0));
+    assert.deepEqual([contexts, browsers, servers], [1, 1, 1]);
+    assert.equal(fake.observation().revision, 1, 'The accepted source action was never retried.');
+    const report = JSON.parse(await readFile(resolve(started.evidenceDirectory, 'session.json')));
+    assert.equal(report.status, 'disconnected');
+    assert.equal(report.hasErrors, true);
+    assert.equal(report.failures.length, 1);
+    assert.equal(report.downloadErrors.length, 1);
+    assert.deepEqual(report.cleanupErrors, []);
+    await assert.rejects(session.start({ webRoot: 'web', output: 'reports/disconnected-restart' }), /MCP client disconnected/);
+  } finally {
+    download.reject(Error('Test cleanup.')); contextClosed.resolve();
+    await Promise.allSettled([command, graceful, disconnected]);
+  }
+});
+
+test('disconnect during final report persistence retains the escalated status', async t => {
+  const root = await fixture(t), fake = fakeBrowser();
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  const started = await session.start({ webRoot: 'web', output: 'reports/final-report-disconnect' });
+  const writing = deferred(), written = deferred();
+  const report = session._report.bind(session);
+  let delay = true;
+  session._report = async () => {
+    if (session.report.closed && delay) {
+      delay = false; writing.resolve(); await written.promise;
+    }
+    await report();
+  };
+  const graceful = session.close();
+  let disconnected;
+  try {
+    await within(writing.promise, 'Graceful close did not reach report persistence.');
+    disconnected = session.shutdown();
+    written.resolve();
+    const results = await Promise.all([graceful, disconnected]);
+    assert.ok(results.every(result => result.status === 'disconnected'));
+    const retained = JSON.parse(await readFile(resolve(started.evidenceDirectory, 'session.json')));
+    assert.equal(retained.status, 'disconnected');
+    assert.deepEqual(retained.cleanupErrors, []);
+  } finally {
+    written.resolve();
+    await Promise.allSettled([graceful, disconnected]);
+  }
+});
+
+test('graceful close permits a fresh session with independent handles and evidence', async t => {
+  const root = await fixture(t), first = fakeBrowser(), second = fakeBrowser();
+  let launches = 0;
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => (++launches === 1 ? first : second).browser });
+  const initial = await session.start({ webRoot: 'web', output: 'reports/first-session' });
+  assert.equal((await session.close()).status, 'closed');
+  assert.ok(first.context.closed && first.browser.closed);
+  const next = await session.start({ webRoot: 'web', output: 'reports/second-session' });
+  const command = await session.command('act', { revision: 0, actionId: '0:0' });
+  assert.equal(command.observation.revision, 1);
+  assert.equal((await session.close()).status, 'closed');
+  assert.ok(second.context.closed && second.browser.closed);
+  assert.equal(session.server, undefined);
+  assert.equal(launches, 2);
+  for (const output of [initial.evidenceDirectory, next.evidenceDirectory]) {
+    const report = JSON.parse(await readFile(resolve(output, 'session.json')));
+    assert.equal(report.status, 'closed');
+    assert.equal(report.hasErrors, false);
+    assert.deepEqual(report.cleanupErrors, []);
+  }
+  const firstTrace = await readFile(resolve(initial.evidenceDirectory, 'trace.jsonl'), 'utf8');
+  const secondTrace = await readFile(resolve(next.evidenceDirectory, 'trace.jsonl'), 'utf8');
+  assert.equal(firstTrace.includes('"operation":"act"'), false);
+  assert.equal(secondTrace.includes('"operation":"act"'), true);
+});
+
+test('a browser finishing launch after shutdown is closed without attaching late handles', async t => {
+  const root = await fixture(t), fake = fakeBrowser(), launched = deferred(), launch = deferred();
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: () => { launched.resolve(); return launch.promise; } });
+  const starting = session.start({ webRoot: 'web', output: 'reports/disconnected-launch' })
+    .then(result => ({ result }), error => ({ error }));
+  await launched.promise;
+  try {
+    const closed = await within(session.shutdown(), 'Shutdown waited on the unresolved browser launch.');
+    assert.equal(closed.status, 'disconnected');
+    launch.resolve(fake.browser);
+    const outcome = await within(starting, 'Late browser launch did not settle after disconnect.');
+    assert.match(outcome.error.message, /MCP client disconnected/);
+    assert.ok(fake.browser.closed);
+    assert.equal(fake.browser.options, undefined, 'No context is opened after disconnect.');
+    assert.equal(session.context, undefined);
+    assert.equal(session.browser, undefined);
+    assert.equal(session.server, undefined);
+    const report = JSON.parse(await readFile(resolve(root, 'reports/disconnected-launch/session.json')));
+    assert.equal(report.status, 'disconnected');
+    assert.equal(report.hasErrors, true);
+    assert.equal(report.failures.length, 1);
+  } finally {
+    launch.resolve(fake.browser);
+    await starting;
+  }
+});
+
+test('disconnect during source validation cannot create a later active session', async t => {
+  const root = await fixture(t), validating = deferred(), validated = deferred();
+  const web = resolve(root, '.local/dev-mcp/web');
+  await mkdir(web, { recursive: true });
+  await writeFile(resolve(web, 'index.html'), 'prepared build');
+  await writeFile(resolve(web, 'main.dart.js'), 'test compiled bytes');
+  let launches = 0;
+  const session = t.session = new DevelopmentSession({ root,
+    validatePrepared: async () => { validating.resolve(); await validated.promise; return {}; },
+    launchBrowser: async () => { launches++; throw Error('Should not launch after disconnect.'); },
+  });
+  const starting = session.start({ output: 'reports/disconnected-validation' })
+    .then(result => ({ result }), error => ({ error }));
+  await validating.promise;
+  try {
+    assert.equal((await session.shutdown()).status, 'disconnected');
+    validated.resolve();
+    const outcome = await within(starting, 'Source validation continued after disconnect.');
+    assert.match(outcome.error.message, /MCP client disconnected/);
+    assert.equal(launches, 0);
+    assert.equal(session.report, undefined);
+    assert.equal(session.server, undefined);
+  } finally { validated.resolve(); await starting; }
+});
+
+test('a pending initial observation cannot overwrite a completed disconnect report', async t => {
+  const root = await fixture(t), fake = fakeBrowser(), waiting = deferred(), observed = deferred();
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  session._wait = async () => { waiting.resolve(); await observed.promise; return fake.observation(); };
+  const starting = session.start({ webRoot: 'web', output: 'reports/disconnected-initial-reader' })
+    .then(result => ({ result }), error => ({ error }));
+  await waiting.promise;
+  try {
+    assert.equal((await session.shutdown()).status, 'disconnected');
+    observed.resolve();
+    const outcome = await within(starting, 'Initial observation did not stop after disconnect.');
+    assert.match(outcome.error.message, /MCP client disconnected/);
+    const report = JSON.parse(await readFile(resolve(root, 'reports/disconnected-initial-reader/session.json')));
+    assert.equal(report.status, 'disconnected');
+    assert.equal(report.hasErrors, true);
+    assert.equal(report.failures.length, 1);
+  } finally { observed.resolve(); await starting; }
 });
 
 const ack = current => ({ actions: [{ id: `${current}:0`, kind: 'acknowledgement', enabled: true, label: 'Continue' }], report: `Report ${current}` });

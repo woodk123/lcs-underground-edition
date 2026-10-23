@@ -10,7 +10,7 @@ Install the pinned Flutter SDK described in [Building](BUILDING.md), Python 3.11
 python scripts/prepare_dev_mcp.py --configure-codex
 ```
 
-This installs locked Node dependencies, verifies the Flutter pin, generates serializers and compiles a development web player under `.local/dev-mcp/web`. It records source and payload hashes in `.local/dev-mcp/build.json`. Subsequent runs reuse that build only when the source identity and every built file still match. Run it after editing game code; use `--rebuild` to force compilation. Close active MCP sessions before rebuilding.
+This installs locked Node dependencies, verifies the Flutter pin, generates serializers and compiles a development web player under `.local/dev-mcp/web`. It records source and payload hashes in `.local/dev-mcp/build.json`. Subsequent runs reuse that build only when the game inputs, toolchain pin, preparation recipe and every built file still match. Run it after editing game code or the preparation scripts; use `--rebuild` to force compilation. Close active MCP sessions before rebuilding.
 
 The default `lcs_start` also checks freshness against the current checkout and refuses stale or modified builds. `python scripts/prepare_dev_mcp.py --check` performs that check without rebuilding. Custom historical artifacts are permitted with an explicit `webRoot`; their result reports that source freshness was not checked, and `expectedHash` can pin the intended artifact.
 
@@ -60,6 +60,8 @@ For a custom build, pass `webRoot` and optionally `expectedHash` to `lcs_start`.
 ## Evidence and boundaries
 
 Session evidence is retained under ignored `reports/` or `.local/`. It includes the loaded JavaScript hash, bridge build identity, requests, results, elapsed times, rejected actions and browser errors. Named captures provide screenshots and structured state for bug reports. Keep failures as well as successes. Old captures describe their recorded build, not the current checkout.
+
+Use `lcs_close` to let pending native exports finish before closing the disposable context. If the MCP host disconnects, cleanup closes its owned browser and loopback server first so a stalled download cannot hold them open; interrupted exports remain recorded as download errors in `session.json` and the trace.
 
 The bridge reads without making gameplay rolls, advancing time or answering pending input. Actions retain their original object identity and revision. Modal inspection, presentation drafts and busy input boundaries prevent underlying commands. Text entry uses the same editor replay as the visible game. There are no arbitrary JavaScript, raw key, money-setting or state-editing tools.
 
