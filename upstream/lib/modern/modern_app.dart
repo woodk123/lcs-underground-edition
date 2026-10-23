@@ -33,9 +33,11 @@ import 'package:lcs_new_age/modern/journal_legislation.dart';
 import 'package:lcs_new_age/modern/journal_media.dart';
 import 'package:lcs_new_age/modern/journal_media_production.dart';
 import 'package:lcs_new_age/modern/journal_navigation_shortcuts.dart';
+import 'package:lcs_new_age/modern/journal_navigation_state.dart';
 import 'package:lcs_new_age/modern/journal_preferences.dart';
 import 'package:lcs_new_age/modern/journal_pursuit.dart';
 import 'package:lcs_new_age/modern/journal_recovery.dart';
+import 'package:lcs_new_age/modern/journal_sections.dart';
 import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/journal_title.dart';
@@ -82,13 +84,8 @@ class _ModernGameShellState extends State<ModernGameShell> {
   int _renderedRevision = -1;
   bool _wasTextInput = false;
   late final OrganisationController _organisation;
-  bool _journalSession = false;
-  String _lastConsoleScreen = 'generic';
-  int _journalSection = 0;
+  late final JournalNavigationState _journalNavigation;
   bool _mediaProduction = false;
-  bool _openingJournalSection = false;
-  bool _pendingJournalReturn = false;
-  bool _organisationWasBusy = false;
   bool _keyboardTraversal = false;
   final _journalKey = GlobalKey<OrganisationJournalState>();
   final _ledgerKey = GlobalKey<JournalLedgerOverviewState>();
@@ -110,10 +107,12 @@ class _ModernGameShellState extends State<ModernGameShell> {
   @override
   void initState() {
     super.initState();
+    _journalNavigation = JournalNavigationState(
+      screen: console.screen,
+      hasCrew: game.pool.isNotEmpty,
+    );
     _organisation = OrganisationController(console: console);
     _organisation.addListener(_organisationChanged);
-    _journalSession = hq && game.pool.isNotEmpty;
-    _lastConsoleScreen = console.screen;
     console.revision.addListener(_refresh);
     // A source await may already exist before this shell mounts (for example
     // after restoring a session). Initialise its editor and focus as well.
@@ -125,8 +124,11 @@ class _ModernGameShellState extends State<ModernGameShell> {
         inputText: _developmentInputText,
         prepareSourceInput: () {
           _journalKey.currentState?.prepareForSourceInput();
-          if (!_classic && _journalSection != 0) {
-            setState(() => _journalSection = 0);
+          if (!_classic &&
+              _journalNavigation.section != JournalSection.organisation) {
+            setState(
+              () => _journalNavigation.section = JournalSection.organisation,
+            );
           }
         },
       );
@@ -144,7 +146,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
     if (_inspectedPersonId != null) return 'inspection_open';
     if (_sending && !allowSending ||
         _navigating ||
-        _openingJournalSection ||
+        _journalNavigation.openingSection ||
         _organisation.busy) {
       return 'ui_busy';
     }
@@ -228,9 +230,10 @@ class _ModernGameShellState extends State<ModernGameShell> {
 
   void _organisationChanged() {
     if (!mounted) return;
-    final finishedCommand = _organisationWasBusy && !_organisation.busy;
-    _organisationWasBusy = _organisation.busy;
-    _normaliseJournalReturn();
+    final finishedCommand = _journalNavigation.observeController(
+      atHeadquarters: hq,
+      busy: _organisation.busy,
+    );
     setState(() {});
     if (finishedCommand &&
         !_helpOpen &&
@@ -243,24 +246,6 @@ class _ModernGameShellState extends State<ModernGameShell> {
     }
   }
 
-  void _normaliseJournalReturn() {
-    if (!_pendingJournalReturn ||
-        !hq ||
-        _organisation.busy ||
-        _openingJournalSection) {
-      return;
-    }
-    // Source-owned chapters have ended when their reader returns to HQ. Keep this
-    // transition pending while a controller command closes that reader and
-    // runs daily work; its final busy notification may be the only later one.
-    // Reports, City maps and Options are native HQ views. In particular,
-    // cancelling or confirming a visit prepared from City maps must retain it.
-    if (_journalSection >= 1 && _journalSection <= 4) {
-      _journalSection = 0;
-    }
-    _pendingJournalReturn = false;
-  }
-
   void _refresh() {
     if (!mounted) return;
     if (fieldPrompt) {
@@ -270,15 +255,11 @@ class _ModernGameShellState extends State<ModernGameShell> {
         }
       });
     }
-    if (hq && game.pool.isNotEmpty) {
-      _journalSession = true;
-      if (_lastConsoleScreen != 'headquarters' && !_openingJournalSection) {
-        _pendingJournalReturn = true;
-      }
-      _normaliseJournalReturn();
-    }
-    _lastConsoleScreen = console.screen;
-    if (title) _journalSession = false;
+    _journalNavigation.observeReader(
+      screen: console.screen,
+      hasCrew: game.pool.isNotEmpty,
+      controllerBusy: _organisation.busy,
+    );
     if (console.textInput && !_wasTextInput) {
       _entry.text = console.textInputValue;
       _entry.selection = TextSelection.collapsed(offset: _entry.text.length);
@@ -497,7 +478,11 @@ class _ModernGameShellState extends State<ModernGameShell> {
     if (console.textInput) return KeyEventResult.ignored;
     if (!_classic) {
       _journalKey.currentState?.prepareForSourceInput();
-      if (_journalSection != 0) setState(() => _journalSection = 0);
+      if (_journalNavigation.section != JournalSection.organisation) {
+        setState(
+          () => _journalNavigation.section = JournalSection.organisation,
+        );
+      }
     }
     if (!_keyboard.hasPrimaryFocus) _keyboard.requestFocus();
     console.keyEvent(event);
@@ -608,7 +593,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
                   'Controls',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                const Text(
+                Text(
                   '$journalNavigationHelp\n\nKeyboard works in graphical view. At headquarters: 1–6 selects a squad member, pressing that number again opens their profile, and 0 clears the selection. F opens squad visits, N selects the next squad, A opens assignments, and W carries out plans or waits a day. In the visit planner, letter keys open districts and queue buildings immediately; Back returns one original level and cancels a queued departure at the city root. You can also browse the city map and choose Queue visit in one action. Visits replace earlier daily assignments; travel runs when you advance the day. Game keys follow the original menus in every view: category defaults and task or destination selections take effect on the same key as Classic, and Back returns one original menu level. Pointer task cards can still be prepared and confirmed with their visible controls. Tab moves between controls; Enter or Space activates the focused control. Enter continues messages and arrows move during operations. Required names use the text field. F1 opens this guide. Classic view retains the original menu shortcuts.',
                 ),
                 const SizedBox(height: 14),
@@ -742,7 +727,10 @@ class _ModernGameShellState extends State<ModernGameShell> {
     final classic = _classic || console.mouseEventMode;
     final creation = console.creation;
     final journal =
-        _journalSession && !title && !classic && game.mode == GameMode.base;
+        _journalNavigation.active &&
+        !title &&
+        !classic &&
+        game.mode == GameMode.base;
     return NotificationListener<JournalPreferencesClosedNotification>(
       onNotification: (_) {
         _restoreTextEntryFocus();
@@ -1112,58 +1100,37 @@ class _ModernGameShellState extends State<ModernGameShell> {
     onDismissFirstSteps: () => setState(() => _guide = false),
   );
 
-  Future<void> _openJournalSection(int section) async {
-    if (_openingJournalSection || !_organisation.canNavigate) return;
-    _openingJournalSection = true;
-    _pendingJournalReturn = false;
-    setState(() {
-      _journalSection = section;
-      _inspectedPersonId = null;
-    });
+  Future<void> _openJournalSection(int sectionId) async {
+    final section = JournalSection.fromId(sectionId);
+    if (section == null ||
+        !_organisation.canNavigate ||
+        !_journalNavigation.beginSection(section)) {
+      return;
+    }
+    setState(() => _inspectedPersonId = null);
     try {
-      switch (section) {
-        case 0:
-        case 5:
+      switch (section.destination) {
+        case JournalSectionDestination.headquarters:
           await _organisation.returnToHeadquarters();
-        case 1:
-          if (await _organisation.openSection('r')) {
-            final finance = _action('v');
-            if (finance?.enabled == true) {
-              await _organisation.sendAction(
-                finance!,
-                revision: console.revision.value,
-              );
-            }
-          }
-        case 2:
-          if (await _organisation.openSection('r')) {
-            final justice = _action('4');
-            if (justice?.enabled == true) {
-              await _organisation.sendAction(
-                justice!,
-                revision: console.revision.value,
-              );
-            }
-          }
-        case 3:
-          await _organisation.openSection('l');
-        case 4:
-          await _organisation.openSection('m');
-        case 6:
-          await _organisation.returnToHeadquarters();
-        case 7:
-          await _organisation.returnToHeadquarters();
-        case networkJournalSection:
-          await _organisation.returnToHeadquarters();
-        case peopleJournalSection:
+        case JournalSectionDestination.personnelDirectory:
           await _organisation.openPersonnelDirectory();
-        case basesJournalSection:
-          await _organisation.returnToHeadquarters();
+        case JournalSectionDestination.sourceReader:
+          if (await _organisation.openSection(section.sourceRoute.first)) {
+            for (final key in section.sourceRoute.skip(1)) {
+              final action = _action(key);
+              if (action?.enabled != true) break;
+              if (!await _organisation.sendAction(
+                action!,
+                revision: console.revision.value,
+              )) {
+                break;
+              }
+            }
+          }
       }
     } finally {
-      _openingJournalSection = false;
+      _journalNavigation.finishSection();
       if (mounted) {
-        _normaliseJournalReturn();
         setState(() {});
         if (!console.textInput) _keyboard.requestFocus();
       }
@@ -1186,7 +1153,11 @@ class _ModernGameShellState extends State<ModernGameShell> {
         frame.closeAction,
         revision: console.revision.value,
       )) {
-        if (mounted) setState(() => _journalSection = 0);
+        if (mounted) {
+          setState(
+            () => _journalNavigation.section = JournalSection.organisation,
+          );
+        }
       }
     } else {
       _send(key);
@@ -1209,7 +1180,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
           ) &&
           mounted &&
           hq) {
-        setState(() => _journalSection = 0);
+        setState(
+          () => _journalNavigation.section = JournalSection.organisation,
+        );
       }
     } else {
       _send(action.key);
@@ -1239,9 +1212,10 @@ class _ModernGameShellState extends State<ModernGameShell> {
       detail = JournalAgendaView(console: console, onAction: _send);
     } else if (mediaOverviewFrame(console) != null) {
       detail = _mediaDesk();
-    } else if (_journalSection == 7 && !console.textInput) {
+    } else if (_journalNavigation.section == JournalSection.options &&
+        !console.textInput) {
       detail = _journalOptions();
-    } else if (_journalSection == networkJournalSection &&
+    } else if (_journalNavigation.section == JournalSection.network &&
         !console.textInput &&
         console.journalProfile == null &&
         (primary ||
@@ -1250,14 +1224,14 @@ class _ModernGameShellState extends State<ModernGameShell> {
       // The Network owns its roster and inspector while using the original
       // sleeper readers underneath. Required decisions retain their own view.
       detail = null;
-    } else if (_journalSection == peopleJournalSection &&
+    } else if (_journalNavigation.section == JournalSection.people &&
         !console.textInput &&
         console.journalProfile == null &&
         activityOrderFrame(console) == null &&
         squadAllocationFrame(console) == null &&
         (hq || console.screen == 'personnel-directory' || _organisation.busy)) {
       detail = null;
-    } else if (_journalSection == basesJournalSection &&
+    } else if (_journalNavigation.section == JournalSection.bases &&
         !console.textInput &&
         console.journalProfile == null &&
         (hq ||
@@ -1266,7 +1240,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
       detail = null;
     } else if (!primary || console.screen == 'organisation') {
       detail = _workspace(false, true, embeddedJournal: true);
-    } else if (_journalSection == 2 &&
+    } else if (_journalNavigation.section == JournalSection.justice &&
         console.screen == 'organisation' &&
         _action('4')?.enabled != true) {
       detail = const JournalSurface(
@@ -1288,17 +1262,19 @@ class _ModernGameShellState extends State<ModernGameShell> {
       onClassic: () => setState(() => _classic = !_classic),
       onTextScale: (value) => setState(() => _textScale = value),
       textScale: _textScale,
-      section: hq && _organisation.headquarters?.siege != null
-          ? 0
-          : isLegislativeVoteScreen(console)
-          ? 3
-          : ledgerReportFrame(console) != null
-          ? 1
-          : agendaOverviewFrame(console) != null
-          ? 3
-          : mediaOverviewFrame(console) != null
-          ? 4
-          : _journalSection,
+      section:
+          (hq && _organisation.headquarters?.siege != null
+                  ? JournalSection.organisation
+                  : isLegislativeVoteScreen(console)
+                  ? JournalSection.agenda
+                  : ledgerReportFrame(console) != null
+                  ? JournalSection.ledger
+                  : agendaOverviewFrame(console) != null
+                  ? JournalSection.agenda
+                  : mediaOverviewFrame(console) != null
+                  ? JournalSection.newspaper
+                  : _journalNavigation.section)
+              .id,
       fullSpreadDetail:
           console.screen == 'organisation' ||
           console.eventMessage != null ||
@@ -1366,7 +1342,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
                 onAssign: (request) async {
                   if (!_organisation.canNavigate) return;
                   setState(() {
-                    _journalSection = 0;
+                    _journalNavigation.section = JournalSection.organisation;
                     _inspectedPersonId = null;
                   });
                   // Leave the archive first: its source frame owns section 4
@@ -1514,7 +1490,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
                       ],
                     ),
                   ),
-                  if (hq || _journalSession || game.mode == GameMode.site)
+                  if (hq ||
+                      _journalNavigation.active ||
+                      game.mode == GameMode.site)
                     Text(
                       '${game.day} ${getMonth(game.month).substring(0, 3)} ${game.year} · \$${game.ledger.funds}',
                       style: JournalPalette.small,
