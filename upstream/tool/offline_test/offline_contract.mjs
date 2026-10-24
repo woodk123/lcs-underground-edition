@@ -16,6 +16,19 @@ export function parseOfflineManifest(worker) {
   return { version: versionMatch[1], resources };
 }
 
+export async function waitForPrecacheActivation(page, { scope, script, timeout }) {
+  const registration = await page.evaluateHandle(scope => navigator.serviceWorker.getRegistration(scope), scope);
+  try {
+    // Playwright polls the immediate return value; an async predicate is a truthy Promise.
+    await page.waitForFunction(({ registration, scope, script }) => Boolean(
+      registration?.scope === scope && registration.active?.state === 'activated' && registration.active.scriptURL === script
+      && navigator.serviceWorker.controller?.state === 'activated' && navigator.serviceWorker.controller.scriptURL === script
+    ), { registration, scope, script }, { timeout });
+  } finally {
+    await registration.dispose();
+  }
+}
+
 // Self-contained for page.evaluate: only browser globals and supplied data.
 // A second argument permits dependency-free CacheStorage fixtures in Node.
 export async function inspectPrecache({ version, resources, scope }, storage = globalThis.caches) {

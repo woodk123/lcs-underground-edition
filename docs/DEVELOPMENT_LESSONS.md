@@ -2,7 +2,7 @@
 
 Reuse the original gameplay handlers, test complete interactions early, and keep builds traceable. Recurring follow-up fixes have involved navigation, retained UI state, hidden choices and misleading explanations. Faster development depends on catching those problems before rebuilding and reviewing a whole player.
 
-These practices come from the locally available project sessions of 13–18 October 2026, checked against the repository on 18 October. Detailed commands remain in [Building](BUILDING.md), [Testing](TESTING.md), [Architecture](ARCHITECTURE.md), [Assets](ASSETS.md) and [Versioning](VERSIONING.md).
+These practices combine the locally available project sessions of 13–18 October 2026 with repository maintenance checked on 24 October. Detailed commands remain in [Building](BUILDING.md), [Testing](TESTING.md), [Architecture](ARCHITECTURE.md), [Assets](ASSETS.md) and [Versioning](VERSIONING.md).
 
 ## Recurring problems and what to do
 
@@ -15,6 +15,8 @@ These practices come from the locally available project sessions of 13–18 Octo
 | Show the information needed for the decision. | A hospitalized crew member looked missing; available shelters looked like eight owned bases; recruitment meeting difficulty looked like persuasion difficulty. | Show status, location, scope, timing and relevant costs beside the choice. Keep important values beside their names, with detailed formulas available on demand. |
 | Derive explanations from the actual rules. | Law descriptions initially overstated direct effects; equipment, injury, recruitment and Juice help required checking their handlers. | Trace the real calculation and eligibility conditions. Label estimates and conditional probabilities. Distinguish political/story effects from direct mechanics; previews must not make game rolls. |
 | Verify what is actually delivered. | Cross-platform line endings broke a pinned asset hash; removing an apparently unused icon dependency broke font output; license validation initially checked the retained copy instead of the packaged copy. | Check built assets and extracted packages, including their actual licenses, hashes and source identity. Import searches and successful compilation provide only part of the evidence. |
+| Wait for the state being asserted. | Founder semantics changed before portrait pixels painted; an async offline-activation predicate returned a Promise before the worker finished. | Await asynchronous lookup before polling a synchronous readiness predicate. Require the selected image or complete cache, with a bounded deadline and the original assertions intact. |
+| Capture failures before cleanup. | A fresh profile showed only a processing shell while foreground and service-worker XML requests were pending; the page reported no network failure. | Retain the raw source stage, pending requests, worker state and loaded-build identity before closing the profile. Keep each attempt's evidence separately. |
 
 The implementation contracts are described in [Architecture](ARCHITECTURE.md#engine-and-interface). Useful regressions include [page storage isolation](../upstream/test/page_storage_isolation_test.dart), [action identity](../upstream/test/action_identity_test.dart), [organisation journeys](../upstream/test/organisation_journal_test.dart) and [tactical shell acceptance](../upstream/test/tactical_shell_acceptance_test.dart).
 
@@ -57,6 +59,8 @@ The current [CI workflow](../.github/workflows/ci.yml) already runs four test sh
 - Measure player performance separately. Download size, startup latency, memory use and frame responsiveness are different problems. Do not evict useful caches or change loading behaviour solely because a theoretical saving exists.
 
 Artwork was the major download-size contributor. [The quality-90 measurements](BUILDING.md#quality-90-size-measurements-17-october-2026) document real rebuilt ZIP reductions, alongside their scope. Keep PNG masters and provenance, encode runtime images from those masters, and review at game scale before changing quality. Avoid repeated lossy recompression and avoid raising a size budget without reviewing its contents.
+
+The [development-MCP cache](DEV_MCP.md#setup) can reuse a compiled player after a documentation or helper commit when full compile inputs and payloads still match. It retains the original compiled revision and records the currently checked revision separately. Release and CI artifact reuse retain their own commit-identity requirements.
 
 ## Keep playtesting reproducible
 

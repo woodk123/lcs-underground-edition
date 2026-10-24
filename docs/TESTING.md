@@ -98,7 +98,7 @@ npm ci --prefix upstream/tool/dev_mcp --no-audit --no-fund
 npm test --prefix upstream/tool/dev_mcp
 ```
 
-The Node command runs the development-MCP and shared browser-support unit tests without launching a browser. For a focused browser-support change, use `node --test scripts/browser_support.test.mjs`. Browser journeys below have their own locked dependencies in `upstream/tool/offline_test/`.
+The Node command runs the development-MCP, shared browser-support and offline-cache contract tests without launching a browser. The cache regressions reject partial, stale-version and wrong-scope caches even when other caches contain many entries. For a focused browser-support change, use `node --test scripts/browser_support.test.mjs`. Browser journeys below have their own locked dependencies in `upstream/tool/offline_test/`.
 
 The tests exercise archive integrity/tampering, complete source snapshots, local and nightly packaging, release-size accounting and limits, unchanged-input detection and safe publication. Flutter regressions also decode every runtime WebP, check atlas dimensions and native alpha fidelity, and exercise conservative web renderer pruning. No live GitHub release is modified by these tests.
 
@@ -150,6 +150,8 @@ Install the pinned SDK and resolve dependencies as described in [Building](BUILD
 The focused tests cover source creation/rewards, order routing and retained scroll/selection, page-storage isolation, current Network orders and modal shortcuts, personnel, and save load/round-trip/recovery. This is the shared integration check; the full suite, rare gameplay branches, offline acceptance and native GUI checks retain their separate scopes below.
 
 Keyboard interface regressions add `keyboard_orders_workspace_test.dart`, `keyboard_reader_choices_test.dart`, `character_presentation_test.dart` and `journal_preferences_test.dart`. They exercise real assignment, equipment and buyer readers, stale callbacks, exact case-sensitive vehicle shortcuts, compact/enlarged/narrow layouts, consistent attribute order, accessible details, pending text/input, unchanged campaign/RNG during inspection and preference persistence independently of reading size. `keyboard_interface_browser_review.mjs` records actual task key sequences, screenshots and whole-campaign exports; its comparison requires the identical original key sequence and immediate assignment timing in both views, with separate pointer draft/cancel/confirm coverage.
+
+On failure, the keyboard helper freezes pending page and service-worker requests before closing the profile, alongside resource timings, worker state and the raw development reader when available. A mounted processing shell or an empty failed-request list does not establish completed startup; inspect the retained loading stage and pending requests before retrying.
 
 The runner reserves **18879 and 18882** by default and fails if either is occupied, with exclusive socket ownership on Windows. For concurrent runs, choose two different unused dedicated ports with `--port 18889 --personnel-port 18892`; only 18879–18999 are accepted. Standalone helpers retain their usual fixed origins. The runner starts and stops only its own loopback servers and uses isolated browser profiles. Player servers, profiles and saves remain untouched. Logs, screenshots, exported saves and `report.json` go into a new ignored `.local/reports/shared-acceptance-*` directory. Use `--out reports/my-acceptance-run` to choose another new ignored directory.
 
@@ -326,6 +328,10 @@ node scripts/creation_browser_review.mjs --url http://127.0.0.1:18879/ --expecte
 ```
 
 The Organisation and first-week helpers use installed Microsoft Edge; creation uses Chrome. The creation helper checks portrait rerolls, continuity through creation/headquarters/save reload, projected answer-bonus help and click-through, and public-name placement below the question. It covers manual and random backgrounds at normal size and 1024×720 with 150% text. Unit regressions cover all 50 source bonuses, untouched state/RNG/ID counters during previews, and the birthday/cohort edge case. Use only the isolated QA port when stopping a test server.
+
+Portrait semantics can update before decoded art paints. The creation helper waits for the selected atlas cell's pixels before comparing rerolls, with a bounded deadline and retained first/last/reference captures, identities and distance samples. A placeholder or another cell cannot satisfy that readiness check; the original visual-change and unchanged-settings assertions still apply.
+
+For an offline boot check, run `node upstream/tool/offline_test/test_offline.mjs "$qaWeb" /`. Set `LCS_BROWSER_CHANNEL` to `msedge` or `chrome` to use an installed browser. This helper owns a temporary loopback server and fresh profile, requires every resource in the current version's scoped cache, then stops its server, disables networking and requires the original title again. Actual loaded-script hashes must match online and offline; failures retain unique ignored captures and diagnostics. This checks offline startup; saved-campaign continuity and native GUI acceptance retain their separate journeys.
 
 ### Mission, recovery and custody
 

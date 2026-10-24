@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
-import { inspectPrecache, parseOfflineManifest } from './offline_contract.mjs';
+import { inspectPrecache, parseOfflineManifest, waitForPrecacheActivation } from './offline_contract.mjs';
 
 const resources = { 'index.html': '123', 'main.dart.js': 'abc', 'assets/portrait 01.webp': 'def' };
 const worker = (map = resources, version = '1234abcd') =>
@@ -38,6 +38,67 @@ test('unfilled, malformed and incomplete injected manifests fail preflight', () 
     worker({ 'index.html': '123' }), worker({ ...resources, 'main.dart.js': 123 }),
     worker({ ...resources, 'main.dart.js': 'not-a-checksum' }),
   ]) assert.throws(() => parseOfflineManifest(source), /RESOURCES|VERSION/);
+});
+
+test('activation polling returns literal false until the exact worker and controller are activated', async () => {
+  const scope = 'http://127.0.0.1:18879/lcs-new-age/', script = new URL('sw.js', scope).href;
+  const registration = { scope, active: null, installing: { state: 'installing', scriptURL: script } };
+  const serviceWorker = { getRegistration: async requested => {
+    assert.equal(requested, scope);
+    return registration;
+  }, controller: null };
+  const handle = { value: registration, dispose: async () => phases.push('dispose') };
+  const phases = [];
+  const page = {
+    evaluateHandle: async (lookup, requested) => {
+      phases.push('lookup');
+      const inBrowser = runInNewContext(`(${lookup.toString()})`, { navigator: { serviceWorker } });
+      assert.equal(await inBrowser(requested), registration);
+      return handle;
+    },
+    waitForFunction: async (predicate, args, options) => {
+      phases.push('poll');
+      assert.equal(args.registration, handle);
+      assert.equal(options.timeout, 1234);
+      const inBrowser = runInNewContext(`(${predicate.toString()})`, { navigator: { serviceWorker } });
+      const check = expected => assert.equal(inBrowser({ ...args, registration: handle.value }), expected);
+      check(false); // Installation has not completed.
+      registration.active = { state: 'activating', scriptURL: script };
+      check(false);
+      registration.active.state = 'activated';
+      check(false); // The page is not controlled yet.
+      serviceWorker.controller = { state: 'activating', scriptURL: script };
+      check(false);
+      serviceWorker.controller.state = 'activated';
+      serviceWorker.controller.scriptURL = script + '?old';
+      check(false);
+      serviceWorker.controller.scriptURL = script;
+      registration.active.scriptURL = script + '?old';
+      check(false);
+      registration.active.scriptURL = script;
+      registration.scope = 'http://127.0.0.1:18879/';
+      check(false);
+      registration.scope = scope;
+      check(true);
+      handle.value = undefined;
+      check(false);
+    },
+  };
+  await waitForPrecacheActivation(page, { scope, script, timeout: 1234 });
+  assert.deepEqual(phases, ['lookup', 'poll', 'dispose']);
+});
+
+test('activation registration handles are disposed while preserving timeout and polling errors', async () => {
+  for (const error of [Object.assign(new Error('Worker activation timed out'), { name: 'TimeoutError' }), new Error('Page closed')]) {
+    let disposed = 0;
+    const page = {
+      evaluateHandle: async () => ({ dispose: async () => { disposed++; } }),
+      waitForFunction: async () => { throw error; },
+    };
+    await assert.rejects(waitForPrecacheActivation(page, { scope: 'http://localhost/', script: 'http://localhost/sw.js', timeout: 1 }),
+      thrown => thrown === error);
+    assert.equal(disposed, 1);
+  }
 });
 
 test('complete current cache is verified at root and hosted base paths, including encoded asset names', async () => {
