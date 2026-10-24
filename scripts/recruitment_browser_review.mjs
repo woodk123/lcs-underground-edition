@@ -62,7 +62,7 @@ async function start(width) {
   page.on('pageerror', e => report.pageErrors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') report.consoleErrors.push(m.text()); });
   page.on('requestfailed', r => report.failedRequests.push(r.url()));
-  await page.goto(url, { waitUntil: 'networkidle' }); await wait(/Start a New Game/);
+  await page.goto(url, { waitUntil: 'domcontentloaded' }); await wait(/Start a New Game/);
   const chooser = page.waitForEvent('filechooser'); await click(/^Import a Save/); await (await chooser).setFiles(fixture);
   await wait(/Save imported/); await page.keyboard.press('Enter'); await wait(/Start a New Game/);
   await click(/^Load & Manage Saves/); await click(/^A(?:\s|$)/); await click(/^L Load Game/); await wait(/Save & exit/);
@@ -83,10 +83,17 @@ try {
     assert.match(await text(), /Page 1 of/);
     assert.match(await text(), /Skip recruitment today/);
     const info = page.getByRole('button', { name: /Base attribute ranges:/ }).first();
-    await info.click(); await wait(/These are generation ranges/);
-    await page.waitForTimeout(700); // Let the dialog's fade transition finish before visual QA.
+    await info.click();
+    const stats = page.getByRole('alertdialog');
+    await stats.waitFor({ state: 'visible' });
+    await stats.getByText(/These are generation ranges/).waitFor({ state: 'visible' });
+    const closeStats = stats.getByRole('button', { name: 'Close', exact: true });
+    await closeStats.waitFor({ state: 'visible' });
+    assert.ok(await closeStats.isEnabled(), 'The current profession stats dialog must have an enabled Close control.');
     await capture(`profession-stats-${width}`);
-    await click(/^Close$/); check(`profession stat help at ${width}`);
+    await closeStats.click();
+    await stats.waitFor({ state: 'hidden' });
+    await page.mouse.move(2, 2); check(`profession stat help at ${width}`);
     const first = await button(/^A /).textContent();
     assert.ok(first, 'Profession A must exist.'); check(`profession choices visible at ${width}`);
     await page.keyboard.press('PageDown'); await page.waitForTimeout(250); await capture(`page-two-${width}`);

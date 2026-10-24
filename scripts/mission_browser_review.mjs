@@ -58,6 +58,7 @@ async function wait(pattern) {
   throw Error(`Missing ${pattern}: ${await uiText()}`);
 }
 const button = name => page.getByRole('button', { name }).first();
+const legislationContinue = /^(?:Watch the votes|Watch the President|See the outcome|Return to the campaign)$/;
 async function available(name) { return await button(name).count() > 0 && await button(name).isEnabled(); }
 async function click(name) {
   await button(name).click();
@@ -104,7 +105,7 @@ async function fresh() {
     previousContext: context, report, errorContext: () => ({ scenario }), timeout: 8000,
   }));
   verifyLoaded = observeMainScript(page, report);
-  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
   await wait(/Start a New Game/);
 }
 async function fixture(name, state, changes, envelope = normalizedEnvelope ?? original) {
@@ -146,7 +147,7 @@ async function roundTrip(name) {
   const saved = await exportGame(name);
   // The first export already reloads through the original save menu. Reload
   // the browser too, then transfer to a completely new storage context.
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await wait(/Continue Game|Continue Previous|Continue Last|Continue Saved|Continue/);
   await click(/^Continue/);
   await wait(/Save & exit/);
@@ -234,6 +235,12 @@ async function day({ pay = false, defense = false } = {}) {
       assert.ok(await available(/^Plead guilty$/), 'Invalid input must retain the same defense choices.');
       await click(/^Plead guilty$/);
       check('court defense retains choices on invalid input and rejects unaffordable elite counsel');
+    } else if (await available(legislationContinue)) {
+      // Month-end custody can encounter the source Congress report before
+      // returning to the daily reader. Acknowledge only its offered step.
+      await recordDecision();
+      await capture(`legislation-${report.decisions.length}`);
+      await click(legislationContinue);
     } else if (await available(/^Continue$/)) { await recordDecision(); await click(/^Continue$/); }
     else if (await available(/^D Break off the meetings/)) await click(/^D Break off the meetings/);
     else if (await available(/Read newspaper|Read the paper|Done reading/)) await click(/Read newspaper|Read the paper|Done reading/);
@@ -575,7 +582,14 @@ try {
       [`Prepared ${patient.name} with 94% blood and one bleeding arm wound at headquarters; starting funds $${state.ledger._funds}. Admission, stabilization, daily healing, bill and discharge are produced through the original browser handlers.`]));
     const before = (await exportGame('baseline')).state;
     await visit('University District', 'University Hospital');
-    assert.match(await uiText(), /Visit in progress/);
+    // Hospital decisions use the source recovery reader, rather than the
+    // Organisation planning card that advertises queued visits.
+    await wait(/University Hospital/);
+    await button(/^Admit injured squad members$/).click({ trial: true });
+    assert.match(await uiText(), /1 squad member needs care/);
+    assert.ok(await available(/^Admit injured squad members$/));
+    assert.ok(await available(/^Return to headquarters$/));
+    assert.equal(await available(/^Save & exit/), false);
     assert.doesNotMatch(await uiText(), /Visit queued · advance the day to travel/);
     await capture('hospital-menu');
     await page.setViewportSize({ width: 1024, height: 720 });
