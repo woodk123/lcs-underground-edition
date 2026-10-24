@@ -175,6 +175,14 @@ When writing or repairing a helper, navigate through `DOMContentLoaded` and then
 
 Check complete text against its measured scroll clip and viewport with dismissal reachable; a fixed pixel boundary or a leaf span's DOM height can reject fully visible Flutter text. Save geometry and pending page/worker requests before failure cleanup, without adding gameplay input or extending the reader deadline to obtain a pass.
 
+For intermittent transport failures, prepend `node --require ./scripts/browser_netlog.cjs` to a standalone helper invocation, retaining its normal port, expected hash and fixture requirements. For example, after the setup below:
+
+```powershell
+node --require ./scripts/browser_netlog.cjs scripts/screen_browser_review.mjs --expected-hash $expected --out reports/screens-netlog
+```
+
+The preload uses the helper's installed Playwright and preserves its launch options. Each `chromium.launch` in that Node process gets a fresh ignored `.local/browser-netlog/launch-...` directory, printed to stderr, with launch metadata and recent traffic in a rolling 32 MiB default-redaction log. Close the browser normally to flush the log and retain it alongside the helper report; the report's full journey checks and loaded-build hashes remain separate evidence. This does not instrument persistent-context launches or child Node processes, and it refuses existing NetLog flags rather than overriding their policy.
+
 ### Prepare an isolated web build
 
 For the common creation/orders/navigation/save journey, the [shared acceptance runner](#shared-acceptance-journey) already owns compilation, ports and cleanup. Use this setup for a supplemental helper. Install Node.js/npm and the Edge/Chrome browser required by that helper, and complete [Development mode](BUILDING.md#development-mode) first.
