@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test ../../../scripts/browser_support.test.mjs ../../../scripts/browser_netlog.test.cjs ../../../scripts/dev_mcp/server.test.mjs ../../../scripts/dev_mcp/session.test.mjs ../offline_test/offline_contract.test.mjs", "start": "node ../../../scripts/dev_mcp/server.mjs" },
+  "scripts": { "test": "node --test ../../../scripts/browser_support.test.mjs ../../../scripts/browser_netlog.test.cjs ../../../scripts/dev_mcp/server.test.mjs ../../../scripts/dev_mcp/session.test.mjs ../offline_test/offline_contract.test.mjs ../offline_test/service_worker.test.mjs", "start": "node ../../../scripts/dev_mcp/server.mjs" },
   "dependencies": { "@modelcontextprotocol/server": "2.3.1", "zod": "4.6.7" },
   "devDependencies": { "@modelcontextprotocol/client": "2.3.1" }
 }

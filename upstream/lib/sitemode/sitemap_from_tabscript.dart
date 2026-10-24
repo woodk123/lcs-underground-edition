@@ -2,6 +2,7 @@
 
 import 'package:flutter/services.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
+import 'package:lcs_new_age/saveload/required_asset.dart';
 import 'package:lcs_new_age/sitemode/sitemap.dart';
 import 'package:lcs_new_age/utils/lcsrandom.dart';
 
@@ -654,9 +655,9 @@ class ConfigSiteLoot extends ConfigSiteCommand {
 
 // Reads in an entire configuration file
 // Returns true for read successful, returns false if failed read
-Future<bool> readConfigFile(String filename) async {
+Future<bool> readConfigFile(String filename, {AssetBundle? bundle}) async {
   Configurable? object;
-  String file = await rootBundle.loadString(filename);
+  String file = await loadRequiredAssetString(filename, bundle: bundle);
   Iterable<(String, String)> commands = file.split("\n").map(readLine).nonNulls;
   for (var (command, value) in commands) {
     if (command == "OBJECT") {

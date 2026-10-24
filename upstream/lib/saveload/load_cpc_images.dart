@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:lcs_new_age/engine/engine.dart';
 import 'package:lcs_new_age/saveload/load_xml_data.dart';
+import 'package:lcs_new_age/saveload/required_asset.dart';
 import 'package:lcs_new_age/utils/colors.dart';
 
 late List<List<List<List<int>>>> bigletters;
@@ -13,21 +14,21 @@ late Map<String, List<List<int>>> letters4x5;
 late Map<String, List<List<int>>> letters3x5;
 late Map<String, List<List<int>>> letters3x3;
 
-Future<void> loadCpcGraphics() async {
+Future<void> loadCpcGraphics({AssetBundle? bundle}) async {
   loadingFeedback("largecap.cpc");
-  bigletters = await readCPCFile("assets/art/largecap.cpc");
+  bigletters = await readCPCFile("assets/art/largecap.cpc", bundle: bundle);
   loadingFeedback("5x5caps.txt");
-  letters5x5 = await readCapTextFile("assets/art/5x5caps.txt", 5, 5);
+  letters5x5 = await readCapTextFile("assets/art/5x5caps.txt", 5, 5, bundle: bundle);
   loadingFeedback("4x5caps.txt");
-  letters4x5 = await readCapTextFile("assets/art/4x5caps.txt", 4, 5);
+  letters4x5 = await readCapTextFile("assets/art/4x5caps.txt", 4, 5, bundle: bundle);
   loadingFeedback("3x5caps.txt");
-  letters3x5 = await readCapTextFile("assets/art/3x5caps.txt", 3, 5);
+  letters3x5 = await readCapTextFile("assets/art/3x5caps.txt", 3, 5, bundle: bundle);
   loadingFeedback("3x3caps.txt");
-  letters3x3 = await readCapTextFile("assets/art/3x3caps.txt", 3, 3);
+  letters3x3 = await readCapTextFile("assets/art/3x3caps.txt", 3, 3, bundle: bundle);
   loadingFeedback("newstops.cpc");
-  newstops = await readCPCFile("assets/art/newstops.cpc");
+  newstops = await readCPCFile("assets/art/newstops.cpc", bundle: bundle);
   loadingFeedback("newspic.cpc");
-  newspic = await readCPCFile("assets/art/newspic.cpc");
+  newspic = await readCPCFile("assets/art/newspic.cpc", bundle: bundle);
 }
 
 List<String> getLetters() {
@@ -35,8 +36,8 @@ List<String> getLetters() {
 }
 
 Future<Map<String, List<List<int>>>> readCapTextFile(
-    String s, int y, int x) async {
-  String text = await rootBundle.loadString(s);
+    String s, int y, int x, {AssetBundle? bundle}) async {
+  String text = await loadRequiredAssetString(s, bundle: bundle);
   List<String> lines = text.split('\n');
   List<String> letters = getLetters();
   Map<String, List<List<int>>> letterData = {};
@@ -116,8 +117,8 @@ void printNewsText(String s, Map<String, List<List<int>>> letters) {
   }
 }
 
-Future<List<List<List<List<int>>>>> readCPCFile(String s) async {
-  return readCPCData(await rootBundle.load(s));
+Future<List<List<List<List<int>>>>> readCPCFile(String s, {AssetBundle? bundle}) async {
+  return readCPCData(await loadRequiredAssetBytes(s, bundle: bundle));
 }
 
 List<List<List<List<int>>>> readCPCData(ByteData h, [int pos = 0]) {

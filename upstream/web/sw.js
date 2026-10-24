@@ -43,6 +43,24 @@ async function previousCache() {
   }
 }
 
+async function fetchPrecacheResource(url) {
+  // A rejected transfer must not disable offline installation after one
+  // transient connection failure. Retry only this GET, before caching/parsing;
+  // HTTP and storage errors still follow the normal installation failure path.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const response = await fetch(url, { cache: 'reload' });
+      // fetch resolves at headers. Finish the transfer here so a broken body
+      // is retried too; keep the original response and its metadata for put.
+      if (response.ok) await response.clone().arrayBuffer();
+      return response;
+    } catch (error) {
+      if (attempt === 3) throw error;
+      await new Promise(resolve => setTimeout(resolve, 200 * attempt));
+    }
+  }
+}
+
 self.addEventListener('install', (event) => {
   if (RESOURCES === null) {
     return;
@@ -61,7 +79,7 @@ self.addEventListener('install', (event) => {
             return;
           }
         }
-        const response = await fetch(url, { cache: 'reload' });
+        const response = await fetchPrecacheResource(url);
         if (!response.ok) {
           throw new Error('HTTP ' + response.status);
         }
