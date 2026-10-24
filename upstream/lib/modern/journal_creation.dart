@@ -67,7 +67,9 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.console, widget.console)) _sentRevision = null;
     if (oldWidget.context.stage != widget.context.stage ||
-        oldWidget.context.step != widget.context.step) {
+        oldWidget.context.step != widget.context.step ||
+        oldWidget.context.portraitChoices.values.firstOrNull !=
+            widget.context.portraitChoices.values.firstOrNull) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _mainScroll.hasClients) _mainScroll.jumpTo(0);
       });
@@ -140,10 +142,18 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
           final margin = narrow ? 10.0 : 18.0;
           final dossierWidth = narrow ? 246.0 : 330.0;
           final footerChoices = creation.choices
-              .where((choice) => normalizeConsoleKey(choice.key) == 'Enter')
+              .where(
+                (choice) =>
+                    normalizeConsoleKey(choice.key) == 'Enter' ||
+                    creation.portraitChoices.isNotEmpty,
+              )
               .toList();
           final answers = creation.choices
-              .where((choice) => normalizeConsoleKey(choice.key) != 'Enter')
+              .where(
+                (choice) =>
+                    normalizeConsoleKey(choice.key) != 'Enter' &&
+                    creation.portraitChoices.isEmpty,
+              )
               .toList();
           return DecoratedBox(
             key: const ValueKey('journal-creation-page'),
@@ -276,6 +286,49 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (creation.portraitChoices.isNotEmpty)
+              LayoutBuilder(
+                builder: (context, bounds) {
+                  final columns = (bounds.maxWidth / 160).floor().clamp(1, 4);
+                  final entries = creation.portraitChoices.entries.toList();
+                  return Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      for (final entry in entries)
+                        SizedBox(
+                          width:
+                              (bounds.maxWidth - (columns - 1) * 10) / columns,
+                          child: OutlinedButton(
+                            key: ValueKey(
+                              'creation-select-portrait:${entry.value}',
+                            ),
+                            onPressed: _dispatch(entry.key, revision, creation),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: Column(
+                                children: [
+                                  ExcludeSemantics(
+                                    child: FounderPortraitPreview(
+                                      portraitId: entry.value,
+                                      size: 96,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    '${entry.key} · Portrait ${entry.value + 1}',
+                                  ),
+                                  if (entry.value == creation.portraitId)
+                                    const Text('Current'),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
             if (creation.prompt.isNotEmpty) ...[
               Text(
                 creation.prompt,
@@ -519,6 +572,13 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
                 ),
               ),
               const SizedBox(height: 14),
+              if (creation.portraitSelectKey case final key?)
+                OutlinedButton.icon(
+                  key: const ValueKey('creation-select-portrait'),
+                  onPressed: _dispatch(key, revision, creation),
+                  icon: const Icon(Icons.grid_view, size: 18),
+                  label: const Text('Select portrait'),
+                ),
               if (creation.portraitRerollKey case final key?)
                 OutlinedButton.icon(
                   key: const ValueKey('creation-reroll-portrait'),
@@ -730,43 +790,57 @@ class _JournalCreationPageState extends State<JournalCreationPage> {
     CreationContext creation,
     List<CreationChoice> continues,
     int revision,
-  ) => JournalSurface(
-    key: const ValueKey('creation-footer'),
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    child: Row(
-      children: [
-        if (widget.onHelp != null)
-          IconButton(
-            tooltip: 'Field guide',
-            onPressed: widget.onHelp,
-            icon: const Icon(Icons.menu_book_outlined, size: 20),
+  ) => creation.portraitChoices.isNotEmpty
+      ? JournalSurface(
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            children: [
+              for (final choice in continues)
+                OutlinedButton(
+                  onPressed: _dispatch(choice.key, revision, creation),
+                  child: Text(choice.label),
+                ),
+            ],
           ),
-        if (widget.readingControl != null) widget.readingControl!,
-        Expanded(
-          child: Text(_footerNote(creation), style: JournalPalette.small),
-        ),
-        if (continues.isNotEmpty)
-          FilledButton.icon(
-            key: const ValueKey('creation-continue'),
-            onPressed: _dispatch(continues.first.key, revision, creation),
-            icon: const Icon(Icons.arrow_forward, size: 18),
-            label: Text(continues.first.label),
-          )
-        else if (creation.choices.isEmpty)
-          FilledButton.icon(
-            key: const ValueKey('creation-continue'),
-            onPressed: _dispatch(
-              'Enter',
-              revision,
-              creation,
-              acknowledge: true,
-            ),
-            icon: const Icon(Icons.arrow_forward, size: 18),
-            label: const Text('Continue'),
+        )
+      : JournalSurface(
+          key: const ValueKey('creation-footer'),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              if (widget.onHelp != null)
+                IconButton(
+                  tooltip: 'Field guide',
+                  onPressed: widget.onHelp,
+                  icon: const Icon(Icons.menu_book_outlined, size: 20),
+                ),
+              if (widget.readingControl != null) widget.readingControl!,
+              Expanded(
+                child: Text(_footerNote(creation), style: JournalPalette.small),
+              ),
+              if (continues.isNotEmpty)
+                FilledButton.icon(
+                  key: const ValueKey('creation-continue'),
+                  onPressed: _dispatch(continues.first.key, revision, creation),
+                  icon: const Icon(Icons.arrow_forward, size: 18),
+                  label: Text(continues.first.label),
+                )
+              else if (creation.choices.isEmpty)
+                FilledButton.icon(
+                  key: const ValueKey('creation-continue'),
+                  onPressed: _dispatch(
+                    'Enter',
+                    revision,
+                    creation,
+                    acknowledge: true,
+                  ),
+                  icon: const Icon(Icons.arrow_forward, size: 18),
+                  label: const Text('Continue'),
+                ),
+            ],
           ),
-      ],
-    ),
-  );
+        );
 
   String _footerNote(CreationContext creation) => switch (creation.stage) {
     CreationStage.setup => 'Click a setting to cycle its choices.',

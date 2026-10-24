@@ -334,6 +334,8 @@ Future<void> makeCharacter() async {
       baseColorKey: ColorKey.midGray,
     );
 
+    addOptionText(17, 28, "G", "Select portrait");
+
     addOptionText(
       19,
       2,
@@ -348,6 +350,7 @@ Future<void> makeCharacter() async {
       subtitle: 'Open a personnel file for the movement’s first member',
       portraitId: portraitId,
       portraitRerollKey: 'F',
+      portraitSelectKey: 'G',
       fields: [
         CreationField(
           key: 'A',
@@ -402,6 +405,8 @@ Future<void> makeCharacter() async {
         seed: portraitSeed,
         after: portraitId,
       );
+    } else if (c == Key.g) {
+      portraitId = await selectFounderPortrait(sex, portraitAge, portraitId);
     } else {
       break;
     }
@@ -646,5 +651,47 @@ Future<void> aNewConservativeEra() async {
     uniqueCreatures.president.juice = 1000;
     pool.add(uniqueCreatures.president);
     exec[Exec.president] = DeepAlignment.eliteLiberal;
+  }
+}
+
+/// A source-owned cosmetic reader. Browsing and cancellation never roll RNG.
+Future<int> selectFounderPortrait(Gender gender, int age, int selected) async {
+  final portraits = founderPortraitChoices(gender: gender, age: age);
+  const pageSize = 12;
+  var page = portraits.indexWhere((entry) => entry.id == selected) ~/ pageSize;
+  final pages = (portraits.length / pageSize).ceil();
+  while (true) {
+    erase();
+    mvaddstrc(2, 2, white, 'Select portrait - ${page + 1} / $pages');
+    final visible = portraits.skip(page * pageSize).take(pageSize).toList();
+    final choices = <String, int>{};
+    for (var i = 0; i < visible.length; i++) {
+      final key = String.fromCharCode(65 + i);
+      choices[key] = visible[i].id;
+      addOptionText(4 + i, 2, key, '$key - Portrait ${visible[i].id + 1}');
+    }
+    if (page > 0) addOptionText(18, 2, 'P', 'Previous portraits');
+    if (page + 1 < pages) addOptionText(18, 30, 'N', 'Next portraits');
+    addOptionText(20, 2, 'Escape', 'Back to identity');
+    console.creation = CreationContext(
+      stage: CreationStage.identity,
+      title: 'Select portrait',
+      subtitle: 'Choose a face · Page ${page + 1} of $pages',
+      portraitId: selected,
+      portraitChoices: choices,
+      choices: [
+        if (page > 0)
+          const CreationChoice(key: 'P', label: 'Previous portraits'),
+        if (page + 1 < pages)
+          const CreationChoice(key: 'N', label: 'Next portraits'),
+        const CreationChoice(key: 'Escape', label: 'Back to identity'),
+      ],
+    );
+    final key = await getKey();
+    final index = key - Key.a;
+    if (index >= 0 && index < visible.length) return visible[index].id;
+    if (key == Key.escape) return selected;
+    if (key == Key.p && page > 0) page--;
+    if (key == Key.n && page + 1 < pages) page++;
   }
 }

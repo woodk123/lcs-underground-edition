@@ -343,23 +343,7 @@ int chooseFounderPortrait({
   required int seed,
   int? after,
 }) {
-  final choices = portraitCatalog.where((entry) {
-    final human = age < 20
-        ? entry.background == PortraitBackground.teenager &&
-              (entry.visualAge - age).abs() <= 2 &&
-              (age >= 18 || entry.visualAge < 18)
-        : entry.ordinaryHuman ||
-              const {
-                PortraitBackground.punk,
-                PortraitBackground.goth,
-                PortraitBackground.emo,
-                PortraitBackground.biker,
-              }.contains(entry.background);
-    return human &&
-        (gender.simplified == Gender.nonbinary ||
-            entry.gender == gender.simplified) &&
-        (entry.visualAge - age).abs() <= _portraitAgeTolerance(age);
-  }).toList();
+  final choices = founderPortraitChoices(gender: gender, age: age);
   if (choices.isEmpty) throw StateError('No suitable founder portraits');
   final previous = choices.indexWhere((entry) => entry.id == after);
   return choices[previous < 0
@@ -367,6 +351,28 @@ int chooseFounderPortrait({
           : (previous + 1) % choices.length]
       .id;
 }
+
+/// The same compatible catalogue used by both reroll and explicit selection.
+List<PortraitEntry> founderPortraitChoices({
+  required Gender gender,
+  required int age,
+}) => portraitCatalog.where((entry) {
+  final human = age < 20
+      ? entry.background == PortraitBackground.teenager &&
+            (entry.visualAge - age).abs() <= 2 &&
+            (age >= 18 || entry.visualAge < 18)
+      : entry.ordinaryHuman ||
+            const {
+              PortraitBackground.punk,
+              PortraitBackground.goth,
+              PortraitBackground.emo,
+              PortraitBackground.biker,
+            }.contains(entry.background);
+  return human &&
+      (gender.simplified == Gender.nonbinary ||
+          entry.gender == gender.simplified) &&
+      (entry.visualAge - age).abs() <= _portraitAgeTolerance(age);
+}).toList();
 
 bool _canKeepSaved(Creature person) {
   if (!_validPortrait(person.portraitId)) return false;

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.6.1 — 2026-10-24
+
+* Select a founder portrait from a gallery as well as rerolling it, with keyboard shortcuts, page controls and Back to keep the current face.
+
 ## Underground Edition 0.6.0 — 2026-10-24
 
 * Reorder a squad directly from its roster, open bulk crew orders from People and bulk sleeper orders from Network, and change the movement slogan from Options. Bulk orders keep task and person choices visible together, with full mechanics in Details.

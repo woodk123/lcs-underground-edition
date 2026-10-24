@@ -188,7 +188,36 @@ async function rerollPortrait(prefix) {
   assert.equal(await text(), beforeText, 'Reroll must leave names and settings unchanged');
   assert.match(identity ?? '', /^founder-preview:\d+$/);
   report.checks.push({ name: `${prefix}-portrait-reroll`, status: 'passed', beforeIdentity, identity });
-  return { portrait: Number(identity.split(':')[1]), person: null };
+  await click(/^Select portrait$/);
+  await wait(/Choose a face/);
+  await capture(`${prefix}-portrait-gallery`);
+  const firstPage = await text();
+  if (await page.getByRole('button', { name: 'Next portraits', exact: true }).count()) {
+    await click(/^Next portraits$/);
+    await click(/^Previous portraits$/);
+    assert.equal(await text(), firstPage, 'Paging back retains the gallery');
+  }
+  await page.keyboard.press('Escape');
+  await wait(/Given name/);
+  assert.equal(await preview.getAttribute('flt-semantics-identifier'), identity,
+    'Cancelling selection keeps the current face');
+  await click(/^Select portrait$/); await wait(/Choose a face/);
+  const candidates = page.getByRole('button', { name: /^[A-L] .*Portrait \d+/ });
+  const labels = await candidates.allTextContents();
+  const selectedIndex = labels.findIndex(label => Number(label.match(/Portrait (\d+)/)[1]) - 1 !== Number(identity.split(':')[1]));
+  assert.ok(selectedIndex >= 0, `No alternative gallery portrait: ${labels}`);
+  const selected = Number(labels[selectedIndex].match(/Portrait (\d+)/)[1]) - 1;
+  if (prefix === 'large') {
+    await page.keyboard.press(String.fromCharCode(97 + selectedIndex));
+  } else {
+    await candidates.nth(selectedIndex).click();
+  }
+  await wait(/Given name/);
+  await paintedPortrait(preview, `founder-preview:${selected}`, `${prefix}-portrait-selected`);
+  assert.equal(await preview.getAttribute('flt-semantics-identifier'), `founder-preview:${selected}`);
+  assert.equal(await text(), beforeText, 'Selecting a face leaves names and settings unchanged');
+  report.checks.push({ name: `${prefix}-portrait-gallery`, status: 'passed', selected });
+  return { portrait: selected, person: null };
 }
 async function checkPortrait(identity, stage) {
   const visible = await page.locator('[flt-semantics-identifier^="crew-portrait:"]')

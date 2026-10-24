@@ -81,8 +81,11 @@ class CreationContext {
     this.founder,
     this.portraitId,
     this.portraitRerollKey,
+    this.portraitSelectKey,
+    Map<String, int> portraitChoices = const {},
     this.pendingBonuses,
-  }) : fields = List.unmodifiable(fields),
+  }) : portraitChoices = Map.unmodifiable(portraitChoices),
+       fields = List.unmodifiable(fields),
        choices = List.unmodifiable(choices),
        body = List.unmodifiable(body);
 
@@ -100,5 +103,7 @@ class CreationContext {
   /// Cosmetic identity preview; the founder has not joined the campaign yet.
   final int? portraitId;
   final String? portraitRerollKey;
+  final String? portraitSelectKey;
+  final Map<String, int> portraitChoices;
   final CreationBonuses? pendingBonuses;
 }

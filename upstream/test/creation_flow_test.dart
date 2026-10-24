@@ -80,8 +80,30 @@ void main() {
         final firstReroll = engine.console.creation!.portraitId;
         expect(firstReroll, isNot(originalPortrait));
         await send('F');
+        final secondReroll = engine.console.creation!.portraitId;
+        expect(secondReroll, isNot(firstReroll));
+        await send('G');
+        expect(engine.console.creation!.title, 'Select portrait');
+        final firstPage = engine.console.creation!.portraitChoices;
+        expect(firstPage, isNotEmpty);
+        if (engine.console.creation!.choices.any(
+          (choice) => choice.key == 'N',
+        )) {
+          await send('N');
+          expect(engine.console.creation!.portraitChoices, isNot(firstPage));
+          await send('P');
+          expect(engine.console.creation!.portraitChoices, firstPage);
+        }
+        await send('Escape');
+        expect(engine.console.creation!.portraitId, secondReroll);
+        expect(engine.console.creation!.portraitChoices, isEmpty);
+        final beforeSelect = engine.console.creation!.portraitId;
+        await send('G');
+        final selection = engine.console.creation!.portraitChoices.entries
+            .firstWhere((entry) => entry.value != beforeSelect);
+        await send(selection.key);
+        expect(engine.console.creation!.portraitId, selection.value);
         final chosenPortrait = engine.console.creation!.portraitId;
-        expect(chosenPortrait, isNot(firstReroll));
         expect(
           engine.console.creation!.fields.map((field) => field.value),
           originalFields,
