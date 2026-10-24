@@ -22,7 +22,10 @@ export async function createQaPage(browser, {
     page.on('console', message => {
       if (message.type() === 'error') report.consoleErrors.push({ ...errorContext(), error: message.text() });
     });
-    page.on('requestfailed', request => report.failedRequests.push({ ...errorContext(), url: request.url() }));
+    page.on('requestfailed', request => report.failedRequests.push({
+      ...errorContext(), url: request.url(), method: request.method(), resourceType: request.resourceType(),
+      errorText: request.failure()?.errorText ?? null, timing: request.timing(),
+    }));
     return { context, page };
   } catch (error) {
     await context.close().catch(() => {});

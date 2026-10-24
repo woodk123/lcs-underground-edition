@@ -11,6 +11,7 @@ import { assertQaUrl, chromiumLaunchOptions, observeMainScript, waitForSemantics
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
 const { chromium } = require('playwright');
+const { PNG } = require('pngjs');
 const args = process.argv.slice(2);
 const expectedHash = args[args.indexOf('--expected-hash') + 1];
 assert.ok(args.includes('--expected-hash'));
@@ -24,7 +25,8 @@ await mkdir(output, { recursive: true });
 await mkdir(profile, { recursive: true });
 const report = { status: 'running', started: new Date().toISOString(), expectedHash, url,
   scope: 'Real original new-game settings, identity, ten background questions, briefing, public-name entry and playable HQ. Normal and150%/1024x720 manual/fate journeys in an isolated profile.',
-  checks: [], screenshots: [], pageErrors: [], consoleErrors: [], failedRequests: [] };
+  checks: [], screenshots: [], pageErrors: [], consoleErrors: [], failedRequests: [],
+  portraitReadiness: [], portraitResponses: [] };
 let context, page, verifyLoadedScript;
 async function text() {
   return page.locator('flt-semantics-host').evaluate(host => [host.innerText,
@@ -63,13 +65,115 @@ async function capture(name) {
   report.checks.push({ name, status: 'passed', viewport: page.viewportSize() });
   console.log(`PASS ${name}`);
 }
+async function paintedPortrait(preview, identity, name) {
+  const started = Date.now(), deadline = started + 30000;
+  const evidence = { name, identity, status: 'waiting', timeoutMs: 30000,
+    tolerance: { meanRgb: 6, maxChannel: 24, mismatchFraction: .05, alignmentPixels: 1 }, samples: [] };
+  report.portraitReadiness.push(evidence);
+  let first, last;
+  const remaining = () => Math.max(1, deadline - Date.now());
+  try {
+    assert.match(identity ?? '', /^founder-preview:\d+$/);
+    const id = Number(identity.split(':')[1]);
+    const batch = id < 250 ? Math.floor(id / 16) : 16 + Math.floor((id - 250) / 16);
+    const cell = id < 250 ? id % 16 : (id - 250) % 16;
+    const assetUrl = new URL(`assets/assets/modern/portraits_v2/batch_${String(batch).padStart(2, '0')}.webp`, url).href;
+    Object.assign(evidence, { portraitId: id, batch, cell, assetUrl });
+    const box = await preview.boundingBox({ timeout: remaining() });
+    assert.ok(box?.width && box?.height, 'Founder preview must have visible bounds.');
+    first = last = await preview.screenshot({ timeout: remaining() });
+    evidence.firstCapture = `${name}-first.png`;
+    await writeFile(resolve(output, evidence.firstCapture), first);
+    const size = PNG.sync.read(first);
+    evidence.geometry = { width: size.width, height: size.height, cssWidth: box.width, cssHeight: box.height, padding: 2 };
+    // FounderPortraitPreview paints one 4x4 atlas cell inside two logical pixels
+    // of padding. Decode that exact cell independently; semantics can precede
+    // painting, and a FutureBuilder can temporarily retain an older atlas.
+    const reference = await page.evaluate(async ({ assetUrl, cell, width, height, paddingX, paddingY, timeoutMs }) => {
+      const controller = new AbortController();
+      let timer, status;
+      const decode = (async () => {
+        const response = await fetch(assetUrl, { signal: controller.signal });
+        status = response.status;
+        if (!response.ok) throw Error(`Portrait reference HTTP ${status}`);
+        const blob = await response.blob(), image = await createImageBitmap(blob);
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          const paint = canvas.getContext('2d');
+          paint.fillStyle = '#e1dfc4'; paint.fillRect(0, 0, width, height);
+          paint.imageSmoothingEnabled = true; paint.imageSmoothingQuality = 'medium';
+          paint.drawImage(image, cell % 4 * image.width / 4, Math.floor(cell / 4) * image.height / 4,
+            image.width / 4, image.height / 4, paddingX, paddingY, width - 2 * paddingX, height - 2 * paddingY);
+          return { status, bytes: blob.size, atlasWidth: image.width, atlasHeight: image.height, png: canvas.toDataURL('image/png').split(',')[1] };
+        } finally { image.close(); }
+      })();
+      try {
+        return await Promise.race([decode, new Promise((_, reject) => {
+          timer = setTimeout(() => { controller.abort(); reject(Error('Portrait reference decode timed out.')); }, timeoutMs);
+        })]);
+      } catch (error) { return { status, error: String(error) }; }
+      finally { clearTimeout(timer); }
+    }, { assetUrl, cell, width: size.width, height: size.height,
+      paddingX: 2 * size.width / box.width, paddingY: 2 * size.height / box.height, timeoutMs: remaining() });
+    const { png, ...referenceInfo } = reference;
+    evidence.reference = referenceInfo;
+    assert.ok(png, reference.error ?? 'Portrait reference must decode.');
+    const expectedBytes = Buffer.from(png, 'base64'), expected = PNG.sync.read(expectedBytes);
+    evidence.expectedCapture = `${name}-expected.png`;
+    await writeFile(resolve(output, evidence.expectedCapture), expectedBytes);
+    const inset = Math.ceil(4 * Math.max(size.width / box.width, size.height / box.height));
+    assert.ok(inset * 2 < size.width && inset * 2 < size.height, 'Portrait comparison needs a painted interior.');
+    while (true) {
+      assert.equal(await preview.getAttribute('flt-semantics-identifier', { timeout: remaining() }), identity, 'Portrait identity changed while awaiting its paint.');
+      const actual = PNG.sync.read(last);
+      assert.deepEqual([actual.width, actual.height], [expected.width, expected.height], 'Preview bounds changed during portrait decoding.');
+      let best = { meanRgb: Infinity, mismatchFraction: 1 };
+      // Ignore the border and permit one capture-alignment pixel. Canvas2D and
+      // Flutter's medium filter need not produce byte-identical resampling.
+      for (const dy of [-1, 0, 1]) for (const dx of [-1, 0, 1]) {
+        let distance = 0, mismatched = 0, pixels = 0;
+        for (let y = inset; y < actual.height - inset; y++) for (let x = inset; x < actual.width - inset; x++) {
+          const a = (y * actual.width + x) * 4, b = ((y + dy) * expected.width + x + dx) * 4;
+          const red = Math.abs(actual.data[a] - expected.data[b]);
+          const green = Math.abs(actual.data[a + 1] - expected.data[b + 1]);
+          const blue = Math.abs(actual.data[a + 2] - expected.data[b + 2]);
+          distance += red + green + blue;
+          if (Math.max(red, green, blue) > evidence.tolerance.maxChannel) mismatched++;
+          pixels++;
+        }
+        const meanRgb = distance / (pixels * 3), mismatchFraction = mismatched / pixels;
+        if (meanRgb < best.meanRgb) best = { meanRgb, mismatchFraction, dx, dy };
+      }
+      evidence.samples.push({ elapsedMs: Date.now() - started, ...best });
+      if (best.meanRgb <= evidence.tolerance.meanRgb && best.mismatchFraction <= evidence.tolerance.mismatchFraction) {
+        evidence.status = 'passed';
+        return last;
+      }
+      assert.ok(Date.now() < deadline, `Founder portrait ${id} did not paint its expected atlas cell within 30 seconds: ${JSON.stringify(best)}`);
+      last = await preview.screenshot({ timeout: remaining() });
+    }
+  } catch (error) {
+    evidence.status = 'failed'; evidence.error = String(error);
+    throw error;
+  } finally {
+    evidence.elapsedMs = Date.now() - started;
+    evidence.network = report.portraitResponses.filter(response => response.url === evidence.assetUrl);
+    if (last) {
+      evidence.lastCapture = `${name}-last.png`;
+      evidence.firstSha256 = createHash('sha256').update(first).digest('hex');
+      evidence.lastSha256 = createHash('sha256').update(last).digest('hex');
+      await writeFile(resolve(output, evidence.lastCapture), last);
+    }
+  }
+}
 async function rerollPortrait(prefix) {
   const preview = page.getByRole('img', { name: 'Founder portrait preview', exact: true });
   await preview.waitFor();
   await waitForUiSettled(page);
   const beforeText = await text();
   const beforeIdentity = await preview.getAttribute('flt-semantics-identifier');
-  const before = createHash('sha256').update(await preview.screenshot()).digest('hex');
+  const before = createHash('sha256').update(await paintedPortrait(preview, beforeIdentity, `${prefix}-portrait-before`)).digest('hex');
   await click(/^Reroll portrait$/);
   await page.mouse.move(2, 2);
   await page.waitForFunction(previous => {
@@ -77,12 +181,13 @@ async function rerollPortrait(prefix) {
     return preview && preview.getAttribute('flt-semantics-identifier') !== previous;
   }, beforeIdentity);
   await waitForUiSettled(page);
-  const after = createHash('sha256').update(await preview.screenshot()).digest('hex');
+  const identity = await preview.getAttribute('flt-semantics-identifier');
+  const after = createHash('sha256').update(await paintedPortrait(preview, identity, `${prefix}-portrait-after`)).digest('hex');
+  assert.notEqual(identity, beforeIdentity, 'Reroll must change the source portrait identity');
   assert.notEqual(after, before, 'Reroll must visibly change the portrait');
   assert.equal(await text(), beforeText, 'Reroll must leave names and settings unchanged');
-  const identity = await preview.getAttribute('flt-semantics-identifier');
   assert.match(identity ?? '', /^founder-preview:\d+$/);
-  report.checks.push({ name: `${prefix}-portrait-reroll`, status: 'passed', identity });
+  report.checks.push({ name: `${prefix}-portrait-reroll`, status: 'passed', beforeIdentity, identity });
   return { portrait: Number(identity.split(':')[1]), person: null };
 }
 async function checkPortrait(identity, stage) {
@@ -287,7 +392,19 @@ try {
   verifyLoadedScript = observeMainScript(page, report);
   page.on('pageerror', error => report.pageErrors.push(error.stack ?? error.message));
   page.on('console', message => {if(message.type()==='error') report.consoleErrors.push(message.text());});
-  page.on('requestfailed', request => report.failedRequests.push({url:request.url(),failure:request.failure()?.errorText}));
+  page.on('requestfailed', request => {
+    const failed = { url: request.url(), failure: request.failure()?.errorText };
+    report.failedRequests.push(failed);
+    if (/\/portraits_v2\/batch_\d+\.webp$/.test(new URL(request.url()).pathname)) {
+      report.portraitResponses.push({ ...failed, status: null, elapsedMs: Date.now() - Date.parse(report.started) });
+    }
+  });
+  page.on('response', response => {
+    if (/\/portraits_v2\/batch_\d+\.webp$/.test(new URL(response.url()).pathname)) {
+      report.portraitResponses.push({ url: response.url(), status: response.status(),
+        fromServiceWorker: response.fromServiceWorker(), elapsedMs: Date.now() - Date.parse(report.started) });
+    }
+  });
   await page.goto(url, {waitUntil:'domcontentloaded'}); await wait(/Start a New Game/);
   if(!args.includes('--large-only'))await founderFlow({fate:false,prefix:'manual',name:'Journal Founder Review'});
   await click(/^Start a New Game/); await wait(/Campaign dossier/);

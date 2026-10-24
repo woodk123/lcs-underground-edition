@@ -143,6 +143,7 @@ class DevelopmentBridge {
             if (action.entityId != null) 'entityId': action.entityId,
             if (action.entityCategory != null)
               'entityCategory': action.entityCategory,
+            if (action.entityLabel != null) 'entityLabel': action.entityLabel,
           },
       // The journal already offers Enter on authored reports, articles/maps,
       // and an empty-action reader. Capture that capability for this reader

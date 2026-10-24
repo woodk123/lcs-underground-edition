@@ -34,6 +34,7 @@ class ConsoleAction {
     this.entityType,
     this.entityId,
     this.entityCategory,
+    this.entityLabel,
   });
 
   final String key;
@@ -48,6 +49,9 @@ class ConsoleAction {
   final String? entityType;
   final String? entityId;
   final String? entityCategory;
+  // Human-readable entity description, independent of the painted action or
+  // intent label. Inspection metadata does not opt a choice into new UI.
+  final String? entityLabel;
 }
 
 /// Uses the same color escape rules as [Console.addstrx]. Literal ampersands
@@ -324,6 +328,7 @@ class Console {
         entityType: action.entityType,
         entityId: action.entityId,
         entityCategory: action.entityCategory,
+        entityLabel: action.entityLabel,
       );
     }
   }
@@ -333,6 +338,7 @@ class Console {
     required String type,
     required String id,
     String? category,
+    String? label,
   }) {
     final lookup = actions.any((action) => action.key == key)
         ? key
@@ -351,6 +357,7 @@ class Console {
         entityType: type,
         entityId: id,
         entityCategory: category,
+        entityLabel: label,
       );
     }
   }

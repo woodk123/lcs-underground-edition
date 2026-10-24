@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## Underground Edition 0.4.1 — 2026-10-24
+
+* Launch the browser player with Python 3.9 or later without file-loading errors, including game folders reached through directory junctions or paths with trailing separators. The launcher skips incompatible Python installations.
+* Stop the local browser server without closing an unrelated program if its recorded process ID has been reused.
+
 ## Underground Edition 0.4.0 — 2026-10-23
 
 * Meet 1,024 additional faces across adult professions and subcultures, children, teenagers, elderly people, mutants and dogs. Existing saved characters keep their portraits.

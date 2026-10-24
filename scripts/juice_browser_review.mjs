@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromiumLaunchOptions } from './browser_support.mjs';
+import { chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -48,6 +48,7 @@ assert.equal(report.mainJsSha256, expectedHash.toLowerCase());
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 const context = await browser.newContext({ viewport: { width: 1440, height: 1100 }, acceptDownloads: true });
 const page = await context.newPage();
+const verifyLoadedScript = observeMainScript(page, report);
 page.on('pageerror', error => report.pageErrors.push(String(error)));
 page.on('console', message => { if (message.type() === 'error') report.consoleErrors.push(message.text()); });
 page.on('requestfailed', request => report.failedRequests.push(request.url()));
@@ -116,8 +117,59 @@ async function closeHelp() {
   await page.getByRole('alertdialog').getByRole('button', { name: /^Close$/ }).click();
   await page.waitForTimeout(180);
 }
+async function helpTextGeometry(prefix, fullSize) {
+  return page.getByRole('alertdialog').evaluate((dialog, { prefix, fullSize }) => {
+    const bounds = node => {
+      const box = node.getBoundingClientRect();
+      return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
+    };
+    const describe = node => ({ tag: node.tagName, id: node.id, role: node.getAttribute('role'),
+      text: node.textContent?.trim(), ariaLabel: node.getAttribute('aria-label'), rect: bounds(node) });
+    const nodes = [...dialog.querySelectorAll('*')];
+    const matches = nodes.filter(node => [node.textContent?.trim(), node.getAttribute('aria-label')]
+      .some(text => text?.startsWith(prefix)));
+    // Flutter's semantic node describes the painted paragraph. Its stretched,
+    // single-line DOM span can have a different height from the painted text.
+    const target = matches.find(node => node.tagName === 'FLT-SEMANTICS' && bounds(node).height > 0);
+    const close = nodes.find(node => node.getAttribute('role') === 'button'
+      && [node.textContent?.trim(), node.getAttribute('aria-label')].includes('Close'));
+    const visibleClip = { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+    const clips = [], unsupportedClips = [];
+    for (let node = target?.parentElement; node; node = node.parentElement) {
+      const style = getComputedStyle(node), rect = bounds(node);
+      const clipX = /hidden|clip|auto|scroll/.test(style.overflowX);
+      const clipY = /hidden|clip|auto|scroll/.test(style.overflowY);
+      if (clipX || clipY) {
+        clips.push({ id: node.id, rect, overflowX: style.overflowX, overflowY: style.overflowY, scrollTop: node.scrollTop });
+        if (clipX) { visibleClip.left = Math.max(visibleClip.left, rect.left); visibleClip.right = Math.min(visibleClip.right, rect.right); }
+        if (clipY) { visibleClip.top = Math.max(visibleClip.top, rect.top); visibleClip.bottom = Math.min(visibleClip.bottom, rect.bottom); }
+      }
+      if (style.clip !== 'auto' || style.clipPath !== 'none') unsupportedClips.push({ id: node.id, clip: style.clip, clipPath: style.clipPath });
+    }
+    const surface = dialog.getRootNode();
+    const hit = (node, x, y) => {
+      const top = (surface.elementsFromPoint?.(x, y) ?? document.elementsFromPoint(x, y))[0];
+      return { x, y, ownsTarget: Boolean(top && (top === node || node.contains(top))), top: top ? describe(top) : null };
+    };
+    const closeRect = close ? bounds(close) : null;
+    const closeHit = closeRect ? hit(close, closeRect.left + closeRect.width / 2, closeRect.top + closeRect.height / 2) : null;
+    const closeVisible = Boolean(closeRect && closeRect.width > 0 && closeRect.height > 0 && closeRect.left >= 0
+      && closeRect.top >= 0 && closeRect.right <= innerWidth && closeRect.bottom <= innerHeight && closeHit.ownsTarget);
+    if (closeRect) visibleClip.bottom = Math.min(visibleClip.bottom, closeRect.top);
+    const rect = target ? bounds(target) : null;
+    const hits = rect ? [[rect.left + 2, rect.top + 2], [rect.left + rect.width / 2, rect.top + rect.height / 2], [rect.right - 2, rect.bottom - 2]]
+      .map(([x, y]) => hit(target, x, y)) : [];
+    const fullyVisible = Boolean(rect && rect.width > 0 && rect.height > 0 && !unsupportedClips.length && closeVisible
+      && (!fullSize || (rect.width >= fullSize.width - .5 && rect.height >= fullSize.height - .5))
+      && rect.left >= visibleClip.left - .5 && rect.top >= visibleClip.top - .5
+      && rect.right <= visibleClip.right + .5 && rect.bottom <= visibleClip.bottom + .5 && hits.every(point => point.ownsTarget));
+    return { prefix, fullSize, viewport: { width: innerWidth, height: innerHeight }, dialog: bounds(dialog),
+      candidates: matches.map(describe), target: target ? describe(target) : null,
+      clips, unsupportedClips, visibleClip, hits, close: close ? describe(close) : null, closeHit, closeVisible, fullyVisible };
+  }, { prefix, fullSize });
+}
 try {
-  await page.goto(url, { waitUntil: 'networkidle' }); await wait(/Start a New Game/);
+  await page.goto(url, { waitUntil: 'domcontentloaded' }); await wait(/Start a New Game/);
   const choosing = page.waitForEvent('filechooser'); await click(/^Import a Save/);
   await (await choosing).setFiles(fixturePath); await wait(/Save imported/);
   await page.keyboard.press('Enter'); await wait(/Start a New Game/);
@@ -160,31 +212,31 @@ try {
   await click(/^Reading size$/); await page.getByRole('menuitem', { name: '150%', exact: true }).click();
   await click(/^Inspect Artie Activist(?:\s|$)/); await wait(/Full dossier/);
   await openHelp(); await wait(/40 more Juice/); await capture('07-1024x720-at150-help');
-  async function earningBounds() {
-    return page.getByRole('alertdialog').evaluate(root => {
-      const match = [...root.querySelectorAll('*')].find(node =>
-        (node.textContent?.trim() === 'Earning Juice' || node.getAttribute('aria-label') === 'Earning Juice')
-        && node.getBoundingClientRect().height > 0);
-      const rect = match?.getBoundingClientRect();
-      return rect ? { y: rect.y, height: rect.height } : null;
-    });
-  }
+  // Preserve the full offscreen text size before scrolling: Flutter can trim a
+  // partially clipped semantic rectangle while retaining its complete label.
+  const initialEarning = await helpTextGeometry('Earning Juice');
+  const initialCaps = await helpTextGeometry('Successful actions can award Juice');
+  report.enlargedHelpGeometry = { initialEarning, initialCaps, earning: [] };
+  await writeFile(resolve(output, 'enlarged-help-geometry.json'), JSON.stringify(report.enlargedHelpGeometry, null, 2));
+  assert.ok(initialEarning.target?.rect && initialCaps.target?.rect, 'Help must expose its complete earning and cap paragraphs.');
+  let earning;
   for (let step = 0; step < 12; step++) {
-    const box = await earningBounds();
-    if (box && box.y >= 90 && box.y + box.height < 510) break;
+    earning = await helpTextGeometry('Earning Juice', initialEarning.target.rect);
+    report.enlargedHelpGeometry.earning.push(earning);
+    if (earning.fullyVisible) break;
     await page.mouse.move(400, 330); await page.mouse.wheel(0, 250); await page.waitForTimeout(120);
   }
-  const earningBox = await earningBounds();
-  assert.ok(earningBox && earningBox.y >= 90 && earningBox.y + earningBox.height < 510, 'Earning guidance must scroll into the visible enlarged help viewport.');
+  earning = await helpTextGeometry('Earning Juice', initialEarning.target.rect);
+  report.enlargedHelpGeometry.earning.push(earning);
+  await writeFile(resolve(output, 'enlarged-help-geometry.json'), JSON.stringify(report.enlargedHelpGeometry, null, 2));
+  assert.ok(earning.fullyVisible, 'Earning guidance must scroll fully inside the actual unclipped help viewport with Close visible.');
   await capture('08-1024x720-at150-earning');
   await page.mouse.move(400, 330); await page.mouse.wheel(0, 650); await page.waitForTimeout(200);
-  const capBounds = await page.getByRole('alertdialog').evaluate(root => {
-    const match = [...root.querySelectorAll('*')].find(node =>
-      node.textContent?.trim().startsWith('Successful actions can award Juice') && node.children.length === 0);
-    const rect = match?.getBoundingClientRect();
-    return rect ? { y: rect.y, height: rect.height } : null;
-  });
-  assert.ok(capBounds && capBounds.y >= 85 && capBounds.y + capBounds.height < 510, 'Activity cap paragraph must be readable inside the enlarged help viewport.');
+  const caps = report.enlargedHelpGeometry.caps = await helpTextGeometry('Successful actions can award Juice', initialCaps.target.rect);
+  await writeFile(resolve(output, 'enlarged-help-geometry.json'), JSON.stringify(report.enlargedHelpGeometry, null, 2));
+  await writeFile(resolve(output, 'enlarged-help-semantics.html'), await page.getByRole('alertdialog').innerHTML());
+  assert.ok(caps.fullyVisible, 'The complete activity cap paragraph must fit the actual unclipped help viewport with Close visible.');
+  assert.match(caps.target.text || caps.target.ariaLabel, /Community Service.*10.*Disobedience.*50.*Hacking.*200.*Outcomes and risks vary\./);
   await capture('09-1024x720-at150-caps');
   await closeHelp(); await wait(/Juice 160/);
   report.checks.push('1024x720 at 150 percent help reads, scrolls and dismisses without losing underlying game');
@@ -194,6 +246,7 @@ try {
   assert.deepEqual(after, before, 'Entire exported campaign must remain identical.');
   report.campaignSha256 = hash(JSON.stringify(before));
   report.checks.push('Entire campaign exports match before and after all Juice browsing');
+  await verifyLoadedScript(expectedHash.toLowerCase());
   assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.consoleErrors, []); assert.deepEqual(report.failedRequests, []);
   report.checks.push('Exact-build Edge run has no page, console or network failures');
   report.status = 'passed';

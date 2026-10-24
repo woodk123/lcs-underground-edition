@@ -8,6 +8,7 @@ import platform
 import shutil
 import subprocess
 
+from analysis_targets import focused_targets
 from package_release import verify_source_checkout
 from release_common import file_hashes, runtime_hashes, write_json
 
@@ -15,6 +16,7 @@ from release_common import file_hashes, runtime_hashes, write_json
 def build(root: Path, channel: str = 'Development') -> None:
     if platform.system() != 'Linux' or platform.machine() != 'x86_64':
         raise ValueError('Run this builder on Linux x64.')
+    analysis = focused_targets(root)
     commit = (subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
               if (root / '.git').exists() else
               json.loads((root / 'BUILD_INFO.json').read_text())['source_commit'])
@@ -22,6 +24,11 @@ def build(root: Path, channel: str = 'Development') -> None:
     pin = json.loads((root / 'scripts/toolchain.json').read_text())
     flutter = str(root / '.tools/flutter/bin/flutter')
     dart = str(root / '.tools/flutter/bin/dart')
+    # Bootstrap output can precede --machine JSON on the first SDK invocation.
+    try:
+        subprocess.check_output([flutter, '--suppress-analytics', '--version'], text=True)
+    except subprocess.CalledProcessError as error:
+        raise ValueError(f'Flutter SDK bootstrap failed ({error.returncode}). {(error.output or "").strip()}') from error
     version = json.loads(subprocess.check_output([flutter, '--version', '--machine'], text=True))
     if (version['frameworkVersion'] != pin['flutter_version']
             or version['frameworkRevision'] != pin['flutter_revision']):
@@ -35,9 +42,7 @@ def build(root: Path, channel: str = 'Development') -> None:
         ('dependencies', [flutter, 'pub', 'get']),
         ('serialization', [dart, 'run', 'build_runner', 'build']),
         ('tests', [flutter, 'test', '--no-pub']),
-        ('focused-analysis', [flutter, 'analyze', '--no-pub', 'lib/modern', 'lib/main.dart',
-                              'lib/engine/console.dart', 'lib/engine/console_widget.dart',
-                              'lib/engine/console_char.dart', 'lib/engine/console_graphic.dart']),
+        ('focused-analysis', [flutter, 'analyze', '--no-pub', *analysis]),
         ('full-analysis', [flutter, 'analyze', '--no-pub', '--no-fatal-infos', '--no-fatal-warnings']),
         ('linux-release', [flutter, 'build', 'linux', '--release', '--no-pub',
                            f'--dart-define=LCS_BUILD={commit[:8]}',

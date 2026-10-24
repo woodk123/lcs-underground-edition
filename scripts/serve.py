@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import os
+import sys
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -15,6 +16,14 @@ class GameServer(ThreadingHTTPServer):
     # A fresh Flutter page requests many assets at once. Queue a bounded burst
     # while the accept loop is busy starting request threads.
     request_queue_size = 128
+
+    def handle_error(self, request, client_address):
+        # Closing a browser profile or leaving a page can cancel an asset
+        # response. Keep those ordinary disconnects out of failure evidence,
+        # while preserving tracebacks for unexpected handler/file errors.
+        if isinstance(sys.exc_info()[1], (BrokenPipeError, ConnectionResetError, ConnectionAbortedError)):
+            return
+        super().handle_error(request, client_address)
 
 
 class GameHandler(SimpleHTTPRequestHandler):
@@ -47,7 +56,10 @@ class GameHandler(SimpleHTTPRequestHandler):
             return super().send_head()
         try:
             info = os.fstat(source.fileno())
-            etag = '"' + hashlib.file_digest(source, "sha256").hexdigest() + '"'
+            checksum = hashlib.sha256()
+            for block in iter(lambda: source.read(1024 * 1024), b""):
+                checksum.update(block)
+            etag = '"' + checksum.hexdigest() + '"'
             source.seek(0)
             matches = [value.strip().removeprefix("W/") for value in
                        self.headers.get("If-None-Match", "").split(",")]

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { EventEmitter } from 'node:events';
-import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import test from 'node:test';
@@ -14,6 +14,21 @@ async function fixture(t) {
   await writeFile(resolve(root, 'web/index.html'), '<html>Test build</html>');
   await writeFile(resolve(root, 'web/main.dart.js'), 'test compiled bytes');
   return root;
+}
+
+async function preparedFixture(root, path = '.local/dev-mcp/web') {
+  const directory = resolve(root, path);
+  await mkdir(directory, { recursive: true });
+  const payload = { 'index.html': '<html>Prepared build</html>', 'main.dart.js': 'test compiled bytes', 'sw.js': 'test manifest' };
+  for (const [name, bytes] of Object.entries(payload)) await writeFile(resolve(directory, name), bytes);
+  const source = { commit: 'a'.repeat(40), inputs_sha256: 'b'.repeat(64) };
+  const prepared = { schema: 1, status: 'ready', devtools: true, source,
+    build_id: 'aaaaaaaa-bbbbbbbb', web_root: await realpath(directory),
+    main_js_sha256: createHash('sha256').update(payload['main.dart.js']).digest('hex'),
+    payload_hashes: Object.fromEntries(Object.entries(payload).map(([name, bytes]) => [name, createHash('sha256').update(bytes).digest('hex')])) };
+  const manifest = resolve(directory, '../build.json');
+  await writeFile(manifest, JSON.stringify(prepared));
+  return { prepared, manifest, validation: { ...prepared, checked_source: { ...source, commit: 'c'.repeat(40) } } };
 }
 
 function fakeBrowser({ frames, download } = {}) {
@@ -40,6 +55,21 @@ function fakeBrowser({ frames, download } = {}) {
   const context = { newPage: async () => page, close: async () => { context.closed = true; } };
   const browser = { newContext: async options => { browser.options = options; return context; }, close: async () => { browser.closed = true; } };
   return { browser, context, observation, invalidate: () => current++ };
+}
+
+function deferred() {
+  let resolve, reject;
+  const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+}
+
+async function within(promise, message) {
+  let timer;
+  try {
+    return await Promise.race([promise, new Promise((_, reject) => {
+      timer = setTimeout(() => reject(Error(message)), 5000);
+    })]);
+  } finally { clearTimeout(timer); }
 }
 
 test('owned static server serves exact bytes and rejects writes, directories and escaping symlinks', async t => {
@@ -73,6 +103,9 @@ test('session identifies actual loaded build, preserves inspection, serializes m
   const session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
   t.session = session;
   const started = await session.start({ webRoot: 'web', output: 'reports/session' });
+  assert.equal(started.sourceFreshness, 'not_checked_custom_build');
+  assert.equal(started.compiledSource, null);
+  assert.equal(started.checkedSource, null);
   assert.equal(started.mainJsSha256, createHash('sha256').update('test compiled bytes').digest('hex'));
   assert.equal(fake.browser.options.serviceWorkers, 'block');
   const before = await session.inspect({ scope: 'campaign' });
@@ -128,6 +161,270 @@ test('download failure is reported after accepted action without a retry', async
   assert.match((await session.observe()).downloadErrors[0].message, /cancelled/);
   await session.close();
   assert.equal(JSON.parse(await readFile(resolve(root, 'reports/download-failure/session.json'))).hasErrors, true);
+});
+
+test('host disconnect closes owned handles before draining a stalled native download', async t => {
+  const root = await fixture(t), fake = fakeBrowser();
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  const started = await session.start({ webRoot: 'web', output: 'reports/interrupted-download' });
+  let rejectDownload, downloadStarted;
+  const pending = new Promise((_, reject) => { rejectDownload = reject; });
+  const retaining = new Promise(resolve => { downloadStarted = resolve; });
+  const contextClose = fake.context.close;
+  fake.context.close = async () => {
+    rejectDownload(Error('Download interrupted by disposable context close.'));
+    await contextClose();
+  };
+  session.page.emit('download', {
+    suggestedFilename: () => 'unfinished.json',
+    saveAs: () => { downloadStarted(); return pending; },
+  });
+  await retaining;
+  const closing = session.shutdown();
+  let timer;
+  try {
+    const result = await Promise.race([closing, new Promise((_, reject) => {
+      timer = setTimeout(() => reject(Error('Disconnect waited for a stalled download before closing its context.')), 1000);
+    })]);
+    assert.ok(fake.context.closed && fake.browser.closed);
+    assert.equal(session.server, undefined);
+    assert.equal(result.status, 'disconnected');
+    assert.match(result.downloadErrors[0].message, /interrupted/);
+    const report = JSON.parse(await readFile(resolve(started.evidenceDirectory, 'session.json')));
+    assert.equal(report.status, 'disconnected');
+    assert.equal(report.hasErrors, true);
+    assert.equal(report.downloadErrors.length, 1);
+  } finally {
+    clearTimeout(timer);
+    // The guard also lets the regression release its fixture on the old code.
+    rejectDownload(Error('Test cleanup.'));
+    await closing;
+  }
+});
+
+test('disconnect escalates an active graceful close without disposing delayed handles twice', async t => {
+  const root = await fixture(t), fake = fakeBrowser();
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  const started = await session.start({ webRoot: 'web', output: 'reports/escalated-close' });
+  const download = deferred(), retaining = deferred(), contextClosing = deferred(), contextClosed = deferred();
+  let contexts = 0, browsers = 0, servers = 0;
+  const closeContext = fake.context.close, closeBrowser = fake.browser.close, closeServer = session.server.close;
+  fake.context.close = async () => {
+    contexts++;
+    download.reject(Error('Export interrupted by disconnect.'));
+    contextClosing.resolve();
+    await contextClosed.promise;
+    await closeContext();
+  };
+  fake.browser.close = async () => { browsers++; await closeBrowser(); };
+  session.server.close = async () => { servers++; await closeServer(); };
+  session.page.emit('download', {
+    suggestedFilename: () => 'unfinished.json',
+    saveAs: () => { retaining.resolve(); return download.promise; },
+  });
+  await retaining.promise;
+  const graceful = session.close();
+  await new Promise(resolve => setImmediate(resolve));
+  const disconnected = session.shutdown();
+  try {
+    await within(contextClosing.promise, 'Disconnect did not interrupt graceful export retention.');
+    assert.equal(contexts, 1);
+    assert.equal(browsers, 0, 'Wait for the owned context to finish closing.');
+    contextClosed.resolve();
+    const results = await within(Promise.all([graceful, disconnected]), 'Overlapping close calls did not settle.');
+    assert.deepEqual(results.map(result => result.status), ['disconnected', 'disconnected']);
+    assert.ok(results.every(result => result.cleanupErrors.length === 0));
+    assert.deepEqual([contexts, browsers, servers], [1, 1, 1]);
+    const report = JSON.parse(await readFile(resolve(started.evidenceDirectory, 'session.json')));
+    assert.equal(report.status, 'disconnected');
+    assert.equal(report.hasErrors, true);
+    assert.equal(report.downloadErrors.length, 1);
+    assert.deepEqual(report.cleanupErrors, []);
+  } finally {
+    download.reject(Error('Test cleanup.')); contextClosed.resolve();
+    await Promise.allSettled([graceful, disconnected]);
+  }
+});
+
+test('disconnect interrupts an accepted export with queued lcs_close and one resource owner', async t => {
+  const root = await fixture(t), download = deferred(), retaining = deferred();
+  const fake = fakeBrowser({ download: {
+    suggestedFilename: () => 'accepted-export.json',
+    saveAs: () => { retaining.resolve(); return download.promise; },
+  } });
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  const started = await session.start({ webRoot: 'web', output: 'reports/queued-export-close' });
+  const contextClosing = deferred(), contextClosed = deferred(), queuedClosing = deferred();
+  let contexts = 0, browsers = 0, servers = 0;
+  const closeContext = fake.context.close, closeBrowser = fake.browser.close, closeServer = session.server.close;
+  fake.context.close = async () => {
+    contexts++;
+    download.reject(Error('Accepted export cancelled when host disconnected.'));
+    contextClosing.resolve();
+    await contextClosed.promise;
+    await closeContext();
+  };
+  fake.browser.close = async () => { browsers++; await closeBrowser(); };
+  session.server.close = async () => { servers++; await closeServer(); };
+  const close = session._close.bind(session);
+  session._close = status => {
+    if (status === undefined) queuedClosing.resolve();
+    return close(status);
+  };
+  const command = session.command('act', { revision: 0, actionId: '0:0', expectDownload: true })
+    .then(result => ({ result }), error => ({ error }));
+  await retaining.promise;
+  const graceful = session.close(), disconnected = session.shutdown();
+  try {
+    await within(contextClosing.promise, 'Shutdown waited behind the accepted export.');
+    const outcome = await within(command, 'Interrupted source action did not retain its failure evidence.');
+    assert.equal(outcome.error.code, 'download_failed');
+    assert.equal(outcome.error.accepted, true);
+    await within(queuedClosing.promise, 'Queued lcs_close did not join disconnect cleanup.');
+    assert.equal(contexts, 1);
+    contextClosed.resolve();
+    const results = await within(Promise.all([graceful, disconnected]), 'Queued close/disconnect did not settle.');
+    assert.ok(results.every(result => result.status === 'disconnected' && result.cleanupErrors.length === 0));
+    assert.deepEqual([contexts, browsers, servers], [1, 1, 1]);
+    assert.equal(fake.observation().revision, 1, 'The accepted source action was never retried.');
+    const report = JSON.parse(await readFile(resolve(started.evidenceDirectory, 'session.json')));
+    assert.equal(report.status, 'disconnected');
+    assert.equal(report.hasErrors, true);
+    assert.equal(report.failures.length, 1);
+    assert.equal(report.downloadErrors.length, 1);
+    assert.deepEqual(report.cleanupErrors, []);
+    await assert.rejects(session.start({ webRoot: 'web', output: 'reports/disconnected-restart' }), /MCP client disconnected/);
+  } finally {
+    download.reject(Error('Test cleanup.')); contextClosed.resolve();
+    await Promise.allSettled([command, graceful, disconnected]);
+  }
+});
+
+test('disconnect during final report persistence retains the escalated status', async t => {
+  const root = await fixture(t), fake = fakeBrowser();
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  const started = await session.start({ webRoot: 'web', output: 'reports/final-report-disconnect' });
+  const writing = deferred(), written = deferred();
+  const report = session._report.bind(session);
+  let delay = true;
+  session._report = async () => {
+    if (session.report.closed && delay) {
+      delay = false; writing.resolve(); await written.promise;
+    }
+    await report();
+  };
+  const graceful = session.close();
+  let disconnected;
+  try {
+    await within(writing.promise, 'Graceful close did not reach report persistence.');
+    disconnected = session.shutdown();
+    written.resolve();
+    const results = await Promise.all([graceful, disconnected]);
+    assert.ok(results.every(result => result.status === 'disconnected'));
+    const retained = JSON.parse(await readFile(resolve(started.evidenceDirectory, 'session.json')));
+    assert.equal(retained.status, 'disconnected');
+    assert.deepEqual(retained.cleanupErrors, []);
+  } finally {
+    written.resolve();
+    await Promise.allSettled([graceful, disconnected]);
+  }
+});
+
+test('graceful close permits a fresh session with independent handles and evidence', async t => {
+  const root = await fixture(t), first = fakeBrowser(), second = fakeBrowser();
+  let launches = 0;
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => (++launches === 1 ? first : second).browser });
+  const initial = await session.start({ webRoot: 'web', output: 'reports/first-session' });
+  assert.equal((await session.close()).status, 'closed');
+  assert.ok(first.context.closed && first.browser.closed);
+  const next = await session.start({ webRoot: 'web', output: 'reports/second-session' });
+  const command = await session.command('act', { revision: 0, actionId: '0:0' });
+  assert.equal(command.observation.revision, 1);
+  assert.equal((await session.close()).status, 'closed');
+  assert.ok(second.context.closed && second.browser.closed);
+  assert.equal(session.server, undefined);
+  assert.equal(launches, 2);
+  for (const output of [initial.evidenceDirectory, next.evidenceDirectory]) {
+    const report = JSON.parse(await readFile(resolve(output, 'session.json')));
+    assert.equal(report.status, 'closed');
+    assert.equal(report.hasErrors, false);
+    assert.deepEqual(report.cleanupErrors, []);
+  }
+  const firstTrace = await readFile(resolve(initial.evidenceDirectory, 'trace.jsonl'), 'utf8');
+  const secondTrace = await readFile(resolve(next.evidenceDirectory, 'trace.jsonl'), 'utf8');
+  assert.equal(firstTrace.includes('"operation":"act"'), false);
+  assert.equal(secondTrace.includes('"operation":"act"'), true);
+});
+
+test('a browser finishing launch after shutdown is closed without attaching late handles', async t => {
+  const root = await fixture(t), fake = fakeBrowser(), launched = deferred(), launch = deferred();
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: () => { launched.resolve(); return launch.promise; } });
+  const starting = session.start({ webRoot: 'web', output: 'reports/disconnected-launch' })
+    .then(result => ({ result }), error => ({ error }));
+  await launched.promise;
+  try {
+    const closed = await within(session.shutdown(), 'Shutdown waited on the unresolved browser launch.');
+    assert.equal(closed.status, 'disconnected');
+    launch.resolve(fake.browser);
+    const outcome = await within(starting, 'Late browser launch did not settle after disconnect.');
+    assert.match(outcome.error.message, /MCP client disconnected/);
+    assert.ok(fake.browser.closed);
+    assert.equal(fake.browser.options, undefined, 'No context is opened after disconnect.');
+    assert.equal(session.context, undefined);
+    assert.equal(session.browser, undefined);
+    assert.equal(session.server, undefined);
+    const report = JSON.parse(await readFile(resolve(root, 'reports/disconnected-launch/session.json')));
+    assert.equal(report.status, 'disconnected');
+    assert.equal(report.hasErrors, true);
+    assert.equal(report.failures.length, 1);
+  } finally {
+    launch.resolve(fake.browser);
+    await starting;
+  }
+});
+
+test('disconnect during source validation cannot create a later active session', async t => {
+  const root = await fixture(t), validating = deferred(), validated = deferred();
+  const web = resolve(root, '.local/dev-mcp/web');
+  await mkdir(web, { recursive: true });
+  await writeFile(resolve(web, 'index.html'), 'prepared build');
+  await writeFile(resolve(web, 'main.dart.js'), 'test compiled bytes');
+  let launches = 0;
+  const session = t.session = new DevelopmentSession({ root,
+    validatePrepared: async () => { validating.resolve(); await validated.promise; return {}; },
+    launchBrowser: async () => { launches++; throw Error('Should not launch after disconnect.'); },
+  });
+  const starting = session.start({ output: 'reports/disconnected-validation' })
+    .then(result => ({ result }), error => ({ error }));
+  await validating.promise;
+  try {
+    assert.equal((await session.shutdown()).status, 'disconnected');
+    validated.resolve();
+    const outcome = await within(starting, 'Source validation continued after disconnect.');
+    assert.match(outcome.error.message, /MCP client disconnected/);
+    assert.equal(launches, 0);
+    assert.equal(session.report, undefined);
+    assert.equal(session.server, undefined);
+  } finally { validated.resolve(); await starting; }
+});
+
+test('a pending initial observation cannot overwrite a completed disconnect report', async t => {
+  const root = await fixture(t), fake = fakeBrowser(), waiting = deferred(), observed = deferred();
+  const session = t.session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
+  session._wait = async () => { waiting.resolve(); await observed.promise; return fake.observation(); };
+  const starting = session.start({ webRoot: 'web', output: 'reports/disconnected-initial-reader' })
+    .then(result => ({ result }), error => ({ error }));
+  await waiting.promise;
+  try {
+    assert.equal((await session.shutdown()).status, 'disconnected');
+    observed.resolve();
+    const outcome = await within(starting, 'Initial observation did not stop after disconnect.');
+    assert.match(outcome.error.message, /MCP client disconnected/);
+    const report = JSON.parse(await readFile(resolve(root, 'reports/disconnected-initial-reader/session.json')));
+    assert.equal(report.status, 'disconnected');
+    assert.equal(report.hasErrors, true);
+    assert.equal(report.failures.length, 1);
+  } finally { observed.resolve(); await starting; }
 });
 
 const ack = current => ({ actions: [{ id: `${current}:0`, kind: 'acknowledgement', enabled: true, label: 'Continue' }], report: `Report ${current}` });
@@ -224,6 +521,95 @@ test('cached default build must pass current-source validation before browser la
   });
   await assert.rejects(session.start({}), /Source changed/);
   assert.equal(checks, 1); assert.equal(launches, 0);
+});
+
+test('input-equivalent checkout retains original compiled identity and separate checked source in all session evidence', async t => {
+  const root = await fixture(t), { prepared, manifest, validation } = await preparedFixture(root);
+  const originalManifest = await readFile(manifest);
+  const fake = fakeBrowser({ frames: [{ build: { source: prepared.build_id } }] });
+  const session = t.session = new DevelopmentSession({ root, validatePrepared: async () => validation, launchBrowser: async () => fake.browser });
+  const started = await session.start({ output: 'reports/equivalent-inputs' });
+  assert.equal(started.sourceFreshness, 'verified_current_inputs');
+  assert.deepEqual(started.compiledSource, prepared.source);
+  assert.deepEqual(started.checkedSource, validation.checked_source);
+  assert.equal(started.observation.build.source, prepared.build_id);
+  await session.close();
+  const report = JSON.parse(await readFile(resolve(started.evidenceDirectory, 'session.json')));
+  assert.equal(report.sourceFreshness, 'verified_current_inputs');
+  assert.deepEqual(report.preparedBuild, prepared);
+  assert.deepEqual(report.compiledSource, prepared.source);
+  assert.deepEqual(report.checkedSource, validation.checked_source);
+  assert.equal(report.build.source, prepared.build_id);
+  const trace = (await readFile(resolve(started.evidenceDirectory, 'trace.jsonl'), 'utf8')).trim().split('\n').map(JSON.parse);
+  const event = trace.find(item => item.operation === 'session_start');
+  assert.deepEqual(event.compiledSource, prepared.source);
+  assert.deepEqual(event.checkedSource, validation.checked_source);
+  assert.deepEqual(await readFile(manifest), originalManifest);
+});
+
+test('explicit historical custom build keeps its identity without claiming checked-current inputs', async t => {
+  const root = await fixture(t), { prepared, manifest } = await preparedFixture(root, 'web');
+  const before = await readFile(manifest);
+  const fake = fakeBrowser({ frames: [{ build: { source: prepared.build_id } }] });
+  const session = t.session = new DevelopmentSession({ root,
+    validatePrepared: async () => { throw Error('Custom historical build must not be checked against current source.'); },
+    launchBrowser: async () => fake.browser });
+  const started = await session.start({ webRoot: 'web', output: 'reports/historical' });
+  assert.equal(started.sourceFreshness, 'not_checked_custom_build');
+  assert.deepEqual(started.compiledSource, prepared.source);
+  assert.equal(started.checkedSource, null);
+  assert.equal(started.observation.build.source, prepared.build_id);
+  assert.deepEqual(await readFile(manifest), before);
+});
+
+test('invalid default source validation cannot become an unchecked historical session', async t => {
+  const variants = [
+    ['missing response', () => null],
+    ['missing current identity', value => ({ ...value, checked_source: undefined })],
+    ['malformed original identity', value => ({ ...value, source: { ...value.source, commit: 'bad' } })],
+    ['malformed current identity', value => ({ ...value, checked_source: {} })],
+    ['different full inputs', value => ({ ...value, checked_source: { ...value.checked_source, inputs_sha256: 'b'.repeat(8) + 'd'.repeat(56) } })],
+    ['different original build ID', value => ({ ...value, build_id: 'cccccccc-bbbbbbbb' })],
+    ['changed JavaScript', value => ({ ...value, main_js_sha256: '0'.repeat(64) })],
+    ['different directory', value => ({ ...value, web_root: resolve(value.web_root, '../elsewhere') })],
+  ];
+  for (const [name, change] of variants) await t.test(name, async t => {
+    const root = await fixture(t), { validation } = await preparedFixture(root);
+    let launches = 0;
+    const session = t.session = new DevelopmentSession({ root, validatePrepared: async () => change(validation),
+      launchBrowser: async () => { launches++; throw Error('Invalid validation must not launch a browser.'); } });
+    await assert.rejects(session.start({}), /Invalid prepared|inputs do not match|identity is inconsistent|changed during validation/);
+    assert.equal(launches, 0);
+  });
+});
+
+test('prepared metadata changed or removed after validation is rejected before browser startup', async t => {
+  for (const removed of [false, true]) await t.test(removed ? 'removed' : 'changed', async t => {
+    const root = await fixture(t), { prepared, manifest, validation } = await preparedFixture(root);
+    let launches = 0;
+    const session = t.session = new DevelopmentSession({ root, validatePrepared: async () => {
+      if (removed) await rm(manifest);
+      else await writeFile(manifest, JSON.stringify({ ...prepared, source: { ...prepared.source, commit: 'd'.repeat(40) } }));
+      return validation;
+    }, launchBrowser: async () => { launches++; throw Error('Changed metadata must not launch a browser.'); } });
+    await assert.rejects(session.start({ output: 'reports/changed-metadata' }), /metadata changed|metadata disappeared/);
+    assert.equal(launches, 0);
+  });
+});
+
+test('observed bridge build ID must match prepared metadata even when JavaScript hashes match', async t => {
+  const root = await fixture(t), { prepared, validation } = await preparedFixture(root);
+  const fake = fakeBrowser({ frames: [{ build: { source: 'dddddddd-bbbbbbbb' } }] });
+  const session = t.session = new DevelopmentSession({ root, validatePrepared: async () => validation, launchBrowser: async () => fake.browser });
+  await assert.rejects(session.start({ output: 'reports/wrong-bridge-id' }), /Observed bridge build ID does not match/);
+  assert.ok(fake.browser.closed && fake.context.closed);
+  assert.equal(session.server, undefined);
+  const report = JSON.parse(await readFile(resolve(root, 'reports/wrong-bridge-id/session.json')));
+  assert.equal(report.status, 'failed');
+  assert.equal(report.build.source, 'dddddddd-bbbbbbbb');
+  assert.equal(report.preparedBuild.build_id, prepared.build_id);
+  assert.deepEqual(report.compiledSource, prepared.source);
+  assert.deepEqual(report.checkedSource, validation.checked_source);
 });
 
 test('a root path alias cannot bypass cached default source validation', async t => {

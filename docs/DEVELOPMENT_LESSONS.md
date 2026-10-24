@@ -2,7 +2,7 @@
 
 Reuse the original gameplay handlers, test complete interactions early, and keep builds traceable. Recurring follow-up fixes have involved navigation, retained UI state, hidden choices and misleading explanations. Faster development depends on catching those problems before rebuilding and reviewing a whole player.
 
-These practices come from the locally available project sessions of 13–18 October 2026, checked against the repository on 18 October. Detailed commands remain in [Building](BUILDING.md), [Testing](TESTING.md), [Architecture](ARCHITECTURE.md), [Assets](ASSETS.md) and [Versioning](VERSIONING.md).
+These practices combine the locally available project sessions of 13–18 October 2026 with repository maintenance checked on 24 October. Detailed commands remain in [Building](BUILDING.md), [Testing](TESTING.md), [Architecture](ARCHITECTURE.md), [Assets](ASSETS.md) and [Versioning](VERSIONING.md).
 
 ## Recurring problems and what to do
 
@@ -15,12 +15,14 @@ These practices come from the locally available project sessions of 13–18 Octo
 | Show the information needed for the decision. | A hospitalized crew member looked missing; available shelters looked like eight owned bases; recruitment meeting difficulty looked like persuasion difficulty. | Show status, location, scope, timing and relevant costs beside the choice. Keep important values beside their names, with detailed formulas available on demand. |
 | Derive explanations from the actual rules. | Law descriptions initially overstated direct effects; equipment, injury, recruitment and Juice help required checking their handlers. | Trace the real calculation and eligibility conditions. Label estimates and conditional probabilities. Distinguish political/story effects from direct mechanics; previews must not make game rolls. |
 | Verify what is actually delivered. | Cross-platform line endings broke a pinned asset hash; removing an apparently unused icon dependency broke font output; license validation initially checked the retained copy instead of the packaged copy. | Check built assets and extracted packages, including their actual licenses, hashes and source identity. Import searches and successful compilation provide only part of the evidence. |
+| Wait for the state being asserted. | Founder semantics changed before portrait pixels painted; an async offline-activation predicate returned a Promise before the worker finished. | Await asynchronous lookup before polling a synchronous readiness predicate. Require the selected image or complete cache, with a bounded deadline and the original assertions intact. |
+| Capture failures before cleanup. | A fresh profile showed only a processing shell while foreground and service-worker XML requests were pending; the page reported no network failure. | Retain the raw source stage, pending requests, worker state and loaded-build identity before closing the profile. Keep each attempt's evidence separately. |
 
 The implementation contracts are described in [Architecture](ARCHITECTURE.md#engine-and-interface). Useful regressions include [page storage isolation](../upstream/test/page_storage_isolation_test.dart), [action identity](../upstream/test/action_identity_test.dart), [organisation journeys](../upstream/test/organisation_journal_test.dart) and [tactical shell acceptance](../upstream/test/tactical_shell_acceptance_test.dart).
 
 ## A fast working loop
 
-1. **Establish the starting state.** Inspect Git status and the affected source handlers, then read the relevant guide. Record existing changes before editing. Identify the player-visible problem, how to reproduce it and the files the task owns.
+1. **Establish the starting state.** Inspect Git status and the affected source handlers, then read the relevant guide. Use the [source ownership map](ARCHITECTURE.md#find-the-owner-of-a-change) to find the boundary, and `python scripts/developer_doctor.py` to diagnose missing prerequisites without starting a build. Record existing changes before editing. Identify the player-visible problem, how to reproduce it and the files the task owns.
 2. **Define the expected interaction.** Name the actor, current reader, starting state, action and expected result. For inspection or cancellation, state what must remain unchanged. For a consequential action, check money, inventory, membership, date and persistence as applicable.
 3. **Make the smallest coherent change.** Reuse source actions and existing presentation components. Keep gameplay fixes distinct from presentation changes so each can be explained and reviewed. Add a regression that fails for the actual defect when rules, saves or routing are involved.
 4. **Get focused feedback first.** Use the [focused-check mapping](TESTING.md#choose-focused-checks) to select existing tests for the changed boundary, then run the relevant tests and analysis while iterating. Use the pinned SDK; regenerate serializers after changing saved fields or JSON annotations. Fully restart after engine changes because hot reload cannot restart an awaited game loop reliably.
@@ -57,6 +59,8 @@ The current [CI workflow](../.github/workflows/ci.yml) already runs four test sh
 - Measure player performance separately. Download size, startup latency, memory use and frame responsiveness are different problems. Do not evict useful caches or change loading behaviour solely because a theoretical saving exists.
 
 Artwork was the major download-size contributor. [The quality-90 measurements](BUILDING.md#quality-90-size-measurements-17-october-2026) document real rebuilt ZIP reductions, alongside their scope. Keep PNG masters and provenance, encode runtime images from those masters, and review at game scale before changing quality. Avoid repeated lossy recompression and avoid raising a size budget without reviewing its contents.
+
+The [development-MCP cache](DEV_MCP.md#setup) can reuse a compiled player after a documentation or helper commit when full compile inputs and payloads still match. It retains the original compiled revision and records the currently checked revision separately. Release and CI artifact reuse retain their own commit-identity requirements.
 
 ## Keep playtesting reproducible
 

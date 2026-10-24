@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
 const { chromium } = require('playwright');
@@ -36,8 +36,7 @@ const res = await fetch(new URL('main.dart.js', url)); assert.ok(res.ok);
 report.actualHash = createHash('sha256').update(Buffer.from(await res.arrayBuffer())).digest('hex');
 assert.equal(report.actualHash, expected.toLowerCase());
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
-let page, context;
-const loadedHashTasks = [];
+let page, context, verifyLoadedScript;
 async function text() {
   if (!await page.locator('flt-semantics-host').count()) return '';
   return page.locator('flt-semantics-host').evaluate(host => [host.innerText,
@@ -55,20 +54,15 @@ async function capture(name) {
 }
 function check(name) { report.checks.push(name); console.log(`PASS ${name}`); }
 async function start(width) {
+  if (verifyLoadedScript) await verifyLoadedScript(expected.toLowerCase());
   await context?.close();
   context = await browser.newContext({ viewport: { width, height: width === 1024 ? 720 : 1440 } });
   page = await context.newPage(); page.setDefaultTimeout(12000);
+  verifyLoadedScript = observeMainScript(page, report);
   page.on('pageerror', e => report.pageErrors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') report.consoleErrors.push(m.text()); });
   page.on('requestfailed', r => report.failedRequests.push(r.url()));
-  page.on('response', response => {
-    if (new URL(response.url()).pathname.endsWith('/main.dart.js')) {
-      loadedHashTasks.push(response.body().then(body => {
-        report.loadedMainJsHashes.push(createHash('sha256').update(body).digest('hex'));
-      }));
-    }
-  });
-  await page.goto(url, { waitUntil: 'networkidle' }); await wait(/Start a New Game/);
+  await page.goto(url, { waitUntil: 'domcontentloaded' }); await wait(/Start a New Game/);
   const chooser = page.waitForEvent('filechooser'); await click(/^Import a Save/); await (await chooser).setFiles(fixture);
   await wait(/Save imported/); await page.keyboard.press('Enter'); await wait(/Start a New Game/);
   await click(/^Load & Manage Saves/); await click(/^A(?:\s|$)/); await click(/^L Load Game/); await wait(/Save & exit/);
@@ -89,10 +83,17 @@ try {
     assert.match(await text(), /Page 1 of/);
     assert.match(await text(), /Skip recruitment today/);
     const info = page.getByRole('button', { name: /Base attribute ranges:/ }).first();
-    await info.click(); await wait(/These are generation ranges/);
-    await page.waitForTimeout(700); // Let the dialog's fade transition finish before visual QA.
+    await info.click();
+    const stats = page.getByRole('alertdialog');
+    await stats.waitFor({ state: 'visible' });
+    await stats.getByText(/These are generation ranges/).waitFor({ state: 'visible' });
+    const closeStats = stats.getByRole('button', { name: 'Close', exact: true });
+    await closeStats.waitFor({ state: 'visible' });
+    assert.ok(await closeStats.isEnabled(), 'The current profession stats dialog must have an enabled Close control.');
     await capture(`profession-stats-${width}`);
-    await click(/^Close$/); check(`profession stat help at ${width}`);
+    await closeStats.click();
+    await stats.waitFor({ state: 'hidden' });
+    await page.mouse.move(2, 2); check(`profession stat help at ${width}`);
     const first = await button(/^A /).textContent();
     assert.ok(first, 'Profession A must exist.'); check(`profession choices visible at ${width}`);
     await page.keyboard.press('PageDown'); await page.waitForTimeout(250); await capture(`page-two-${width}`);
@@ -109,7 +110,7 @@ try {
       assert.ok(await page.getByRole('button', { name: /Meet / }).count()); check('actual daily recruitment creates candidate controls');
     }
   }
-  await Promise.all(loadedHashTasks);
+  await verifyLoadedScript(expected.toLowerCase());
   assert.ok(report.loadedMainJsHashes.length >= 2, 'Capture the actual loaded JavaScript in both contexts.');
   for (const hash of report.loadedMainJsHashes) assert.equal(hash, expected.toLowerCase());
   assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.consoleErrors, []);

@@ -57,5 +57,4 @@ build_test.bat
 
 # Offline PWA test artifacts
 tool/offline_test/node_modules/
-tool/offline_test/package-lock.json
 tool/offline_test/offline-test-failure.png

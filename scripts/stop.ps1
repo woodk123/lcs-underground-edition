@@ -13,7 +13,11 @@ $serverProcessId = [int](Get-Content -LiteralPath $pidFile -Raw).Trim()
 $process = Get-CimInstance Win32_Process -Filter "ProcessId = $serverProcessId"
 if ($null -eq $process) { Write-Host 'The local server has already stopped.'; return }
 $expectedScript = Join-Path $root 'scripts\serve.py'
-if (-not $process.CommandLine -or -not $process.CommandLine.Contains($expectedScript) -or $process.CommandLine -notmatch "--port\s+$Port(\s|$)") {
+# Accept only the invocation produced by launch.ps1. A script-path substring
+# can also be an unrelated script's name or argument after PID reuse.
+$pythonCommand = '(?:"[^"\r\n]*[\\/]python(?:[0-9.]+)?\.exe"|[^\s"]*[\\/]python(?:[0-9.]+)?\.exe)'
+$expectedCommand = '^\s*' + $pythonCommand + '\s+"' + [regex]::Escape($expectedScript) + '"\s+--directory\s+"[^"\r\n]+"\s+--port\s+' + $Port + '\s*$'
+if (-not $process.CommandLine -or $process.CommandLine -notmatch $expectedCommand) {
     throw 'The recorded process no longer matches this launcher. No process was stopped.'
 }
 Stop-Process -Id $serverProcessId

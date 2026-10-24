@@ -11,8 +11,9 @@ import subprocess
 import sys
 import time
 
-from package_release import vc_runtime, verify_source_checkout
+from analysis_targets import focused_targets
 from ci_shards import SHARDS, test_files
+from package_release import vc_runtime, verify_source_checkout
 from release_common import WINDOWS_RUNTIME_FILES, digest, file_hashes, require_files, runtime_hashes, safe_relative, write_json
 
 PLATFORMS = ('linux', 'windows')
@@ -22,8 +23,6 @@ BUILD_OUTPUTS = {
     'windows': {'native': 'windows/x64/runner/Release'},
     'web': {'web': 'web'},
 }
-FOCUSED = ['lib/modern', 'lib/devtools', 'lib/main.dart', 'lib/engine/console.dart',
-           'lib/engine/console_widget.dart', 'lib/engine/console_char.dart', 'lib/engine/console_graphic.dart']
 
 
 def identity(root: Path) -> dict:
@@ -44,6 +43,7 @@ def run_worker(root: Path, kind: str, target: str, shard: int) -> None:
     host = platform.system().lower()
     if host != ('linux' if target == 'web' else target) or (kind == 'checks' and target not in PLATFORMS):
         raise ValueError('Worker platform does not match this host.')
+    analysis = focused_targets(root) if kind == 'checks' and shard == 0 else []
     info = {'schema': 1, **identity(root), 'kind': kind, 'platform': target,
             'shard': shard if kind == 'checks' else None, 'shards': SHARDS,
             'run_id': os.environ.get('GITHUB_RUN_ID'), 'status': 'running', 'steps': [],
@@ -80,7 +80,7 @@ def run_worker(root: Path, kind: str, target: str, shard: int) -> None:
                                         'test/development_bridge_test.dart'], root / 'upstream'),
                 ('tooling', [sys.executable, '-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_*.py', '-v'], root),
                 ('assets', [sys.executable, 'scripts/verify_assets.py'], root),
-                ('focused-analysis', [flutter, 'analyze', '--no-pub', *FOCUSED], root / 'upstream'),
+                ('focused-analysis', [flutter, 'analyze', '--no-pub', *analysis], root / 'upstream'),
                 ('full-analysis', [flutter, 'analyze', '--no-pub', '--no-fatal-infos', '--no-fatal-warnings'], root / 'upstream'),
             ])
     else:

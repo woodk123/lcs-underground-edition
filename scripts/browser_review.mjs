@@ -84,6 +84,9 @@ async function wait(pattern) {
 }
 async function click(name, locator = page) {
   const item = locator.getByRole('button', { name }).first();
+  // A tooltip left by scrolling can cover the next target. Let ordinary
+  // pointer exit dismiss it before Playwright checks the target's hit area.
+  await page.mouse.move(2, 2);
   await item.click();
   await page.mouse.move(2, 2);
   await waitForUiSettled(page);

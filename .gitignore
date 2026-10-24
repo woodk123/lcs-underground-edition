@@ -17,7 +17,8 @@ Thumbs.db
 .DS_Store
 *.log
 
-# Keep source, pubspec.lock, generated serialization and production artwork.
+# Keep source, pubspec.lock and production artwork. Serializers are regenerated;
+# their outputs follow upstream's ignore policy and are included in Source ZIPs.
 
 # Generated playtest captures and reports
 /reports/

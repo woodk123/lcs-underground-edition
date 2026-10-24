@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromiumLaunchOptions } from './browser_support.mjs';
+import { chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -62,17 +62,16 @@ const report = {
   screens: [], loadedAtlases: [], loadedMainJsHashes: [], errors: [],
 };
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
-const pendingHashes = [];
 try {
   for (const large of [false, true]) {
     const context = await browser.newContext({ viewport: large ? { width: 1024, height: 720 } : { width: 1440, height: 1000 }, acceptDownloads: true });
     const page = await context.newPage();
+    const verifyLoadedScript = observeMainScript(page, report);
     page.setDefaultTimeout(15000);
     const prefix = large ? 'large' : 'desktop';
     page.on('pageerror', error => report.errors.push(String(error)));
     page.on('console', message => { if (message.type() === 'error') report.errors.push(message.text()); });
     page.on('response', response => {
-      if (response.url().endsWith('/main.dart.js')) pendingHashes.push(response.body().then(body => report.loadedMainJsHashes.push(hash(body))));
       if (/journal_(?:equipment_(?:weapons|gear)|vehicles|catalogue_[a-z_]+)_v1\.webp$/.test(response.url())) {
         assert.equal(response.status(), 200);
         report.loadedAtlases.push(response.url().split('/').at(-1));
@@ -159,9 +158,9 @@ try {
     await page.getByRole('dialog').getByRole('button', { name: 'Close dossier', exact: true }).last().click();
     const after = await exportGame('after-inspection');
     assert.deepEqual(after, before, `${prefix} inspection must preserve the complete campaign`);
+    await verifyLoadedScript(expectedHash);
     await context.close();
   }
-  await Promise.all(pendingHashes);
   assert.ok(report.loadedMainJsHashes.length >= 2);
   assert.ok(report.loadedMainJsHashes.every(value => value === expectedHash));
   assert.equal(new Set(report.loadedAtlases).size, 11, 'All eight supplemental and three original catalogue atlases must load');

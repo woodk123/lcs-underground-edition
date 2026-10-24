@@ -21,9 +21,12 @@ if (Test-Path -LiteralPath (Join-Path $root '.git')) {
     if ($changes) { throw 'Release builds require a clean Git checkout. Commit or move source changes before building; ignored build outputs are allowed.' }
 }
 $sourceCommit = Get-LcsSourceCommit -Root $root
+$python = Get-LcsPython -MinimumVersion ([version]'3.12')
 $flutter = Get-LcsFlutter
 $dart = Join-Path $root '.tools\flutter\bin\dart.bat'
-$python = Get-LcsPython
+$analysisJson = & $python (Join-Path $root 'scripts\analysis_targets.py') --root $root
+if ($LASTEXITCODE -ne 0) { throw 'Could not load strict analysis targets; see scripts/analysis_targets.json.' }
+$analysisTargets = $analysisJson | ConvertFrom-Json
 $stamp = [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')
 $reportDir = Join-Path $root ".local\reports\build-$stamp"
 New-Item -ItemType Directory -Path $reportDir -Force | Out-Null
@@ -69,11 +72,7 @@ try {
     Invoke-BuildStep '01-dependencies' $flutter @('--suppress-analytics', 'pub', 'get')
     Invoke-BuildStep '02-serialization' $dart @('run', 'build_runner', 'build')
     Invoke-BuildStep '03-tests' $flutter @('--suppress-analytics', 'test', '--no-pub')
-    Invoke-BuildStep '04-focused-analysis' $flutter @(
-        '--suppress-analytics', 'analyze', '--no-pub',
-        'lib/modern', 'lib/main.dart', 'lib/engine/console.dart',
-        'lib/engine/console_widget.dart', 'lib/engine/console_char.dart', 'lib/engine/console_graphic.dart'
-    )
+    Invoke-BuildStep '04-focused-analysis' $flutter (@('--suppress-analytics', 'analyze', '--no-pub') + $analysisTargets)
     # Keep legacy infos/warnings visible in a separate full-project report. Errors remain fatal.
     Invoke-BuildStep '05-full-analysis' $flutter @('--suppress-analytics', 'analyze', '--no-pub', '--no-fatal-infos', '--no-fatal-warnings')
     $buildDefine = '--dart-define=LCS_BUILD=' + $sourceCommit.Substring(0, 8)

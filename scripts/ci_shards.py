@@ -98,8 +98,11 @@ def timing_profile(artifacts: Path) -> dict:
             # relative weights to this shard's actual test-process wall time.
             scale = elapsed / sum(spans.values())
             files.update({name: max(0.0001, round(value * scale, 4)) for name, value in spans.items()})
+            # Enabled bridge tests are a separate process on shard 0, not part
+            # of tests.jsonl. Account for them when reserving that shard's time.
             extra.append(round(sum(s['elapsed_seconds'] for s in report['steps']
-                                   if s['name'] in {'tooling', 'assets', 'focused-analysis', 'full-analysis'}), 3))
+                                   if s['name'] in {'development-bridge', 'tooling', 'assets',
+                                                    'focused-analysis', 'full-analysis'}), 3))
         platforms[target] = {'extra_seconds': extra, 'files': dict(sorted(files.items()))}
     if len(identities) != 1 or set(platforms['linux']['files']) != set(platforms['windows']['files']):
         raise ValueError('Timing profiles must cover the same tests from the same CI run.')

@@ -10,9 +10,15 @@ Install the pinned Flutter SDK described in [Building](BUILDING.md), Python 3.11
 python scripts/prepare_dev_mcp.py --configure-codex
 ```
 
-This installs locked Node dependencies, verifies the Flutter pin, generates serializers and compiles a development web player under `.local/dev-mcp/web`. It records source and payload hashes in `.local/dev-mcp/build.json`. Subsequent runs reuse that build only when the source identity and every built file still match. Run it after editing game code; use `--rebuild` to force compilation. Close active MCP sessions before rebuilding.
+This verifies the Flutter pin, checks the current Node version and locked package inventory, repairs affected Node tool directories with development dependencies included, generates serializers and compiles a development web player under `.local/dev-mcp/web`. Node must meet the committed packages' engine requirements. It records source and payload hashes in `.local/dev-mcp/build.json`. Subsequent runs reuse that build only when the full game-input fingerprint (including ignored generated `.g.dart` serializers), toolchain pin, preparation recipe and every built file still match. A commit changing only documentation, tests or browser helpers can reuse the same compiled player. Run preparation after editing game code or the preparation scripts; use `--rebuild` to force compilation. Close active MCP sessions before rebuilding.
 
-The default `lcs_start` also checks freshness against the current checkout and refuses stale or modified builds. `python scripts/prepare_dev_mcp.py --check` performs that check without rebuilding. Custom historical artifacts are permitted with an explicit `webRoot`; their result reports that source freshness was not checked, and `expectedHash` can pin the intended artifact.
+The artifact's `source` and `build_id` always identify its original compilation. Cache reuse leaves `build.json` and all compiled bytes unchanged; it does not relabel the player with the new commit. Both preparation commands return the current checkout as `checked_source`, separately from the compiled `source`. To compile an ID for the current commit even when inputs are unchanged, use `--rebuild`. Changing the preparation recipe itself also requires one new build.
+
+Preparation prints each child command and working directory before starting it, then reports success or failure and its elapsed time. Child output remains visible, so a quiet code-generation phase can be distinguished from a completed or failed step.
+
+On Windows, package resolution can stop at plugin link creation when symlink privilege is unavailable. Follow the [project-local plugin junction setup](WINDOWS_BUILD.md#plugin-junction-setup-without-developer-mode), then retry preparation. It uses the generated plugin metadata and preserves existing matching links without changing machine settings.
+
+The default `lcs_start` verifies that compiled inputs match the current checkout and refuses stale or modified builds. `python scripts/prepare_dev_mcp.py --check` performs that check without rebuilding or writing metadata. Startup results, `session.json` and the `session_start` trace retain both `compiledSource` and `checkedSource`, with `sourceFreshness: "verified_current_inputs"`. The bridge must report the original prepared build ID as well as loading the expected JavaScript hash. Custom historical artifacts are permitted with an explicit `webRoot`; their result reports `not_checked_custom_build`, leaves `checkedSource` null, and `expectedHash` can pin the intended artifact.
 
 `--configure-codex` adds this server to the machine-local `.codex/config.toml`, which is ignored by Git. It retains unrelated configuration and refuses to overwrite a conflicting server entry. Reconnect MCP servers or open a new chat to load the connection. Project MCP configuration is supported for trusted projects; see the [official Codex MCP documentation](https://developers.openai.com/codex/mcp). No model API key or hosted service is required.
 
@@ -21,13 +27,15 @@ Other MCP clients can launch the same stdio server with an absolute Node executa
 ## Working loop
 
 1. Run the preparation command against settled source.
-2. Call `lcs_start` with default arguments. It serves the prepared build on an owned loopback port and opens a fresh disposable browser context. It checks the JavaScript actually loaded by the browser against its SHA-256 and verifies the bridge handshake. The result includes the build identity, first observation and evidence directory.
+2. Call `lcs_start` with default arguments for exploration. For final acceptance, pass `expectedHash` from the prepared artifact's `main_js_sha256`. It serves the prepared build on an owned loopback port and opens a fresh disposable browser context. It checks the JavaScript actually loaded by the browser against its SHA-256 and verifies the bridge handshake. Retain the returned `compiledSource`, `checkedSource`, `mainJsSha256` and evidence directory together.
 3. Read the current observation. Use `lcs_inspect` with `scope: "summary"` or `scope: "person", personId: ...` to investigate consequences. `scope: "context"` gives named locations, pending recruitment, vehicles and the existing encounter without a full campaign dump. These are debugging fields, including hidden locations; they do not predict recruitment success. Request `scope: "campaign"` only when complete saved fields are needed.
 4. Choose an enabled action from `observation.actions`. Call `lcs_act` with its `actionId` and the observation's `revision`. The result supplies the next decision, so ordinary play does not need an extra observation call after every action. Use `lcs_input_text` when a source reader requests text.
 5. On an unexpected result, call `lcs_capture` with a meaningful name. Preserve the returned paths in the fix report, add a focused regression, then run the existing checks appropriate to the change.
 6. Call `lcs_close` to finalize the session and close its owned resources.
 
 Always inspect a rejected or timed-out action before retrying. A timeout can follow an accepted command; it does not mean that command never happened. `lcs_wait` observes progress without answering it. Encounters and confirmations remain individual decisions.
+
+Source actions can include `entityType`, `entityId` and a readable `entityLabel`. Save-menu rows identify the stored campaign and its existing founder/date description, so duplicate founder names and repeated row keys on later pages remain distinguishable. Use this metadata to find a current action, then dispatch its observed action ID and revision.
 
 During a tactical reader, `observation.map` supplies the same read-only snapshot as the graphical map: coordinates, an ASCII grid and legend, known cells with terrain and interaction hints, and adjacent source movement actions linked by their current IDs. `#` is a known wall, `+` a door, `@` the squad and `?` unexplored terrain. Unknown cells expose no flags, enemies, loot or lock state. Remembered cells are distinguished from those in view. `full_map` uses the full already-explored floor; other tactical readers use the graphical viewport. Movement terrain describes the known target; it does not predict an encounter or bypass the source handler. Nested prompts retain the displayed squad position and expose no movement action unless the original reader does.
 
@@ -59,7 +67,9 @@ For a custom build, pass `webRoot` and optionally `expectedHash` to `lcs_start`.
 
 ## Evidence and boundaries
 
-Session evidence is retained under ignored `reports/` or `.local/`. It includes the loaded JavaScript hash, bridge build identity, requests, results, elapsed times, rejected actions and browser errors. Named captures provide screenshots and structured state for bug reports. Keep failures as well as successes. Old captures describe their recorded build, not the current checkout.
+Session evidence is retained under ignored `reports/` or `.local/`. It includes the loaded JavaScript hash, bridge build identity, requests, results, elapsed times, rejected actions and browser errors. Named captures provide screenshots and structured state for bug reports. Keep each attempt in a new output directory, including page/console/request diagnostics from failures; a successful retry is separate evidence. Old captures describe their recorded build, not the current checkout.
+
+Use `lcs_close` to let pending native exports finish before closing the disposable context. If the MCP host disconnects, cleanup closes its owned browser and loopback server first so a stalled download cannot hold them open; interrupted exports remain recorded as download errors in `session.json` and the trace.
 
 The bridge reads without making gameplay rolls, advancing time or answering pending input. Actions retain their original object identity and revision. Modal inspection, presentation drafts and busy input boundaries prevent underlying commands. Text entry uses the same editor replay as the visible game. There are no arbitrary JavaScript, raw key, money-setting or state-editing tools.
 
@@ -74,7 +84,7 @@ Structured gameplay control does not certify graphical layout, keyboard focus, s
 ## Verification
 
 ```powershell
-python -m unittest discover -s scripts -p test_prepare_dev_mcp.py -v
+python -m unittest discover -s scripts -p 'test_prepare_dev_mcp*.py' -v
 npm test --prefix upstream/tool/dev_mcp
 node scripts/dev_mcp/smoke.mjs
 Push-Location upstream
@@ -85,4 +95,4 @@ Pop-Location
 
 The MCP package tests exercise the real stdio protocol in addition to session contracts. The Dart bridge regressions cover read-only state/RNG, current-action identity, stale readers and input boundaries. Run both default-disabled and explicitly enabled configurations: the enabled run exercises actual shell/modal/text integration. CI requires the enabled run on Linux and Windows as well as the normal regression shards. Use the pinned SDK and fully restart after engine changes.
 
-The smoke journey talks to the shipped stdio executable and the compiled player. It creates a fresh founder through all ten original background decisions, continues the political briefing through the bounded helper and requires it to stop at text entry, then submits the public name. It verifies inspection purity, rejects a stale action, advances an actual day (using bounded continuation if reports occur) and checks save/continue. It records the original first-load lazy NPC normalization separately, then requires complete campaign equality on the next save/continue. It exports the original save, verifies retained bytes/hash after closing the browser, and imports that file in a fresh session with complete campaign equality. No starting campaign or earned outcome is supplied to the initial journey. Its `smoke.json` retains call timings, checks and build identity; these are measurements of that run, not a general speedup claim.
+The smoke journey talks to the shipped stdio executable and the compiled player. It creates a fresh founder through all ten original background decisions, continues the political briefing through the bounded helper and requires it to stop at text entry, then submits the public name. It verifies inspection purity, rejects a stale action, advances an actual day (using bounded continuation if reports occur) and checks save/continue. It records the original first-load lazy NPC normalization separately, then requires complete campaign equality on the next save/continue. It chooses the observed save action by campaign ID and founder metadata, exports the original save, verifies retained bytes/hash after closing the browser, and imports that file in a fresh session with complete campaign equality. No starting campaign or earned outcome is supplied to the initial journey. Its `smoke.json` retains call timings, checks and both compiled/checked source identities; the same identities must survive in the session report and startup trace. These are measurements of that run, not a general speedup claim.

@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from ci_shards import SHARDS, suite_seconds, test_files
+from ci_shards import SHARDS, suite_seconds, test_files, timing_profile
 
 
 class ShardTests(unittest.TestCase):
@@ -70,6 +70,75 @@ class ShardTests(unittest.TestCase):
         path.write_text('\n'.join(json.dumps(event) for event in events))
         with self.assertRaisesRegex(ValueError, 'unsuccessful'):
             suite_seconds(path, ['test/a_test.dart'])
+
+    def timing_reports(self):
+        """Eight actual-format reports with a separate enabled bridge run."""
+        for target in ('linux', 'windows'):
+            for shard in range(SHARDS):
+                folder = self.root / f'artifacts/checks-{target}-{shard}'
+                folder.mkdir(parents=True)
+                name = f'test/shard_{shard}_test.dart'
+                steps = [
+                    {'name': 'dependencies', 'exit_code': 0, 'elapsed_seconds': 100},
+                    {'name': 'serialization', 'exit_code': 0, 'elapsed_seconds': 100},
+                    {'name': 'tests', 'exit_code': 0, 'elapsed_seconds': 4},
+                ]
+                if shard == 0:
+                    steps.extend({'name': step, 'exit_code': 0, 'elapsed_seconds': seconds}
+                                 for step, seconds in [('development-bridge', 12), ('tooling', 3),
+                                                       ('assets', 2), ('focused-analysis', 5),
+                                                       ('full-analysis', 8)])
+                report = {'status': 'passed', 'source_commit': 'a' * 40, 'run_id': '123',
+                          'platform': target, 'shard': shard, 'shards': SHARDS,
+                          'test_files': [name], 'steps': steps}
+                (folder / 'report.json').write_text(json.dumps(report))
+                events = [
+                    {'type': 'suite', 'suite': {'id': 1, 'path': f'/checkout/upstream/{name}'}},
+                    {'type': 'testStart', 'time': 0, 'test': {'id': 2, 'suiteID': 1}},
+                    {'type': 'testDone', 'time': 1000, 'testID': 2},
+                    {'type': 'done', 'success': True},
+                ]
+                (folder / 'tests.jsonl').write_text('\n'.join(map(json.dumps, events)))
+        return self.root / 'artifacts'
+
+    def test_timing_profile_budgets_enabled_bridge_without_duplicating_suite_cost(self):
+        artifacts = self.timing_reports()
+        profile = timing_profile(artifacts)
+        for target in ('linux', 'windows'):
+            self.assertEqual(profile['platforms'][target]['extra_seconds'], [30, 0, 0, 0])
+            self.assertEqual(profile['platforms'][target]['files'], {
+                f'test/shard_{shard}_test.dart': 4 for shard in range(SHARDS)})
+        # Rebalance using the refreshed profile; every suite still runs once.
+        (self.root / 'scripts').mkdir()
+        (self.root / 'scripts/ci_test_weights.json').write_text(json.dumps(profile))
+        groups = [test_files(self.root, shard) for shard in range(SHARDS)]
+        self.assertEqual(len(set().union(*map(set, groups))), 6)
+        self.assertEqual(sum(map(len, groups)), 6)
+
+    def test_timing_profile_rejects_failed_mismatched_and_overlapping_reports(self):
+        artifacts = self.timing_reports()
+        path = artifacts / 'checks-windows-0/report.json'
+        original = json.loads(path.read_text())
+        for update in ({'run_id': 'different'}, {'source_commit': 'b' * 40}, {'status': 'failed'}):
+            with self.subTest(update=update):
+                path.write_text(json.dumps({**original, **update}))
+                with self.assertRaises(ValueError):
+                    timing_profile(artifacts)
+        path.write_text(json.dumps(original))
+        failed = {**original, 'steps': [dict(step) for step in original['steps']]}
+        failed['steps'][3]['exit_code'] = 1
+        path.write_text(json.dumps(failed))
+        with self.assertRaisesRegex(ValueError, 'successful'):
+            timing_profile(artifacts)
+        path.write_text(json.dumps(original))
+        # A shard cannot claim another shard's suite even with valid JSON events.
+        other = artifacts / 'checks-windows-1'
+        report = json.loads((other / 'report.json').read_text())
+        report['test_files'] = original['test_files']
+        (other / 'report.json').write_text(json.dumps(report))
+        (other / 'tests.jsonl').write_bytes((path.parent / 'tests.jsonl').read_bytes())
+        with self.assertRaisesRegex(ValueError, 'overlap'):
+            timing_profile(artifacts)
 
 
 if __name__ == '__main__':

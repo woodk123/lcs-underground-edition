@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -41,6 +41,7 @@ const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 const large = args.includes('--large');
 const context = await browser.newContext({ viewport: large ? { width: 1024, height: 720 } : { width: 1440, height: 1000 }, acceptDownloads: true });
 const page = await context.newPage();
+const verifyLoadedScript = observeMainScript(page, report);
 page.setDefaultTimeout(7000);
 page.on('pageerror', error => report.pageErrors.push(String(error)));
 page.on('console', message => { if (message.type() === 'error') report.consoleErrors.push(message.text()); });
@@ -103,8 +104,16 @@ async function screen(id) {
   await writeFile(resolve(output, 'report.json'), JSON.stringify(report, null, 2));
   console.log(`PASS ${id}`);
 }
+async function visibleModal(role, closeName) {
+  const dialog = page.getByRole(role).filter({ has: page.getByRole('button', { name: closeName, exact: true }) }).last();
+  await dialog.waitFor({ state: 'visible' });
+  const close = dialog.getByRole('button', { name: closeName, exact: true }).last();
+  await close.waitFor({ state: 'visible' });
+  assert.ok(await close.isEnabled(), `${closeName} must be enabled in the current modal.`);
+  return { dialog, close };
+}
 async function hq() {
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await wait(/Start a New Game/);
   const resume = page.getByRole('button', { name: /^Continue as/ });
   if (await resume.count() && await resume.isEnabled()) {
@@ -124,7 +133,7 @@ async function journey(id, action) {
   }
 }
 try {
-  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
   await wait(/Start a New Game/);
   await screen('title-no-saves');
   await journey('title-options', async () => {
@@ -134,9 +143,9 @@ try {
     await click(/^C.*Content and Tone/); await screen('content-tone-options');
     await click(/^B.*Back to Options/); await click(/^B.*Back to Title/);
   });
-  await page.reload({ waitUntil: 'networkidle' }); await wait(/Start a New Game/);
+  await page.reload({ waitUntil: 'domcontentloaded' }); await wait(/Start a New Game/);
   await journey('changelog', async () => { await click(/^View Changelog/); await screen('changelog'); });
-  await page.reload({ waitUntil: 'networkidle' }); await wait(/Start a New Game/);
+  await page.reload({ waitUntil: 'domcontentloaded' }); await wait(/Start a New Game/);
   const choosing = page.waitForEvent('filechooser'); await click(/^Import a Save/);
   await (await choosing).setFiles(fixture); await wait(/Save imported/); await page.keyboard.press('Enter'); await wait(/Start a New Game/);
   await screen('title-with-save');
@@ -178,8 +187,11 @@ try {
   });
   await journey('ledger-guide', async () => {
     await hq(); await click(/^Ledger(?:$|\s)/);
-    await click(/^Money & ledger guide/); await screen('ledger-guide');
+    await click(/^Money & ledger guide/);
+    const guide = await visibleModal('dialog', 'Close decision guide');
+    await screen('ledger-guide');
     await page.keyboard.press('Escape');
+    await guide.dialog.waitFor({ state: 'hidden' });
   });
   await journey('archive-article-pages', async () => {
     await hq(); await click(/^Newspaper(?:$|\s)/);
@@ -190,16 +202,21 @@ try {
     const next = page.getByRole('button', { name: /Next/ }).first();
     assert.ok(await next.count(), 'Prepared archive must expose another page');
     await next.click(); await screen('newspaper-next-page');
-    await click(/^Public opinion guide/); await screen('public-opinion-guide');
+    await click(/^Public opinion guide/);
+    const guide = await visibleModal('dialog', 'Close decision guide');
+    await screen('public-opinion-guide');
     await page.keyboard.press('Escape');
+    await guide.dialog.waitFor({ state: 'hidden' });
   });
   await journey('dossier-all-pages', async () => {
     await hq(); await click(/^Inspect Felix Kobayashi(?:$|\s)/); await screen('crew-inspector');
     await click(/^Full dossier/);
+    const dossier = await visibleModal('dialog', 'Close dossier');
     for (const name of ['Overview', 'Skills', 'Campaign record']) {
       await click(new RegExp(`^${name}$`)); await screen(`dossier-${name.toLowerCase().replaceAll(' ', '-')}`);
     }
-    await page.getByRole('dialog').getByRole('button', { name: 'Close dossier', exact: true }).last().click();
+    await dossier.close.click();
+    await dossier.dialog.waitFor({ state: 'hidden' });
   });
   await journey('people-sort', async () => {
     await hq(); await click(/^People(?:$|[.\s])/);
@@ -222,8 +239,11 @@ try {
     await page.keyboard.press('Escape');
   });
   await journey('field-guide', async () => {
-    await hq(); await click(/^Field guide/); await screen('field-guide');
-    await click(/^Back to the game/);
+    await hq(); await click(/^Field guide/);
+    const guide = await visibleModal('alertdialog', 'Back to the game');
+    await screen('field-guide');
+    await guide.close.click();
+    await guide.dialog.waitFor({ state: 'hidden' });
   });
   await journey('classic-view', async () => {
     await hq(); await click(/^Switch readable \/ classic view/); await screen('classic-headquarters');
@@ -236,7 +256,7 @@ try {
     await screen('save-empty-after-deletion');
   });
   await journey('invalid-import', async () => {
-    await page.reload({ waitUntil: 'networkidle' }); await wait(/Start a New Game/);
+    await page.reload({ waitUntil: 'domcontentloaded' }); await wait(/Start a New Game/);
     const invalid = resolve(output, 'deliberately-invalid.json');
     await writeFile(invalid, '{ invalid campaign JSON');
     const chooser = page.waitForEvent('filechooser'); await click(/^Import a Save/);
@@ -244,6 +264,7 @@ try {
     await page.waitForTimeout(500); await screen('invalid-import-error');
     await page.keyboard.press('Enter');
   });
+  await verifyLoadedScript(expected.toLowerCase());
   report.status = report.failures.length || report.pageErrors.length || report.consoleErrors.length ? 'failed' : 'passed';
 } catch (error) {
   report.status = 'failed';

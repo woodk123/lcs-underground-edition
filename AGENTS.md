@@ -2,6 +2,8 @@
 
 The Flutter game lives in `upstream/`; fork documentation and build tools live at the repository root. Follow [building](docs/BUILDING.md), [testing](docs/TESTING.md) and [architecture](docs/ARCHITECTURE.md) for the existing workflows. Keep generated reports and review captures in ignored `.local/` or `reports/` directories.
 
+Use `python scripts/developer_doctor.py` for a read-only local setup inventory before troubleshooting a build. Its optional browser, MCP and tooling checks are described in [development mode](docs/BUILDING.md#development-mode); a passing inventory does not replace code checks or build acceptance.
+
 ## Development practice
 
 Follow [development lessons](docs/DEVELOPMENT_LESSONS.md) for the working loop and checks matched to the change.

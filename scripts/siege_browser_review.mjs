@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions, createQaPage } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, createQaPage, observeMainScript } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -38,7 +38,7 @@ assert.ok(main.ok);
 report.mainJsSha256 = createHash('sha256').update(Buffer.from(await main.arrayBuffer())).digest('hex');
 assert.equal(report.mainJsSha256, expected.toLowerCase());
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
-let context, page, scene = 'setup', normalized, serial = 0;
+let context, page, verifyLoadedScript, scene = 'setup', normalized, serial = 0;
 const button = name => page.getByRole('button', { name }).first();
 async function available(name) { return await button(name).count() > 0 && await button(name).isEnabled(); }
 async function text() {
@@ -78,9 +78,11 @@ async function capture(name) {
   await writeFile(resolve(output, `${file}.txt`), await text()); report.screenshots.push(`${file}.png`);
 }
 async function fresh() {
+  if (verifyLoadedScript) await verifyLoadedScript(expected.toLowerCase());
   ({ context, page } = await createQaPage(browser, {
     previousContext: context, report, errorContext: () => ({ scene }), timeout: 10000,
   }));
+  verifyLoadedScript = observeMainScript(page, report);
   await page.goto(url, { waitUntil: 'networkidle' }); await wait(/Start a New Game/);
 }
 async function prepared(name, state, description, envelope = normalized?.envelope ?? original) {
@@ -359,6 +361,7 @@ try {
     'Bundled Felix copy with idle orders and old wanted crimes/heat cleared. No siege or results yet.'));
   normalized = await snapshot('normalized');
   for (const mode of only === 'all' ? ['surrender', 'escape', 'defense', 'assault-escape'] : [only]) await runScenario(mode);
+  await verifyLoadedScript(expected.toLowerCase());
   assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.consoleErrors, []); assert.deepEqual(report.failedRequests, []);
   report.status = report.issues.length ? 'baseline-issues-reproduced' : 'passed';
 } catch (error) {

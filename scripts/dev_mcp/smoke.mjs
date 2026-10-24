@@ -36,6 +36,20 @@ async function key(key) {
   return call('lcs_act', { revision: observation.revision, actionId: action.id });
 }
 function passed(name) { report.checks.push(name); console.log(`PASS ${name}`); }
+async function retainedSession(started) {
+  const session = JSON.parse(await readFile(resolve(started.evidenceDirectory, 'session.json'), 'utf8'));
+  const trace = (await readFile(resolve(started.evidenceDirectory, 'trace.jsonl'), 'utf8'))
+    .trim().split('\n').map(line => JSON.parse(line));
+  const startup = trace.find(event => event.operation === 'session_start');
+  assert.ok(startup, 'The retained trace must identify the actual session startup.');
+  for (const evidence of [session, startup]) {
+    assert.deepEqual(evidence.compiledSource, started.compiledSource);
+    assert.deepEqual(evidence.checkedSource, started.checkedSource);
+  }
+  assert.deepEqual(session.pageErrors, []); assert.deepEqual(session.consoleErrors, []);
+  assert.deepEqual(session.failedRequests, []);
+  return session;
+}
 async function label(pattern, options = {}) {
   const action = observation.actions.find(action => action.enabled && pattern.test(action.label));
   assert.ok(action, `No source action matching ${pattern}: ${JSON.stringify(observation.actions)}`);
@@ -50,6 +64,12 @@ try {
     ...(arg('--out') ? { output: arg('--out') } : {}) });
   output = started.evidenceDirectory;
   report.mainJsSha256 = started.mainJsSha256; report.sourceFreshness = started.sourceFreshness;
+  report.compiledSource = started.compiledSource; report.checkedSource = started.checkedSource;
+  if (started.sourceFreshness === 'verified_current_inputs') {
+    assert.equal(started.compiledSource.inputs_sha256, started.checkedSource.inputs_sha256);
+    assert.equal(observation.build.source,
+      `${started.compiledSource.commit.slice(0, 8)}-${started.compiledSource.inputs_sha256.slice(0, 8)}`);
+  }
   await call('lcs_capture', { name: 'title' });
   const old = { revision: observation.revision, actionId: currentKey('n').id };
   await key('n');
@@ -133,7 +153,12 @@ try {
   passed('source-save-and-continue-preserve-complete-campaign');
   await key('x');
   await label(/Load & Manage Saves/);
-  await key('A');
+  const savedCampaign = observation.actions.find(action => action.enabled
+    && action.entityType === 'save' && action.entityId === `${firstLoad.campaign.uniqueGameId}`);
+  assert.ok(savedCampaign?.entityLabel?.includes('MCP Development Founder'),
+    'The observed source save action must identify the saved campaign and founder.');
+  report.saveAction = { revision: observation.revision, ...savedCampaign };
+  await call('lcs_act', { revision: observation.revision, actionId: savedCampaign.id });
   const exported = await label(/Export Save File/, { expectDownload: true });
   assert.equal(exported.downloads.length, 1);
   const artifact = exported.downloads[0];
@@ -150,13 +175,15 @@ try {
     webRoot: arg('--web-root', '.local/dev-mcp/web'),
     ...(arg('--expected-hash') ? { expectedHash: arg('--expected-hash') } : {}) });
   report.importEvidenceDirectory = imported.evidenceDirectory;
+  assert.deepEqual(imported.compiledSource, started.compiledSource);
+  assert.deepEqual(imported.checkedSource, started.checkedSource);
   assert.deepEqual(await call('lcs_inspect', { scope: 'campaign' }), firstLoad);
   await call('lcs_capture', { name: 'fresh-import', includeCampaign: true });
-  await call('lcs_close');
+  assert.deepEqual((await call('lcs_close')).cleanupErrors, []);
   passed('retained-native-export-and-fresh-import-preserve-complete-campaign');
-  const session = JSON.parse(await readFile(resolve(output, 'session.json'), 'utf8'));
-  assert.deepEqual(session.pageErrors, []); assert.deepEqual(session.consoleErrors, []);
-  assert.deepEqual(session.failedRequests, []);
+  const session = await retainedSession(started);
+  assert.deepEqual((await retainedSession(imported)).failures, []);
+  passed('compiled-and-checked-source-identities-retained');
   assert.equal(session.failures.length, 1, 'Only the intentional stale-action rejection is expected.');
   assert.match(session.failures[0].code, /stale/);
   assert.equal(stderr, '');

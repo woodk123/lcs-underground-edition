@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "focused": [
+    "lib/modern",
+    "lib/devtools",
+    "lib/main.dart",
+    "lib/engine/console.dart",
+    "lib/engine/console_widget.dart",
+    "lib/engine/console_char.dart",
+    "lib/engine/console_graphic.dart"
+  ]
+}

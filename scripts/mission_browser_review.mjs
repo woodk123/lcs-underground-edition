@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions, createQaPage } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, createQaPage, observeMainScript, waitForUiSettled } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -32,13 +32,14 @@ for (const person of seed.lcs.pool) {
   person.activity = { type: 'none' };
 }
 const report = { status: 'running', url, expectedHash: expected, prepared: [], checks: [],
-  scenarios: {}, screenshots: [], decisions: [], pageErrors: [], consoleErrors: [], failedRequests: [] };
+  scenarios: {}, screenshots: [], decisions: [], layoutChapters: [], inspections: [],
+  pageErrors: [], consoleErrors: [], failedRequests: [] };
 const response = await fetch(new URL('main.dart.js', url));
 assert.ok(response.ok);
 report.mainJsSha256 = createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex');
 assert.equal(report.mainJsSha256, expected.toLowerCase(), 'QA server must serve this exact compiled build.');
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
-let context, page, normalizedEnvelope, normalizedState;
+let context, page, verifyLoaded, normalizedEnvelope, normalizedState;
 let scenario = '';
 const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 async function uiText() {
@@ -57,11 +58,37 @@ async function wait(pattern) {
   throw Error(`Missing ${pattern}: ${await uiText()}`);
 }
 const button = name => page.getByRole('button', { name }).first();
+const legislationContinue = /^(?:Watch the votes|Watch the President|See the outcome|Return to the campaign)$/;
 async function available(name) { return await button(name).count() > 0 && await button(name).isEnabled(); }
 async function click(name) {
   await button(name).click();
   await page.mouse.move(2, 2);
   await page.waitForTimeout(130);
+}
+async function reachableControl(control) {
+  await control.waitFor({ state: 'visible' });
+  assert.ok(await control.isEnabled(), 'The current source control must be enabled.');
+  await control.scrollIntoViewIfNeeded();
+  await page.mouse.move(2, 2);
+  await waitForUiSettled(page);
+  const bounds = await control.boundingBox(), viewport = page.viewportSize();
+  const label = await control.getAttribute('aria-label') ?? await control.innerText();
+  assert.ok(bounds && bounds.width > 0 && bounds.height > 0
+    && bounds.x >= -.5 && bounds.y >= -.5
+    && bounds.x + bounds.width <= viewport.width + .5
+    && bounds.y + bounds.height <= viewport.height + .5,
+    `Current control must fit inside the ${viewport.width}x${viewport.height} viewport: ${label}`);
+  return { label, bounds, viewport };
+}
+async function mapControl(label) {
+  const direct = page.getByRole('button', { name: label, exact: true });
+  if (await direct.count()) await direct.first().click();
+  else {
+    await click('Map controls');
+    await page.getByRole('menuitem', { name: label, exact: true }).click();
+  }
+  await page.mouse.move(2, 2);
+  await waitForUiSettled(page);
 }
 function check(name) { report.checks.push(`${scenario}: ${name}`); console.log(`PASS ${scenario}: ${name}`); }
 async function capture(name) {
@@ -73,10 +100,12 @@ async function capture(name) {
   await writeFile(resolve(output, `${scenario}-${name}.txt`), await uiText());
 }
 async function fresh() {
+  if (verifyLoaded) await verifyLoaded(expected.toLowerCase());
   ({ context, page } = await createQaPage(browser, {
     previousContext: context, report, errorContext: () => ({ scenario }), timeout: 8000,
   }));
-  await page.goto(url, { waitUntil: 'networkidle' });
+  verifyLoaded = observeMainScript(page, report);
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
   await wait(/Start a New Game/);
 }
 async function fixture(name, state, changes, envelope = normalizedEnvelope ?? original) {
@@ -118,7 +147,7 @@ async function roundTrip(name) {
   const saved = await exportGame(name);
   // The first export already reloads through the original save menu. Reload
   // the browser too, then transfer to a completely new storage context.
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await wait(/Continue Game|Continue Previous|Continue Last|Continue Saved|Continue/);
   await click(/^Continue/);
   await wait(/Save & exit/);
@@ -206,6 +235,12 @@ async function day({ pay = false, defense = false } = {}) {
       assert.ok(await available(/^Plead guilty$/), 'Invalid input must retain the same defense choices.');
       await click(/^Plead guilty$/);
       check('court defense retains choices on invalid input and rejects unaffordable elite counsel');
+    } else if (await available(legislationContinue)) {
+      // Month-end custody can encounter the source Congress report before
+      // returning to the daily reader. Acknowledge only its offered step.
+      await recordDecision();
+      await capture(`legislation-${report.decisions.length}`);
+      await click(legislationContinue);
     } else if (await available(/^Continue$/)) { await recordDecision(); await click(/^Continue$/); }
     else if (await available(/^D Break off the meetings/)) await click(/^D Break off the meetings/);
     else if (await available(/Read newspaper|Read the paper|Done reading/)) await click(/Read newspaper|Read the paper|Done reading/);
@@ -255,11 +290,9 @@ try {
       await click(/^Reading size$/);
       await page.getByRole('menuitem', { name: '150%', exact: true }).click();
       await capture('compact-1024x720-at150');
-      await click('Map controls');
-      await page.getByRole('menuitem', { name: 'Fit area', exact: true }).click();
+      await mapControl('Fit area');
       await capture('compact-fit-area');
-      await click('Map controls');
-      await page.getByRole('menuitem', { name: 'Center squad at readable size', exact: true }).click();
+      await mapControl('Center squad at readable size');
       const squadMark = page.getByText(/^Squad.*Current position/).first()
         .locator('xpath=ancestor::flt-semantics[1]');
       const squadBox = await squadMark.boundingBox();
@@ -268,8 +301,7 @@ try {
       await page.mouse.down();
       await page.mouse.move(squadBox.x + squadBox.width / 2 + 45, squadBox.y + squadBox.height / 2 + 20, { steps: 8 });
       await page.mouse.up();
-      await click('Map controls');
-      await page.getByRole('menuitem', { name: 'Center squad at readable size', exact: true }).click();
+      await mapControl('Center squad at readable size');
       await page.getByRole('checkbox', { name: /Inspect/ }).click();
       const inspectBox = await page.getByText(/^Squad.*Current position/).first()
         .locator('xpath=ancestor::flt-semantics[1]').boundingBox();
@@ -283,6 +315,37 @@ try {
       await page.getByRole('checkbox', { name: /Inspect/ }).click();
       await capture('compact-centered-restored');
       check('compact focus, fit, pan, recovery and safe inspection retain the operation');
+      const inspectName = `Inspect ${baseline.state.lcs.pool[0].name} dossier`;
+      const inspectControl = await reachableControl(button(inspectName));
+      assert.ok(await available(/^F Fight$/), 'The original fight shortcut must be available before modal inspection.');
+      const compactBeforeInspect = await uiText();
+      await capture('compact-before-crew-inspection');
+      await click(inspectName);
+      await wait(/Full dossier/);
+      const closeInspector = await reachableControl(button('Close crew inspection'));
+      const modalText = await uiText();
+      const blockedKeys = ['ArrowRight', 'f', 'v', 'u'];
+      const inspection = { scenario, chapter: 'compact-field-crew-inspector',
+        viewport: page.viewportSize(), readingScale: 1.5, shortcutChecks: [],
+        controls: { inspect: inspectControl, close: closeInspector },
+        readerTextBefore: compactBeforeInspect, modalText };
+      report.inspections.push(inspection);
+      for (const key of blockedKeys) {
+        await page.keyboard.press(key);
+        await waitForUiSettled(page);
+        const unchanged = await uiText() === modalText;
+        inspection.shortcutChecks.push({ key, unchanged });
+        assert.ok(unchanged, `Original ${key} must stay behind the field dossier.`);
+      }
+      await capture('compact-crew-inspection-modal');
+      await click('Close crew inspection');
+      await waitForUiSettled(page);
+      const compactAfterInspect = await uiText();
+      inspection.readerTextAfter = compactAfterInspect;
+      assert.equal(compactAfterInspect, compactBeforeInspect,
+        'Compact dossier inspection and blocked game keys must retain the current operation.');
+      await capture('compact-after-crew-inspection');
+      check('1024x720/150% crew dossier and reachable Close retain the operation while original movement/fight/flee/use keys are blocked');
       await click(/^Reading size$/);
       await page.getByRole('menuitem', { name: '100%', exact: true }).click();
       await page.getByRole('menuitem', { name: '100%', exact: true }).waitFor({ state: 'detached' });
@@ -401,6 +464,7 @@ try {
     await waitEncounter(/^T Talk$/);
     await click(/^T Talk$/);
     const politics = /^(?:A[-\s]*)?Strike up a conversation/;
+    const desktopParticipants = [];
     for (let step = 0; step < 8; step++) {
       await reports();
       if (await available(politics)) break;
@@ -415,7 +479,11 @@ try {
         : page.getByRole('button', { name: /^(?:[1-6]|[A-Z]) / });
       let selected = false;
       for (const candidate of await candidates.all()) {
-        if (await candidate.isEnabled()) { await candidate.click(); await page.waitForTimeout(150); selected = true; break; }
+        if (await candidate.isEnabled()) {
+          desktopParticipants.push(await reachableControl(candidate));
+          await recordDecision();
+          await candidate.click(); await page.waitForTimeout(150); selected = true; break;
+        }
       }
       assert.ok(selected, `No current conversation participant: ${await uiText()}`);
     }
@@ -423,22 +491,80 @@ try {
     await page.keyboard.press('z'); await page.waitForTimeout(150);
     assert.ok(await available(politics));
     await capture('conversation-retry');
+    report.layoutChapters.push({ scenario, chapter: 'desktop-conversation-participants',
+      viewport: page.viewportSize(), readingScale: 1, participants: desktopParticipants,
+      politicalChoice: await reachableControl(button(politics)) });
+    await page.setViewportSize({ width: 1024, height: 720 });
+    await click(/^Reading size$/);
+    await page.getByRole('menuitem', { name: '150%', exact: true }).click();
+    await page.getByRole('menuitem', { name: '150%', exact: true }).waitFor({ state: 'detached' });
+    await waitForUiSettled(page);
+    const compactPoliticalChoice = await reachableControl(button(politics));
+    async function compactReaderSnapshot() {
+      const text = await uiText(), buttons = [];
+      for (const control of await page.getByRole('button').all()) {
+        if (await control.isVisible()) buttons.push({
+          label: await control.getAttribute('aria-label') ?? await control.innerText(),
+          enabled: await control.isEnabled(),
+        });
+      }
+      buttons.sort((a, b) => a.label < b.label ? -1 : a.label > b.label ? 1 : Number(a.enabled) - Number(b.enabled));
+      return { text, lines: text.split('\n').sort(), buttons,
+        politicalChoiceAvailable: await available(politics) };
+    }
+    const compactConversation = await compactReaderSnapshot();
+    await capture('conversation-compact-choice');
+    await page.keyboard.press('z');
+    await waitForUiSettled(page);
+    const compactAfterInvalidKey = await compactReaderSnapshot();
+    const compactChoices = [compactPoliticalChoice];
+    const compactChapter = { scenario, chapter: 'compact-political-conversation',
+      viewport: page.viewportSize(), readingScale: 1.5, invalidKey: 'z', choices: compactChoices,
+      comparisonBasis: 'Complete raw reader line multiset and visible button label/enabled multiset; all values and duplicate lines/buttons are retained, while sibling traversal order may change.',
+      readerTextBeforeInvalidKey: compactConversation.text, readerTextAfterInvalidKey: compactAfterInvalidKey.text,
+      readerLinesBeforeInvalidKey: compactConversation.lines, readerLinesAfterInvalidKey: compactAfterInvalidKey.lines,
+      visibleButtonsBeforeInvalidKey: compactConversation.buttons, visibleButtonsAfterInvalidKey: compactAfterInvalidKey.buttons,
+      politicalChoiceAvailableBeforeInvalidKey: compactConversation.politicalChoiceAvailable,
+      politicalChoiceAvailableAfterInvalidKey: compactAfterInvalidKey.politicalChoiceAvailable };
+    report.layoutChapters.push(compactChapter);
+    assert.deepEqual(compactAfterInvalidKey.lines, compactConversation.lines,
+      'Invalid compact input must retain every reader line and its multiplicity.');
+    assert.deepEqual(compactAfterInvalidKey.buttons, compactConversation.buttons,
+      'Invalid compact input must retain every visible button label and enabled/disabled state.');
+    assert.ok(compactConversation.politicalChoiceAvailable && compactAfterInvalidKey.politicalChoiceAvailable);
+    assert.ok(await available(politics));
+    await capture('conversation-compact-retry');
+    await recordDecision();
     await click(politics);
     // Follow real conversation acknowledgements; if persuasion reaches the
     // issue reader, use its own explicit cancellation choice.
     for (let step = 0; step < 50; step++) {
       if (await available(/^S Wait \/ stall$/)) break;
-      if (await available(/^Continue$/)) { await recordDecision(); await click(/^Continue$/); }
-      else if (await available(/On second thought|Never mind|Nevermind|Nothing|Forget it|Cancel|Goodbye/i))
-        await click(/On second thought|Never mind|Nevermind|Nothing|Forget it|Cancel|Goodbye/i);
-      else {
+      if (await available(/^Continue$/)) {
+        compactChoices.push({ kind: 'acknowledgement', ...await reachableControl(button(/^Continue$/)) });
+        await recordDecision(); await click(/^Continue$/);
+      } else if (await available(/On second thought|Never mind|Nevermind|Nothing|Forget it|Cancel|Goodbye/i)) {
+        const cancellation = /On second thought|Never mind|Nevermind|Nothing|Forget it|Cancel|Goodbye/i;
+        compactChoices.push({ kind: 'source-cancellation', ...await reachableControl(button(cancellation)) });
+        await recordDecision();
+        await capture(`conversation-compact-cancellation-${step}`);
+        await click(cancellation);
+      } else {
         const choices = page.getByRole('button', { name: /^[A-Z] / });
         const choice = await choices.all();
         let selected = false;
-        for (const item of choice) if (await item.isEnabled()) { await item.click(); selected = true; break; }
+        for (const item of choice) if (await item.isEnabled()) {
+          compactChoices.push({ kind: 'source-choice', ...await reachableControl(item) });
+          await recordDecision();
+          await item.click(); selected = true; break;
+        }
         assert.ok(selected, `Unhandled conversation reader: ${await uiText()}`);
       }
     }
+    assert.ok(await available(/^S Wait \/ stall$/), 'Compact conversation must return through its current source choices to the tactical reader.');
+    compactChapter.returnedToOperation = true;
+    await capture('conversation-compact-returned');
+    check('1024x720/150% political choices, acknowledgements and any offered source cancellation remain reachable and return to the operation');
     check('met a real building occupant and exercised political conversation; invalid input keeps choices');
     await exitBuilding();
     await roundTrip('complete');
@@ -456,7 +582,14 @@ try {
       [`Prepared ${patient.name} with 94% blood and one bleeding arm wound at headquarters; starting funds $${state.ledger._funds}. Admission, stabilization, daily healing, bill and discharge are produced through the original browser handlers.`]));
     const before = (await exportGame('baseline')).state;
     await visit('University District', 'University Hospital');
-    assert.match(await uiText(), /Visit in progress/);
+    // Hospital decisions use the source recovery reader, rather than the
+    // Organisation planning card that advertises queued visits.
+    await wait(/University Hospital/);
+    await button(/^Admit injured squad members$/).click({ trial: true });
+    assert.match(await uiText(), /1 squad member needs care/);
+    assert.ok(await available(/^Admit injured squad members$/));
+    assert.ok(await available(/^Return to headquarters$/));
+    assert.equal(await available(/^Save & exit/), false);
     assert.doesNotMatch(await uiText(), /Visit queued · advance the day to travel/);
     await capture('hospital-menu');
     await page.setViewportSize({ width: 1024, height: 720 });
@@ -536,6 +669,7 @@ try {
       detainee: { id: transferred.id, location: transferred.locationId }, prisoner: { id: released.id, location: released.locationId } };
     await roundTrip('complete');
   }
+  await verifyLoaded(expected.toLowerCase());
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.consoleErrors, []);
   assert.deepEqual(report.failedRequests, []);

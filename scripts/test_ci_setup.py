@@ -1,5 +1,6 @@
 """SDK profiles must contain the right artifacts without weakening pin checks."""
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -10,6 +11,11 @@ import ci_setup
 
 class SetupTests(unittest.TestCase):
     def setUp(self):
+        # A cold platform.system() can run `ver` through subprocess on Windows.
+        # Keep OS discovery out of the SDK subprocess mocks below.
+        host = patch.object(ci_setup.platform, 'system', return_value='Windows' if os.name == 'nt' else 'Linux')
+        host.start()
+        self.addCleanup(host.stop)
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)

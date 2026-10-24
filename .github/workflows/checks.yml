@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   development-mcp:
-    name: Development MCP (${{ matrix.os }})
+    name: Node tooling (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
