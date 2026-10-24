@@ -18,7 +18,7 @@ const option = (flag, fallback) => {
 };
 if (args.includes('--help')) {
   console.log('Usage: node scripts/planning_equipment_browser_review.mjs --expected-hash SHA256 [--url URL] [--out FRESH_IGNORED_DIRECTORY]\n'
-    + 'Requires a development bridge build. Runs desktop and 1024x720/150% equipment and Daily plan journeys in fresh profiles. '
+    + 'Requires a development bridge build. Runs desktop, 1280x720 startup and 1024x720/150% equipment and Daily plan journeys in fresh profiles. '
     + '--prepare-only writes the declared fixture without fetching or launching anything.');
   process.exit(0);
 }
@@ -628,11 +628,34 @@ async function dailyPlanJourney() {
   assert.ok(orderFrame.observation.actions.some(action => action.entityType === 'activity'
     && action.entityId === 'donations' && action.entityCategory === String(orderActor.id)),
   'The original Orders reader must be for the person selected on the board.');
+  await click(/^Details for Solicit Donations$/);
+  const mechanics = page.getByRole('alertdialog');
+  await mechanics.waitFor({ state: 'visible' }); await wait(/Calculation:/);
+  for (const key of ['w', 'p', 'd']) {
+    await page.keyboard.press(key); await waitForUiSettled(page);
+    assert.ok(await mechanics.isVisible(), `Task details must own bare ${key}.`);
+  }
+  sameSource(orderFrame, await snapshot('task-details-before-draft'), 'Task Details do not prepare or alter the original reader');
+  await capture('task-details-full-mechanics');
+  await page.keyboard.press('Escape'); await mechanics.waitFor({ state: 'hidden' });
+  await waitForUiSettled(page);
+  sameSource(orderFrame, await snapshot('after-task-details-Escape'), 'Task Details Escape preserves pending source input');
+  assert.equal(await button('Confirm order').count(), 0, 'Inspection must not create a draft.');
+  check('Task Details expose full mechanics with modal key isolation and no preparation/source input');
   await click(/^Prepare Solicit Donations(?:$|\s)/);
   await wait(/Prepared · awaiting confirmation/);
   const draft = await snapshot('daily-plan-local-draft');
   sameSource(orderFrame, draft, 'Preparing a daily order is a local draft');
   await capture('daily-plan-order-draft');
+  await click(/^Details for Solicit Donations$/); await mechanics.waitFor({ state: 'visible' });
+  await wait(/Calculation:/); await page.keyboard.press('Tab'); await waitForUiSettled(page);
+  await keyboardFocus(button(/^Close$/, mechanics), 'Task Details Close');
+  await page.keyboard.press('Enter'); await mechanics.waitFor({ state: 'hidden' });
+  await waitForUiSettled(page); await wait(/Prepared · awaiting confirmation/);
+  assert.ok(await button('Confirm order').isEnabled(), 'Task inspection keeps the prepared confirmation reachable.');
+  assert.match(await text(), /Soliciting Donations/, 'Task inspection retains the intended prepared order.');
+  sameSource(draft, await snapshot('draft-after-task-details'), 'Task Details retain the prepared draft and source reader');
+  check('Task Details retain a prepared order through actual Tab/Enter Close and return to confirmation');
   await click(/^Cancel prepared order$/);
   sameSource(orderFrame, await snapshot('daily-plan-cancelled-draft'), 'Cancel retains the current actor and all existing assignments');
   check('Orders routes the clicked outside-squad actor; preparing and Cancel preserve full campaign and source actions');
@@ -665,6 +688,7 @@ try {
   browser = await chromium.launch(chromiumLaunchOptions({ args }));
   for (const configuration of [
     { name: 'desktop', viewport: { width: 1440, height: 1000 }, reading: '100%' },
+    { name: 'startup', viewport: { width: 1280, height: 720 }, reading: '100%' },
     { name: 'large', viewport: { width: 1024, height: 720 }, reading: '150%' },
   ]) {
     layout = configuration.name; report.layouts.push(configuration);
@@ -689,7 +713,7 @@ try {
     await verifyLoaded(expectedHash);
     await context.close(); context = null;
   }
-  assert.equal(report.loadedMainJsHashes.length, 2);
+  assert.equal(report.loadedMainJsHashes.length, 3);
   for (const actual of report.loadedMainJsHashes) assert.equal(actual, expectedHash);
   assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.consoleErrors, []);
   assert.deepEqual(report.failedRequests, []); assert.deepEqual(report.workerErrors, []);

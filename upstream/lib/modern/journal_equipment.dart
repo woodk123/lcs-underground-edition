@@ -274,13 +274,46 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
     ),
   );
 
+  Widget _personSelector(
+    EquipmentContext frame,
+    Creature person,
+    int revision,
+    int selectedId, {
+    bool compact = false,
+  }) => MergeSemantics(
+    child: Semantics(
+      key: ValueKey('equipment-person-row:${person.id}'),
+      button: true,
+      selected: person.id == selectedId,
+      label: 'Select equipment for ${person.name}',
+      child: TextButton(
+        key: ValueKey('equipment-person:${person.id}'),
+        onPressed: () => _selectPerson(frame, person, revision),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          alignment: Alignment.centerLeft,
+          backgroundColor: compact && person.id == selectedId
+              ? JournalPalette.selected
+              : null,
+        ),
+        child: ExcludeSemantics(
+          child: Text(
+            person.name,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    ),
+  );
+
   Widget _person(
     EquipmentContext frame,
     Creature person,
     SquadReadiness readiness,
     int revision,
-    int selectedId,
-  ) {
+    int selectedId, {
+    bool selectableHeader = true,
+  }) {
     final loadout = EquipmentLoadout(person, readiness);
     final action = frame.actions
         .where(
@@ -293,7 +326,7 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
     return Builder(
       key: ValueKey('equipment-loadout:${person.id}'),
       builder: (cardContext) {
-        if (person.id == selectedId) {
+        if (selectableHeader && person.id == selectedId) {
           _revealSelectedCard(cardContext, person.id);
         }
         return _card([
@@ -303,28 +336,12 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
               CrewPortrait(person: person, size: 56),
               const SizedBox(width: 8),
               Expanded(
-                child: MergeSemantics(
-                  child: Semantics(
-                    key: ValueKey('equipment-person-row:${person.id}'),
-                    button: true,
-                    selected: person.id == selectedId,
-                    label: 'Select equipment for ${person.name}',
-                    child: TextButton(
-                      key: ValueKey('equipment-person:${person.id}'),
-                      onPressed: () => _selectPerson(frame, person, revision),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        alignment: Alignment.centerLeft,
+                child: selectableHeader
+                    ? _personSelector(frame, person, revision, selectedId)
+                    : Text(
+                        person.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      child: ExcludeSemantics(
-                        child: Text(
-                          person.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               ),
               if (widget.onInspect != null)
                 IconButton(
@@ -740,24 +757,55 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
                 ),
               ],
               const SizedBox(height: 10),
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: frame.phase == EquipmentPhase.inventory
-                      ? 285
-                      : 420,
-                ),
-                child: Scrollbar(
-                  controller: _loadoutScroll,
-                  thumbVisibility: true,
-                  child: SingleChildScrollView(
-                    controller: _loadoutScroll,
-                    key: const PageStorageKey('equipment-loadout-scroll'),
-                    child: LayoutBuilder(
-                      builder: (context, bounds) {
-                        final columns = bounds.maxWidth >= 720 ? 2 : 1;
-                        final width =
-                            (bounds.maxWidth - (columns - 1) * 8) / columns;
-                        return Wrap(
+              LayoutBuilder(
+                builder: (context, bounds) {
+                  if (frame.phase == EquipmentPhase.inventory &&
+                      bounds.maxWidth < 600) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Wrap(
+                          key: const ValueKey('equipment-crew-selector'),
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            for (final person in frame.people)
+                              _personSelector(
+                                frame,
+                                person,
+                                revision,
+                                selected.id,
+                                compact: true,
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        _person(
+                          frame,
+                          selected,
+                          readiness,
+                          revision,
+                          selected.id,
+                          selectableHeader: false,
+                        ),
+                      ],
+                    );
+                  }
+                  final columns = bounds.maxWidth >= 720 ? 2 : 1;
+                  final width = (bounds.maxWidth - (columns - 1) * 8) / columns;
+                  return ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: frame.phase == EquipmentPhase.inventory
+                          ? 285
+                          : 420,
+                    ),
+                    child: Scrollbar(
+                      controller: _loadoutScroll,
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        controller: _loadoutScroll,
+                        key: const PageStorageKey('equipment-loadout-scroll'),
+                        child: Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           children: [
@@ -773,11 +821,11 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
                                 ),
                               ),
                           ],
-                        );
-                      },
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
               Material(
                 type: MaterialType.transparency,

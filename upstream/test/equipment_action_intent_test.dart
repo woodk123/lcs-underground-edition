@@ -26,12 +26,13 @@ Finder intentControl(ConsoleAction action) =>
 
 Future<void> mountIntentFlow(
   WidgetTester tester,
-  Future<void> operation,
-) async {
+  Future<void> operation, {
+  Size size = const Size(1280, 800),
+}) async {
   var completed = false;
   unawaited(operation.then((_) => completed = true));
   tester.view.devicePixelRatio = 1;
-  tester.view.physicalSize = const Size(1280, 800);
+  tester.view.physicalSize = size;
   addTearDown(() async {
     for (var i = 0; i < 8 && !completed; i++) {
       if (engine.console.awaitingInput) engine.console.sendInput('Enter');
@@ -99,7 +100,9 @@ void main() {
       final secondWeapon = second.equippedWeapon;
       final clothing = first.equippedClothing;
       final loot = <Item>[];
-      await mountIntentFlow(tester, equip(loot));
+      // The wide overview exposes both numbered rows together. Narrow views
+      // keep these original actions behind the selected crew's loadout.
+      await mountIntentFlow(tester, equip(loot), size: const Size(2200, 1200));
       final firstAction = engine.console.actions.singleWhere(
         (action) => action.key == '1',
       );

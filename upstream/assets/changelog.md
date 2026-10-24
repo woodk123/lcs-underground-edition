@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## Underground Edition 0.5.1 — 2026-10-24
+
+* Use compact crew headers in shorter journal windows, with clearly labelled Cancel and Back controls for orders.
+* Open a task's full mechanics from its Details control without preparing an assignment or opening large hover panels.
+* Browse narrow equipment pages with a compact crew selector and one complete loadout in the main page scroll.
+
 ## Underground Edition 0.5.0 — 2026-10-24
 
 * Prepare squad equipment with illustrated loadouts, clearly labelled ammunition and condition, item comparisons and readiness warnings. Supporting mechanics remain available on demand.

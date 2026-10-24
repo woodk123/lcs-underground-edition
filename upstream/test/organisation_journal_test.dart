@@ -823,7 +823,6 @@ void main() {
         expect(tester.takeException(), isNull);
       },
     );
-
   }
 
   for (final size in [
@@ -864,6 +863,104 @@ void main() {
         final before = campaignSnapshot();
         final revision = engine.console.revision.value;
         final actions = List.of(engine.console.actions);
+        if (size.width == 1024) {
+          expect(_key('equipment-crew-selector'), findsOneWidget);
+          expect(
+            find.byKey(const PageStorageKey('equipment-loadout-scroll')),
+            findsNothing,
+          );
+          expect(
+            _key('equipment-loadout:${game.squad.first.id}'),
+            findsOneWidget,
+          );
+          expect(_key('equipment-loadout:${second.id}'), findsNothing);
+          final scroll = find
+              .descendant(
+                of: find.byKey(
+                  const PageStorageKey('journal-management-scroll:equipment'),
+                ),
+                matching: find.byType(Scrollable),
+              )
+              .first;
+          final position = tester.state<ScrollableState>(scroll).position;
+          final offset = position.maxScrollExtent.clamp(0, 90).toDouble();
+          position.jumpTo(offset);
+          await _settle(tester);
+          reseedRNG(seed: 29471);
+          final rolls = List.generate(10, (_) => lcsRandom(100000));
+          reseedRNG(seed: 29471);
+          await _showCrewMember(tester, second.id);
+          await _tap(tester, 'journal-member:${second.id}');
+          expect(
+            tester
+                .widget<Semantics>(_key('equipment-person-row:${second.id}'))
+                .properties
+                .selected,
+            isTrue,
+          );
+          expect(
+            _key('equipment-loadout:${game.squad.first.id}'),
+            findsNothing,
+          );
+          final selectedCard = _key('equipment-loadout:${second.id}');
+          expect(selectedCard, findsOneWidget);
+          expect(
+            position.pixels,
+            closeTo(offset, .01),
+            reason: 'A flat loadout selection must not jump its outer page.',
+          );
+          expect(
+            tester.widget<Text>(_key('journal-selected-person')).data,
+            second.name,
+          );
+          expect(
+            tester.widget<TextField>(_key('equipment-search')).controller!.text,
+            stock.item.type.name,
+          );
+          expect(
+            tester
+                .widget<ChoiceChip>(_key('equipment-filter:weapons'))
+                .selected,
+            isTrue,
+          );
+          expect(
+            find.text('Compare equipment for ${second.name}'),
+            findsOneWidget,
+          );
+          for (final fact in [
+            find.descendant(
+              of: selectedCard,
+              matching: find.text(second.weapon.type.name),
+            ),
+            find.descendant(
+              of: selectedCard,
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is Text &&
+                    widget.data?.startsWith('Loaded:') == true,
+              ),
+            ),
+          ]) {
+            await tester.ensureVisible(fact);
+            await _settle(tester);
+            _insideViewport(tester, fact, size, 'Selected flat loadout fact');
+          }
+          final inspectedOffset = position.pixels;
+          final focused = FocusManager.instance.primaryFocus;
+          tester
+              .widget<TextButton>(_key('equipment-person:${second.id}'))
+              .onPressed!();
+          await _settle(tester);
+          expect(position.pixels, closeTo(inspectedOffset, .01));
+          expect(FocusManager.instance.primaryFocus, same(focused));
+          expect(campaignSnapshot(), before);
+          expect(engine.console.revision.value, revision);
+          expect(engine.console.actions, orderedEquals(actions));
+          expect(engine.console.lastKey, isNull);
+          expect(List.generate(10, (_) => lcsRandom(100000)), rolls);
+          expect(tester.takeException(), isNull);
+          return;
+        }
         final scroll = find
             .descendant(
               of: find.byKey(
@@ -885,21 +982,32 @@ void main() {
         await _settle(tester);
         final selectedCard = _key('equipment-loadout:${second.id}');
         final selectedFacts = [
-          find.descendant(of: selectedCard, matching: find.text(second.weapon.type.name)),
-          find.descendant(of: selectedCard, matching: find.byWidgetPredicate(
-            (widget) => widget is Text && widget.data?.startsWith('Loaded:') == true,
-          )),
+          find.descendant(
+            of: selectedCard,
+            matching: find.text(second.weapon.type.name),
+          ),
+          find.descendant(
+            of: selectedCard,
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is Text && widget.data?.startsWith('Loaded:') == true,
+            ),
+          ),
         ];
         final initialViewport = tester.getRect(
           find.byKey(const PageStorageKey('equipment-loadout-scroll')),
         );
         final initiallyClipped = selectedFacts.any((fact) {
           final rect = tester.getRect(fact);
-          return rect.top < initialViewport.top - 1 || rect.bottom > initialViewport.bottom + 1;
+          return rect.top < initialViewport.top - 1 ||
+              rect.bottom > initialViewport.bottom + 1;
         });
         if (size.width <= 1440) {
-          expect(initiallyClipped, isTrue,
-            reason: 'The reproduced embedded and enlarged layouts initially clip the second loadout.');
+          expect(
+            initiallyClipped,
+            isTrue,
+            reason: 'The reproduced embedded and enlarged layouts initially clip the second loadout.',
+          );
         }
         reseedRNG(seed: 29471);
         final rolls = List.generate(10, (_) => lcsRandom(100000));
@@ -940,8 +1048,12 @@ void main() {
         }
 
         if (initiallyClipped) {
-          expect(tester.state<ScrollableState>(inner).position.pixels, greaterThan(0),
-            reason: 'Selecting through the left roster must reveal its loadout.');
+          expect(
+            tester.state<ScrollableState>(inner).position.pixels,
+            greaterThan(0),
+            reason:
+                'Selecting through the left roster must reveal its loadout.',
+          );
         }
         expectSelectedLoadoutVisible();
         expect(
@@ -1724,8 +1836,7 @@ void main() {
     expect(
       campaignSnapshot(),
       before,
-      reason:
-          'Even a captured confirmation cannot apply the previous actor’s draft.',
+      reason: 'Even a captured confirmation cannot apply the previous actor’s draft.',
     );
     expect(tester.takeException(), isNull);
   });
@@ -2144,24 +2255,24 @@ void main() {
     },
   );
 
-  testWidgets('Done closes existing allocation and returns to usable planning', (
-    tester,
-  ) async {
-    await mount(tester);
-    await _tap(tester, 'journal-pool');
-    expect(squadAllocationFrame(engine.console), isNotNull);
-    await tester.tap(find.widgetWithText(TextButton, 'Done'));
-    await _settle(tester);
-    expect(engine.console.screen, 'headquarters');
-    expect(squadAllocationFrame(engine.console), isNull);
-    expect(
-      find.text('Available crew'),
-      findsNothing,
-      reason:
-          'Done must not leave a pool page with an expired allocation behind.',
-    );
-    expect(tester.takeException(), isNull);
-  });
+  testWidgets(
+    'Done closes existing allocation and returns to usable planning',
+    (tester) async {
+      await mount(tester);
+      await _tap(tester, 'journal-pool');
+      expect(squadAllocationFrame(engine.console), isNotNull);
+      await tester.tap(find.widgetWithText(TextButton, 'Done'));
+      await _settle(tester);
+      expect(engine.console.screen, 'headquarters');
+      expect(squadAllocationFrame(engine.console), isNull);
+      expect(
+        find.text('Available crew'),
+        findsNothing,
+        reason: 'Done must not leave a pool page with an expired allocation behind.',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'dragging a real crew member to the pool and back dispatches original allocation',
@@ -2348,6 +2459,116 @@ void main() {
 
   for (final enlarged in [false, true]) {
     testWidgets(
+      'task details inspect the current reader and retain drafts, enlarged=$enlarged',
+      (tester) async {
+        journalReadingScale.value = enlarged ? 1.5 : 1;
+        await mount(
+          tester,
+          size: enlarged ? const Size(1024, 720) : const Size(1440, 1000),
+        );
+        await business(tester);
+        final source = engine.console;
+        final before = campaignSnapshot();
+        final revision = source.revision.value;
+        final actions = List.of(source.actions);
+        final pending = source.nextKeyEvent;
+        final screen = source.screen;
+        List<List<Object>> readerCells() => [
+          for (final row in source.buffer)
+            [
+              for (final cell in row)
+                (
+                  cell.glyph,
+                  cell.foreground,
+                  cell.background,
+                  cell.mouseClickKey,
+                ),
+            ],
+        ];
+        final cells = readerCells();
+        void expectUnchangedReader() {
+          expect(campaignSnapshot(), before);
+          expect(source.revision.value, revision);
+          expect(source.actions, orderedEquals(actions));
+          expect(source.nextKeyEvent, same(pending));
+          expect(source.awaitingInput, isTrue);
+          expect(source.lastKey, isNull);
+          expect(source.screen, screen);
+          expect(readerCells(), cells);
+        }
+
+        final details = _key('journal-activity-details:donations');
+        final retainedDetails = tester.widget<IconButton>(details).onPressed!;
+        final help = activityMechanics(
+          ActivityType.donations,
+          actor: game.squad.first,
+        );
+        final formula = 'Calculation: ${help.calculation!.formula}';
+        reseedRNG(seed: 62413);
+        final rolls = List.generate(10, (_) => lcsRandom(100000));
+        reseedRNG(seed: 62413);
+        await _tap(tester, 'journal-activity-details:donations');
+        expect(_key('journal-order-details-dialog'), findsOneWidget);
+        expect(find.text(formula), findsOneWidget);
+        expect(find.text('Prepared · awaiting confirmation'), findsNothing);
+        expectUnchangedReader();
+        for (final (key, character) in [
+          (LogicalKeyboardKey.keyW, 'w'),
+          (LogicalKeyboardKey.keyP, 'p'),
+          (LogicalKeyboardKey.keyD, 'd'),
+        ]) {
+          await tester.sendKeyEvent(key, character: character);
+          await _settle(tester);
+          expect(_key('journal-order-details-dialog'), findsOneWidget);
+          expectUnchangedReader();
+        }
+        final gameFocus = tester
+            .widgetList<Focus>(find.byType(Focus))
+            .singleWhere(
+              (widget) => widget.focusNode?.debugLabel == 'Game keyboard',
+            )
+            .focusNode!;
+        gameFocus.requestFocus();
+        await tester.pump();
+        expect(gameFocus.hasPrimaryFocus, isTrue);
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await _settle(tester);
+        expect(_key('journal-order-details-dialog'), findsNothing);
+        expectUnchangedReader();
+
+        await _tap(tester, 'journal-activity:donations');
+        final title = tester.widget<Text>(_key('journal-current-order')).data;
+        expect(find.text('Prepared · awaiting confirmation'), findsOneWidget);
+        await _tap(tester, 'journal-activity-details:donations');
+        expect(find.text(formula), findsOneWidget);
+        await tester.tap(find.widgetWithText(TextButton, 'Close'));
+        await _settle(tester);
+        expect(find.text('Prepared · awaiting confirmation'), findsOneWidget);
+        expect(tester.widget<Text>(_key('journal-current-order')).data, title);
+        expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
+        expectUnchangedReader();
+        await _tap(tester, 'journal-cancel-order');
+        expect(find.text('Prepared · awaiting confirmation'), findsNothing);
+        expectUnchangedReader();
+        expect(List.generate(10, (_) => lcsRandom(100000)), rolls);
+
+        await _tap(tester, 'journal-finish-orders');
+        final returnedRevision = source.revision.value;
+        final returnedPending = source.nextKeyEvent;
+        final returnedActions = List.of(source.actions);
+        expect(returnedRevision, isNot(revision));
+        retainedDetails();
+        await _settle(tester);
+        expect(_key('journal-order-details-dialog'), findsNothing);
+        expect(source.revision.value, returnedRevision);
+        expect(source.nextKeyEvent, same(returnedPending));
+        expect(source.actions, orderedEquals(returnedActions));
+        expect(campaignSnapshot(), before);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
       'order formulas retain draft, scroll and focus without changing assignments, input or RNG, enlarged=$enlarged',
       (tester) async {
         await mount(
@@ -2436,8 +2657,7 @@ void main() {
           expect(
             gameFocus.hasPrimaryFocus,
             isTrue,
-            reason:
-                'Closing mechanics must restore the original game keyboard reader.',
+            reason: 'Closing mechanics must restore the original game keyboard reader.',
           );
           await _tap(tester, 'journal-skills');
           expectRetainedDraft();
@@ -2538,9 +2758,8 @@ void main() {
       await tester.tap(find.text('150%'));
       await _settle(tester);
       expect(
-        MediaQuery.textScalerOf(
-          tester.element(_key('journal-selected-person')),
-        ).scale(10),
+        MediaQuery.textScalerOf(tester.element(_key('journal-selected-person')))
+            .scale(10),
         15,
       );
 
@@ -2714,8 +2933,7 @@ void main() {
       expect(
         _key('journal-member:${game.squad.first.id}').hitTestable(),
         findsOneWidget,
-        reason:
-            'Archive Back must return to the usable organisation, with its squad visible.',
+        reason: 'Archive Back must return to the usable organisation, with its squad visible.',
       );
       expect(tester.takeException(), isNull);
     },
