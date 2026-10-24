@@ -36,7 +36,9 @@ For UI or routing work, define the complete interaction before editing: retained
 
 Prepare the cached development build with `python scripts/prepare_dev_mcp.py`, then start a disposable session as described in its guide. Observe the current reader, choose one of its current action IDs and send its observed revision. After an action fails or times out, observe again before deciding what to do: the action may already have been accepted.
 
-Use inspection and captures to explain the defect; save the action trace and actual loaded-build identity. Use the native export flow for a restorable checkpoint rather than synthesizing a save from inspection. Close the owned session when finished. Turn a discovered defect into an ordinary regression and, where relevant, a browser journey; structured engine control cannot verify pointer bounds, focus or layout.
+For final development acceptance, pin `lcs_start.expectedHash` to preparation's `main_js_sha256`. Record the startup result's original `compiledSource`, current `checkedSource` and loaded `mainJsSha256` together; a verified cache hit can retain an older compiled commit.
+
+Use inspection and captures to explain the defect; save the action trace and actual loaded-build identity. Keep each attempt in a new ignored output directory, retaining the initial failure's diagnostics beside any successful retry. Use the native export flow for a restorable checkpoint rather than synthesizing a save from inspection. Close the owned session when finished. Turn a discovered defect into an ordinary regression and, where relevant, a browser journey; structured engine control cannot verify pointer bounds, focus or layout.
 
 ## Leave a reviewable result
 

@@ -25,13 +25,15 @@ Other MCP clients can launch the same stdio server with an absolute Node executa
 ## Working loop
 
 1. Run the preparation command against settled source.
-2. Call `lcs_start` with default arguments. It serves the prepared build on an owned loopback port and opens a fresh disposable browser context. It checks the JavaScript actually loaded by the browser against its SHA-256 and verifies the bridge handshake. The result includes the build identity, first observation and evidence directory.
+2. Call `lcs_start` with default arguments for exploration. For final acceptance, pass `expectedHash` from the prepared artifact's `main_js_sha256`. It serves the prepared build on an owned loopback port and opens a fresh disposable browser context. It checks the JavaScript actually loaded by the browser against its SHA-256 and verifies the bridge handshake. Retain the returned `compiledSource`, `checkedSource`, `mainJsSha256` and evidence directory together.
 3. Read the current observation. Use `lcs_inspect` with `scope: "summary"` or `scope: "person", personId: ...` to investigate consequences. `scope: "context"` gives named locations, pending recruitment, vehicles and the existing encounter without a full campaign dump. These are debugging fields, including hidden locations; they do not predict recruitment success. Request `scope: "campaign"` only when complete saved fields are needed.
 4. Choose an enabled action from `observation.actions`. Call `lcs_act` with its `actionId` and the observation's `revision`. The result supplies the next decision, so ordinary play does not need an extra observation call after every action. Use `lcs_input_text` when a source reader requests text.
 5. On an unexpected result, call `lcs_capture` with a meaningful name. Preserve the returned paths in the fix report, add a focused regression, then run the existing checks appropriate to the change.
 6. Call `lcs_close` to finalize the session and close its owned resources.
 
 Always inspect a rejected or timed-out action before retrying. A timeout can follow an accepted command; it does not mean that command never happened. `lcs_wait` observes progress without answering it. Encounters and confirmations remain individual decisions.
+
+Source actions can include `entityType`, `entityId` and a readable `entityLabel`. Save-menu rows identify the stored campaign and its existing founder/date description, so duplicate founder names and repeated row keys on later pages remain distinguishable. Use this metadata to find a current action, then dispatch its observed action ID and revision.
 
 During a tactical reader, `observation.map` supplies the same read-only snapshot as the graphical map: coordinates, an ASCII grid and legend, known cells with terrain and interaction hints, and adjacent source movement actions linked by their current IDs. `#` is a known wall, `+` a door, `@` the squad and `?` unexplored terrain. Unknown cells expose no flags, enemies, loot or lock state. Remembered cells are distinguished from those in view. `full_map` uses the full already-explored floor; other tactical readers use the graphical viewport. Movement terrain describes the known target; it does not predict an encounter or bypass the source handler. Nested prompts retain the displayed squad position and expose no movement action unless the original reader does.
 
@@ -63,7 +65,7 @@ For a custom build, pass `webRoot` and optionally `expectedHash` to `lcs_start`.
 
 ## Evidence and boundaries
 
-Session evidence is retained under ignored `reports/` or `.local/`. It includes the loaded JavaScript hash, bridge build identity, requests, results, elapsed times, rejected actions and browser errors. Named captures provide screenshots and structured state for bug reports. Keep failures as well as successes. Old captures describe their recorded build, not the current checkout.
+Session evidence is retained under ignored `reports/` or `.local/`. It includes the loaded JavaScript hash, bridge build identity, requests, results, elapsed times, rejected actions and browser errors. Named captures provide screenshots and structured state for bug reports. Keep each attempt in a new output directory, including page/console/request diagnostics from failures; a successful retry is separate evidence. Old captures describe their recorded build, not the current checkout.
 
 Use `lcs_close` to let pending native exports finish before closing the disposable context. If the MCP host disconnects, cleanup closes its owned browser and loopback server first so a stalled download cannot hold them open; interrupted exports remain recorded as download errors in `session.json` and the trace.
 
