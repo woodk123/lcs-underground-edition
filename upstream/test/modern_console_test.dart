@@ -56,6 +56,7 @@ void main() {
         type: 'site',
         id: 'Site42',
         category: 'Abandoned Warehouse',
+        label: 'Warehouse at the docks',
       );
       engine.console.annotateAction('b', 'Queue a squad visit');
       final action = engine.console.actions.single;
@@ -80,24 +81,33 @@ void main() {
       expect(action.entityType, 'site');
       expect(action.entityId, 'Site42');
       expect(action.entityCategory, 'Abandoned Warehouse');
+      expect(action.entityLabel, 'Warehouse at the docks');
       expect(action.intentLabel, 'Queue a squad visit');
       engine.console.replaceActions({'Enter': 'Continue'});
       expect(engine.console.actions.single.entityId, isNull);
+      expect(engine.console.actions.single.entityLabel, isNull);
     });
 
     test('entity annotations distinguish uppercase and lowercase commands', () {
       final console = engine.console;
       console.addAction('c', 'Passenger', caseSensitive: true);
       console.addAction('C', 'Drive', caseSensitive: true);
-      console.annotateActionEntity('C', type: 'vehicle', id: 'Car7');
+      console.annotateActionEntity(
+        'C',
+        type: 'vehicle',
+        id: 'Car7',
+        label: 'Parked Jeep',
+      );
       console.annotateAction('C', 'Choose a driver');
       final driver = console.actions.singleWhere((action) => action.key == 'C');
       final passenger = console.actions.singleWhere(
         (action) => action.key == 'c',
       );
       expect(driver.entityId, 'Car7');
+      expect(driver.entityLabel, 'Parked Jeep');
       expect(driver.intentLabel, 'Choose a driver');
       expect(passenger.entityId, isNull);
+      expect(passenger.entityLabel, isNull);
       expect(passenger.intentLabel, isNull);
     });
 

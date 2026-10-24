@@ -341,6 +341,12 @@ Future<bool> loadGameMenu() async {
           setColor(lightGray);
         }
         mvaddstr(y, 70, version);
+        console.annotateActionEntity(
+          key,
+          type: 'save',
+          id: saveFile.gameId,
+          label: '$founder · $inGameDate',
+        );
       },
       onChoice: (index) async {
         selectedGame = index;
