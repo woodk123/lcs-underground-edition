@@ -27,7 +27,8 @@ from serve import GameHandler, GameServer
 ROOT = Path(__file__).resolve().parent.parent
 TESTS = (
     'creation_flow_test.dart', 'creation_bonus_help_test.dart',
-    'organisation_journal_test.dart', 'journal_navigation_state_test.dart', 'page_storage_isolation_test.dart',
+    'organisation_journal_test.dart', 'headquarters_command_access_test.dart',
+    'journal_navigation_state_test.dart', 'page_storage_isolation_test.dart',
     'movement_daily_plan_test.dart', 'journal_daily_plan_test.dart', 'journal_equipment_test.dart',
     'organisation_order_workspace_test.dart', 'organisation_team_header_test.dart',
     'organisation_visit_flow_test.dart', 'journal_processing_test.dart',

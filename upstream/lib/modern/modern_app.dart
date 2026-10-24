@@ -29,6 +29,7 @@ import 'package:lcs_new_age/modern/full_site_map.dart';
 import 'package:lcs_new_age/modern/game_input_policy.dart';
 import 'package:lcs_new_age/modern/headquarters_view.dart';
 import 'package:lcs_new_age/modern/journal_agenda.dart';
+import 'package:lcs_new_age/modern/journal_bulk_orders.dart';
 import 'package:lcs_new_age/modern/journal_creation.dart';
 import 'package:lcs_new_age/modern/journal_equipment.dart';
 import 'package:lcs_new_age/modern/journal_field_operation_view.dart';
@@ -48,7 +49,9 @@ import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/modern/journal_title.dart';
 import 'package:lcs_new_age/modern/journal_workspace_view.dart';
 import 'package:lcs_new_age/modern/juice_indicator.dart';
+import 'package:lcs_new_age/modern/mechanics_help.dart';
 import 'package:lcs_new_age/modern/modern_shell_chrome.dart';
+import 'package:lcs_new_age/modern/order_mechanics_dialog.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/modern/organisation_journal.dart';
 import 'package:lcs_new_age/modern/tactical_map.dart';
@@ -1072,7 +1075,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
         case JournalSectionDestination.headquarters:
           await _organisation.returnToHeadquarters();
         case JournalSectionDestination.personnelDirectory:
-          await _organisation.openPersonnelDirectory();
+          if (await _organisation.openPersonnelDirectory()) {
+            _journalKey.currentState?.showPersonnelDirectory();
+          }
         case JournalSectionDestination.sourceReader:
           if (await _organisation.openSection(section.sourceRoute.first)) {
             for (final key in section.sourceRoute.skip(1)) {
@@ -1177,6 +1182,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
     } else if (_journalNavigation.section == JournalSection.network &&
         !console.textInput &&
         console.journalProfile == null &&
+        !console.actions.any(
+          (action) => action.entityType == 'sleeper-bulk-selected',
+        ) &&
         (primary ||
             _organisation.busy ||
             console.navigation?.section == 'assignments')) {
@@ -1236,6 +1244,12 @@ class _ModernGameShellState extends State<ModernGameShell> {
               .id,
       fullSpreadDetail:
           console.screen == 'organisation' ||
+          console.actions.any(
+            (action) => const {
+              'bulk-activity-selected',
+              'sleeper-bulk-selected',
+            }.contains(action.entityType),
+          ) ||
           console.eventMessage != null ||
           recoveryContext(console) != null ||
           console.screen == 'squad_choice' ||
@@ -1328,6 +1342,23 @@ class _ModernGameShellState extends State<ModernGameShell> {
     ],
   );
 
+  VoidCallback? get _changeSloganCommand {
+    if (!_organisation.canNavigate ||
+        (_journalKey.currentState?.hasUnconfirmedDraft ?? false)) {
+      return null;
+    }
+    final revision = console.revision.value;
+    final campaign = game.gameState;
+    return () {
+      if (identical(game.gameState, campaign) &&
+          console.revision.value == revision &&
+          _organisation.canNavigate &&
+          !(_journalKey.currentState?.hasUnconfirmedDraft ?? false)) {
+        unawaited(_organisation.openSection('s'));
+      }
+    };
+  }
+
   Widget _journalOptions() => JournalSurface(
     lined: true,
     child: SingleChildScrollView(
@@ -1364,6 +1395,15 @@ class _ModernGameShellState extends State<ModernGameShell> {
           ),
           const SizedBox(height: 18),
           const Text('Campaign options', style: JournalPalette.heading),
+          const SizedBox(height: 8),
+          Text(game.slogan, style: JournalPalette.body),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const ValueKey('journal-change-slogan'),
+            onPressed: _changeSloganCommand,
+            icon: const Icon(Icons.edit_outlined),
+            label: const Text('Change movement slogan'),
+          ),
           const SizedBox(height: 8),
           const Text(
             'Save the campaign and return to the title screen to change game content and start options.',
@@ -1962,6 +2002,15 @@ class _ModernGameShellState extends State<ModernGameShell> {
         .where((row) => row.isNotEmpty)
         .toList();
     final heading = rows.isEmpty ? 'Organisation' : _screenHeading(rows);
+    final bulk = console.actions
+        .where(
+          (action) => const {
+            'bulk-activity-selected',
+            'sleeper-bulk-selected',
+          }.contains(action.entityType),
+        )
+        .firstOrNull;
+    if (bulk != null) return _bulkOrdersPage(heading, bulk);
     final navigation = console.navigation;
     final selected = _organisation.selectedPerson;
     final squadOnly = const {
@@ -2017,6 +2066,79 @@ class _ModernGameShellState extends State<ModernGameShell> {
               ],
             ),
       input: console.textInput ? _inputBar() : null,
+    );
+  }
+
+  Widget _bulkOrdersPage(String title, ConsoleAction selected) {
+    final revision = console.revision.value;
+    final tasks = console.actions
+        .where(
+          (action) =>
+              action.entityType?.startsWith('bulk-activity') == true ||
+              action.entityType?.startsWith('sleeper-bulk') == true,
+        )
+        .toList();
+    final personActions = console.actions
+        .where((action) => action.entityType == 'person')
+        .toList();
+    final type = activityTypeForAction(selected);
+    final help = selected.entityType == 'bulk-activity-selected'
+        ? bulkActivityMechanics(selected.entityId)
+        : type != null
+        ? activityMechanics(type, sleeper: true)
+        : null;
+    final backKey = console.navigation!.backKey;
+    return JournalBulkOrdersView(
+      title: title,
+      tasks: tasks,
+      selected: selected,
+      help: help,
+      people: [
+        for (final action in personActions)
+          if (game.pool
+                  .where((person) => person.id.toString() == action.entityId)
+                  .firstOrNull
+              case final person?)
+            BulkOrderPerson(
+              action: action,
+              name: person.name,
+              order: person.activity.description,
+            ),
+      ],
+      pages: console.actions
+          .where(
+            (action) =>
+                !tasks.contains(action) && !personActions.contains(action),
+          )
+          .toList(),
+      onAction: (action) {
+        if (!_inputState().overlayOpen &&
+            console.revision.value == revision &&
+            console.actions.contains(action) &&
+            action.enabled) {
+          _send(action.key);
+        }
+      },
+      onBack: () {
+        if (!_inputState().overlayOpen && console.revision.value == revision) {
+          _send(backKey);
+        }
+      },
+      onDetails: () async {
+        if (help == null ||
+            _inputState().overlayOpen ||
+            console.revision.value != revision) {
+          return;
+        }
+        await showDialog<void>(
+          context: context,
+          builder: (context) => OrderMechanicsDialog(
+            help: help,
+            onClose: () => Navigator.of(context).pop(),
+          ),
+        );
+        if (mounted) _keyboard.requestFocus();
+      },
     );
   }
 

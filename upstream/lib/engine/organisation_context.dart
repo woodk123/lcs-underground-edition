@@ -164,7 +164,8 @@ class SiegeBriefing {
   final List<String> statusLines;
 }
 
-/// The exact W/F/G/C capabilities authored by the last matching HQ frame.
+/// Source-authored day, siege, cancellation, reorder and order capabilities
+/// from the last matching HQ frame.
 ///
 /// Its scope is a fingerprint, never an eligibility calculation. A changed
 /// team, site, date, roster, queued order or siege invalidates the snapshot; UI
@@ -175,7 +176,8 @@ class HeadquartersFrame {
     : _scope = _currentHeadquartersScope(),
       actions = List.unmodifiable(
         actions.where(
-          (action) => const {'w', 'f', 'g', 'c'}.contains(action.key),
+          (action) =>
+              const {'w', 'f', 'g', 'c', 'o', 'a', 'b'}.contains(action.key),
         ),
       );
 

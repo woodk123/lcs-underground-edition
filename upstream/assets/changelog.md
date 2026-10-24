@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.6.0 — 2026-10-24
+
+* Reorder a squad directly from its roster, open bulk crew orders from People and bulk sleeper orders from Network, and change the movement slogan from Options. Bulk orders keep task and person choices visible together, with full mechanics in Details.
+
 ## Underground Edition 0.5.2 — 2026-10-24
 
 * Distinguish prepared Orders changes from current assignments, with costs, income estimates and key warnings ahead of confirmation. Keep full calculations in Details.
