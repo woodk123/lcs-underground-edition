@@ -1474,6 +1474,74 @@ void main() {
         );
         expect(unavailable.onPressed, isNull);
         expect(campaignSnapshot(), before);
+        final hackingSource = engine.console;
+        final hackingCategory = activityOrderFrame(hackingSource)
+            ?.selectedCategoryKey;
+        final hackingRevision = hackingSource.revision.value;
+        final hackingActions = List.of(hackingSource.actions);
+        final hackingPending = hackingSource.nextKeyEvent;
+        final hackingHelp = activityMechanics(
+          ActivityType.hacking,
+          actor: actor,
+        );
+        expect(hackingHelp.unavailableReason, isNotNull);
+        void expectHackingReaderUnchanged() {
+          expect(campaignSnapshot(), before);
+          expect(
+            activityOrderFrame(hackingSource)?.selectedCategoryKey,
+            hackingCategory,
+          );
+          expect(hackingSource.revision.value, hackingRevision);
+          expect(hackingSource.actions, orderedEquals(hackingActions));
+          expect(hackingSource.nextKeyEvent, same(hackingPending));
+          expect(hackingSource.awaitingInput, isTrue);
+          expect(hackingSource.lastKey, isNull);
+        }
+
+        await _tap(tester, 'journal-activity-details:hacking');
+        final hackingDialog = _key('journal-order-details-dialog');
+        expect(hackingDialog, findsOneWidget);
+        for (final text in [
+          hackingHelp.title,
+          hackingHelp.summary,
+          hackingHelp.timing,
+          if (hackingHelp.factors.isNotEmpty) 'Uses: ${hackingHelp.factors}',
+          if (hackingHelp.cost.isNotEmpty) 'Cost: ${hackingHelp.cost}',
+          if (hackingHelp.requirements.isNotEmpty)
+            'Needs: ${hackingHelp.requirements}',
+          'Unavailable: ${hackingHelp.unavailableReason}',
+          if (hackingHelp.risk.isNotEmpty) hackingHelp.risk,
+          if (hackingHelp.calculation case final calculation?) ...[
+            'Calculation: ${calculation.formula}',
+            ...calculation.inputs,
+            calculation.result,
+            ...calculation.qualifiers,
+          ],
+          if (hackingHelp.details.isNotEmpty) hackingHelp.details,
+        ]) {
+          expect(
+            find.descendant(of: hackingDialog, matching: find.text(text)),
+            findsOneWidget,
+          );
+        }
+        expectHackingReaderUnchanged();
+        await _tap(tester, 'journal-order-details-close');
+        expect(hackingDialog, findsNothing);
+        expect(
+          tester
+              .widget<TextField>(_key('journal-order-search'))
+              .controller!
+              .text,
+          'hacking',
+        );
+        expect(_key('journal-confirm-order'), findsNothing);
+        expect(
+          tester
+              .state<OrganisationJournalState>(find.byType(OrganisationJournal))
+              .hasPreparedOrder,
+          isFalse,
+        );
+        expectHackingReaderUnchanged();
         await tester.enterText(_key('journal-order-search'), 'money');
         await _settle(tester);
         await _tap(tester, 'journal-activity:donations');

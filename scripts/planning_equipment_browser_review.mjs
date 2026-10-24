@@ -120,7 +120,7 @@ const report = {
       sleeper: { id: sleeper.id, name: sleeper.name }, queuedSquad: { id: queuedSquad.id, name: queuedSquad.name, destination: park.name },
       recruiter: { id: prepared.lcs.pool[3].id, name: prepared.lcs.pool[3].name }, prospect: { id: prospect.id, name: prospect.name } },
     people: prepared.lcs.pool.length, stockTypes: home.loot.map(item => item.typeName) },
-  checks: [], errors: [], screenshots: [], sourceActions: [], snapshots: [], layouts: [], focusChecks: [], sourceNormalizations: [],
+  checks: [], errors: [], screenshots: [], sourceActions: [], snapshots: [], layouts: [], focusChecks: [], sourceNormalizations: [], actorStatusGeometry: [],
   pageErrors: [], consoleErrors: [], failedRequests: [], workerErrors: [], loadedMainJsHashes: [],
 };
 await writeFile(resolve(output, 'report.json'), JSON.stringify(report, null, 2));
@@ -174,6 +174,9 @@ function check(name) { report.checks.push({ name, layout, status: 'passed' }); c
 async function wait(pattern) { await waitForSemantics(page, pattern); }
 async function reveal(control, scope = page) {
   let lastError;
+  // Ancestor/child DOMRects can quantize an exactly shared horizontal CSS edge
+  // differently; allow one layout unit while retaining the real trial click.
+  const horizontalQuantization = 1 / 64;
   for (let attempt = 0; attempt < 32; attempt++) {
     const viewport = page.viewportSize();
     const area = scope === page ? { x: 0, y: 0, ...viewport } : await scope.boundingBox();
@@ -209,7 +212,8 @@ async function reveal(control, scope = page) {
     }, area) : [];
     const visible = clips[0]?.visible ?? area;
     const topInset = clips[0]?.topInset ?? 0, bottomInset = clips[0]?.bottomInset ?? 0;
-    if (box && box.height > 4 && box.x >= visible.x && box.x + box.width <= visible.x + visible.width
+    if (box && box.height > 4 && box.x >= visible.x - horizontalQuantization
+      && box.x + box.width <= visible.x + visible.width + horizontalQuantization
       && box.y >= visible.y + topInset && box.y + box.height <= visible.y + visible.height - bottomInset) {
       try { await control.click({ trial: true, timeout: 300 }); return control; }
       catch (error) { lastError = String(error); }
@@ -628,6 +632,39 @@ async function dailyPlanJourney() {
   assert.ok(orderFrame.observation.actions.some(action => action.entityType === 'activity'
     && action.entityId === 'donations' && action.entityCategory === String(orderActor.id)),
   'The original Orders reader must be for the person selected on the board.');
+  // Mara is the declared healthy Felix clone. Inspect its current painted status
+  // without reveal/scroll: accessible text alone did not catch the clipped line.
+  const statusGeometry = await page.evaluate(label => {
+    const host = document.querySelector('flt-semantics-host');
+    const labelled = [...(host?.querySelectorAll('flt-semantics[aria-label]') ?? [])]
+      .filter(node => node.getAttribute('aria-label') === label);
+    const matches = labelled.length ? labelled : [...(host?.querySelectorAll('flt-semantics > span') ?? [])]
+      .filter(node => node.textContent.trim() === label);
+    const rect = node => {
+      const box = node.getBoundingClientRect();
+      return { x: box.x, y: box.y, width: box.width, height: box.height, right: box.right, bottom: box.bottom };
+    };
+    return { label, count: matches.length, matches: matches.slice(0, 4).map(node => {
+      const target = rect(node), clips = [];
+      let left = 0, top = 0, right = innerWidth, bottom = innerHeight;
+      for (let ancestor = node.parentElement; ancestor; ancestor = ancestor.parentElement) {
+        const style = getComputedStyle(ancestor);
+        if (!/(?:hidden|auto|scroll|clip)/.test(`${style.overflowX} ${style.overflowY}`)) continue;
+        const box = rect(ancestor);
+        left = Math.max(left, box.x); top = Math.max(top, box.y);
+        right = Math.min(right, box.right); bottom = Math.min(bottom, box.bottom);
+        if (clips.length < 10) clips.push({ id: ancestor.id, overflowX: style.overflowX, overflowY: style.overflowY, rect: box });
+      }
+      return { id: node.id, target, clips, visible: { left, top, right, bottom },
+        fullyVisible: target.width > 4 && target.height > 4 && target.x >= left - 1 / 64
+          && target.right <= right + 1 / 64 && target.y >= top && target.bottom <= bottom };
+    }) };
+  }, 'Juice 0 · Civilian · 230/230 blood');
+  report.actorStatusGeometry.push({ layout, actorId: orderActor.id, ...statusGeometry });
+  await writeFile(resolve(output, `${layout}-selected-actor-status-geometry.json`), JSON.stringify(statusGeometry, null, 2));
+  assert.equal(statusGeometry.count, 1, 'The current Orders actor must expose one exact status label.');
+  assert.ok(statusGeometry.matches[0].fullyVisible,
+    'The selected Orders actor status must fit its actual clipped ancestors before any reveal scrolling.');
   await click(/^Details for Solicit Donations$/);
   const mechanics = page.getByRole('alertdialog');
   await mechanics.waitFor({ state: 'visible' }); await wait(/Calculation:/);

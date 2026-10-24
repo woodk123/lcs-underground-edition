@@ -1266,7 +1266,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   (headerActor.blood < headerActor.maxBlood ||
                       headerActor.body.parts.any((part) => part.wounded));
               final compactHeaderHeight = widget.textScale > 1.1
-                  ? (undercover && members.length > 6
+                  ? (_individualOrderActor != null || undercover
                         ? 140.0
                         : healthWarning
                         ? 130.0

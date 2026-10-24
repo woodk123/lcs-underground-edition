@@ -15,6 +15,7 @@ const _status = 'Juice 0 · 140/140 blood';
 
 OrganisationTeamActorView _actor({
   String name = _name,
+  String location = _location,
   String status = _status,
   String statusTooltip = 'Juice 0 · Liberal · 140/140 blood',
   bool warning = false,
@@ -23,7 +24,7 @@ OrganisationTeamActorView _actor({
 }) => OrganisationTeamActorView(
   personId: 7,
   name: name,
-  location: _location,
+  location: location,
   status: status,
   statusTooltip: statusTooltip,
   statusWarning: warning,
@@ -52,7 +53,20 @@ Future<void> _mount(
   bool withActor = true,
   OrganisationTeamActorView? actor,
   VoidCallback? onToggle,
+  double? viewportHeight,
 }) async {
+  final header = OrganisationTeamHeaderView(
+    key: const ValueKey('team-header'),
+    teamName: team,
+    showingSkills: showingSkills,
+    onToggleSkills: onToggle ?? () {},
+    memberCount: memberCount,
+    memberCountLabel: memberLabel,
+    armedCount: armed,
+    carCount: cars,
+    compact: compact,
+    actor: withActor ? actor ?? _actor() : null,
+  );
   await tester.pumpWidget(
     MaterialApp(
       theme: buildJournalTheme(),
@@ -66,18 +80,15 @@ Future<void> _mount(
           alignment: Alignment.topLeft,
           child: SizedBox(
             width: width,
-            child: OrganisationTeamHeaderView(
-              key: const ValueKey('team-header'),
-              teamName: team,
-              showingSkills: showingSkills,
-              onToggleSkills: onToggle ?? () {},
-              memberCount: memberCount,
-              memberCountLabel: memberLabel,
-              armedCount: armed,
-              carCount: cars,
-              compact: compact,
-              actor: withActor ? actor ?? _actor() : null,
-            ),
+            child: viewportHeight == null
+                ? header
+                : SizedBox(
+                    height: viewportHeight,
+                    child: SingleChildScrollView(
+                      key: const ValueKey('team-header-viewport'),
+                      child: header,
+                    ),
+                  ),
           ),
         ),
       ),
@@ -315,6 +326,82 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  for (final (scale, warning, allocation, network) in [
+    (1.0, false, 86.0, false),
+    (1.0, true, 96.0, false),
+    (1.5, false, 140.0, false),
+    (1.5, true, 140.0, false),
+    (1.5, false, 140.0, true),
+    (1.5, true, 140.0, true),
+  ]) {
+    testWidgets(
+      '${network ? 'small network' : 'individual assignment'} keeps blood and Juice visible scale=$scale warning=$warning',
+      (tester) async {
+        final members = network ? '1 agents' : '1 person';
+        final memberLabel = network
+            ? 'Undercover agents'
+            : 'Individual assignment';
+        final statusText = warning ? 'Juice 1200 · 5/230 blood' : _status;
+        final detail = warning
+            ? 'Juice 1200 · Commander · 5/230 blood · Injured'
+            : 'Juice 0 · Liberal · 140/140 blood';
+        await _mount(
+          tester,
+          width: 300,
+          scale: scale,
+          compact: true,
+          viewportHeight: allocation,
+          team: network ? 'Undercover network' : 'Individual orders',
+          memberCount: members,
+          memberLabel: memberLabel,
+          armed: '1',
+          cars: '0',
+          actor: _actor(
+            name: 'Mara Planner',
+            location: 'Homeless, SEA',
+            status: statusText,
+            statusTooltip: detail,
+            warning: warning,
+            portraitSize: 36,
+          ),
+        );
+        final viewport = tester.getRect(_key('team-header-viewport'));
+        final header = tester.getRect(_key('team-header'));
+        final status = tester.getRect(_key('journal-selected-status'));
+        debugPrint(
+          '${network ? 'SmallNetwork' : 'Individual'}300px scale=$scale warning=$warning: natural=${header.height} allocation=${viewport.height} statusBottom=${status.bottom - viewport.top}',
+        );
+        expect(header.bottom, lessThanOrEqualTo(viewport.bottom));
+        expect(status.bottom, lessThanOrEqualTo(viewport.bottom));
+        expect(status.top, greaterThanOrEqualTo(viewport.top));
+        expect(
+          tester
+              .renderObject<RenderParagraph>(_key('journal-selected-status'))
+              .didExceedMaxLines,
+          isFalse,
+        );
+        expect(
+          tester
+              .getSemantics(_key('journal-team-members'))
+              .getSemanticsData()
+              .label,
+          '$memberLabel: $members',
+        );
+        expect(
+          find.bySemanticsLabel('${warning ? 'Health warning: ' : ''}$detail'),
+          findsOneWidget,
+        );
+        for (final id in ['members', 'armed', 'cars']) {
+          final counter = tester.getRect(_key('journal-team-$id'));
+          expect(counter.bottom, lessThanOrEqualTo(viewport.bottom));
+        }
+        expect(_key('journal-skills').hitTestable(), findsOneWidget);
+        expect(_key('hq-portrait:7').hitTestable(), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets(
     'empty crew retains counters and native toggle without an inspect action',
