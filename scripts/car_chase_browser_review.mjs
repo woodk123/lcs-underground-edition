@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions, createQaPage, observeMainScript } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, createQaPage, observeMainScript, waitForUiSettled } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -54,7 +54,7 @@ const report = {
     + 'cleared car preferences/orders/charges/heat. Original attributes, skills, body, blood and juice preserved. '
     + 'Supplied a clone of the founder AK47 (30 loaded rounds) and spare ammunition stack8. '
     + 'No supplied vehicle, selected RNG, forced pursuit, healing, balance or outcome.' }],
-  checks: [], issues: [], attempts: [], outcomes: {}, decisions: [], chosenControls: [], screenshots: [],
+  checks: [], issues: [], attempts: [], outcomes: {}, decisions: [], chosenControls: [], screenshots: [], startups: [],
   pageErrors: [], consoleErrors: [], failedRequests: [],
 };
 const response = await fetch(new URL('main.dart.js', url));
@@ -62,7 +62,34 @@ assert.ok(response.ok);
 report.mainJsSha256 = createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex');
 assert.equal(report.mainJsSha256, expected.toLowerCase(), 'QA must serve this exact compiled build.');
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
-let context, page, verifyLoadedScript, scene = 'setup', attemptNumber = 0, normalized;
+let context, page, verifyLoadedScript, network, scene = 'setup', attemptNumber = 0, normalized;
+function trackStartupRequests(context) {
+  const startedAt = Date.now(), requests = [], pending = new Map(), workerErrors = [];
+  context.on('request', request => {
+    const entry = { url: request.url(), method: request.method(), resourceType: request.resourceType(),
+      serviceWorker: request.serviceWorker()?.url() ?? null, startedMs: Date.now() - startedAt };
+    requests.push(entry); pending.set(request, entry);
+  });
+  context.on('response', response => {
+    const entry = pending.get(response.request());
+    if (entry) Object.assign(entry, { responseMs: Date.now() - startedAt, status: response.status(),
+      fromServiceWorker: response.fromServiceWorker(), contentLength: Number(response.headers()['content-length'] ?? 0) });
+  });
+  function finish(request, error) {
+    const entry = pending.get(request);
+    if (entry) Object.assign(entry, { finishedMs: Date.now() - startedAt, timing: request.timing(),
+      ...(error ? { error } : {}) });
+    pending.delete(request);
+  }
+  context.on('requestfinished', request => finish(request));
+  context.on('requestfailed', request => finish(request, request.failure()?.errorText ?? 'Unknown request failure'));
+  context.on('console', message => {
+    if (!message.page() && ['error', 'warning'].includes(message.type()))
+      workerErrors.push({ elapsedMs: Date.now() - startedAt, type: message.type(), text: message.text(), location: message.location() });
+  });
+  return { startedAt, requests, workerErrors,
+    pendingAtFailure: () => [...pending.values()].map(entry => ({ ...entry, pendingForMs: Date.now() - startedAt - entry.startedMs })) };
+}
 const button = name => page.getByRole('button', { name }).first();
 async function available(name) { return await button(name).count() > 0 && await button(name).isEnabled(); }
 async function text() {
@@ -113,11 +140,19 @@ function issue(message) {
 }
 async function fresh() {
   if (verifyLoadedScript) await verifyLoadedScript(expected.toLowerCase());
+  if (network) network.startup.pendingBeforeClose = network.pendingAtFailure().length;
   ({ context, page } = await createQaPage(browser, {
     previousContext: context, report, errorContext: () => ({ scene }), timeout: 9000,
   }));
+  network = trackStartupRequests(context);
+  network.startup = { scene, attempt: attemptNumber, createdAt: new Date(network.startedAt).toISOString(), titleWaitBudgetMs: 20000 };
+  report.startups.push(network.startup);
   verifyLoadedScript = observeMainScript(page, report);
-  await page.goto(url, { waitUntil: 'networkidle' }); await wait(/Start a New Game/);
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  network.startup.domContentLoadedMs = Date.now() - network.startedAt;
+  await wait(/Start a New Game/);
+  network.startup.titleReadyMs = Date.now() - network.startedAt;
+  console.log(`STARTUP ${scene} ${attemptNumber}: title ready in ${network.startup.titleReadyMs}ms`);
 }
 async function importLoad(path) {
   const choosing = page.waitForEvent('filechooser'); await click(/^Import a Save/);
@@ -140,7 +175,7 @@ async function enlarged() {
   await page.setViewportSize({ width: 1024, height: 720 });
   await click(/^Reading size/);
   await page.getByRole('menuitem', { name: '150%', exact: true }).click();
-  await page.waitForTimeout(200);
+  await waitForUiSettled(page);
 }
 const pullOver = /^(?:P[-\s]*)?Pull over and surrender$/i;
 const bailOut = /^(?:B[-\s]*)?Bail out and run$/i;
@@ -196,11 +231,13 @@ async function inspectAndEnlarge() {
   if (!/Car pursuit/.test(await text())) issue('Car pursuit uses the generic fallback instead of a contextual journal page.');
   if (await available(/^Inspect Teachlocks$/)) {
     const before = await text(); await click(/^Inspect Teachlocks$/);
+    await page.getByRole('dialog').waitFor({ state: 'visible' });
     if (await page.getByRole('dialog').count()) {
-      await page.keyboard.press('p'); await page.keyboard.press('d'); await page.waitForTimeout(160);
+      await page.keyboard.press('p'); await page.keyboard.press('d'); await waitForUiSettled(page);
       assert.ok(await page.getByRole('dialog').count(), 'Dossier must block underlying keyboard actions.');
       await page.getByRole('dialog').getByRole('button', { name: 'Close dossier', exact: true }).last().click();
-      await page.waitForTimeout(160);
+      await page.getByRole('dialog').waitFor({ state: 'hidden' });
+      await waitForUiSettled(page);
       assert.equal(await text(), before, 'Closing the read-only dossier preserves the current car decision.');
       check('car dossier opens, blocks pursuit keys and closes without consuming a decision');
     } else issue('Car pursuit Inspect control does not open a dossier.');
@@ -471,11 +508,33 @@ try {
   report.status = report.issues.length ? 'baseline-issues-reproduced' : 'passed';
 } catch (error) {
   report.status = 'failed'; report.error = error.stack ?? String(error); process.exitCode = 1;
+  report.failureNetwork = network && { capturedAt: new Date().toISOString(), pendingBeforeCapture: network.pendingAtFailure(),
+    requests: network.requests, workerErrors: network.workerErrors };
   if (page) {
+    try {
+      const evidence = await page.evaluate(async () => {
+        let bridge = { available: false }, timer;
+        if (globalThis.lcsDev?.request) {
+          try { bridge = { available: true, result: JSON.parse(await Promise.race([
+            globalThis.lcsDev.request(JSON.stringify({ method: 'observe', params: {} })),
+            new Promise((_, reject) => { timer = setTimeout(() => reject(Error('Read-only observe timed out')), 1500); }),
+          ])) }; } catch (error) { bridge = { available: true, error: String(error) }; } finally { clearTimeout(timer); }
+        }
+        const registrations = await navigator.serviceWorker.getRegistrations().catch(() => []);
+        return { capturedAt: new Date().toISOString(), url: location.href, bridge, fonts: document.fonts.status,
+          resources: performance.getEntriesByType('resource').map(entry => entry.toJSON()),
+          serviceWorker: { controller: navigator.serviceWorker.controller && {
+            scriptURL: navigator.serviceWorker.controller.scriptURL, state: navigator.serviceWorker.controller.state },
+          registrations: registrations.map(registration => ({ scope: registration.scope,
+            active: registration.active?.state, installing: registration.installing?.state, waiting: registration.waiting?.state })) } };
+      });
+      await writeFile(resolve(output, 'FAILURE.json'), JSON.stringify(evidence, null, 2));
+    } catch (captureError) { report.failureCaptureError = String(captureError); }
     await page.screenshot({ path: resolve(output, 'FAILURE.png'), fullPage: true }).catch(() => {});
     await writeFile(resolve(output, 'FAILURE.txt'), await text().catch(() => '')).catch(() => {});
   }
 } finally {
+  if (network) network.startup.pendingBeforeClose = network.pendingAtFailure().length;
   await context?.close(); await browser.close();
   await writeFile(resolve(output, 'report.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify({ status: report.status, output, checks: report.checks.length, issues: report.issues, error: report.error }));
