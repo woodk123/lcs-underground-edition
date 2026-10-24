@@ -221,7 +221,34 @@ void main() {
         final workspaceWidth = tester
             .getSize(_key('journal-order-workspace'))
             .width;
-        expect(tester.getSize(choice).width, greaterThan(workspaceWidth * .9));
+        final details = _key('journal-activity-details:donations');
+        expect(details.hitTestable(), findsOneWidget);
+        expect(tester.widget<TextButton>(choice).onPressed, isNotNull);
+        expect(tester.widget<IconButton>(details).onPressed, isNotNull);
+        final prepareRect = tester.getRect(choice);
+        final detailsRect = tester.getRect(details);
+        final workspaceRect = tester.getRect(_key('journal-order-workspace'));
+        final viewport = Offset.zero & layout.$1;
+        for (final rect in [prepareRect, detailsRect]) {
+          expect(rect.width, greaterThanOrEqualTo(48));
+          expect(rect.height, greaterThanOrEqualTo(48));
+          expect(viewport.contains(rect.center), isTrue);
+          expect(workspaceRect.contains(rect.center), isTrue);
+          expect(rect.left, greaterThanOrEqualTo(workspaceRect.left - 1));
+          expect(rect.right, lessThanOrEqualTo(workspaceRect.right + 1));
+        }
+        expect(detailsRect.bottom, lessThanOrEqualTo(workspaceRect.bottom));
+        expect(prepareRect.right, lessThanOrEqualTo(detailsRect.left + 1));
+        expect(
+          detailsRect.right - prepareRect.left,
+          greaterThan(workspaceWidth * .9),
+          reason: 'Prepare and its separate Details control span the task row.',
+        );
+        expect(
+          prepareRect.width,
+          greaterThanOrEqualTo(workspaceWidth - detailsRect.width - 1),
+          reason: 'The primary action keeps the space beside Details.',
+        );
         final source = engine.console.actions.singleWhere(
           (action) => action.entityId == ActivityType.donations.name,
         );

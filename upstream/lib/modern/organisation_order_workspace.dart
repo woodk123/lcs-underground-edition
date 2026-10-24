@@ -3,7 +3,6 @@ import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/modern/journal_order_icon.dart';
 import 'package:lcs_new_age/modern/journal_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
-import 'package:lcs_new_age/modern/skill_help.dart';
 
 /// Presentation of the task browser and its retained optional map pane.
 /// The journal supplies already-filtered choices and owns all navigation.
@@ -88,10 +87,7 @@ class OrganisationOrderWorkspace extends StatelessWidget {
                             key: PageStorageKey(taskStorageId),
                             controller: taskScrollController,
                             padding: EdgeInsets.zero,
-                            children: [
-                              ?leadingTask,
-                              ...tasks,
-                            ],
+                            children: [?leadingTask, ...tasks],
                           )
                         : Center(
                             child: Text(
@@ -164,13 +160,13 @@ class OrganisationOrderTaskView extends StatelessWidget {
     required this.enabled,
     required this.selected,
     required this.prepared,
-    required this.tooltip,
     required this.summary,
     required this.factors,
     required this.cost,
     required this.unavailableReason,
     required this.compact,
     required this.showGuidance,
+    required this.onDetails,
     this.onPrepare,
     this.categoryLabel,
   });
@@ -182,7 +178,6 @@ class OrganisationOrderTaskView extends StatelessWidget {
   final bool enabled;
   final bool selected;
   final bool prepared;
-  final String tooltip;
   final String summary;
   final String factors;
   final String cost;
@@ -190,6 +185,7 @@ class OrganisationOrderTaskView extends StatelessWidget {
   final bool compact;
   final bool showGuidance;
   final VoidCallback? onPrepare;
+  final VoidCallback? onDetails;
 
   /// Search results open another source category; its keys are not active yet.
   final String? categoryLabel;
@@ -198,108 +194,127 @@ class OrganisationOrderTaskView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
-      child: MechanicsTooltip(
-        message: tooltip,
-        maxWidth: 520,
-        child: DecoratedBox(
-          decoration: journalTabDecoration(
-            selected: selected,
-            enabled: enabled,
-          ),
-          child: TextButton(
-            key: ValueKey('journal-activity:$taskId'),
-            onPressed: onPrepare,
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: compact ? 6 : 10,
-              ),
-              minimumSize: const Size(48, 48),
-              shape: const RoundedRectangleBorder(),
-            ),
-            child: Semantics(
-              label:
-                  'Prepare $label${categoryLabel == null ? ' · Assign immediately with ${journalShortcutSpokenLabel(shortcut)}' : ' · $categoryLabel'}${selected
-                      ? prepared
-                            ? ' · Prepared, awaiting confirmation'
-                            : ' · Currently assigned'
-                      : ''}${!enabled ? ' · Unavailable${unavailableReason == null ? '' : ': $unavailableReason'}' : ''}',
-              selected: selected,
-              excludeSemantics: true,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (!compact) ...[
-                    JournalOrderIcon(type: type, size: 28),
-                    const SizedBox(width: 8),
-                  ],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          label,
-                          style: JournalPalette.body.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: enabled
-                                ? JournalPalette.ink
-                                : JournalPalette.muted,
-                          ),
-                        ),
-                        if (categoryLabel != null)
-                          Text(categoryLabel!, style: JournalPalette.small),
-                        Wrap(
-                          spacing: 10,
-                          crossAxisAlignment: WrapCrossAlignment.center,
+      child: DecoratedBox(
+        decoration: journalTabDecoration(selected: selected, enabled: enabled),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextButton(
+                key: ValueKey('journal-activity:$taskId'),
+                onPressed: onPrepare,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: compact ? 6 : 10,
+                  ),
+                  minimumSize: const Size(48, 48),
+                  shape: const RoundedRectangleBorder(),
+                ),
+                child: Semantics(
+                  label:
+                      'Prepare $label${categoryLabel == null ? ' · Assign immediately with ${journalShortcutSpokenLabel(shortcut)}' : ' · $categoryLabel'}${selected
+                          ? prepared
+                                ? ' · Prepared, awaiting confirmation'
+                                : ' · Currently assigned'
+                          : ''}${!enabled ? ' · Unavailable${unavailableReason == null ? '' : ': $unavailableReason'}' : ''}',
+                  selected: selected,
+                  excludeSemantics: true,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!compact) ...[
+                        JournalOrderIcon(type: type, size: 28),
+                        const SizedBox(width: 8),
+                      ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Click: Prepare order',
-                              style: JournalPalette.small,
+                            Text(
+                              label,
+                              style: JournalPalette.body.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: enabled
+                                    ? JournalPalette.ink
+                                    : JournalPalette.muted,
+                              ),
                             ),
-                            if (categoryLabel == null)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Text(
-                                    'Assign now: ',
-                                    style: JournalPalette.small,
+                            if (categoryLabel != null)
+                              Text(categoryLabel!, style: JournalPalette.small),
+                            Wrap(
+                              spacing: 10,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                const Text(
+                                  'Click: Prepare order',
+                                  style: JournalPalette.small,
+                                ),
+                                if (categoryLabel == null)
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text(
+                                        'Assign now: ',
+                                        style: JournalPalette.small,
+                                      ),
+                                      JournalShortcutBadge(shortcut: shortcut),
+                                    ],
                                   ),
-                                  JournalShortcutBadge(shortcut: shortcut),
-                                ],
+                              ],
+                            ),
+                            if (selected)
+                              Text(
+                                prepared ? 'Prepared' : 'Currently assigned',
+                                style: JournalPalette.small.copyWith(
+                                  color: prepared
+                                      ? JournalPalette.binding
+                                      : JournalPalette.olive,
+                                ),
+                              ),
+                            if (factors.isNotEmpty)
+                              Text(
+                                'Uses: $factors',
+                                style: JournalPalette.small,
+                              ),
+                            if (cost.isNotEmpty && cost != 'No activity fee')
+                              Text('Cost: $cost', style: JournalPalette.small),
+                            if (showGuidance && selected)
+                              Text(summary, style: JournalPalette.small),
+                            if (!enabled)
+                              Text(
+                                unavailableReason == null
+                                    ? 'Unavailable'
+                                    : 'Unavailable: $unavailableReason',
+                                style: JournalPalette.small.copyWith(
+                                  color: JournalPalette.danger,
+                                ),
                               ),
                           ],
                         ),
-                        if (selected)
-                          Text(
-                            prepared ? 'Prepared' : 'Currently assigned',
-                            style: JournalPalette.small.copyWith(
-                              color: prepared
-                                  ? JournalPalette.binding
-                                  : JournalPalette.olive,
-                            ),
-                          ),
-                        if (factors.isNotEmpty)
-                          Text('Uses: $factors', style: JournalPalette.small),
-                        if (cost.isNotEmpty && cost != 'No activity fee')
-                          Text('Cost: $cost', style: JournalPalette.small),
-                        if (showGuidance && selected)
-                          Text(summary, style: JournalPalette.small),
-                        if (!enabled)
-                          Text(
-                            unavailableReason == null
-                                ? 'Unavailable'
-                                : 'Unavailable: $unavailableReason',
-                            style: JournalPalette.small.copyWith(
-                              color: JournalPalette.danger,
-                            ),
-                          ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
+            Tooltip(
+              message: 'Details for $label',
+              excludeFromSemantics: true,
+              child: IconButton(
+                key: ValueKey('journal-activity-details:$taskId'),
+                onPressed: onDetails,
+                style: IconButton.styleFrom(
+                  foregroundColor: JournalPalette.ink,
+                  minimumSize: const Size(48, 48),
+                ),
+                icon: Icon(
+                  Icons.info_outline,
+                  semanticLabel: 'Details for $label',
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

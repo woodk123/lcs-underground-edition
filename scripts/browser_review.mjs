@@ -412,8 +412,29 @@ try {
     await click(/^Order mechanics(?:$|\s)/);
     const mechanics = page.getByRole('alertdialog');
     await mechanics.waitFor();
-    await page.keyboard.press('Tab');
+    const close = mechanics.getByRole('button', { name: 'Close', exact: true });
+    const focus = [];
+    for (let attempt = 0; attempt <= 12; attempt++) {
+      const state = await close.evaluate(node => ({
+        hasFocus: document.hasFocus(),
+        closeFocused: node === document.activeElement || node.contains(document.activeElement),
+        activeTag: document.activeElement?.tagName,
+        activeLabel: document.activeElement?.getAttribute('aria-label'),
+      }));
+      focus.push(state);
+      if (state.hasFocus && state.closeFocused) break;
+      // Close deliberately autofocuses. Tab from that sole native button can
+      // leave the document, so traverse only while another control has focus.
+      if (!state.hasFocus || attempt === 12) break;
+      await page.keyboard.press('Tab');
+      await waitForUiSettled(page);
+    }
+    report.mechanicsFocus ??= [];
+    report.mechanicsFocus.push({ ...layout, states: focus });
+    assert.ok(focus.at(-1).hasFocus && focus.at(-1).closeFocused,
+      'The actual document and mechanics Close must own focus before Escape.');
     await page.keyboard.press('Escape');
+    await mechanics.waitFor({ state: 'hidden' });
     await waitForUiSettled(page);
     assert.ok(await page.getByRole('button', { name: 'Confirm order', exact: true }).isEnabled());
     await click(/^Cancel prepared order$/);
@@ -497,8 +518,42 @@ try {
   await capture('13-people-aligned-skill-values');
   await click(new RegExp(`^Select crew ${escape(crew[1].name)}(?:$|\\s)`));
   await wait(/Skills & training/);
-  assert.equal(await page.getByRole('img', { name: new RegExp(`^${escape(crew[1].name)} portrait\\.`) }).count(), 2,
-    'The left identity and open dossier must both follow the selected person.');
+  const dossierReader = page.getByText('Skills & training', { exact: true })
+    .locator('xpath=ancestor::flt-semantics[@role="group"][1]');
+  assert.equal(await dossierReader.count(), 1, 'Use the open source profile reader.');
+  assert.equal(await dossierReader.getByRole('img', {
+    name: new RegExp(`^${escape(crew[1].name)} portrait\\.`),
+  }).count(), 1, 'The open dossier portrait must follow the selected person.');
+  const headerInspect = page.getByRole('button', { name: `Inspect ${crew[1].name}`, exact: true });
+  assert.equal(await headerInspect.count(), 1, 'The left header names its current native inspection action.');
+  assert.ok(await headerInspect.isEnabled());
+  const headerGeometry = await headerInspect.evaluate(node => {
+    const rect = element => {
+      const box = element.getBoundingClientRect();
+      return { x: box.x, y: box.y, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
+    };
+    const control = rect(node), header = rect(node.closest('[role="group"]'));
+    let left = Math.max(0, header.x), top = Math.max(0, header.y);
+    let right = Math.min(innerWidth, header.right), bottom = Math.min(innerHeight, header.bottom);
+    for (let ancestor = node.parentElement; ancestor; ancestor = ancestor.parentElement) {
+      const style = getComputedStyle(ancestor);
+      if (!/(?:hidden|auto|scroll|clip)/.test(`${style.overflowX} ${style.overflowY}`)) continue;
+      const box = rect(ancestor);
+      left = Math.max(left, box.x); top = Math.max(top, box.y);
+      right = Math.min(right, box.right); bottom = Math.min(bottom, box.bottom);
+    }
+    return { control, header, visible: { left, top, right, bottom }, viewportWidth: innerWidth };
+  });
+  const profileBounds = await dossierReader.boundingBox();
+  report.actorSyncGeometry = { name: crew[1].name, dossier: profileBounds, header: headerGeometry };
+  const { control, header, visible, viewportWidth } = headerGeometry;
+  assert.ok(profileBounds && profileBounds.x >= viewportWidth / 2 && header.right <= profileBounds.x,
+    'The current dossier and left header remain distinct visible readers.');
+  assert.ok(control.width > 4 && control.height > 4 && control.x >= visible.left - 1 / 64
+    && control.right <= visible.right + 1 / 64 && control.y >= visible.top && control.bottom <= visible.bottom,
+  'The current native Inspect button must fit its header and clipped viewport.');
+  await headerInspect.click({ trial: true });
+  await page.mouse.move(2, 2);
   await capture('17-profile-member-switch-keeps-skills-tab');
   await click(/^Back to directory/);
   await wait(/Personnel directory/);

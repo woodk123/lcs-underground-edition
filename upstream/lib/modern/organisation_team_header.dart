@@ -14,6 +14,7 @@ class OrganisationTeamHeaderView extends StatelessWidget {
     required this.armedCount,
     required this.carCount,
     this.actor,
+    this.compact = false,
   });
 
   final String teamName;
@@ -24,84 +25,116 @@ class OrganisationTeamHeaderView extends StatelessWidget {
   final String armedCount;
   final String carCount;
   final OrganisationTeamActorView? actor;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return JournalSurface(
       inset: true,
       padding: const EdgeInsets.all(5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
+      child: LayoutBuilder(
+        builder: (context, bounds) {
+          final inlineCounters = compact && bounds.maxWidth >= 240;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: Tooltip(
-                  message: teamName,
-                  child: Text(
-                    teamName,
-                    key: const ValueKey('journal-team-name'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: JournalPalette.heading.copyWith(
-                      fontSize: 14,
-                      height: 1.15,
+              Row(
+                children: [
+                  Expanded(
+                    child: Tooltip(
+                      message: teamName,
+                      excludeFromSemantics: true,
+                      child: Text(
+                        teamName,
+                        key: const ValueKey('journal-team-name'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: JournalPalette.heading.copyWith(
+                          fontSize: 14,
+                          height: 1.15,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: IconButton(
-                  key: const ValueKey('journal-skills'),
-                  tooltip: 'Toggle crew and skills',
-                  onPressed: onToggleSkills,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  style: IconButton.styleFrom(
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    minimumSize: const Size(24, 24),
+                  if (inlineCounters) ...[
+                    const SizedBox(width: 4),
+                    ConstrainedBox(
+                      // Keep some team identity beside the counters and the toggle.
+                      // Longer network counts wrap rather than squeezing it away.
+                      constraints: BoxConstraints(
+                        maxWidth: bounds.maxWidth - 112,
+                      ),
+                      child: _facts(spacing: 6),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: IconButton(
+                      key: const ValueKey('journal-skills'),
+                      tooltip: 'Toggle crew and skills',
+                      onPressed: onToggleSkills,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      style: IconButton.styleFrom(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        minimumSize: const Size(24, 24),
+                      ),
+                      icon: Icon(
+                        showingSkills ? Icons.groups : Icons.auto_graph,
+                        size: 16,
+                      ),
+                    ),
                   ),
-                  icon: Icon(
-                    showingSkills ? Icons.groups : Icons.auto_graph,
-                    size: 16,
-                  ),
-                ),
+                ],
               ),
+              SizedBox(height: compact ? 2 : 3),
+              if (actor != null)
+                actor!._withCompact(compact)
+              else
+                const Text(
+                  'No active crew selected.',
+                  style: JournalPalette.small,
+                ),
+              if (!inlineCounters) ...[
+                const SizedBox(height: 4),
+                _facts(spacing: 10),
+              ],
             ],
-          ),
-          const SizedBox(height: 3),
-          if (actor != null)
-            actor!
-          else
-            const Text('No active crew selected.', style: JournalPalette.small),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 10,
-            runSpacing: 2,
-            children: [
-              _fact(Icons.people, memberCount, memberCountLabel),
-              _fact(Icons.shield_outlined, armedCount, 'Armed members'),
-              _fact(Icons.directions_car, carCount, 'Assigned cars'),
-            ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
-  Widget _fact(IconData icon, String value, String name) => Tooltip(
+  Widget _facts({required double spacing}) => Wrap(
+    spacing: spacing,
+    runSpacing: 2,
+    children: [
+      _fact('members', Icons.people, memberCount, memberCountLabel),
+      _fact('armed', Icons.shield_outlined, armedCount, 'Armed members'),
+      _fact('cars', Icons.directions_car, carCount, 'Assigned cars'),
+    ],
+  );
+
+  Widget _fact(String id, IconData icon, String value, String name) => Tooltip(
     message: name,
+    excludeFromSemantics: true,
     child: Semantics(
+      key: ValueKey('journal-team-$id'),
+      container: true,
       label: '$name: $value',
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: JournalPalette.brassDark),
-          const SizedBox(width: 4),
-          Text(value, style: JournalPalette.body),
-        ],
+      child: ExcludeSemantics(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: JournalPalette.brassDark),
+            const SizedBox(width: 4),
+            Flexible(child: Text(value, style: JournalPalette.body)),
+          ],
+        ),
       ),
     ),
   );
@@ -120,6 +153,7 @@ class OrganisationTeamActorView extends StatelessWidget {
     required this.statusWarning,
     required this.portrait,
     required this.onInspect,
+    this.compact = false,
   });
 
   final int personId;
@@ -130,18 +164,36 @@ class OrganisationTeamActorView extends StatelessWidget {
   final bool statusWarning;
   final Widget portrait;
   final VoidCallback onInspect;
+  final bool compact;
+
+  OrganisationTeamActorView _withCompact(bool value) => value == compact
+      ? this
+      : OrganisationTeamActorView(
+          key: key,
+          personId: personId,
+          name: name,
+          location: location,
+          status: status,
+          statusTooltip: statusTooltip,
+          statusWarning: statusWarning,
+          portrait: portrait,
+          onInspect: onInspect,
+          compact: value,
+        );
 
   @override
   Widget build(BuildContext context) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Semantics(
-        button: true,
-        label: 'Inspect $name',
-        child: InkWell(
-          key: ValueKey('hq-portrait:$personId'),
-          onTap: onInspect,
-          child: portrait,
+      MergeSemantics(
+        child: Semantics(
+          button: true,
+          label: 'Inspect $name',
+          child: InkWell(
+            key: ValueKey('hq-portrait:$personId'),
+            onTap: onInspect,
+            child: ExcludeSemantics(child: portrait),
+          ),
         ),
       ),
       const SizedBox(width: 7),
@@ -151,6 +203,7 @@ class OrganisationTeamActorView extends StatelessWidget {
           children: [
             Tooltip(
               message: name,
+              excludeFromSemantics: true,
               child: Text(
                 name,
                 key: const ValueKey('journal-selected-person'),
@@ -164,6 +217,7 @@ class OrganisationTeamActorView extends StatelessWidget {
             ),
             Tooltip(
               message: location,
+              excludeFromSemantics: true,
               child: Text(
                 location,
                 maxLines: 1,
@@ -176,16 +230,45 @@ class OrganisationTeamActorView extends StatelessWidget {
             ),
             Tooltip(
               message: statusTooltip,
-              child: Text(
-                status,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: JournalPalette.small.copyWith(
-                  fontSize: 10.5,
-                  height: 1.15,
-                  color: statusWarning
-                      ? JournalPalette.danger
-                      : JournalPalette.ink,
+              excludeFromSemantics: true,
+              child: Semantics(
+                container: true,
+                label:
+                    '${statusWarning ? 'Health warning: ' : ''}$statusTooltip',
+                child: ExcludeSemantics(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (compact && statusWarning) ...[
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Icon(
+                            Icons.warning_amber_rounded,
+                            size: 14,
+                            color: JournalPalette.danger,
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                      ],
+                      Expanded(
+                        child: Text(
+                          status,
+                          key: const ValueKey('journal-selected-status'),
+                          maxLines: compact ? null : 1,
+                          overflow: compact
+                              ? TextOverflow.visible
+                              : TextOverflow.ellipsis,
+                          style: JournalPalette.small.copyWith(
+                            fontSize: 10.5,
+                            height: 1.15,
+                            color: statusWarning
+                                ? JournalPalette.danger
+                                : JournalPalette.ink,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

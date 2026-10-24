@@ -122,6 +122,7 @@ void main() {
   for (final (size, scale) in [
     (const Size(1440, 1000), 1.0),
     (const Size(1024, 720), 1.5),
+    (const Size(600, 1000), 1.5),
   ]) {
     testWidgets('six-person loadout layout at ${size.width} / $scale', (
       tester,
@@ -143,13 +144,52 @@ void main() {
       final loadouts = find.byKey(
         const PageStorageKey('equipment-loadout-scroll'),
       );
-      expect(tester.getSize(loadouts).height, lessThanOrEqualTo(285));
+      final narrow =
+          tester.getSize(find.byType(JournalEquipmentView)).width < 600;
+      if (narrow) {
+        expect(loadouts, findsNothing);
+        expect(_key('equipment-crew-selector'), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(JournalEquipmentView),
+            matching: find.byType(SingleChildScrollView),
+          ),
+          findsNothing,
+          reason: 'The selected loadout belongs to the ordinary outer reader.',
+        );
+      } else {
+        expect(tester.getSize(loadouts).height, lessThanOrEqualTo(285));
+        expect(_key('equipment-crew-selector'), findsNothing);
+      }
+      final initiallySelected = tester
+          .widget<Text>(_key('equipment-selected-person'))
+          .data;
+      for (final person in game.squad) {
+        expect(_key('equipment-person:${person.id}'), findsOneWidget);
+        expect(
+          _key('equipment-loadout:${person.id}'),
+          narrow && person.name != initiallySelected
+              ? findsNothing
+              : findsOneWidget,
+        );
+      }
       expect(find.textContaining('Filter this page'), findsOneWidget);
       expect(find.textContaining('22/7'), findsNothing);
       expect(find.textContaining('30/8'), findsNothing);
       final before = campaignSnapshot();
       final revision = engine.console.revision.value;
       final actions = List.of(engine.console.actions);
+      final frame = equipmentContext(engine.console)!;
+      expect(
+        frame.actions
+            .where((action) => action.entityType == 'person')
+            .map((action) => action.key),
+        ['1', '2', '3', '4', '5', '6'],
+        reason: 'Local crew selection cannot replace original unequip numbers.',
+      );
+      reseedRNG(seed: 92572);
+      final rolls = List.generate(12, (_) => lcsRandom(100000));
+      reseedRNG(seed: 92572);
       final person = game.squad.first;
       await _tabToNativeButton(
         tester,
@@ -169,9 +209,36 @@ void main() {
       expect(engine.console.revision.value, revision);
       expect(engine.console.actions, orderedEquals(actions));
       expect(engine.console.lastKey, isNull);
+      expect(equipmentContext(engine.console), same(frame));
+      expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+      if (narrow) {
+        expect(_key('equipment-loadout:${game.squad[1].id}'), findsNothing);
+        final card = _key('equipment-loadout:${person.id}');
+        expect(card, findsOneWidget);
+        expect(
+          find.descendant(
+            of: card,
+            matching: find.text(person.weapon.type.name),
+          ),
+          findsOneWidget,
+        );
+        final unequip = frame.actions.singleWhere(
+          (action) =>
+              action.entityType == 'person' &&
+              action.entityId == person.id.toString(),
+        );
+        await tester.ensureVisible(_action(unequip));
+        await tester.pumpAndSettle();
+        expect(_action(unequip).hitTestable(), findsOneWidget);
+      }
       final choice = equipmentContext(engine.console)!.stock.first;
       await _tap(tester, _action(choice.action));
       final recipient = equipmentContext(engine.console)!;
+      expect(
+        loadouts,
+        findsOneWidget,
+        reason: 'Original recipient stages retain their full crew overview.',
+      );
       final cancel = recipient.actions.singleWhere(
         (action) => action.key == 'Enter',
       );
@@ -183,6 +250,61 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets(
+    'narrow crew selection leaves number keys with their original unequip actor',
+    (tester) async {
+      final first = game.squad.first;
+      final selected = game.squad[1];
+      first.equippedWeapon = Weapon('WEAPON_9MM_HANDGUN');
+      first.spareAmmo = Ammo('AMMO_9MM', stackSize: 15);
+      final weapon = first.equippedWeapon!;
+      final ammunition = first.spareAmmo!;
+      final stock = <Item>[];
+      final reader = _Reader(stock);
+      await _mount(
+        tester,
+        reader: reader,
+        size: const Size(600, 1000),
+        scale: 1.5,
+      );
+      expect(
+        tester.getSize(find.byType(JournalEquipmentView)).width,
+        lessThan(600),
+      );
+      expect(_key('equipment-crew-selector'), findsOneWidget);
+      await _tap(tester, _key('equipment-person:${first.id}'));
+      await _tabToNativeButton(
+        tester,
+        _key('equipment-person-row:${selected.id}'),
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.space, character: ' ');
+      await tester.pumpAndSettle();
+      expect(_key('equipment-loadout:${first.id}'), findsNothing);
+      expect(_key('equipment-loadout:${selected.id}'), findsOneWidget);
+      final before = jsonDecode(campaignSnapshot()) as Map<String, dynamic>;
+      final expectedActor =
+          ((before['lcs'] as Map<String, dynamic>)['pool'] as List)
+              .cast<Map<String, dynamic>>()
+              .singleWhere((person) => person['id'] == first.id);
+      expectedActor['equippedWeapon'] = null;
+      expectedActor['spareAmmo'] = null;
+      final revision = engine.console.revision.value;
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit1, character: '1');
+      await tester.pumpAndSettle();
+      expect(engine.console.revision.value, greaterThan(revision));
+      expect(equipmentContext(engine.console)!.phase, EquipmentPhase.inventory);
+      expect(
+        jsonDecode(campaignSnapshot()),
+        before,
+        reason: 'Only the original first actor drops weapon/ammo, despite another local comparison selection.',
+      );
+      expect(stock, containsAll([weapon, ammunition]));
+      expect(game.activeSquadMember, same(selected));
+      expect(_key('equipment-loadout:${selected.id}'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'browsing, comparison, filters and details preserve campaign, reader and RNG',
@@ -510,6 +632,207 @@ void main() {
       expect(jsonEncode(other.toJson()), otherBefore);
       expect(game.activeSquadMember, same(selected));
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'narrow selected loadout and stock browsing survive source Back and reentry',
+    (tester) async {
+      while (game.squad.length < 6) {
+        addTestCrewMember(name: 'Compact crew ${game.squad.length + 1}').squad =
+            game.activeSquad;
+      }
+      final selected = game.squad.last;
+      final stock = <Item>[
+        Weapon('WEAPON_AK102'),
+        Clothing('CLOTHING_CATSUIT'),
+      ];
+      final reader = _Reader(stock);
+      await _mount(
+        tester,
+        reader: reader,
+        size: const Size(600, 1000),
+        scale: 1.5,
+      );
+      final frame = equipmentContext(engine.console)!;
+      final revision = engine.console.revision.value;
+      final actions = List.of(engine.console.actions);
+      final before = campaignSnapshot();
+      final inventory = jsonEncode(stock.map((item) => item.toJson()).toList());
+      reseedRNG(seed: 73251);
+      final rolls = List.generate(12, (_) => lcsRandom(100000));
+      reseedRNG(seed: 73251);
+      await _tap(tester, _key('equipment-person:${selected.id}'));
+      await _tap(tester, _key('equipment-filter:weapons'));
+      await tester.ensureVisible(_key('equipment-search'));
+      await tester.enterText(_key('equipment-search'), 'AK-102');
+      await tester.pumpAndSettle();
+      final weapon = frame.stock.singleWhere((choice) => choice.item is Weapon);
+      await _tap(tester, _key('equipment-stock:${weapon.action.key}'));
+      expect(
+        find.text('Compare equipment for ${selected.name}'),
+        findsOneWidget,
+      );
+      expect(equipmentContext(engine.console), same(frame));
+      expect(engine.console.revision.value, revision);
+      expect(engine.console.actions, orderedEquals(actions));
+      expect(engine.console.lastKey, isNull);
+      expect(campaignSnapshot(), before);
+      await _tap(
+        tester,
+        _action(frame.actions.singleWhere((action) => action.key == 'Enter')),
+      );
+      expect(reader.finished, isTrue);
+      final reopened = _Reader(stock);
+      addTearDown(() => reopened.stop(tester));
+      await tester.pumpAndSettle();
+      expect(_key('equipment-crew-selector'), findsOneWidget);
+      expect(
+        find.byKey(const PageStorageKey('equipment-loadout-scroll')),
+        findsNothing,
+      );
+      expect(_key('equipment-loadout:${selected.id}'), findsOneWidget);
+      expect(
+        tester.widget<Text>(_key('equipment-selected-person')).data,
+        selected.name,
+      );
+      expect(
+        tester.widget<TextField>(_key('equipment-search')).controller!.text,
+        'AK-102',
+      );
+      expect(
+        tester.widget<ChoiceChip>(_key('equipment-filter:weapons')).selected,
+        isTrue,
+      );
+      expect(
+        find.text('Compare equipment for ${selected.name}'),
+        findsOneWidget,
+      );
+      final current = equipmentContext(engine.console)!;
+      final unequip = current.actions.singleWhere(
+        (action) =>
+            action.entityType == 'person' &&
+            action.entityId == selected.id.toString(),
+      );
+      await tester.ensureVisible(_action(unequip));
+      await tester.pumpAndSettle();
+      expect(_action(unequip).hitTestable(), findsOneWidget);
+      expect(campaignSnapshot(), before);
+      expect(
+        jsonEncode(stock.map((item) => item.toJson()).toList()),
+        inventory,
+      );
+      expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'inventory resize retains browsing and detaches only the narrow loadout scroll',
+    (tester) async {
+      final stock = <Item>[
+        Weapon('WEAPON_AK102'),
+        Clothing('CLOTHING_CATSUIT'),
+      ];
+      final reader = _Reader(stock);
+      await _mount(tester, reader: reader);
+      final frame = equipmentContext(engine.console)!;
+      final initialName = tester
+          .widget<Text>(_key('equipment-selected-person'))
+          .data;
+      final selected = frame.people.firstWhere(
+        (person) => person.name != initialName,
+      );
+      final revision = engine.console.revision.value;
+      final actions = List.of(engine.console.actions);
+      final navigation = engine.console.navigation;
+      final awaitingInput = engine.console.awaitingInput;
+      final textInput = engine.console.textInput;
+      final before = campaignSnapshot();
+      final inventory = jsonEncode(stock.map((item) => item.toJson()).toList());
+      reseedRNG(seed: 63021);
+      final rolls = List.generate(12, (_) => lcsRandom(100000));
+      reseedRNG(seed: 63021);
+      await _tap(tester, _key('equipment-person:${selected.id}'));
+      await _tap(tester, _key('equipment-filter:weapons'));
+      await tester.ensureVisible(_key('equipment-search'));
+      await tester.enterText(_key('equipment-search'), 'AK-102');
+      await tester.pumpAndSettle();
+      final weapon = frame.stock.singleWhere((choice) => choice.item is Weapon);
+      await _tap(tester, _key('equipment-stock:${weapon.action.key}'));
+      final inner = find.byKey(
+        const PageStorageKey('equipment-loadout-scroll'),
+      );
+      final controller = tester
+          .widget<SingleChildScrollView>(inner)
+          .controller!;
+
+      void expectReadingState({required bool narrow}) {
+        final width = tester.getSize(find.byType(JournalEquipmentView)).width;
+        expect(width, narrow ? lessThan(600) : greaterThanOrEqualTo(600));
+        expect(
+          _key('equipment-crew-selector'),
+          narrow ? findsOneWidget : findsNothing,
+        );
+        expect(inner, narrow ? findsNothing : findsOneWidget);
+        if (narrow) {
+          expect(controller.hasClients, isFalse);
+        } else {
+          final current = tester
+              .widget<SingleChildScrollView>(inner)
+              .controller!;
+          expect(current.hasClients, isTrue);
+          expect(current.positions, hasLength(1));
+          expect(current.position.hasContentDimensions, isTrue);
+          if (!identical(current, controller)) {
+            expect(
+              controller.hasClients,
+              isFalse,
+              reason:
+                  'A responsive remount must release the old loadout position.',
+            );
+          }
+        }
+        expect(_key('equipment-loadout:${selected.id}'), findsOneWidget);
+        expect(
+          tester.widget<Text>(_key('equipment-selected-person')).data,
+          selected.name,
+        );
+        expect(
+          tester.widget<TextField>(_key('equipment-search')).controller!.text,
+          'AK-102',
+        );
+        expect(
+          tester.widget<ChoiceChip>(_key('equipment-filter:weapons')).selected,
+          isTrue,
+        );
+        expect(
+          find.text('Compare equipment for ${selected.name}'),
+          findsOneWidget,
+        );
+        expect(equipmentContext(engine.console), same(frame));
+        expect(engine.console.revision.value, revision);
+        expect(engine.console.actions, orderedEquals(actions));
+        expect(engine.console.navigation, same(navigation));
+        expect(engine.console.awaitingInput, awaitingInput);
+        expect(engine.console.textInput, textInput);
+        expect(engine.console.lastKey, isNull);
+        expect(campaignSnapshot(), before);
+        expect(
+          jsonEncode(stock.map((item) => item.toJson()).toList()),
+          inventory,
+        );
+        expect(tester.takeException(), isNull);
+      }
+
+      expectReadingState(narrow: false);
+      tester.view.physicalSize = const Size(600, 1000);
+      await tester.pumpAndSettle();
+      expectReadingState(narrow: true);
+      tester.view.physicalSize = const Size(1440, 1000);
+      await tester.pumpAndSettle();
+      expectReadingState(narrow: false);
+      expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
     },
   );
 

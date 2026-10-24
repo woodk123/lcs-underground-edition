@@ -268,15 +268,35 @@ class OrganisationOrderCard extends StatelessWidget {
                   ),
                 ),
               if (showCancel)
-                IconButton(
-                  key: cancelPrepared
-                      ? const ValueKey('journal-cancel-order')
-                      : null,
-                  tooltip: cancelPrepared
+                Tooltip(
+                  message: cancelPrepared
                       ? 'Cancel prepared order'
                       : 'Return to planning; keep assigned orders',
-                  onPressed: onCancel,
-                  icon: const Icon(Icons.close, size: 18),
+                  excludeFromSemantics: true,
+                  child: TextButton.icon(
+                    key: cancelPrepared
+                        ? const ValueKey('journal-cancel-order')
+                        : null,
+                    onPressed: onCancel,
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(44, 34),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 3,
+                      ),
+                      textStyle: JournalPalette.small.copyWith(
+                        fontSize: 11,
+                        height: 1.2,
+                      ),
+                    ),
+                    icon: const Icon(Icons.close, size: 16),
+                    label: Text(
+                      cancelPrepared ? 'Cancel' : 'Back',
+                      semanticsLabel: cancelPrepared
+                          ? 'Cancel prepared order'
+                          : 'Return to planning; keep assigned orders',
+                    ),
+                  ),
                 ),
             ],
           ),

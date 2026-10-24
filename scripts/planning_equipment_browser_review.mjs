@@ -18,7 +18,7 @@ const option = (flag, fallback) => {
 };
 if (args.includes('--help')) {
   console.log('Usage: node scripts/planning_equipment_browser_review.mjs --expected-hash SHA256 [--url URL] [--out FRESH_IGNORED_DIRECTORY]\n'
-    + 'Requires a development bridge build. Runs desktop and 1024x720/150% equipment and Daily plan journeys in fresh profiles. '
+    + 'Requires a development bridge build. Runs desktop, 1280x720 startup and 1024x720/150% equipment and Daily plan journeys in fresh profiles. '
     + '--prepare-only writes the declared fixture without fetching or launching anything.');
   process.exit(0);
 }
@@ -120,7 +120,7 @@ const report = {
       sleeper: { id: sleeper.id, name: sleeper.name }, queuedSquad: { id: queuedSquad.id, name: queuedSquad.name, destination: park.name },
       recruiter: { id: prepared.lcs.pool[3].id, name: prepared.lcs.pool[3].name }, prospect: { id: prospect.id, name: prospect.name } },
     people: prepared.lcs.pool.length, stockTypes: home.loot.map(item => item.typeName) },
-  checks: [], errors: [], screenshots: [], sourceActions: [], snapshots: [], layouts: [], focusChecks: [], sourceNormalizations: [],
+  checks: [], errors: [], screenshots: [], sourceActions: [], snapshots: [], layouts: [], focusChecks: [], sourceNormalizations: [], actorStatusGeometry: [],
   pageErrors: [], consoleErrors: [], failedRequests: [], workerErrors: [], loadedMainJsHashes: [],
 };
 await writeFile(resolve(output, 'report.json'), JSON.stringify(report, null, 2));
@@ -174,6 +174,9 @@ function check(name) { report.checks.push({ name, layout, status: 'passed' }); c
 async function wait(pattern) { await waitForSemantics(page, pattern); }
 async function reveal(control, scope = page) {
   let lastError;
+  // Ancestor/child DOMRects can quantize an exactly shared horizontal CSS edge
+  // differently; allow one layout unit while retaining the real trial click.
+  const horizontalQuantization = 1 / 64;
   for (let attempt = 0; attempt < 32; attempt++) {
     const viewport = page.viewportSize();
     const area = scope === page ? { x: 0, y: 0, ...viewport } : await scope.boundingBox();
@@ -209,7 +212,8 @@ async function reveal(control, scope = page) {
     }, area) : [];
     const visible = clips[0]?.visible ?? area;
     const topInset = clips[0]?.topInset ?? 0, bottomInset = clips[0]?.bottomInset ?? 0;
-    if (box && box.height > 4 && box.x >= visible.x && box.x + box.width <= visible.x + visible.width
+    if (box && box.height > 4 && box.x >= visible.x - horizontalQuantization
+      && box.x + box.width <= visible.x + visible.width + horizontalQuantization
       && box.y >= visible.y + topInset && box.y + box.height <= visible.y + visible.height - bottomInset) {
       try { await control.click({ trial: true, timeout: 300 }); return control; }
       catch (error) { lastError = String(error); }
@@ -628,11 +632,67 @@ async function dailyPlanJourney() {
   assert.ok(orderFrame.observation.actions.some(action => action.entityType === 'activity'
     && action.entityId === 'donations' && action.entityCategory === String(orderActor.id)),
   'The original Orders reader must be for the person selected on the board.');
+  // Mara is the declared healthy Felix clone. Inspect its current painted status
+  // without reveal/scroll: accessible text alone did not catch the clipped line.
+  const statusGeometry = await page.evaluate(label => {
+    const host = document.querySelector('flt-semantics-host');
+    const labelled = [...(host?.querySelectorAll('flt-semantics[aria-label]') ?? [])]
+      .filter(node => node.getAttribute('aria-label') === label);
+    const matches = labelled.length ? labelled : [...(host?.querySelectorAll('flt-semantics > span') ?? [])]
+      .filter(node => node.textContent.trim() === label);
+    const rect = node => {
+      const box = node.getBoundingClientRect();
+      return { x: box.x, y: box.y, width: box.width, height: box.height, right: box.right, bottom: box.bottom };
+    };
+    return { label, count: matches.length, matches: matches.slice(0, 4).map(node => {
+      const target = rect(node), clips = [];
+      let left = 0, top = 0, right = innerWidth, bottom = innerHeight;
+      for (let ancestor = node.parentElement; ancestor; ancestor = ancestor.parentElement) {
+        const style = getComputedStyle(ancestor);
+        if (!/(?:hidden|auto|scroll|clip)/.test(`${style.overflowX} ${style.overflowY}`)) continue;
+        const box = rect(ancestor);
+        left = Math.max(left, box.x); top = Math.max(top, box.y);
+        right = Math.min(right, box.right); bottom = Math.min(bottom, box.bottom);
+        if (clips.length < 10) clips.push({ id: ancestor.id, overflowX: style.overflowX, overflowY: style.overflowY, rect: box });
+      }
+      return { id: node.id, target, clips, visible: { left, top, right, bottom },
+        fullyVisible: target.width > 4 && target.height > 4 && target.x >= left - 1 / 64
+          && target.right <= right + 1 / 64 && target.y >= top && target.bottom <= bottom };
+    }) };
+  }, 'Juice 0 · Civilian · 230/230 blood');
+  report.actorStatusGeometry.push({ layout, actorId: orderActor.id, ...statusGeometry });
+  await writeFile(resolve(output, `${layout}-selected-actor-status-geometry.json`), JSON.stringify(statusGeometry, null, 2));
+  assert.equal(statusGeometry.count, 1, 'The current Orders actor must expose one exact status label.');
+  assert.ok(statusGeometry.matches[0].fullyVisible,
+    'The selected Orders actor status must fit its actual clipped ancestors before any reveal scrolling.');
+  await click(/^Details for Solicit Donations$/);
+  const mechanics = page.getByRole('alertdialog');
+  await mechanics.waitFor({ state: 'visible' }); await wait(/Calculation:/);
+  for (const key of ['w', 'p', 'd']) {
+    await page.keyboard.press(key); await waitForUiSettled(page);
+    assert.ok(await mechanics.isVisible(), `Task details must own bare ${key}.`);
+  }
+  sameSource(orderFrame, await snapshot('task-details-before-draft'), 'Task Details do not prepare or alter the original reader');
+  await capture('task-details-full-mechanics');
+  await page.keyboard.press('Escape'); await mechanics.waitFor({ state: 'hidden' });
+  await waitForUiSettled(page);
+  sameSource(orderFrame, await snapshot('after-task-details-Escape'), 'Task Details Escape preserves pending source input');
+  assert.equal(await button('Confirm order').count(), 0, 'Inspection must not create a draft.');
+  check('Task Details expose full mechanics with modal key isolation and no preparation/source input');
   await click(/^Prepare Solicit Donations(?:$|\s)/);
   await wait(/Prepared · awaiting confirmation/);
   const draft = await snapshot('daily-plan-local-draft');
   sameSource(orderFrame, draft, 'Preparing a daily order is a local draft');
   await capture('daily-plan-order-draft');
+  await click(/^Details for Solicit Donations$/); await mechanics.waitFor({ state: 'visible' });
+  await wait(/Calculation:/); await page.keyboard.press('Tab'); await waitForUiSettled(page);
+  await keyboardFocus(button(/^Close$/, mechanics), 'Task Details Close');
+  await page.keyboard.press('Enter'); await mechanics.waitFor({ state: 'hidden' });
+  await waitForUiSettled(page); await wait(/Prepared · awaiting confirmation/);
+  assert.ok(await button('Confirm order').isEnabled(), 'Task inspection keeps the prepared confirmation reachable.');
+  assert.match(await text(), /Soliciting Donations/, 'Task inspection retains the intended prepared order.');
+  sameSource(draft, await snapshot('draft-after-task-details'), 'Task Details retain the prepared draft and source reader');
+  check('Task Details retain a prepared order through actual Tab/Enter Close and return to confirmation');
   await click(/^Cancel prepared order$/);
   sameSource(orderFrame, await snapshot('daily-plan-cancelled-draft'), 'Cancel retains the current actor and all existing assignments');
   check('Orders routes the clicked outside-squad actor; preparing and Cancel preserve full campaign and source actions');
@@ -665,6 +725,7 @@ try {
   browser = await chromium.launch(chromiumLaunchOptions({ args }));
   for (const configuration of [
     { name: 'desktop', viewport: { width: 1440, height: 1000 }, reading: '100%' },
+    { name: 'startup', viewport: { width: 1280, height: 720 }, reading: '100%' },
     { name: 'large', viewport: { width: 1024, height: 720 }, reading: '150%' },
   ]) {
     layout = configuration.name; report.layouts.push(configuration);
@@ -689,7 +750,7 @@ try {
     await verifyLoaded(expectedHash);
     await context.close(); context = null;
   }
-  assert.equal(report.loadedMainJsHashes.length, 2);
+  assert.equal(report.loadedMainJsHashes.length, 3);
   for (const actual of report.loadedMainJsHashes) assert.equal(actual, expectedHash);
   assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.consoleErrors, []);
   assert.deepEqual(report.failedRequests, []); assert.deepEqual(report.workerErrors, []);

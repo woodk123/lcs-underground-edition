@@ -1259,7 +1259,24 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         Expanded(
           child: LayoutBuilder(
             builder: (context, bounds) {
-              final headerHeight = widget.textScale > 1.1
+              final compactHeader = _compact || bounds.maxHeight < 620;
+              final headerActor = person;
+              final healthWarning =
+                  headerActor != null &&
+                  (headerActor.blood < headerActor.maxBlood ||
+                      headerActor.body.parts.any((part) => part.wounded));
+              final compactHeaderHeight = widget.textScale > 1.1
+                  ? (_individualOrderActor != null || undercover
+                        ? 140.0
+                        : healthWarning
+                        ? 130.0
+                        : 112.0)
+                  : healthWarning
+                  ? 96.0
+                  : 86.0;
+              final headerHeight = compactHeader
+                  ? compactHeaderHeight
+                  : widget.textScale > 1.1
                   ? (narrow ? 130.0 : 140.0)
                   : (bounds.maxHeight * .25).clamp(
                       108.0,
@@ -1287,7 +1304,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                 children: [
                   SizedBox(
                     height: headerHeight,
-                    child: SingleChildScrollView(child: _teamHeader(narrow)),
+                    child: SingleChildScrollView(
+                      child: _teamHeader(narrow, compactHeader: compactHeader),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   if (_hasJob) ...[
@@ -1322,7 +1341,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     ),
   );
 
-  Widget _teamHeader(bool narrow) {
+  Widget _teamHeader(bool narrow, {bool compactHeader = false}) {
     final actor = person;
     final teamName = undercover
         ? 'Undercover network'
@@ -1337,6 +1356,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     final wounded = actor?.body.parts.any((part) => part.wounded) == true;
     return OrganisationTeamHeaderView(
       teamName: teamName,
+      compact: compactHeader,
       showingSkills: _skills,
       onToggleSkills: () => setState(() => _skills = !_skills),
       actor: actor == null
@@ -1352,7 +1372,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               statusWarning: actor.blood < actor.maxBlood || wounded,
               portrait: CrewPortrait(
                 person: actor,
-                size: _compact
+                size: _compact || compactHeader
                     ? 36
                     : narrow
                     ? 46
@@ -1856,24 +1876,47 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     );
   }
 
-  Future<void> _showOrderMechanics(ActivityMechanics help) async {
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(widget.textScale)),
-        child: OrderMechanicsDialog(
-          help: help,
-          visitReadiness: help.type == ActivityType.visit
-              ? SquadReadiness(members)
-              : null,
-          visitMemberNames: help.type == ActivityType.visit
-              ? members.map((member) => member.name).toList()
-              : const [],
-          onClose: () => Navigator.of(dialogContext).pop(),
+  Future<void> _showOrderMechanics(
+    ActivityMechanics help, {
+    required int revision,
+    required int? actorId,
+  }) async {
+    if (!mounted ||
+        _managementDialog ||
+        controller.busy ||
+        !console.awaitingInput ||
+        console.lastKey != null ||
+        console.revision.value != revision ||
+        person?.id != actorId) {
+      return;
+    }
+    _managementDialog = true;
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(widget.textScale)),
+          child: OrderMechanicsDialog(
+            help: help,
+            visitReadiness: help.type == ActivityType.visit
+                ? SquadReadiness(members)
+                : null,
+            visitMemberNames: help.type == ActivityType.visit
+                ? members.map((member) => member.name).toList()
+                : const [],
+            onClose: () {
+              if (dialogContext.mounted &&
+                  ModalRoute.of(dialogContext)?.isCurrent == true) {
+                Navigator.of(dialogContext).pop();
+              }
+            },
+          ),
         ),
-      ),
-    );
+      );
+    } finally {
+      _managementDialog = false;
+    }
     if (mounted) _restoreInputFocus();
   }
 
@@ -1891,6 +1934,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       return _educationChoiceCard(actor);
     }
     final actor = person;
+    final revision = console.revision.value;
     final prepared = hasPreparedOrder;
     final previousOrder = actor == null
         ? null
@@ -2019,7 +2063,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             : null,
       ),
       scrollHeading: scrollHeading,
-      onDetails: () => _showOrderMechanics(help),
+      onDetails: () =>
+          _showOrderMechanics(help, revision: revision, actorId: actor?.id),
       showConfirm: prepared || planning,
       onConfirm:
           controller.busy ||
@@ -2379,6 +2424,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     required int revision,
   }) {
     final type = ActivityType.values.byName(task.typeId);
+    final actorId = person?.id;
     final help = activityMechanics(type, actor: person);
     return OrganisationOrderTaskView(
       taskId: task.typeId,
@@ -2391,7 +2437,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           ? _pendingOrder!.action.entityId == task.typeId
           : person?.activity.type == type,
       prepared: hasPreparedOrder,
-      tooltip: '${help.summary}\n${help.cost}',
+      onDetails: controller.busy
+          ? null
+          : () =>
+                _showOrderMechanics(help, revision: revision, actorId: actorId),
       summary: help.summary,
       factors: help.factors,
       cost: help.cost,
@@ -2455,6 +2504,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     required int revision,
   }) {
     final type = activityTypeForAction(action)!;
+    final actorId = person?.id;
     final help = activityMechanics(type, actor: person);
     final prepared = hasPreparedOrder;
     return OrganisationOrderTaskView(
@@ -2467,8 +2517,10 @@ class OrganisationJournalState extends State<OrganisationJournal> {
           ? activityTypeForAction(_pendingOrder!.action) == type
           : person?.activity.type == type,
       prepared: prepared,
-      tooltip:
-          '${help.summary}\n${help.factors}\n${help.cost}\n${help.unavailableReason ?? ''}\n${help.calculation?.text ?? ''}',
+      onDetails: controller.busy
+          ? null
+          : () =>
+                _showOrderMechanics(help, revision: revision, actorId: actorId),
       summary: help.summary,
       factors: help.factors,
       cost: help.cost,
