@@ -10,7 +10,7 @@ module.exports = function install(chromium, prepareLog) {
   chromium.launch = function (options = {}, ...rest) {
     const args = options.args ?? [];
     if (!Array.isArray(args)) throw TypeError('Playwright launch args must be an array.');
-    if (args.some(arg => /^--(?:log-net-log|net-log-max-size-mb|net-log-capture-mode)(?:=|$)/.test(arg))) {
+    if (args.some(arg => /^(?:--?|\/)(?:log-net-log|net-log-max-size-mb|net-log-capture-mode)(?:=|$)/i.test(arg))) {
       throw Error('The helper already supplies NetLog flags; refuse conflicting diagnostic options.');
     }
     const directory = prepareLog(options);

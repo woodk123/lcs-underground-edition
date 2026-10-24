@@ -36,9 +36,14 @@ test('double installation cannot replace the method or append flags twice', () =
 test('conflicting NetLog flags and invalid args are rejected before preparation or launch', () => {
   const chromium = { launch() { throw Error('Must not launch'); } };
   install(chromium, () => { throw Error('Must not prepare'); });
-  for (const flag of ['--log-net-log=old.json', '--net-log-max-size-mb=1', '--net-log-capture-mode=Everything',
-    '--log-net-log', '--net-log-max-size-mb', '--net-log-capture-mode']) {
-    assert.throws(() => chromium.launch({ args: [flag] }), /already supplies NetLog/);
+  for (const prefix of ['--', '-', '/']) {
+    for (const name of ['log-net-log', 'net-log-max-size-mb', 'net-log-capture-mode']) {
+      for (const spelling of [name, name.toUpperCase()]) {
+        for (const suffix of ['', '=conflicting-value']) {
+          assert.throws(() => chromium.launch({ args: [`${prefix}${spelling}${suffix}`] }), /already supplies NetLog/);
+        }
+      }
+    }
   }
   assert.throws(() => chromium.launch({ args: '--not-an-array' }), /must be an array/);
 });
