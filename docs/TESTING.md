@@ -171,6 +171,10 @@ The contract and audited reader families are recorded in [Classic keyboard audit
 
 `scripts/browser_support.mjs` supplies `createQaPage` for disposable browser setup. It closes the preceding context, creates a fresh context/page and records page, console and request errors with the current scenario metadata. Each journey still owns navigation, expected-reader waits, fixture declarations and assertions. Use it when extending mission, siege or car-pursuit helpers so setup and failure cleanup stay consistent.
 
+When writing or repairing a helper, navigate through `DOMContentLoaded` and then wait for the current reader and enabled control the journey will use. Background offline precaching can keep the network busy after that reader is ready. Assert the currently routed screen: hospital care, for example, uses its recovery reader rather than the Organisation planning card's visit badge. Use `waitForUiSettled` for resizing. After a deliberately ignored key, also wait for the same enabled control before comparing the complete reader and choices: stable semantics can still describe a temporarily disabled frame. Retain the original outcome assertions.
+
+Check complete text against its measured scroll clip and viewport with dismissal reachable; a fixed pixel boundary or a leaf span's DOM height can reject fully visible Flutter text. Save geometry and pending page/worker requests before failure cleanup, without adding gameplay input or extending the reader deadline to obtain a pass.
+
 ### Prepare an isolated web build
 
 For the common creation/orders/navigation/save journey, the [shared acceptance runner](#shared-acceptance-journey) already owns compilation, ports and cleanup. Use this setup for a supplemental helper. Install Node.js/npm and the Edge/Chrome browser required by that helper, and complete [Development mode](BUILDING.md#development-mode) first.

@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript, waitForUiSettled } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -47,6 +47,10 @@ const decodeText = async () => {
 };
 const button = name => page.getByRole('button', { name }).first();
 async function available(name) { return await button(name).count() > 0 && await button(name).isEnabled(); }
+async function waitForEnabled(name) {
+  const deadline = Date.now() + 20000;
+  while (!await available(name) && Date.now() < deadline) await page.waitForTimeout(80);
+}
 async function wait(pattern) {
   const deadline = Date.now() + 20000;
   while (Date.now() < deadline) {
@@ -82,7 +86,7 @@ async function fresh() {
   page.on('pageerror', e => report.pageErrors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') report.consoleErrors.push(m.text()); });
   page.on('requestfailed', r => report.failedRequests.push(r.url()));
-  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
   await wait(/Start a New Game/);
 }
 async function prepared(name, state, details, envelope = normalized?.envelope ?? sourceEnvelope) {
@@ -101,7 +105,8 @@ async function importLoad(path) {
   await click(/^A(?:\s|$)/); await click(/^L Load Game/); await wait(/Save & exit/);
 }
 async function snapshot(name) {
-  assert.ok(await available(/^Save & exit/));
+  await waitForEnabled(/^Save & exit/);
+  assert.ok(await available(/^Save & exit/), `Need current enabled headquarters save control: ${await decodeText()}`);
   await click(/^Save & exit/); await wait(/Start a New Game/);
   await click(/^Load & Manage Saves/); await click(/^A(?:\s|$)/);
   const downloading = page.waitForEvent('download'); await click(/Export Save File/);
@@ -117,10 +122,22 @@ async function decision() {
       disabled: n.getAttribute('aria-disabled') === 'true' }))) });
   return text;
 }
+async function readerSnapshot() {
+  const text = await decodeText(), buttons = [];
+  for (const control of await page.getByRole('button').all()) {
+    if (await control.isVisible()) buttons.push({
+      label: await control.getAttribute('aria-label') ?? await control.innerText(),
+      enabled: await control.isEnabled(),
+    });
+  }
+  buttons.sort((a, b) => a.label < b.label ? -1 : a.label > b.label ? 1 : Number(a.enabled) - Number(b.enabled));
+  return { text, lines: text.split('\n').sort(), buttons, surrenderAvailable: await available(/Give up/) };
+}
 async function enlarged() {
   await page.setViewportSize({ width: 1024, height: 720 });
   await click(/^Reading size/); await page.getByRole('menuitem', { name: '150%', exact: true }).click();
-  await page.waitForTimeout(250);
+  await page.getByRole('menuitem', { name: '150%', exact: true }).waitFor({ state: 'detached' });
+  await waitForUiSettled(page);
 }
 async function settle({ street = false } = {}) {
   let surrendered = false;
@@ -131,14 +148,30 @@ async function settle({ street = false } = {}) {
       assert.match(before, /Yann Zedner/);
       await capture('pursuit-before-inspection');
       await click(/^Inspect Yann Zedner$/);
+      await page.getByRole('dialog').waitFor({ state: 'visible' });
       if (await page.getByRole('dialog').count()) {
         await page.getByRole('dialog').getByRole('button', { name: 'Close dossier', exact: true }).last().click();
-        await page.waitForTimeout(150);
+        await page.getByRole('dialog').waitFor({ state: 'hidden' });
+        await waitForUiSettled(page);
         assert.ok(await available(/Give up/));
         check('pursuit dossier opens and closes without consuming a game decision');
       } else issue('Pursuit Inspect control does not display a dossier.');
       await enlarged();
-      await page.keyboard.press('z'); await page.waitForTimeout(150);
+      await waitForEnabled(/Give up/);
+      const beforeInvalidKey = await readerSnapshot();
+      const invalidKeyCheck = { scene, key: 'z', viewport: page.viewportSize(), readingScale: 1.5,
+        comparisonBasis: 'Complete raw reader line multiset and visible button label/enabled multiset; all values and duplicates retained, allowing sibling traversal reordering.',
+        before: beforeInvalidKey };
+      (report.invalidKeyChecks ??= []).push(invalidKeyCheck);
+      assert.ok(beforeInvalidKey.surrenderAvailable, 'Invalid-key probe requires the current enabled surrender choice.');
+      await page.keyboard.press('z'); await waitForUiSettled(page);
+      await waitForEnabled(/Give up/);
+      const afterInvalidKey = await readerSnapshot();
+      invalidKeyCheck.after = afterInvalidKey;
+      assert.deepEqual(afterInvalidKey.lines, beforeInvalidKey.lines,
+        'Invalid compact input must retain every reader line and its multiplicity.');
+      assert.deepEqual(afterInvalidKey.buttons, beforeInvalidKey.buttons,
+        'Invalid compact input must retain every visible button label and enabled/disabled state.');
       assert.ok(await available(/Give up/), 'Retry must retain the source surrender choice.');
       const bounds = await button(/Give up/).boundingBox();
       assert.ok(bounds && bounds.y >= 0 && bounds.y + bounds.height <= page.viewportSize().height);

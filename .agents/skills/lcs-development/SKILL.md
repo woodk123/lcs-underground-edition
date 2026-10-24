@@ -32,6 +32,8 @@ For internal tools or documentation, run the relevant tooling tests or verify th
 
 For UI or routing work, define the complete interaction before editing: retained selection/scroll, cancellation, revisiting, focus and relevant compact/enlarged layouts. Once source settles, use the shared acceptance journey for changes spanning creation, orders, navigation or saves. Preserve its new founder's continuation and separately declared prepared scenarios. Follow the testing guide for supplemental journeys outside that coverage.
 
+For browser-helper changes, follow the [current-reader readiness rules](../../../docs/TESTING.md#browser-regressions). Use the current routed reader, actual enabled controls and measured visible bounds; retain the original campaign and outcome checks when repairing timing or geometry assumptions. Run supplemental gameplay journeys sequentially as the guide requires; the shared acceptance runner owns its separate worker limit.
+
 ## Investigate through the development MCP
 
 Prepare the cached development build with `python scripts/prepare_dev_mcp.py`, then start a disposable session as described in its guide. Observe the current reader, choose one of its current action IDs and send its observed revision. After an action fails or times out, observe again before deciding what to do: the action may already have been accepted.
