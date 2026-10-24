@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions, createQaPage, waitForUiSettled } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, createQaPage, observeMainScript, waitForUiSettled } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -39,7 +39,7 @@ assert.ok(response.ok);
 report.mainJsSha256 = createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex');
 assert.equal(report.mainJsSha256, expected.toLowerCase(), 'QA server must serve this exact compiled build.');
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
-let context, page, normalizedEnvelope, normalizedState;
+let context, page, verifyLoaded, normalizedEnvelope, normalizedState;
 let scenario = '';
 const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 async function uiText() {
@@ -79,6 +79,16 @@ async function reachableControl(control) {
     `Current control must fit inside the ${viewport.width}x${viewport.height} viewport: ${label}`);
   return { label, bounds, viewport };
 }
+async function mapControl(label) {
+  const direct = page.getByRole('button', { name: label, exact: true });
+  if (await direct.count()) await direct.first().click();
+  else {
+    await click('Map controls');
+    await page.getByRole('menuitem', { name: label, exact: true }).click();
+  }
+  await page.mouse.move(2, 2);
+  await waitForUiSettled(page);
+}
 function check(name) { report.checks.push(`${scenario}: ${name}`); console.log(`PASS ${scenario}: ${name}`); }
 async function capture(name) {
   const filename = `${scenario}-${name}.png`;
@@ -89,9 +99,11 @@ async function capture(name) {
   await writeFile(resolve(output, `${scenario}-${name}.txt`), await uiText());
 }
 async function fresh() {
+  if (verifyLoaded) await verifyLoaded(expected.toLowerCase());
   ({ context, page } = await createQaPage(browser, {
     previousContext: context, report, errorContext: () => ({ scenario }), timeout: 8000,
   }));
+  verifyLoaded = observeMainScript(page, report);
   await page.goto(url, { waitUntil: 'networkidle' });
   await wait(/Start a New Game/);
 }
@@ -271,11 +283,9 @@ try {
       await click(/^Reading size$/);
       await page.getByRole('menuitem', { name: '150%', exact: true }).click();
       await capture('compact-1024x720-at150');
-      await click('Map controls');
-      await page.getByRole('menuitem', { name: 'Fit area', exact: true }).click();
+      await mapControl('Fit area');
       await capture('compact-fit-area');
-      await click('Map controls');
-      await page.getByRole('menuitem', { name: 'Center squad at readable size', exact: true }).click();
+      await mapControl('Center squad at readable size');
       const squadMark = page.getByText(/^Squad.*Current position/).first()
         .locator('xpath=ancestor::flt-semantics[1]');
       const squadBox = await squadMark.boundingBox();
@@ -284,8 +294,7 @@ try {
       await page.mouse.down();
       await page.mouse.move(squadBox.x + squadBox.width / 2 + 45, squadBox.y + squadBox.height / 2 + 20, { steps: 8 });
       await page.mouse.up();
-      await click('Map controls');
-      await page.getByRole('menuitem', { name: 'Center squad at readable size', exact: true }).click();
+      await mapControl('Center squad at readable size');
       await page.getByRole('checkbox', { name: /Inspect/ }).click();
       const inspectBox = await page.getByText(/^Squad.*Current position/).first()
         .locator('xpath=ancestor::flt-semantics[1]').boundingBox();
@@ -484,19 +493,40 @@ try {
     await page.getByRole('menuitem', { name: '150%', exact: true }).waitFor({ state: 'detached' });
     await waitForUiSettled(page);
     const compactPoliticalChoice = await reachableControl(button(politics));
-    const compactConversation = await uiText();
+    async function compactReaderSnapshot() {
+      const text = await uiText(), buttons = [];
+      for (const control of await page.getByRole('button').all()) {
+        if (await control.isVisible()) buttons.push({
+          label: await control.getAttribute('aria-label') ?? await control.innerText(),
+          enabled: await control.isEnabled(),
+        });
+      }
+      buttons.sort((a, b) => a.label < b.label ? -1 : a.label > b.label ? 1 : Number(a.enabled) - Number(b.enabled));
+      return { text, lines: text.split('\n').sort(), buttons,
+        politicalChoiceAvailable: await available(politics) };
+    }
+    const compactConversation = await compactReaderSnapshot();
     await capture('conversation-compact-choice');
     await page.keyboard.press('z');
     await waitForUiSettled(page);
-    const compactAfterInvalidKey = await uiText();
-    assert.equal(compactAfterInvalidKey, compactConversation, 'Invalid compact input must retain the same political conversation choices.');
-    assert.ok(await available(politics));
-    await capture('conversation-compact-retry');
+    const compactAfterInvalidKey = await compactReaderSnapshot();
     const compactChoices = [compactPoliticalChoice];
     const compactChapter = { scenario, chapter: 'compact-political-conversation',
       viewport: page.viewportSize(), readingScale: 1.5, invalidKey: 'z', choices: compactChoices,
-      readerTextBeforeInvalidKey: compactConversation, readerTextAfterInvalidKey: compactAfterInvalidKey };
+      comparisonBasis: 'Complete raw reader line multiset and visible button label/enabled multiset; all values and duplicate lines/buttons are retained, while sibling traversal order may change.',
+      readerTextBeforeInvalidKey: compactConversation.text, readerTextAfterInvalidKey: compactAfterInvalidKey.text,
+      readerLinesBeforeInvalidKey: compactConversation.lines, readerLinesAfterInvalidKey: compactAfterInvalidKey.lines,
+      visibleButtonsBeforeInvalidKey: compactConversation.buttons, visibleButtonsAfterInvalidKey: compactAfterInvalidKey.buttons,
+      politicalChoiceAvailableBeforeInvalidKey: compactConversation.politicalChoiceAvailable,
+      politicalChoiceAvailableAfterInvalidKey: compactAfterInvalidKey.politicalChoiceAvailable };
     report.layoutChapters.push(compactChapter);
+    assert.deepEqual(compactAfterInvalidKey.lines, compactConversation.lines,
+      'Invalid compact input must retain every reader line and its multiplicity.');
+    assert.deepEqual(compactAfterInvalidKey.buttons, compactConversation.buttons,
+      'Invalid compact input must retain every visible button label and enabled/disabled state.');
+    assert.ok(compactConversation.politicalChoiceAvailable && compactAfterInvalidKey.politicalChoiceAvailable);
+    assert.ok(await available(politics));
+    await capture('conversation-compact-retry');
     await recordDecision();
     await click(politics);
     // Follow real conversation acknowledgements; if persuasion reaches the
@@ -625,6 +655,7 @@ try {
       detainee: { id: transferred.id, location: transferred.locationId }, prisoner: { id: released.id, location: released.locationId } };
     await roundTrip('complete');
   }
+  await verifyLoaded(expected.toLowerCase());
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.consoleErrors, []);
   assert.deepEqual(report.failedRequests, []);
