@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lcs_new_age/gamestate/time.dart';
 import 'package:lcs_new_age/modern/journal_recruitment.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
@@ -108,18 +109,23 @@ class _JournalDailyPlanState extends State<JournalDailyPlan> {
   }
 
   @override
-  Widget build(BuildContext context) => Dialog(
-    key: const ValueKey('daily-plan-board'),
-    backgroundColor: JournalPalette.page,
-    surfaceTintColor: Colors.transparent,
-    insetPadding: const EdgeInsets.all(12),
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 1120),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: AnimatedBuilder(
-          animation: widget.controller,
-          builder: (context, _) => _content(context),
+  Widget build(BuildContext context) => CallbackShortcuts(
+    bindings: {
+      const SingleActivator(LogicalKeyboardKey.escape): widget.onClose,
+    },
+    child: Dialog(
+      key: const ValueKey('daily-plan-board'),
+      backgroundColor: JournalPalette.page,
+      surfaceTintColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(12),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1120),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: AnimatedBuilder(
+            animation: widget.controller,
+            builder: (context, _) => _content(context),
+          ),
         ),
       ),
     ),

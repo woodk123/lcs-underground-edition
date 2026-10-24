@@ -310,6 +310,96 @@ void main() {
     );
   }
 
+  for (final large in [false, true]) {
+    testWidgets(
+      'Tab to Close then Escape preserves the active draft, large=$large',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        try {
+          final harness = await mount(tester, large: large);
+          await _tap(tester, 'journal-orders');
+          await _tap(tester, 'journal-activity:donations');
+          final journal = tester.state<OrganisationJournalState>(
+            find.byType(OrganisationJournal),
+          );
+          expect(journal.hasPreparedOrder, true);
+          final source = engine.console;
+          final before = campaignSnapshot();
+          final revision = source.revision.value;
+          final actions = List.of(source.actions);
+          final pending = source.nextKeyEvent;
+          final dispatched = List.of(harness.dispatched);
+          reseedRNG(seed: 94312);
+          final rolls = List.generate(12, (_) => lcsRandom(100000));
+          reseedRNG(seed: 94312);
+          await _focusGame(tester);
+          final previousFocus = FocusManager.instance.primaryFocus;
+          await _tap(tester, 'journal-daily-plan');
+          await tester.enterText(_key('daily-plan-search'), 'wpd');
+          await _settle(tester);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          try {
+            await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          } finally {
+            await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          }
+          await _settle(tester);
+          final close = find.bySemanticsLabel('Close daily plan');
+          expect(close, findsOneWidget);
+          expect(
+            tester
+                .getSemantics(close)
+                .getSemanticsData()
+                .flagsCollection
+                .isFocused,
+            Tristate.isTrue,
+            reason: 'The real Close button must own keyboard focus.',
+          );
+          for (final (key, character) in [
+            (LogicalKeyboardKey.keyW, 'w'),
+            (LogicalKeyboardKey.keyP, 'p'),
+            (LogicalKeyboardKey.keyD, 'd'),
+          ]) {
+            await tester.sendKeyEvent(key, character: character);
+            await _settle(tester);
+          }
+          expect(
+            tester
+                .widget<TextField>(_key('daily-plan-search'))
+                .controller!
+                .text,
+            'wpd',
+          );
+          expect(
+            tester
+                .getSemantics(close)
+                .getSemanticsData()
+                .flagsCollection
+                .isFocused,
+            Tristate.isTrue,
+          );
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+          await _settle(tester);
+          expect(_key('daily-plan-board'), findsNothing);
+          expect(previousFocus?.hasPrimaryFocus, true);
+          expect(journal.hasPreparedOrder, true);
+          expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
+          expect(campaignSnapshot(), before);
+          expect(source.revision.value, revision);
+          expect(source.actions, actions);
+          expect(identical(source.nextKeyEvent, pending), true);
+          expect(harness.dispatched, dispatched);
+          expect(List.generate(12, (_) => lcsRandom(100000)), rolls);
+          await _tap(tester, 'journal-cancel-order');
+          expect(campaignSnapshot(), before);
+          expect(tester.takeException(), isNull);
+        } finally {
+          semantics.dispose();
+        }
+      },
+    );
+  }
+
   testWidgets(
     'deep scroll clamps after filtering and its current position survives revisit',
     (tester) async {

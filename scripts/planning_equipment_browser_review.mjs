@@ -120,7 +120,7 @@ const report = {
       sleeper: { id: sleeper.id, name: sleeper.name }, queuedSquad: { id: queuedSquad.id, name: queuedSquad.name, destination: park.name },
       recruiter: { id: prepared.lcs.pool[3].id, name: prepared.lcs.pool[3].name }, prospect: { id: prospect.id, name: prospect.name } },
     people: prepared.lcs.pool.length, stockTypes: home.loot.map(item => item.typeName) },
-  checks: [], errors: [], screenshots: [], sourceActions: [], snapshots: [], layouts: [], focusChecks: [],
+  checks: [], errors: [], screenshots: [], sourceActions: [], snapshots: [], layouts: [], focusChecks: [], sourceNormalizations: [],
   pageErrors: [], consoleErrors: [], failedRequests: [], workerErrors: [], loadedMainJsHashes: [],
 };
 await writeFile(resolve(output, 'report.json'), JSON.stringify(report, null, 2));
@@ -417,11 +417,24 @@ async function equipmentJourney() {
     && action.entityCategory === 'WEAPON_AK102').length, 0, 'No stale stock action for the equipped rifle.');
   await selectedEquipmentPerson(equipmentActor.name); await capture('equipment-revisited');
   await equipmentBack();
-  assert.deepEqual(await exportGame('after-equipment-revisit'), equippedSave);
+  // Reentering the original reader sorts newly returned stock. This fixture has
+  // one weapon and unique outfit/ammo/loot types, so its exact original class /
+  // type-id order is unambiguous; preserve every item payload and other field.
+  const sortedExpected = structuredClone(equippedSave), returnedStock = stock(sortedExpected);
+  const rank = { WEAPON: 0, CLOTHING: 1, AMMO: 2, LOOT: 3 };
+  assert.equal(returnedStock.filter(item => item.typeName.startsWith('WEAPON_')).length, 1);
+  assert.equal(new Set(returnedStock.map(item => item.typeName)).size, returnedStock.length);
+  for (const item of returnedStock) assert.ok(item.typeName.split('_')[0] in rank);
+  returnedStock.sort((a, b) => rank[a.typeName.split('_')[0]] - rank[b.typeName.split('_')[0]]
+    || (a.typeName < b.typeName ? -1 : a.typeName > b.typeName ? 1 : 0));
+  assert.deepEqual(await exportGame('after-equipment-revisit'), sortedExpected,
+    'Original stock sorting is the only change on equipment reentry; all complete item payloads and other campaign fields remain exact.');
+  report.sourceNormalizations.push({ layout, kind: 'original equipment reentry stock sort', siteId: home.id,
+    before: `${layout}-equipped-campaign.json`, after: `${layout}-after-equipment-revisit.json` });
   check('Back/revisit and native save round trip retain the final equipment without stale stock actions');
 }
 const boardLocator = () => page.getByRole('dialog').filter({
-  has: page.getByRole('button', { name: 'Close daily plan', exact: true }),
+  has: page.getByRole('button', { name: /^Close daily plan(?:$|\s)/ }),
 });
 async function openBoard() {
   await click(/^Daily plan$/);
