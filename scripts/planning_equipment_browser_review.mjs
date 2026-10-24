@@ -180,29 +180,41 @@ async function reveal(control, scope = page) {
     assert.ok(area, 'Keep the current reader mounted while scrolling.');
     const box = await control.count() ? await control.boundingBox() : null;
     const clips = box ? await control.evaluate((node, boundary) => {
-      const rectangles = [];
+      const ancestors = [];
       for (let parent = node.parentElement; parent; parent = parent.parentElement) {
         const style = getComputedStyle(parent);
         if (!/(?:hidden|auto|scroll)/.test(`${style.overflowX} ${style.overflowY}`)) continue;
         const rect = parent.getBoundingClientRect();
-        rectangles.push({ x: rect.x, y: rect.y, width: rect.width, height: rect.height });
+        ancestors.push({ parent, rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height } });
       }
-      return rectangles.map((rect, index) => {
-        const enclosing = [boundary, ...rectangles.slice(index + 1)];
+      return ancestors.map(({ parent, rect }, index) => {
+        const enclosing = [boundary, ...ancestors.slice(index + 1).map(outer => outer.rect)];
         const left = Math.max(rect.x, ...enclosing.map(outer => outer.x));
         const top = Math.max(rect.y, ...enclosing.map(outer => outer.y));
         const right = Math.min(rect.x + rect.width, ...enclosing.map(outer => outer.x + outer.width));
         const bottom = Math.min(rect.y + rect.height, ...enclosing.map(outer => outer.y + outer.height));
-        return { rect, visible: { x: left, y: top, width: Math.max(0, right - left), height: Math.max(0, bottom - top) } };
+        const nested = [...parent.querySelectorAll('*')].filter(child => {
+          const style = getComputedStyle(child);
+          return /(?:hidden|auto|scroll)/.test(`${style.overflowX} ${style.overflowY}`);
+        }).map(child => {
+          const box = child.getBoundingClientRect();
+          return { x: Math.max(left, box.left), y: Math.max(top, box.top),
+            right: Math.min(right, box.right), bottom: Math.min(bottom, box.bottom) };
+        }).filter(box => box.right > box.x && box.bottom > box.y);
+        const maximumScroll = parent.scrollHeight - parent.clientHeight;
+        return { rect, nested, topInset: maximumScroll > 0 && parent.scrollTop > 0 ? 1 : 0,
+          bottomInset: maximumScroll > 0 && parent.scrollTop < maximumScroll ? 1 : 0,
+          visible: { x: left, y: top, width: Math.max(0, right - left), height: Math.max(0, bottom - top) } };
       });
     }, area) : [];
     const visible = clips[0]?.visible ?? area;
+    const topInset = clips[0]?.topInset ?? 0, bottomInset = clips[0]?.bottomInset ?? 0;
     if (box && box.height > 4 && box.x >= visible.x && box.x + box.width <= visible.x + visible.width
-      && box.y >= visible.y && box.y + box.height <= visible.y + visible.height) {
+      && box.y >= visible.y + topInset && box.y + box.height <= visible.y + visible.height - bottomInset) {
       try { await control.click({ trial: true, timeout: 300 }); return control; }
       catch (error) { lastError = String(error); }
     }
-    let scrollArea = visible, scrollTarget = box, excluded;
+    let scrollArea = visible, scrollTarget = box, excluded, scrollIndex = 0;
     // A partially exposed nested scroller cannot reveal a larger control until
     // its outer scroller exposes it. Keep the real wheel outside that child.
     for (let index = 0; box && index < clips.length
@@ -210,14 +222,24 @@ async function reveal(control, scope = page) {
       excluded = clips[index].visible;
       scrollTarget = clips[index].rect;
       scrollArea = clips[index + 1]?.visible ?? area;
+      scrollIndex = index + 1;
     }
     if (scrollArea.width <= 4 || scrollArea.height <= 4) { lastError = 'No exposed scroll viewport'; continue; }
     const points = [[.76, .58], [.24, .2], [.76, .8], [.24, .8], [.5, .1]]
       .map(([x, y]) => ({ x: scrollArea.x + scrollArea.width * x, y: scrollArea.y + scrollArea.height * y }));
-    const point = points.find(({ x, y }) => !excluded || x < excluded.x || x > excluded.x + excluded.width
-      || y < excluded.y || y > excluded.y + excluded.height) ?? points[0];
+    const point = points.find(({ x, y }) => (!excluded || x < excluded.x || x > excluded.x + excluded.width
+      || y < excluded.y || y > excluded.y + excluded.height)
+      && !(clips[scrollIndex]?.nested ?? []).some(nested => x >= nested.x && x <= nested.right && y >= nested.y && y <= nested.bottom));
+    if (!point) { lastError = 'No exposed wheel point outside nested scroll viewports'; continue; }
     await page.mouse.move(point.x, point.y);
-    await page.mouse.wheel(0, scrollTarget && scrollTarget.y < scrollArea.y ? -230 : 230);
+    const scrollTopInset = clips[scrollIndex]?.topInset ?? 0, scrollBottomInset = clips[scrollIndex]?.bottomInset ?? 0;
+    let distance = scrollTarget && scrollTarget.y < scrollArea.y + scrollTopInset ? scrollTarget.y - scrollArea.y - scrollTopInset
+      : scrollTarget ? scrollTarget.y + scrollTarget.height - scrollArea.y - scrollArea.height + scrollBottomInset : 230;
+    if (scrollTarget && Math.abs(distance) <= 1.01 && scrollArea.height - scrollTarget.height >= 16) {
+      distance = distance < 0 ? -8 : 8;
+    }
+    await page.mouse.wheel(0, distance < 0 ? Math.max(-230, Math.min(-1, distance)) : Math.min(230, Math.max(1, distance)));
+    await page.mouse.move(2, 2);
     await waitForUiSettled(page);
   }
   throw Error(`Cannot reach the current reader's control: ${lastError ?? await control.count() + ' semantic nodes'}`);
@@ -528,8 +550,9 @@ async function dailyPlanJourney() {
   await wait(/Personal order: Laying Low/);
   const anchor = button(`Select daily plan for ${lastName}`, board);
   await reveal(anchor, board);
-  const beforeBounds = await anchor.boundingBox();
   await capture('daily-plan-filtered-scroll');
+  await keyboardFocus(button('Close daily plan', board), 'Daily plan Close before retention baseline');
+  const beforeBounds = await anchor.boundingBox();
   await closeBoard(board, { keyboard: true });
   sameSource(initial, await snapshot('daily-plan-closed'), 'Daily plan inspection and keyboard Close');
   board = await openBoard();
