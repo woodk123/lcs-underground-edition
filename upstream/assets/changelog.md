@@ -4,7 +4,8 @@
 
 ## Underground Edition 0.4.1 — 2026-10-24
 
-* Launch the browser player with Python 3.9 or 3.10 without file-loading errors.
+* Launch the browser player with Python 3.9 or later without file-loading errors, including game folders reached through directory junctions or paths with trailing separators. The launcher skips incompatible Python installations.
+* Stop the local browser server without closing an unrelated program if its recorded process ID has been reused.
 
 ## Underground Edition 0.4.0 — 2026-10-23
 

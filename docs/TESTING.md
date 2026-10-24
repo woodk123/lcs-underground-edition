@@ -106,6 +106,10 @@ The tests exercise archive integrity/tampering, complete source snapshots, local
 
 Expected browser disconnects do not print server tracebacks when a page or disposable profile closes during an asset response. Unexpected handler/file errors retain their diagnostics; loopback regressions cover both cases and continued serving afterward.
 
+Windows launcher regressions use disposable command/process fixtures to check compatible Python selection, actual argument quoting, canonical directory identity and refusal to stop an unrelated process. Their live child only prints arguments; process-stop calls are mocked. They preserve existing player and QA servers.
+
+Journeys using the shared browser-page helper retain failed request methods, resource types, network error text and connection/request timing alongside scenario context. Keep this evidence when investigating a startup transport failure; a later successful request alone does not establish its cause.
+
 ## Shared acceptance journey
 
 `player_guidance_test.dart` checks loaded/compatible spare ammunition, per-patient First Aid eligibility, unchanged campaign/RNG during readiness inspection, source stealth feedback without clearing alarm/suspicion, and operation cash/loot separation with history round-trip. Visit and recovery journeys cover the integrated readiness inspector, enlarged discharge/payment controls and rejoining guidance; pawn journeys verify itemized receipts against stock removed and funds received.

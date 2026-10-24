@@ -50,8 +50,13 @@ def source_identity(root: Path) -> dict:
     paths = subprocess.check_output([
         'git', '-C', str(root), 'ls-files', '-z', '--cached', '--others', '--exclude-standard',
     ]).decode('utf-8').split('\0')
+    inputs = set(paths) - {''}
+    # These ignored outputs are compiled too; the final guard must notice
+    # a concurrent generation/edit even when Git status remains clean.
+    inputs.update(path.relative_to(root).as_posix()
+                  for path in (root / 'upstream/lib').rglob('*.g.dart') if path.is_file())
     tree = hashlib.sha256()
-    for name in sorted(set(paths) - {''}):
+    for name in sorted(inputs):
         path = root / name
         value = digest(path) if path.is_file() else 'missing'
         tree.update(f'{name}\0{value}\0'.encode('utf-8'))

@@ -16,6 +16,12 @@ $WebRoot = [System.IO.Path]::GetFullPath($WebRoot)
 if (-not (Test-Path -LiteralPath (Join-Path $WebRoot 'index.html') -PathType Leaf)) {
     throw "Built game missing at $WebRoot. Run scripts\build_release.ps1 from a source checkout, or extract the complete release archive."
 }
+$python = Get-LcsPython
+# Match serve.py's directory identity, including junctions. Appending '.' also
+# keeps a trailing backslash away from PowerShell's native argument quoting.
+$pathJson = & $python -c 'import json,sys; from pathlib import Path; print(json.dumps(str(Path(sys.argv[1]).resolve(strict=True))))' (Join-Path $WebRoot '.')
+if ($LASTEXITCODE -ne 0) { throw "Could not resolve the built game directory at $WebRoot." }
+$WebRoot = ($pathJson -join "`n") | ConvertFrom-Json
 $url = "http://127.0.0.1:$Port/"
 $healthUrl = "http://127.0.0.1:$Port/__lcs_launcher_health"
 
@@ -35,11 +41,13 @@ if ($null -ne $health) {
 } else {
     $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $Port)
     try { $listener.Start() } catch { throw "Port $Port is occupied. Close the other server or use -Port with a different port." } finally { $listener.Stop() }
-    $python = Get-LcsPython
     $logs = Join-Path $root '.local\launcher'
     New-Item -ItemType Directory -Path $logs -Force | Out-Null
     $serverScript = Join-Path $root 'scripts\serve.py'
-    $arguments = @(('"' + $serverScript + '"'), '--directory', ('"' + $WebRoot + '"'), '--port', $Port)
+    # resolve() removes ordinary trailing separators. A drive/UNC root keeps
+    # its final backslash, which must be doubled before the closing quote.
+    $quotedWebRoot = '"' + ($WebRoot -replace '(\\+)$', '$1$1') + '"'
+    $arguments = @(('"' + $serverScript + '"'), '--directory', $quotedWebRoot, '--port', $Port)
     $process = Start-Process -FilePath $python -ArgumentList $arguments -WindowStyle Hidden -PassThru `
         -RedirectStandardOutput (Join-Path $logs "server-$Port.out.log") `
         -RedirectStandardError (Join-Path $logs "server-$Port.err.log")

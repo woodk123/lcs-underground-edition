@@ -210,6 +210,33 @@ class AcceptanceTests(unittest.TestCase):
             with acceptance.reserve_servers(self.root, (foreign.server_port,)):
                 pass
 
+    def test_source_guard_includes_ignored_generated_serializers(self):
+        def git(*args):
+            return subprocess.run(['git', '-C', str(self.root), *args], check=True,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        git('init', '-q')
+        (self.root / '.gitignore').write_text('*.g.dart\n')
+        source = self.root / 'upstream/lib/model.dart'
+        source.parent.mkdir(parents=True)
+        source.write_text("part 'model.g.dart';\n")
+        generated = source.with_name('model.g.dart')
+        generated.write_text('generated before acceptance')
+        git('add', '.')
+        git('-c', 'user.name=Acceptance Test', '-c', 'user.email=acceptance@example.invalid',
+            'commit', '-qm', 'fixture')
+        original = acceptance.source_identity(self.root)
+        self.assertEqual(original['working_tree'], [])
+        generated.write_text('changed during acceptance')
+        changed = acceptance.source_identity(self.root)
+        self.assertEqual(changed['working_tree'], [])
+        self.assertEqual(changed['commit'], original['commit'])
+        self.assertNotEqual(changed['tree_sha256'], original['tree_sha256'])
+        generated.unlink()
+        missing = acceptance.source_identity(self.root)
+        self.assertNotEqual(missing['tree_sha256'], original['tree_sha256'])
+        generated.with_name('new.g.dart').write_text('new ignored compiler input')
+        self.assertNotEqual(acceptance.source_identity(self.root)['tree_sha256'], missing['tree_sha256'])
+
     def test_runner_rejects_player_out_of_range_and_duplicate_ports_before_work(self):
         for i, ports in enumerate([(8765, 18882), (18889, 18889), (19000, 18882), (18879, 18878)]):
             args = Namespace(out=f'.local/ports-{i}', web_root=None, expected_hash=None,

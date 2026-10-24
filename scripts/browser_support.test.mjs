@@ -26,7 +26,11 @@ test('fresh QA pages close prior storage before creating independent contexts an
   first.page.emit('pageerror', new Error('reader failed'));
   first.page.emit('console', { type: () => 'warning', text: () => 'ignored warning' });
   first.page.emit('console', { type: () => 'error', text: () => 'console failure' });
-  first.page.emit('requestfailed', { url: () => `${QA_URL}asset.webp` });
+  const requestTiming = { startTime: 123456, connectStart: -1, requestStart: -1, responseEnd: -1 };
+  first.page.emit('requestfailed', {
+    url: () => `${QA_URL}asset.webp`, method: () => 'GET', resourceType: () => 'fetch',
+    failure: () => ({ errorText: 'net::ERR_CONNECTION_TIMED_OUT' }), timing: () => requestTiming,
+  });
   const second = await createQaPage(browser, {
     previousContext: first.context, report, errorContext: () => ({ scene: 'siege' }), timeout: 10000,
   });
@@ -38,7 +42,8 @@ test('fresh QA pages close prior storage before creating independent contexts an
   assert.deepEqual(report, {
     pageErrors: [{ scenario: 'operation', error: 'Error: reader failed' }, { scene: 'siege', error: 'Error: siege failed' }],
     consoleErrors: [{ scenario: 'operation', error: 'console failure' }],
-    failedRequests: [{ scenario: 'operation', url: `${QA_URL}asset.webp` }],
+    failedRequests: [{ scenario: 'operation', url: `${QA_URL}asset.webp`, method: 'GET', resourceType: 'fetch',
+      errorText: 'net::ERR_CONNECTION_TIMED_OUT', timing: requestTiming }],
   });
 });
 

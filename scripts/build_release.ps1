@@ -21,9 +21,9 @@ if (Test-Path -LiteralPath (Join-Path $root '.git')) {
     if ($changes) { throw 'Release builds require a clean Git checkout. Commit or move source changes before building; ignored build outputs are allowed.' }
 }
 $sourceCommit = Get-LcsSourceCommit -Root $root
+$python = Get-LcsPython -MinimumVersion ([version]'3.12')
 $flutter = Get-LcsFlutter
 $dart = Join-Path $root '.tools\flutter\bin\dart.bat'
-$python = Get-LcsPython
 $analysisJson = & $python (Join-Path $root 'scripts\analysis_targets.py') --root $root
 if ($LASTEXITCODE -ne 0) { throw 'Could not load strict analysis targets; see scripts/analysis_targets.json.' }
 $analysisTargets = $analysisJson | ConvertFrom-Json
