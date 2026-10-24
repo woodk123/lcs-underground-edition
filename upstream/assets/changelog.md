@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.6.3 — 2026-10-24
+
+* Explain in location guides that face-concealing outfits halve crime heat during site visits but do not prevent charges or improve clothing fit.
+
 ## Underground Edition 0.6.2 — 2026-10-24
 
 * Show the three strongest trained skills, weapons, loaded ammunition and clothing on every Organisation crew row and the selected person's card. Highlight missing, bloodstained or damaged clothing, and scroll the roster to compare larger crews.

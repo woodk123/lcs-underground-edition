@@ -74,4 +74,9 @@ const clothingDisguiseLimits =
     'added visible armor can make an outfit alarming. Blood and less-than-best '
     'condition can get you turned away at checkpoints or by bouncers. '
     'Suspicious weapons and metal detectors have separate checks. '
-    'Security, site control, sieges and current laws can change which outfits fit.';
+    'Security, site control, sieges and current laws can change which outfits fit.'
+    '\n\nOutfits marked “Hides Face”, such as the Black Bloc Outfit and Ninja '
+    'Costume, halve the heat gained from crimes during site visits. Crimes are '
+    'still recorded against the wearer: hiding your face does not prevent '
+    'charges or remove existing ones. Face concealment does not improve an '
+    'outfit’s clothing rating here.';
