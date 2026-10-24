@@ -21,6 +21,9 @@ class OrganisationCrewPoolView extends StatelessWidget {
     required this.onSortChanged,
     required this.onSelectPerson,
     required this.onTransfer,
+    required this.skillSummary,
+    required this.clothingSummary,
+    required this.weaponSummary,
   });
 
   final List<Creature> allocationPool;
@@ -33,6 +36,9 @@ class OrganisationCrewPoolView extends StatelessWidget {
   final ValueChanged<Skill> onSortChanged;
   final ValueChanged<int> onSelectPerson;
   final ValueChanged<int> onTransfer;
+  final String Function(Creature) skillSummary;
+  final String Function(Creature) clothingSummary;
+  final String Function(Creature) weaponSummary;
 
   @override
   Widget build(BuildContext context) {
@@ -75,9 +81,7 @@ class OrganisationCrewPoolView extends StatelessWidget {
             },
           ),
           Text(
-            incoming.isNotEmpty
-                ? 'Drop to remove from this squad'
-                : 'Select a portrait to inspect; add with the arrow or drag onto the left page.',
+            incoming.isNotEmpty ? 'Drop to remove from this squad' : 'Select a portrait to inspect; add with the arrow or drag onto the left page.',
             style: JournalPalette.small,
           ),
           const SizedBox(height: 7),
@@ -160,6 +164,10 @@ class OrganisationCrewPoolView extends StatelessWidget {
   }
 
   Widget _poolRow(Creature candidate) {
+    final skills = skillSummary(candidate);
+    final clothes = clothingSummary(candidate);
+    final weapon = weaponSummary(candidate);
+    final clothing = candidate.equippedClothing;
     final inSquad = members.any((p) => p.id == candidate.id);
     final reason = blockReason(candidate.id);
     void select() => onSelectPerson(candidate.id);
@@ -185,7 +193,11 @@ class OrganisationCrewPoolView extends StatelessWidget {
                   shape: const RoundedRectangleBorder(),
                 ),
                 child: Semantics(
-                  label: 'Inspect pool member ${candidate.name}',
+                  label:
+                      'Inspect pool member ${candidate.name}\n'
+                      '${candidate.squad?.name ?? 'Unassigned'}\n'
+                      '${sortSkill.displayName} ${candidate.skill(sortSkill)} · ${candidate.blood}/${candidate.maxBlood} blood\n'
+                      'Strongest skills: $skills\nWeapon: $weapon\nClothes: $clothes',
                   excludeSemantics: true,
                   child: Row(
                     children: [
@@ -214,6 +226,34 @@ class OrganisationCrewPoolView extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: JournalPalette.small,
+                            ),
+                            Text(
+                              'Strongest skills: $skills',
+                              key: ValueKey(
+                                'journal-pool-skills:${candidate.id}',
+                              ),
+                              style: JournalPalette.small,
+                            ),
+                            Text(
+                              'Weapon: $weapon',
+                              key: ValueKey(
+                                'journal-pool-weapon:${candidate.id}',
+                              ),
+                              style: JournalPalette.small,
+                            ),
+                            Text(
+                              'Clothes: $clothes',
+                              key: ValueKey(
+                                'journal-pool-clothing:${candidate.id}',
+                              ),
+                              style: JournalPalette.small.copyWith(
+                                color:
+                                    clothing == null ||
+                                        clothing.bloody ||
+                                        clothing.damaged
+                                    ? JournalPalette.danger
+                                    : JournalPalette.ink,
+                              ),
                             ),
                           ],
                         ),

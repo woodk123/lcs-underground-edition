@@ -2347,6 +2347,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   }
 
   Widget _poolPage() => OrganisationCrewPoolView(
+    skillSummary: _topSkills,
+    clothingSummary: _clothingSummary,
+    weaponSummary: _weaponSummary,
     allocationPool: controller.allocationPool,
     members: members,
     sortSkill: _poolSort,

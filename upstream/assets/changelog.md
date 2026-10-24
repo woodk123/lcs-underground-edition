@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.6.9 — 2026-10-24
+
+* Show each squad-assignment candidate's three strongest trained skills, equipped weapon, loaded ammunition and clothing condition directly in the pool, with wrapping text for easier comparison.
+
 ## Underground Edition 0.6.8 — 2026-10-24
 
 * Explain daily blood recovery in medical records, including current care support, automatic First Aid help, injury limits, care experience and why recovery can vary.

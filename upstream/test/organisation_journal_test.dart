@@ -222,7 +222,12 @@ Future<void> _showCrewMember(WidgetTester tester, int id) async {
   );
   tester.state<ScrollableState>(scroll).position.jumpTo(0);
   await _settle(tester);
-  await tester.scrollUntilVisible(target, 100, scrollable: scroll, continuous: true);
+  await tester.scrollUntilVisible(
+    target,
+    100,
+    scrollable: scroll,
+    continuous: true,
+  );
   await _settle(tester);
   // Detailed rows can exceed a compact viewport. Reveal the name, which
   // activates the same row button, rather than requiring the entire row.
@@ -2339,6 +2344,13 @@ void main() {
       'pool inspection survives rebuild and sorting survives revisit, large=$large',
       (tester) async {
         final candidate = _extraPerson('Waiting Pool Candidate');
+        candidate.rawSkill = {
+          Skill.science: 8,
+          Skill.art: 6,
+          Skill.persuasion: 6,
+        };
+        candidate.equippedWeapon = null;
+        candidate.equippedClothing = null;
         journalReadingScale.value = large ? 1.5 : 1;
         await mount(
           tester,
@@ -2349,6 +2361,20 @@ void main() {
         final rolls = List.generate(12, (_) => lcsRandom(100000));
         reseedRNG(seed: 41926);
         await _tap(tester, 'journal-pool');
+        expect(
+          tester.widget<Text>(_key('journal-pool-skills:${candidate.id}')).data,
+          'Strongest skills: Science 8 · Art 6 · Persuasion 6',
+        );
+        expect(
+          tester.widget<Text>(_key('journal-pool-weapon:${candidate.id}')).data,
+          'Weapon: Unarmed',
+        );
+        expect(
+          tester
+              .widget<Text>(_key('journal-pool-clothing:${candidate.id}'))
+              .data,
+          'Clothes: No equipped clothing',
+        );
         await _tap(tester, 'journal-pool-person:${candidate.id}');
 
         final sort = find.descendant(
