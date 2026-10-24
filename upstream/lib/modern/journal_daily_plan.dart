@@ -118,13 +118,17 @@ class _JournalDailyPlanState extends State<JournalDailyPlan> {
       backgroundColor: JournalPalette.page,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(12),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1120),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: AnimatedBuilder(
-            animation: widget.controller,
-            builder: (context, _) => _content(context),
+      child: Semantics(
+        container: true,
+        explicitChildNodes: true,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1120),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: AnimatedBuilder(
+              animation: widget.controller,
+              builder: (context, _) => _content(context),
+            ),
           ),
         ),
       ),
@@ -150,8 +154,15 @@ class _JournalDailyPlanState extends State<JournalDailyPlan> {
         children: [
           Row(
             children: [
-              const Expanded(
-                child: Text('Daily plan', style: JournalPalette.heading),
+              Expanded(
+                child: Semantics(
+                  container: true,
+                  namesRoute: true,
+                  child: const Text(
+                    'Daily plan',
+                    style: JournalPalette.heading,
+                  ),
+                ),
               ),
               IconButton(
                 key: const ValueKey('daily-plan-close'),

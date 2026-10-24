@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui' show SemanticsAction, Tristate;
+import 'dart:ui' show SemanticsAction, SemanticsRole, Tristate;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -247,6 +247,49 @@ void main() {
             findsOneWidget,
           );
           await _tap(tester, 'daily-plan-filter:needsOrder');
+          int independentLabel(Finder finder, String label) {
+            final node = tester.getSemantics(finder);
+            expect(node.getSemanticsData().label, label);
+            expect(node.getSemanticsData().role, isNot(SemanticsRole.dialog));
+            var dialog = node.parent;
+            while (dialog != null &&
+                dialog.getSemanticsData().role != SemanticsRole.dialog) {
+              dialog = dialog.parent;
+            }
+            expect(
+              dialog,
+              isNotNull,
+              reason: '$label must remain a child label inside the dialog.',
+            );
+            return node.id;
+          }
+
+          final title = find.text('Daily plan');
+          final date = find.textContaining('Living crew and sleeper agents');
+          const guidance =
+              'Available active crew currently Laying Low. Leaving this order in place can be intentional.';
+          final labels = {
+            independentLabel(title, 'Daily plan'),
+            independentLabel(date, tester.widget<Text>(date).data!),
+            independentLabel(find.text(guidance), guidance),
+            independentLabel(
+              _key('daily-plan-selected'),
+              'Selected: ${actor.name}',
+            ),
+          };
+          expect(
+            labels,
+            hasLength(4),
+            reason: 'Static header, date, guidance and selection must have independent semantics nodes.',
+          );
+          expect(
+            tester
+                .getSemantics(title)
+                .getSemanticsData()
+                .flagsCollection
+                .namesRoute,
+            true,
+          );
           await _tap(tester, 'daily-plan-close');
           await _tap(tester, 'journal-daily-plan');
           expect(
