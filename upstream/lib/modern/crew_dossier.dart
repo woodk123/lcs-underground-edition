@@ -4,6 +4,7 @@ import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/console.dart';
+import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/modern/age_help.dart';
 import 'package:lcs_new_age/modern/catalogue_art.dart';
 import 'package:lcs_new_age/modern/character_attributes.dart';
@@ -184,6 +185,11 @@ class CrewInspector extends StatelessWidget {
                         CrewCommandPanel(person: person),
                         const SizedBox(height: 12),
                         _inlineFact('Age', '${person.age}'),
+                        const SizedBox(height: 6),
+                        _inlineFact(
+                          'Gender',
+                          _capitalize(person.gender.simplified.name),
+                        ),
                         const SizedBox(height: 12),
                         _inlineFact(
                           'Personal assignment',
@@ -694,6 +700,7 @@ class _CrewDossierState extends State<CrewDossier> {
                   Text(
                     [
                       _capitalize(person.align.name),
+                      _capitalize(person.gender.simplified.name),
                       person.type.name,
                       if (!person.alive) 'Deceased',
                       if (person.sleeperAgent) 'Sleeper agent',
@@ -784,6 +791,9 @@ class _CrewDossierState extends State<CrewDossier> {
                               message: ageHelp(person),
                               child: _tag('Age ${person.age}'),
                             ),
+                            _tag(
+                              'Gender: ${_capitalize(person.gender.simplified.name)}',
+                            ),
                             if (!person.alive) _tag('Deceased', warning: true),
                             if (person.sleeperAgent) _tag('Sleeper agent'),
                             if (person.kidnapped)
@@ -833,6 +843,8 @@ class _CrewDossierState extends State<CrewDossier> {
         if (_compact) ...[_compactDecisionFacts(), const SizedBox(height: 8)],
         CrewCommandPanel(person: person),
         SizedBox(height: _compact ? 10 : 18),
+        _relationships(),
+        const SizedBox(height: 22),
         _section('Condition', Icons.favorite_border, [
           CrewInjuryPanel(person: person),
           const SizedBox(height: 10),
@@ -976,6 +988,48 @@ class _CrewDossierState extends State<CrewDossier> {
         if (_showGuidance) AgeEffects(person: person),
       ],
     );
+  }
+
+  Widget _relationships() {
+    final person = widget.person;
+    final partners = person.relationships.toList();
+    final free = person.relationshipsLeft;
+    return _section('Relationships & dates', Icons.favorite_outline, [
+      _fact(
+        'Relationship capacity',
+        '${partners.length}/${person.maxRelationships} slots used · '
+            '${free >= 0 ? '$free free' : '${-free} over capacity'}',
+      ),
+      _fact(
+        'Partners',
+        partners.isEmpty
+            ? 'None'
+            : partners
+                  .map(
+                    (partner) => [
+                      partner.name,
+                      if (partner.sleeperAgent) 'Sleeper agent',
+                      if (!partner.alive) 'Deceased',
+                    ].join(' · '),
+                  )
+                  .join('\n'),
+      ),
+      const Text(
+        'Relationship capacity is separate from recruitment command slots.',
+        style: JournalPalette.small,
+      ),
+      const SizedBox(height: 10),
+      _fact('Scheduled dates', '${person.scheduldeDates}'),
+      for (final session in game.datingSessions.where(
+        (session) =>
+            session.lcsMember?.id == person.id && session.dates.isNotEmpty,
+      ))
+        _fact(
+          session.timeLeft > 0 ? 'Vacation with' : 'Date with',
+          '${session.dates.map((date) => date.name).join(', ')}'
+          '${session.timeLeft > 0 ? ' · ${session.timeLeft} days remaining' : ''}',
+        ),
+    ]);
   }
 
   Widget _compactDecisionFacts() {

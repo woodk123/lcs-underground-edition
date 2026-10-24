@@ -20,6 +20,10 @@ class OrganisationOrderCardData {
     this.risk,
     this.unavailableReason,
     this.destinationUnavailableReason,
+    this.skillSummary,
+    this.weaponSummary,
+    this.clothingSummary,
+    this.clothingWarning = false,
   });
 
   final String scope;
@@ -36,6 +40,10 @@ class OrganisationOrderCardData {
   final String? risk;
   final String? unavailableReason;
   final String? destinationUnavailableReason;
+  final String? skillSummary;
+  final String? weaponSummary;
+  final String? clothingSummary;
+  final bool clothingWarning;
 }
 
 /// The ordinary order card. Required follow-up readers have their own cards.
@@ -206,6 +214,31 @@ class OrganisationOrderCard extends StatelessWidget {
                       height: 1.2,
                     ),
                   ),
+                  if (data.skillSummary case final skills?)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        'Top skills: $skills',
+                        key: const ValueKey('journal-selected-top-skills'),
+                        style: JournalPalette.small,
+                      ),
+                    ),
+                  if (data.weaponSummary case final weapon?)
+                    Text(
+                      'Weapon: $weapon',
+                      key: const ValueKey('journal-selected-weapon'),
+                      style: JournalPalette.small,
+                    ),
+                  if (data.clothingSummary case final clothing?)
+                    Text(
+                      'Clothes: $clothing',
+                      key: const ValueKey('journal-selected-clothing'),
+                      style: JournalPalette.small.copyWith(
+                        color: data.clothingWarning
+                            ? JournalPalette.danger
+                            : null,
+                      ),
+                    ),
                 ],
               ),
             ),

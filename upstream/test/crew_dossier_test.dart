@@ -6,12 +6,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/basemode/activate_regulars.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
-import 'package:lcs_new_age/creature/body.dart';
 import 'package:lcs_new_age/creature/attributes.dart';
+import 'package:lcs_new_age/creature/body.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/gender.dart';
 import 'package:lcs_new_age/creature/portrait.dart';
 import 'package:lcs_new_age/creature/skills.dart';
+import 'package:lcs_new_age/daily/dating.dart';
 import 'package:lcs_new_age/daily/recruitment.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
@@ -47,9 +48,8 @@ Future<void> mountInspector(
     MaterialApp(
       theme: buildModernTheme(),
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: Scaffold(
@@ -88,6 +88,114 @@ void main() {
       await File('test/saves/felix_1_0.json').readAsString(),
     ).gameState!;
     game.activeSquadMember = null;
+  });
+
+  for (final reading in [
+    (const Size(1280, 800), 1.0),
+    (const Size(1024, 720), 1.5),
+  ]) {
+    testWidgets(
+      'relationships and dates remain read-only through dossier journeys at $reading',
+      (tester) async {
+        final person = game.pool.first;
+        Creature contact(int id, String name) =>
+            Creature.fromJson(
+                jsonDecode(jsonEncode(person)) as Map<String, dynamic>,
+              )
+              ..id = id
+              ..name = name
+              ..properName = name
+              ..hireId = null
+              ..seduced = false;
+        final partner = contact(93001, 'Sleeper Partner')
+          ..hireId = person.id
+          ..seduced = true
+          ..sleeperAgent = true;
+        final date = contact(93002, 'Upcoming Contact');
+        final vacation = contact(93003, 'Vacation Contact');
+        final other = contact(93004, 'Other Dater');
+        game.pool.addAll([partner, other]);
+        game.datingSessions
+          ..clear()
+          ..add(DatingSession(person.id, game.cities.first)..dates = [date])
+          ..add(
+            DatingSession(person.id, game.cities.first)
+              ..dates = [vacation]
+              ..timeLeft = 4,
+          )
+          ..add(
+            DatingSession(other.id, game.cities.first)
+              ..dates = [contact(93005, 'Unrelated Contact')],
+          );
+        final before = jsonEncode(game.gameState);
+        var completed = false;
+        final pending = engine.getKey().then((_) => completed = true);
+        reseedRNG(seed: 71935);
+        final rolls = List.generate(8, (_) => lcsRandom(100000));
+        reseedRNG(seed: 71935);
+        await mountInspector(
+          tester,
+          person,
+          size: reading.$1,
+          textScale: reading.$2,
+        );
+        expect(find.text('Sleeper Partner · Sleeper agent'), findsOneWidget);
+        expect(
+          find.text(
+            '${person.relationships.length}/${person.maxRelationships} slots used · ${person.relationshipsLeft} free',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Upcoming Contact'), findsOneWidget);
+        expect(
+          find.text('Vacation Contact · 4 days remaining'),
+          findsOneWidget,
+        );
+        expect(find.text('Unrelated Contact'), findsNothing);
+        final count = find.text('Scheduled dates');
+        await tester.ensureVisible(count);
+        expect(count.hitTestable(), findsOneWidget);
+        expect(find.text('${person.scheduldeDates}'), findsWidgets);
+        await chooseTab(tester, 1);
+        await chooseTab(tester, 0);
+        expect(find.text('Upcoming Contact'), findsOneWidget);
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Open dossier'));
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(
+          find.text('Vacation Contact · 4 days remaining'),
+        );
+        expect(tester.takeException(), isNull);
+        expect(jsonEncode(game.gameState), before);
+        expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
+        expect(completed, isFalse);
+        engine.console.sendInput('Enter');
+        await pending;
+      },
+    );
+  }
+
+  testWidgets('dossier explains empty relationships and dates', (tester) async {
+    final person = game.pool.first;
+    game.pool.removeWhere(
+      (other) =>
+          other.id != person.id && other.seduced && other.hireId == person.id,
+    );
+    person.seduced = false;
+    game.datingSessions.clear();
+    await mountInspector(tester, person);
+    expect(find.text('Partners'), findsOneWidget);
+    expect(find.text('None'), findsWidgets);
+    expect(
+      find.text(
+        '0/${person.maxRelationships} slots used · ${person.relationshipsLeft} free',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Scheduled dates'), findsOneWidget);
+    expect(find.text('Date with'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('an idle squad does not describe Lay Low as a task override', (
@@ -180,7 +288,7 @@ void main() {
           (widget) =>
               widget is Padding &&
               widget.key is ValueKey<String> &&
-              (widget.key as ValueKey<String>).value.startsWith(
+              (widget.key! as ValueKey<String>).value.startsWith(
                 'crew-dossier-skill:',
               ),
         );
@@ -251,9 +359,8 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: TextScaler.linear(layout.$3)),
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(layout.$3)),
               child: child!,
             ),
             home: Scaffold(
@@ -364,7 +471,10 @@ void main() {
       expect(stablePortraitIndex(founder), portrait);
       expect(portraitCatalog[portrait].gender, Gender.male);
       founder.gender = Gender.female;
-      expect(stablePortraitIndex(founder), portrait);
+      expect(
+        portraitCatalog[stablePortraitIndex(founder)].gender,
+        Gender.female,
+      );
       reseedRNG(seed: 91245);
       final expected = List.generate(8, (_) => lcsRandom(100000));
       reseedRNG(seed: 91245);
@@ -382,6 +492,7 @@ void main() {
       await mountInspector(tester, founder);
       expect(find.text(founder.name), findsOneWidget);
       expect(find.text('Age ${founder.age}'), findsOneWidget);
+      expect(find.text('Gender: Male'), findsOneWidget);
       expect(
         find.text('${founder.blood} / ${founder.maxBlood}'),
         findsOneWidget,
@@ -712,6 +823,7 @@ void main() {
       expect(otherClicks, 1);
       expect(commands, 0);
       expect(find.byType(CrewInspector), findsOneWidget);
+      expect(find.text('Gender  Male', findRichText: true), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('crew-inspector-full')));
       await tester.pumpAndSettle();
       expect(find.byType(CrewDossier), findsOneWidget);

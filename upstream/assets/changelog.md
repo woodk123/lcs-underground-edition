@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## Underground Edition 0.6.2 — 2026-10-24
+
+* Show the three strongest trained skills, weapons, loaded ammunition and clothing on every Organisation crew row and the selected person's card. Highlight missing, bloodstained or damaged clothing, and scroll the roster to compare larger crews.
+* Show partners, relationship capacity and scheduled date contacts in the dossier overview, including ongoing romantic vacations.
+* Show gender beside age in crew inspection and dossier headers, without needing to open the campaign record.
+* Match starting sleeper lawyers' portraits to their final gender and age, and repair mismatched gender portraits when loading existing campaigns.
+
 ## Underground Edition 0.6.1 — 2026-10-24
 
 * Select a founder portrait from a gallery as well as rerolling it, with keyboard shortcuts, page controls and Back to keep the current face.

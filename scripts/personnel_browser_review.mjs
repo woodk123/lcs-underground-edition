@@ -40,6 +40,15 @@ for (const [name, patch] of [
     vacationDaysLeft: 0, medicalBills: 0, ...patch };
   fixture.lcs.pool.push(person);
 }
+// Declared relationship/date coverage; no dates are played or advanced here.
+Object.assign(fixture.lcs.pool.find(person => person.name === 'Sam Sleeper'), {
+  hireId: chaz.id, seduced: true,
+});
+const dateContact = { ...structuredClone(template), id: fixture.nextCreatureId++,
+  name: 'Alex Date Contact', properName: 'Alex Date Contact', hireId: null,
+  seduced: false, squadId: null };
+fixture.datingSessions = [{ lcsMemberId: chaz.id, dates: [dateContact],
+  city: structuredClone(fixture.cities[0]), timeLeft: 0 }];
 original.saveData = typeof original.saveData === 'string' ? JSON.stringify(fixture) : fixture;
 const fixturePath = resolve(output, 'synthetic-personnel.json');
 await writeFile(fixturePath, JSON.stringify(original));
@@ -110,6 +119,36 @@ async function row(name, screenshot) {
   await target.click(); await page.mouse.move(2, 2); await waitForUiSettled(page);
   await wait(/Back to directory/);
 }
+async function inspectRelationships(name) {
+  const missing = new Set(['Relationship capacity', 'Sam Sleeper · Sleeper agent', 'Scheduled dates', 'Alex Date Contact']);
+  for (let attempt = 0; attempt < 16 && missing.size; attempt++) {
+    const footer = await page.getByRole('button', { name: /Change name/ }).first().boundingBox();
+    const bottom = Math.min(page.viewportSize().height - 65, footer ? footer.y - 8 : Infinity);
+    const visible = await page.locator('flt-semantics-host').evaluate((host, { labels, bottom }) => {
+      const found = [];
+      for (const node of host.querySelectorAll('*')) {
+        const text = node.getAttribute('aria-label') || node.textContent || '';
+        const box = node.getBoundingClientRect();
+        if (text.length > 180 || box.width < 1 || box.height < 1 || box.top < 80 || box.bottom > bottom) continue;
+        for (const label of labels) if (text.includes(label)) found.push({ label,
+          x: box.x, y: box.y, width: box.width, height: box.height });
+      }
+      return found;
+    }, { labels: [...missing], bottom });
+    report.relationshipBounds ??= [];
+    for (const bounds of visible) {
+      missing.delete(bounds.label);
+      report.relationshipBounds.push({ capture: name, ...bounds });
+    }
+    if (!missing.size) break;
+    await page.mouse.move(page.viewportSize().width * .76, page.viewportSize().height * .55);
+    await page.mouse.wheel(0, 250);
+    await waitForUiSettled(page);
+  }
+  assert.deepEqual([...missing], [], 'Relationship capacity, partner and date contact must be reachable.');
+  await capture(name);
+  report.checks.push(`${name}: relationship capacity, sleeper partner and scheduled date contact are visible`);
+}
 try {
   await page.goto(url, { waitUntil: 'domcontentloaded' }); await wait(/Start a New Game/);
   const choosing = page.waitForEvent('filechooser'); await click(/^Import a Save/);
@@ -134,6 +173,7 @@ try {
   assert.match(await uiText(), /1 of \d+ people.*All personnel/);
   await click(/^Hospital \(/); await row('Chaz Reasoner');
   await wait(/Back to directory/); await capture('02-chaz-native-profile');
+  await inspectRelationships('02b-desktop-relationships');
   await click(/^Back to directory$/); await wait(/people.*Hospital/);
   await page.getByRole('textbox', { name: /Find anyone/ }).click();
   await page.waitForFunction(() => [...document.querySelectorAll('input,textarea')]
@@ -152,6 +192,7 @@ try {
   await click(/^Reading size$/); await page.getByRole('menuitem', { name: '150%', exact: true }).click(); await wait(/Personnel directory/);
   await capture('04-1024x720-at150-directory');
   await row('Chaz Reasoner', '05-1024x720-at150-patient'); await wait(/Back to directory/);
+  await inspectRelationships('05b-1024x720-at150-relationships');
   await click(/^Back to directory$/); await wait(/people.*Hospital/);
   report.checks.push('1024x720 at 150 percent retains readable controls and patient profile navigation');
   await page.setViewportSize({ width: 1440, height: 1100 });

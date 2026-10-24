@@ -395,6 +395,8 @@ bool _canKeepSaved(Creature person) {
   };
   if (nonhuman) return _appropriate(person, entry);
   if (nonhumanBackgrounds.contains(entry.background)) return false;
+  final gender = person.gender.simplified;
+  if (gender != Gender.nonbinary && entry.gender != gender) return false;
   // Judge saved faces against the age when they were assigned, so birthdays
   // never reroll an appropriate identity. Repair visibly mismatched faces from
   // the former weighted-only casting, including already-saved assignments.

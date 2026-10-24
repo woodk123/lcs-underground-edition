@@ -154,7 +154,14 @@ Future<void> _settle(WidgetTester tester) async {
 }
 
 Future<void> _tap(WidgetTester tester, String key) async {
-  final target = _key(key);
+  Finder target = _key(key);
+  if (key.startsWith('journal-member:')) {
+    final id = int.parse(key.split(':').last);
+    target = _key('journal-member-name:$id');
+    if (target.hitTestable().evaluate().isEmpty) {
+      await _showCrewMember(tester, id);
+    }
+  }
   expect(
     target.hitTestable(),
     findsOneWidget,
@@ -208,17 +215,17 @@ Future<void> _altShortcut(
 }
 
 Future<void> _showCrewMember(WidgetTester tester, int id) async {
-  final target = _key('journal-member:$id');
+  final target = _key('journal-member-name:$id');
   final scroll = find.descendant(
     of: _key('journal-crew-list'),
     matching: find.byType(Scrollable),
   );
   tester.state<ScrollableState>(scroll).position.jumpTo(0);
   await _settle(tester);
-  await tester.scrollUntilVisible(target, 30, scrollable: scroll);
+  await tester.scrollUntilVisible(target, 100, scrollable: scroll, continuous: true);
   await _settle(tester);
-  // Very short stress panes can clip a row taller than the viewport. Align
-  // its activation centre inside the roster rather than only revealing its top.
+  // Detailed rows can exceed a compact viewport. Reveal the name, which
+  // activates the same row button, rather than requiring the entire row.
   await Scrollable.ensureVisible(tester.element(target), alignment: .5);
   await _settle(tester);
 }
@@ -305,6 +312,87 @@ void main() {
     await _tap(tester, 'journal-orders');
     await _tap(tester, 'journal-order-group:0');
     expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
+  }
+
+  for (final large in [false, true]) {
+    testWidgets(
+      'top skills and equipment follow the selected order card actor, large=$large',
+      (tester) async {
+        final first = game.squad.first;
+        final second = game.squad[1];
+        for (final actor in [first, second]) {
+          for (final skill in Skill.values) {
+            actor.rawSkill[skill] = 0;
+          }
+        }
+        first.rawSkill[Skill.art] = 12;
+        first.rawSkill[Skill.music] = 8;
+        first.rawSkill[Skill.persuasion] = 8;
+        first.rawSkill[Skill.driving] = 5;
+        first.equippedWeapon!.ammo = 7;
+        first.equippedClothing!
+          ..bloody = true
+          ..damaged = true;
+        second.equippedWeapon = null;
+        second.equippedClothing = null;
+        journalReadingScale.value = large ? 1.5 : 1;
+        await mount(
+          tester,
+          realHeadquarters: true,
+          size: large ? const Size(1024, 720) : const Size(1280, 800),
+        );
+        final before = campaignSnapshot();
+        reseedRNG(seed: 62401);
+        final rolls = List.generate(8, (_) => lcsRandom(100000));
+        reseedRNG(seed: 62401);
+        for (final selection in [
+          (
+            LogicalKeyboardKey.digit1,
+            '1',
+            'Top skills: Art 12 · Music 8 · Persuasion 8',
+          ),
+          (LogicalKeyboardKey.digit2, '2', 'Top skills: No trained skills yet'),
+          (
+            LogicalKeyboardKey.digit1,
+            '1',
+            'Top skills: Art 12 · Music 8 · Persuasion 8',
+          ),
+        ]) {
+          await _focusGame(tester);
+          await tester.sendKeyEvent(selection.$1, character: selection.$2);
+          await _settle(tester);
+          final summary = _key('journal-selected-top-skills');
+          expect(tester.widget<Text>(summary).data, selection.$3);
+          expect(summary.hitTestable(), findsOneWidget);
+          final actor = selection.$2 == '1' ? first : second;
+          final weapon = _key('journal-selected-weapon');
+          expect(
+            tester.widget<Text>(weapon).data,
+            actor == first
+                ? 'Weapon: ${first.equippedWeapon!.type.name} · 7 rounds loaded'
+                : 'Weapon: Unarmed',
+          );
+          final clothes = _key('journal-selected-clothing');
+          expect(
+            tester.widget<Text>(clothes).data,
+            actor == first
+                ? 'Clothes: ${first.equippedClothing!.type.name} · Bloodstained · Damaged'
+                : 'Clothes: No equipped clothing',
+          );
+          expect(
+            tester.widget<Text>(clothes).style!.color,
+            JournalPalette.danger,
+          );
+          await tester.ensureVisible(clothes);
+          expect(clothes.hitTestable(), findsOneWidget);
+          await tester.ensureVisible(summary);
+          expect(engine.console.screen, 'headquarters');
+        }
+        expect(campaignSnapshot(), before);
+        expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 
   for (final large in [false, true]) {
@@ -781,7 +869,7 @@ void main() {
             tester
                 .widget<Text>(_key('journal-member-clothing:${next.id}'))
                 .data,
-            clothingLabel,
+            'Clothes: $clothingLabel',
           );
           expect(find.byTooltip('Wearing: $clothingLabel'), findsOneWidget);
           expect(_key('journal-member-injury:${next.id}'), findsOneWidget);
@@ -1801,7 +1889,7 @@ void main() {
         await _tap(tester, 'journal-activity:teachLiberalArts');
         await _showCrewMember(tester, next.id);
         await _settle(tester);
-        await tester.tap(_key('journal-member:${next.id}'));
+        await tester.tap(_key('journal-member-name:${next.id}'));
         for (var frame = 0; frame < 80; frame++) {
           await tester.pump(const Duration(milliseconds: 1));
           expect(tester.state(retainedMap), same(mapState));
@@ -1826,7 +1914,7 @@ void main() {
         await _settle(tester);
         viewer.transformationController!.value = Matrix4.identity()
           ..scaleByDouble(1.7, 1.7, 1, 1);
-        await tester.tap(_key('journal-member:${third.id}'));
+        await tester.tap(_key('journal-member-name:${third.id}'));
         for (var frame = 0; frame < 80; frame++) {
           await tester.pump(const Duration(milliseconds: 1));
           expect(tester.state(find.byType(JournalCityPlan)), same(mapState));
@@ -1996,7 +2084,7 @@ void main() {
       );
       final before = campaignSnapshot();
       final next = game.squad[1];
-      await tester.tap(_key('journal-member:${next.id}'));
+      await tester.tap(_key('journal-member-name:${next.id}'));
       expect(journal.controller.busy, isTrue);
       var busyFrames = 0;
       for (var frame = 0; frame < 60; frame++) {
@@ -2466,7 +2554,7 @@ void main() {
 
   for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
     testWidgets(
-      'six crew, job card, eleven reachable sections and Confirm fit at ${size.width}x${size.height}',
+      'six detailed crew rows scroll while job card, sections and Confirm stay reachable at ${size.width}x${size.height}',
       (tester) async {
         await mount(tester, size: size);
         await business(tester);
@@ -2495,14 +2583,23 @@ void main() {
           'Date and funds',
         );
         _insideViewport(tester, _key('journal-advance-day'), size, 'Run day');
+        final beforeRosterScroll = campaignSnapshot();
         for (final person in game.squad) {
+          await _showCrewMember(tester, person.id);
           _insideViewport(
             tester,
-            _key('journal-member:${person.id}'),
+            _key('journal-member-name:${person.id}'),
             size,
             'Crew ${person.name}',
           );
         }
+        expect(campaignSnapshot(), beforeRosterScroll);
+        _insideViewport(
+          tester,
+          _key('journal-confirm-order'),
+          size,
+          'Confirm after roster scrolling',
+        );
         expect(tester.takeException(), isNull);
       },
     );
@@ -3234,7 +3331,7 @@ void main() {
           0,
         );
         expect(
-          _key('journal-member:${game.squad.first.id}').hitTestable(),
+          _key('journal-member-name:${game.squad.first.id}').hitTestable(),
           findsOneWidget,
         );
         expect(find.byType(JournalMediaOverview), findsNothing);

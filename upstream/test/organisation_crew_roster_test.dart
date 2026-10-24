@@ -34,7 +34,8 @@ void main() {
                     location: 'Holmes, SEA',
                     clothingSummary: 'Bloodstained clothes',
                     clothingWarning: true,
-                    skillSummary: 'Science 10',
+                    skillSummary: 'Science 10 · Persuasion 8 · Street Smarts 7',
+                    weaponSummary: 'AK-102 Rifle · 30 rounds loaded',
                     hasAssignment: true,
                     numberKey: '2',
                     injury: (
@@ -63,11 +64,29 @@ void main() {
         tester.getTopLeft(assignment).dy,
         greaterThan(tester.getBottomLeft(name).dy - 1),
       );
-      for (final label in [name, find.text('Very low blood'), assignment]) {
+      final skills = find.byKey(const ValueKey('journal-member-skills:7'));
+      final weapon = find.byKey(const ValueKey('journal-member-weapon:7'));
+      final clothes = find.byKey(const ValueKey('journal-member-clothing:7'));
+      for (final label in [
+        name,
+        find.text('Very low blood'),
+        assignment,
+        skills,
+        weapon,
+        clothes,
+      ]) {
         final paragraph = tester.renderObject<RenderParagraph>(label);
         expect(paragraph.didExceedMaxLines, false);
       }
-      expect(find.text('Bloodstained clothes'), findsOneWidget);
+      expect(find.text('Clothes: Bloodstained clothes'), findsOneWidget);
+      expect(
+        find.text('Weapon: AK-102 Rifle · 30 rounds loaded'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Top skills: Science 10 · Persuasion 8 · Street Smarts 7'),
+        findsOneWidget,
+      );
       expect(find.byTooltip('30/140 blood'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('journal-member:7')));
       await tester.tap(find.byKey(const ValueKey('hq-dossier:7')));

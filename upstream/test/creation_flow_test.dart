@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lcs_new_age/creature/attributes.dart';
+import 'package:lcs_new_age/creature/gender.dart';
 import 'package:lcs_new_age/creature/portrait.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/console.dart';
@@ -37,6 +38,55 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(ensureGameDataLoaded);
   setUp(() => engine.console = Console());
+
+  for (final gender in [Gender.male, Gender.female]) {
+    for (final sameGender in [false, true]) {
+      test(
+        'starting lawyer portrait matches $gender founder, sameGender=$sameGender',
+        () async {
+          await beginFounder();
+          final creation = makeCharacter();
+          await send('Enter');
+          game.pool.first.gender = gender;
+          var choseLawyer = false;
+          var choseSameGender = false;
+          for (var step = 1; step <= 10; step++) {
+            final choices = engine.console.creation!.choices;
+            final choice = choices.firstWhere((choice) {
+              if (choice.label.contains('law student')) {
+                choseLawyer = true;
+                return true;
+              }
+              if (sameGender && choice.label.contains('making out')) {
+                choseSameGender = true;
+                return true;
+              }
+              return false;
+            }, orElse: () => choices.first);
+            await send(choice.key);
+          }
+          expect(choseLawyer, isTrue);
+          expect(choseSameGender, sameGender);
+          final lawyer = game.pool.singleWhere((person) => person.sleeperAgent);
+          final expected = sameGender
+              ? gender
+              : gender == Gender.male
+              ? Gender.female
+              : Gender.male;
+          expect(lawyer.gender, expected);
+          expect(portraitCatalog[lawyer.portraitId!].gender, expected);
+          expect(lawyer.portraitAssignedAge, lawyer.age);
+          expect(
+            (portraitCatalog[lawyer.portraitId!].visualAge - lawyer.age).abs(),
+            lessThanOrEqualTo(8),
+          );
+          await send('Enter');
+          await send('Enter');
+          await creation;
+        },
+      );
+    }
+  }
 
   test('campaign setting cards use the original cycling readers', () async {
     final setup = setupNewGame();

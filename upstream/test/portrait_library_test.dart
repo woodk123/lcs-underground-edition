@@ -63,6 +63,98 @@ void main() {
   });
 
   test(
+    'save load repairs gender mismatches once without changing campaign or RNG',
+    () {
+      final person = game.pool.first;
+      person.gender = Gender.female;
+      person.birthDate = DateTime(
+        game.date.year - 25,
+        game.date.month,
+        game.date.day,
+      );
+      final wrong = portraitCatalog.firstWhere(
+        (entry) =>
+            entry.ordinaryHuman &&
+            entry.gender == Gender.male &&
+            entry.visualAge == 25,
+      );
+      person.portraitId = wrong.id;
+      person.portraitAssignedAge = 25;
+      final before = jsonDecode(
+        jsonEncode(game.gameState.toJson()),
+      ) as Map<String, dynamic>;
+      String save(Map<String, dynamic> data) => encodeSaveContents(
+        SaveFile(
+          version: '1.5.6',
+          gameId: game.gameState.uniqueGameId.toString(),
+          saveData: data,
+          lastPlayed: null,
+        ),
+      );
+      reseedRNG(seed: 812);
+      final expectedRolls = List.generate(8, (_) => lcsRandom(100000));
+      reseedRNG(seed: 812);
+      final loaded = decodeSaveContents(save(before)).gameState!;
+      expect(List.generate(8, (_) => lcsRandom(100000)), expectedRolls);
+      final repaired = loaded.lcs.pool.first;
+      expect(portraitCatalog[repaired.portraitId!].gender, Gender.female);
+      expect(repaired.gender, Gender.female);
+      expect(repaired.portraitId, isNot(wrong.id));
+      final after =
+          jsonDecode(jsonEncode(loaded.toJson())) as Map<String, dynamic>;
+      // Only portrait fields may change anywhere in the campaign during repair.
+      Object? withoutPortraits(Object? value) {
+        if (value is List) return value.map(withoutPortraits).toList();
+        if (value is Map<String, dynamic>) {
+          return {
+            for (final entry in value.entries)
+              if (!const {
+                'portraitId',
+                'portraitVariant',
+                'portraitAssignedAge',
+              }.contains(entry.key))
+                entry.key: withoutPortraits(entry.value),
+          };
+        }
+        return value;
+      }
+
+      expect(withoutPortraits(after), withoutPortraits(before));
+      final reloaded = decodeSaveContents(save(after)).gameState!;
+      expect(jsonEncode(reloaded.toJson()), jsonEncode(loaded.toJson()));
+    },
+  );
+
+  test('gender repair respects male, female and simplified gender at every human age', () {
+    for (final gender in [
+      Gender.male,
+      Gender.female,
+      Gender.maleBias,
+      Gender.femaleBias,
+      Gender.whiteMalePatriarch,
+    ]) {
+      for (final age in [7, 16, 25, 80]) {
+        final person = adult(93000 + age)
+          ..gender = gender
+          ..birthDate = DateTime(
+            game.date.year - age,
+            game.date.month,
+            game.date.day,
+          );
+        final face = ensurePortraitId(person);
+        expect(portraitCatalog[face].gender, gender.simplified);
+        person.gender = gender.simplified == Gender.male
+            ? Gender.female
+            : Gender.male;
+        final repaired = ensurePortraitId(person);
+        expect(portraitCatalog[repaired].gender, person.gender);
+        expect(repaired, isNot(face));
+        expect(ensurePortraitId(person), repaired);
+      }
+    }
+  });
+
+  test(
     'founder rerolls stay human, age-compatible and presentation-compatible',
     () {
       for (final age in [18, 21, 22, 35]) {

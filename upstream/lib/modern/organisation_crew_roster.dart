@@ -14,6 +14,7 @@ class OrganisationCrewMemberData {
     required this.clothingSummary,
     required this.clothingWarning,
     required this.skillSummary,
+    required this.weaponSummary,
     required this.hasAssignment,
     this.numberKey,
     this.injury,
@@ -27,6 +28,7 @@ class OrganisationCrewMemberData {
   final String clothingSummary;
   final bool clothingWarning;
   final String skillSummary;
+  final String weaponSummary;
   final bool hasAssignment;
   final String? numberKey;
   final ({String label, String details, bool urgent})? injury;
@@ -162,7 +164,7 @@ class OrganisationCrewMemberView extends StatelessWidget {
     );
     final assignmentLabel = Tooltip(
       message:
-          'Current order: ${data.orderDescription}\nLocation: ${data.location}\nStrongest skills: ${data.skillSummary}\nWearing: ${data.clothingSummary}',
+          'Current order: ${data.orderDescription}\nLocation: ${data.location}\nStrongest skills: ${data.skillSummary}\nWeapon: ${data.weaponSummary}\nWearing: ${data.clothingSummary}',
       child: Text(
         data.orderDescription,
         key: ValueKey('journal-member-order:${data.personId}'),
@@ -191,6 +193,7 @@ class OrganisationCrewMemberView extends StatelessWidget {
           ),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (numberKey != null) ...[
               JournalShortcutBadge(shortcut: numberKey),
@@ -209,27 +212,52 @@ class OrganisationCrewMemberView extends StatelessWidget {
                 ),
                 child: Semantics(
                   label:
-                      'Select crew ${data.name}\nCurrent order: ${data.orderDescription}\nLocation: ${data.location}\nStrongest skills: ${data.skillSummary}\nWearing: ${data.clothingSummary}${injury == null ? '' : '\nCondition: ${injury.details}'}',
+                      'Select crew ${data.name}\nCurrent order: ${data.orderDescription}\nLocation: ${data.location}\nStrongest skills: ${data.skillSummary}\nWeapon: ${data.weaponSummary}\nWearing: ${data.clothingSummary}${injury == null ? '' : '\nCondition: ${injury.details}'}',
                   excludeSemantics: true,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       nameLabel,
                       assignmentLabel,
-                      if (data.clothingWarning)
-                        Tooltip(
-                          message: 'Wearing: ${data.clothingSummary}',
-                          child: Text(
-                            data.clothingSummary,
+                      Text(
+                        'Top skills: ${data.skillSummary}',
+                        key: ValueKey('journal-member-skills:${data.personId}'),
+                        style: JournalPalette.small.copyWith(
+                          fontSize: 11,
+                          height: 1.3,
+                        ),
+                      ),
+                      Wrap(
+                        spacing: 10,
+                        children: [
+                          Text(
+                            'Weapon: ${data.weaponSummary}',
                             key: ValueKey(
-                              'journal-member-clothing:${data.personId}',
+                              'journal-member-weapon:${data.personId}',
                             ),
                             style: JournalPalette.small.copyWith(
                               fontSize: 11,
-                              color: JournalPalette.danger,
+                              height: 1.3,
                             ),
                           ),
-                        ),
+                          Tooltip(
+                            message: 'Wearing: ${data.clothingSummary}',
+                            child: Text(
+                              'Clothes: ${data.clothingSummary}',
+                              key: ValueKey(
+                                'journal-member-clothing:${data.personId}',
+                              ),
+                              style: JournalPalette.small.copyWith(
+                                fontSize: 11,
+                                height: 1.3,
+                                color: data.clothingWarning
+                                    ? JournalPalette.danger
+                                    : JournalPalette.small.color,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                       if (injury != null)
                         Tooltip(
                           message: injury.details,

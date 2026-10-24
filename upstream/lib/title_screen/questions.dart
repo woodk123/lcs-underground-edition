@@ -4,6 +4,7 @@ import 'package:lcs_new_age/creature/attributes.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/creature_type.dart';
 import 'package:lcs_new_age/creature/gender.dart';
+import 'package:lcs_new_age/creature/portrait.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/creation_context.dart';
 import 'package:lcs_new_age/engine/engine.dart';
@@ -523,6 +524,10 @@ Future<void> characterCreationQuestions(Creature founder, bool choose) async {
           );
           lawyer.location = lawyer.workLocation;
           lawyer.nameCreature();
+          // The generic builder cast a face before this reward set age/gender.
+          lawyer.portraitId = null;
+          lawyer.portraitAssignedAge = null;
+          ensurePortraitId(lawyer);
           pool.add(lawyer);
         },
         bonuses: const CreationBonuses(skills: {Skill.seduction: 1}),

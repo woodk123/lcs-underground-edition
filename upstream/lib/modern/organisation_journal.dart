@@ -1806,6 +1806,45 @@ class OrganisationJournalState extends State<OrganisationJournal> {
       !undercover &&
       !allocating;
 
+  String _topSkills(Creature member) {
+    final strengths =
+        Skill.values.where((skill) => member.skill(skill) > 0).toList()
+          ..sort((a, b) {
+            final level = member.skill(b).compareTo(member.skill(a));
+            return level != 0 ? level : a.displayName.compareTo(b.displayName);
+          });
+    return strengths.isEmpty
+        ? 'No trained skills yet'
+        : strengths
+              .take(3)
+              .map((skill) => '${skill.displayName} ${member.skill(skill)}')
+              .join(' · ');
+  }
+
+  String _clothingSummary(Creature member) {
+    final clothing = member.equippedClothing;
+    return clothing == null
+        ? 'No equipped clothing'
+        : [
+            if (clothing.quality > clothing.type.qualityLevels)
+              'Tattered Rags'
+            else
+              clothing.type.name,
+            if (clothing.bloody) 'Bloodstained',
+            if (clothing.damaged) 'Damaged',
+          ].join(' · ');
+  }
+
+  String _weaponSummary(Creature member) {
+    final weapon = member.equippedWeapon;
+    if (weapon == null) return 'Unarmed';
+    return '${weapon.type.name}${weapon.type.usesAmmo
+        ? weapon.ammo > 0
+              ? ' · ${weapon.ammo} rounds loaded'
+              : ' · Unloaded'
+        : ''}';
+  }
+
   OrganisationCrewMemberView _memberView(Creature member) {
     final squadIndex = game.squad.indexOf(member);
     final numberKey = _showSquadNumberKeys && squadIndex >= 0
@@ -1816,28 +1855,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     final showingOrders = _orders || activityFrame;
     final stacked = _compact && widget.textScale > 1.1;
     final clothing = member.equippedClothing;
-    final clothingSummary = clothing == null
-        ? 'No equipped clothing'
-        : [
-            if (clothing.quality > clothing.type.qualityLevels)
-              'Tattered Rags'
-            else
-              clothing.type.name,
-            if (clothing.bloody) 'Bloodstained',
-            if (clothing.damaged) 'Damaged',
-          ].join(' · ');
-    final strengths =
-        Skill.values.where((skill) => member.skill(skill) > 0).toList()
-          ..sort((a, b) {
-            final level = member.skill(b).compareTo(member.skill(a));
-            return level != 0 ? level : a.displayName.compareTo(b.displayName);
-          });
-    final skillSummary = strengths.isEmpty
-        ? 'No trained skills yet'
-        : strengths
-              .take(3)
-              .map((skill) => '${skill.displayName} ${member.skill(skill)}')
-              .join(' · ');
+    final clothingSummary = _clothingSummary(member);
+    final skillSummary = _topSkills(member);
     bool canSelect() =>
         !controller.busy &&
         !_visitFlow.routing &&
@@ -1885,6 +1904,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         clothingWarning:
             clothing == null || clothing.bloody || clothing.damaged,
         skillSummary: skillSummary,
+        weaponSummary: _weaponSummary(member),
         hasAssignment: member.activity.type != ActivityType.none,
         numberKey: numberKey,
         injury: injury,
@@ -2032,8 +2052,14 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         squad?.id == game.activeSquad?.id &&
         (hospitalVisit || atVisitDestination);
     final calculation = type == ActivityType.visit ? null : help.calculation;
+    final clothing = actor?.equippedClothing;
     return OrganisationOrderCard(
       data: OrganisationOrderCardData(
+        skillSummary: actor == null ? null : _topSkills(actor),
+        weaponSummary: actor == null ? null : _weaponSummary(actor),
+        clothingSummary: actor == null ? null : _clothingSummary(actor),
+        clothingWarning:
+            clothing == null || clothing.bloody || clothing.damaged,
         scope: type == ActivityType.visit
             ? 'Squad order · ${squad?.name ?? 'Squad'}'
             : actor?.name ?? squad?.name ?? 'Squad order',
