@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.6.4 — 2026-10-24
+
+* Put people on the current square above the squad roster during field operations, with clearer names and labelled clothing, weapon and health details.
+
 ## Underground Edition 0.6.3 — 2026-10-24
 
 * Explain in location guides that face-concealing outfits halve crime heat during site visits but do not prevent charges or improve clothing fit.

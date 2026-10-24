@@ -55,6 +55,7 @@ class DirectContent extends StatelessWidget {
     this.excludedActionTypes = const {},
     this.journalPage = false,
     this.selectedPersonId,
+    this.prioritizeEncounter = false,
   });
 
   final Console console;
@@ -70,6 +71,7 @@ class DirectContent extends StatelessWidget {
   final Set<String> excludedActionTypes;
   final bool journalPage;
   final int? selectedPersonId;
+  final bool prioritizeEncounter;
 
   @override
   Widget build(BuildContext context) {
@@ -166,6 +168,84 @@ class DirectContent extends StatelessWidget {
       }
     }
     final content = <Widget>[];
+    // Reflow only the basic encounter rows actually published by the tactical
+    // reader. Do not infer people or expose equipment from live campaign data.
+    final encounterRows = <int>{
+      if (prioritizeEncounter && console.screen == 'tactical')
+        for (var row = 12; row < 23; row++)
+          if (!omittedRows.contains(row) &&
+              frame.slice(row, 0, 1) == '${(row - 11) % 10}' &&
+              frame.slice(row, 2, 20).trim().isNotEmpty)
+            row,
+    };
+    if (encounterRows.isNotEmpty) {
+      content.add(
+        Column(
+          key: const ValueKey('field-encounter-people'),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('People on this square', style: JournalPalette.heading),
+            const SizedBox(height: 8),
+            for (final row in encounterRows)
+              Container(
+                key: ValueKey('field-encounter-row:$row'),
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: _card,
+                  border: Border.all(color: _rule),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '${frame.slice(row, 0, 1)}  ',
+                            style: const TextStyle(color: _muted),
+                          ),
+                          ...frame.spans(row, 2, 20, trim: true),
+                        ],
+                      ),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 4,
+                      children: [
+                        for (final (label, start, end) in [
+                          ('Clothing', 20, 36),
+                          ('Weapon', 36, 47),
+                          ('Health', 47, 55),
+                        ])
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: '$label: ',
+                                  style: const TextStyle(color: _muted),
+                                ),
+                                ...frame.spans(row, start, end, trim: true),
+                              ],
+                            ),
+                            style: const TextStyle(fontSize: 14, height: 1.4),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      );
+      omittedRows.addAll(encounterRows);
+    }
     final personCards = <Widget>[];
     for (final summary in people) {
       final action = console.actions

@@ -1709,6 +1709,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
                   console: console,
                   onAction: sendFieldAction,
                   onInspect: _openDossier,
+                  prioritizeEncounter: !fieldPrompt,
                   hiddenRows: {
                     if (fieldPrompt) ...{
                       for (var row = 0; row < 9; row++) row,

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lcs_new_age/common_display/print_party.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
 import 'package:lcs_new_age/gamestate/game_mode.dart';
@@ -11,8 +12,10 @@ import 'package:lcs_new_age/main.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
 import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/sitemode/map_specials.dart';
+import 'package:lcs_new_age/sitemode/site_display.dart';
 import 'package:lcs_new_age/sitemode/sitemap.dart';
 import 'package:lcs_new_age/sitemode/sitemode.dart';
+import 'package:lcs_new_age/utils/lcsrandom.dart';
 
 import 'test_support.dart';
 
@@ -41,6 +44,75 @@ void main() {
   });
 
   for (final size in [const Size(1280, 720), const Size(1024, 720)]) {
+    testWidgets('encounter people precede the squad at $size', (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = size;
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      journalReadingScale.value = size.width == 1024 ? 1.5 : 1;
+      addTearDown(() => journalReadingScale.value = 1);
+      game.activeSquadMember = null;
+      game.encounter
+        ..clear()
+        ..addAll(game.squad.take(5));
+      engine.console.screen = 'tactical';
+      printParty();
+      printBasicEncounter();
+      final state = jsonEncode(game.gameState.toJson());
+      final buffer = engine.console.buffer
+          .map((row) => row.map((cell) => cell.glyph).join())
+          .join('\n');
+      final actions = List.of(engine.console.actions);
+      final reader = engine.console.getkey();
+      reseedRNG(seed: 431);
+      final expectedRoll = lcsRandom(1000000);
+      reseedRNG(seed: 431);
+
+      await tester.pumpWidget(const MainApp());
+      await tester.pumpAndSettle();
+      final people = find.byKey(const ValueKey('field-encounter-people'));
+      final first = find.byKey(const ValueKey('field-encounter-row:12'));
+      expect(people, findsOneWidget);
+      expect(find.text('People on this square'), findsOneWidget);
+      expect(first, findsOneWidget);
+      expect(tester.getTopLeft(first).dy, lessThan(350));
+      for (final label in ['Clothing: ', 'Weapon: ', 'Health: ']) {
+        expect(
+          find.descendant(
+            of: people,
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is Text &&
+                  (widget.textSpan?.toPlainText().contains(label) ?? false),
+            ),
+          ),
+          findsNWidgets(game.encounter.length),
+        );
+      }
+      // The source squad table is still available below the encounter.
+      final squadRow = find.byKey(
+        ValueKey('journal-person-row:${game.squad.first.id}'),
+      );
+      expect(
+        tester.getTopLeft(squadRow).dy,
+        greaterThan(tester.getBottomLeft(people).dy),
+      );
+      expect(engine.console.actions, orderedEquals(actions));
+      expect(engine.console.awaitingInput, isTrue);
+      expect(jsonEncode(game.gameState.toJson()), state);
+      expect(
+        engine.console.buffer
+            .map((row) => row.map((cell) => cell.glyph).join())
+            .join('\n'),
+        buffer,
+      );
+      expect(lcsRandom(1000000), expectedRoll);
+      expect(tester.takeException(), isNull);
+      engine.console.sendInput('Enter');
+      await tester.pump();
+      await reader;
+    });
+
     testWidgets(
       'field conversation choices appear once and remain usable at $size',
       (tester) async {
