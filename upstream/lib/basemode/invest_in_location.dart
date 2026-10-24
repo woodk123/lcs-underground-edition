@@ -1,4 +1,5 @@
 import 'package:lcs_new_age/basemode/base_mode.dart';
+import 'package:lcs_new_age/basemode/front_business_management.dart';
 import 'package:lcs_new_age/creature/name.dart';
 import 'package:lcs_new_age/engine/engine.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
@@ -146,6 +147,15 @@ Future<void> investInLocation(Site loc) async {
       "R - Stockpile 20 daily rations of food (\$150)",
       enabledWhen: ledger.funds >= 150,
     );
+    if (loc.upgradable && !loc.discreet) {
+      addOptionText(21, 1, 'S', 'S - Manage a working print shop');
+      console.annotateActionEntity(
+        's',
+        type: 'front-business-open',
+        id: loc.idString,
+        category: loc.idString,
+      );
+    }
     addOptionText(20, 1, "Enter", "Enter - Done");
     for (final entry in <String, CompoundUpgrade>{
       'w': CompoundUpgrade.fortify,
@@ -182,6 +192,10 @@ Future<void> investInLocation(Site loc) async {
     declareMenuNavigation('bases', backKey: 'Enter');
     int c = await getKey();
     if (isBackKey(c)) break;
+    if (c == Key.s && loc.upgradable && !loc.discreet) {
+      await manageFrontBusiness(loc);
+      continue;
+    }
     if (loc.upgradable) {
       if (c == Key.w) {
         int price = CompoundUpgrade.fortify.price;

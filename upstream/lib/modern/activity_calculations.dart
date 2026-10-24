@@ -5,9 +5,11 @@ import 'package:lcs_new_age/creature/attributes.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/creature_type.dart';
 import 'package:lcs_new_age/creature/skills.dart';
+import 'package:lcs_new_age/daily/activities/front_business.dart';
 import 'package:lcs_new_age/daily/activities/fundraising.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart' as game;
 import 'package:lcs_new_age/items/loot.dart';
+import 'package:lcs_new_age/location/front_business.dart';
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/politics/alignment.dart';
 import 'package:lcs_new_age/politics/laws.dart';
@@ -70,6 +72,37 @@ ActivityCalculation calculationForActivity(
       : null;
   final undercover = sleeper ?? actor?.sleeperAgent ?? false;
   switch (type) {
+    case ActivityType.workPrintShop:
+      final cost = FrontBusiness.dailyCostPerWorker;
+      final gross = actor == null ? null : printShopGrossFor(actor);
+      final influence = actor == null ? null : printShopInfluenceFor(actor);
+      return ActivityCalculation(
+        formula:
+            'Commercial gross per worker = 45 + min(Business, 8) × 8 + '
+            'min(Writing, 8) × 3. Running cost = \$$cost per worker. '
+            'Movement influence = 2 + (min(Writing, 8) + min(Business, 8)) ÷ 2, '
+            'discarding the fraction, capped at 8.',
+        inputs: actor == null
+            ? const []
+            : [
+                _skills(actor, [Skill.business, Skill.writing]),
+              ],
+        result: gross == null
+            ? 'Commercial net: \$25–\$113 per worker per day. '
+                  'Movement printing supports Free Speech instead of earning money.'
+            : 'Current commercial net: \$${gross - cost}/day. '
+                  'Movement printing: $influence Free Speech background influence for \$$cost/day.',
+        qualifiers: const [
+          'Manage staffing and the shop mode from Bases → Manage print shop. '
+              'At most two workers; each uses their daily assignment.',
+          'Only available staff present at their own base work. Squad orders '
+              'take precedence. Closed, unstaffed or besieged shops produce nothing.',
+          'Commercial work requests 5 Business XP; movement printing requests '
+              '5 Writing XP. Normal attribute caps apply. Movement work needs funds '
+              'and does not count as staffing a Guardian special edition.',
+        ],
+        source: '${_daily}front_business.dart',
+      );
     case ActivityType.donations:
     case ActivityType.sellTshirts:
     case ActivityType.sellArt:
@@ -191,10 +224,7 @@ ActivityCalculation calculationForActivity(
               'percentage-point gain.',
           _beforeDay,
         ],
-        quantities: {
-          'awarenessTriggerPercent': chance,
-          'juiceGain': ?gain,
-        },
+        quantities: {'awarenessTriggerPercent': chance, 'juiceGain': ?gain},
         source: '${_daily}solo_activities.dart',
       );
     case ActivityType.recruiting:
@@ -932,10 +962,7 @@ ActivityCalculation _recruiting(Creature? actor, Activity? activity) {
           'is unavailable.',
       _beforeDay,
     ],
-    quantities: {
-      'meetingDifficulty': ?difficulty,
-      'meetingCount': ?count,
-    },
+    quantities: {'meetingDifficulty': ?difficulty, 'meetingCount': ?count},
     source: '${_daily}recruiting.dart',
   );
 }

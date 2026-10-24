@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## Underground Edition 0.6.0 — 2026-10-24
+
+* Give sentenced prisoners monthly standing orders to study Law or Writing, build contacts or document conditions for the Guardian. Manage projects from Justice, including when the whole movement is imprisoned.
+* Develop business fronts into staffed print shops. Choose commercial income or Free Speech printing, name the shop, manage two daily workers and review trading costs in the ledger. Occasional rush orders offer extra sales in exchange for a day's printing capacity.
+
 ## Underground Edition 0.5.1 — 2026-10-24
 
 * Use compact crew headers in shorter journal windows, with clearly labelled Cancel and Back controls for orders.

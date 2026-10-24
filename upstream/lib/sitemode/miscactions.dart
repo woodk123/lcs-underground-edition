@@ -11,6 +11,7 @@ import 'package:lcs_new_age/engine/engine.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/items/weapon.dart';
 import 'package:lcs_new_age/justice/crimes.dart';
+import 'package:lcs_new_age/justice/prison.dart';
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/politics/alignment.dart';
 import 'package:lcs_new_age/politics/views.dart';
@@ -544,6 +545,7 @@ Future<void> partyrescue(TileSpecial special) async {
       rescue.location = null;
       rescue.base = squad[0].base;
       rescue.justEscaped = true;
+      endPrisonActivity(rescue);
       criminalize(rescue, Crime.escapingPrison);
       hostslots++;
       freeslots--;
@@ -560,6 +562,7 @@ Future<void> partyrescue(TileSpecial special) async {
           rescue.location = null;
           rescue.base = p.base;
           rescue.justEscaped = true;
+          endPrisonActivity(rescue);
           hostslots--;
           criminalize(rescue, Crime.escapingPrison);
           printParty();

@@ -7,6 +7,7 @@ import 'package:lcs_new_age/daily/activities/car_theft.dart';
 import 'package:lcs_new_age/daily/activities/clothing_creation.dart';
 import 'package:lcs_new_age/daily/activities/clothing_repair.dart';
 import 'package:lcs_new_age/daily/activities/flag_creation.dart';
+import 'package:lcs_new_age/daily/activities/front_business.dart';
 import 'package:lcs_new_age/daily/activities/fundraising.dart';
 import 'package:lcs_new_age/daily/activities/graffiti.dart';
 import 'package:lcs_new_age/daily/activities/guardian.dart';
@@ -232,6 +233,7 @@ Future<void> soloActivities(bool disbanding) async {
         break;
     }
   }
+  processFrontBusinesses(disbanding: disbanding);
 }
 
 Future<void> doActivityGetWheelchair(Creature p) async {

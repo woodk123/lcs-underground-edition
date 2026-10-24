@@ -40,7 +40,8 @@ class Activity {
       clothingTypes[idString?.split(":ARMOR").firstOrNull];
   FlagType? get flagType => flagTypes[idString];
   ArmorUpgrade? get armorUpgrade => clothingType?.allowedArmor.elementAtOrNull(
-      int.tryParse(idString?.split(":ARMOR").lastOrNull ?? "0") ?? 0);
+    int.tryParse(idString?.split(":ARMOR").lastOrNull ?? "0") ?? 0,
+  );
   Site? get location =>
       gameState.sites.firstWhereOrNull((e) => e.idString == idString);
 
@@ -54,6 +55,8 @@ class Activity {
         return "Making ${flagType?.shortName ?? "a bug"}";
       case ActivityType.visit:
         return "Visiting ${location?.name ?? "a bug"}";
+      case ActivityType.workPrintShop:
+        return "Working at ${location?.frontBusiness?.name ?? 'Print Shop'}";
       case ActivityType.study:
         return "Practice ${skill?.displayName ?? "a bug"}";
       case ActivityType.takeClass:
@@ -88,6 +91,7 @@ enum ActivityType {
   bury("Burying Dead", darkGray),
   writeGuardian("Liberal Guardian Writing", lightGreen),
   streamGuardian("Liberal Guardian Streaming", lightGreen),
+  workPrintShop("Working Print Shop", lightBlue),
   teachLiberalArts("Teaching Liberal Arts", purple),
   teachFighting("Teaching Fighting", purple),
   teachCovert("Teaching Covert Ops", purple),

@@ -59,10 +59,14 @@ class OrganisationController extends ChangeNotifier {
   /// a fresh source HQ frame. A missing W must never be presented as Run day.
   ConsoleAction? headquartersAction(String key) =>
       console.eventMessage == null ? headquarters?.action(key) : null;
+  bool get _blindPrisonPlanning =>
+      !game.canSeeThings &&
+      const {'prison-management', 'prison-order'}.contains(console.screen);
   bool get canNavigate =>
       console.eventMessage == null &&
       !_busy &&
       !_disposed &&
+      !_blindPrisonPlanning &&
       game.mode == GameMode.base &&
       console.awaitingInput &&
       !console.textInput &&
@@ -570,6 +574,11 @@ class OrganisationController extends ChangeNotifier {
     }
     for (var step = 0; step < 40; step++) {
       if (!await _ready()) return false;
+      if (_blindPrisonPlanning) {
+        return _fail(
+          'Finish prison planning before time passes; no outside crew can act.',
+        );
+      }
       if (console.textInput) {
         return _fail(
           'Complete the current name or entry before changing sections.',

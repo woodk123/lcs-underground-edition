@@ -103,6 +103,8 @@ class _ModernGameShellState extends State<ModernGameShell> {
   Creature? get _inspectedPerson =>
       game.pool.where((person) => person.id == _inspectedPersonId).firstOrNull;
   bool get _canSwitchSections =>
+      !(const {'prison-management', 'prison-order'}.contains(console.screen) &&
+          !game.pool.any((person) => person.isActiveLiberal)) &&
       !_helpOpen &&
       console.eventMessage == null &&
       !console.textInput &&
@@ -1235,6 +1237,11 @@ class _ModernGameShellState extends State<ModernGameShell> {
                   : _journalNavigation.section)
               .id,
       fullSpreadDetail:
+          const {
+            'front-business',
+            'prison-management',
+            'prison-order',
+          }.contains(console.screen) ||
           console.screen == 'organisation' ||
           console.eventMessage != null ||
           recoveryContext(console) != null ||
@@ -1956,6 +1963,12 @@ class _ModernGameShellState extends State<ModernGameShell> {
   }
 
   Widget _journalManagementPage() {
+    final managementRevision = console.revision.value;
+    final featureManagement = const {
+      'front-business',
+      'prison-management',
+      'prison-order',
+    }.contains(console.screen);
     final equipment = equipmentContext(console);
     final rows = console.buffer
         .map((row) => row.map((cell) => cell.glyph).join().trim())
@@ -1979,7 +1992,13 @@ class _ModernGameShellState extends State<ModernGameShell> {
           ? null
           : TextButton.icon(
               key: const ValueKey('journal-management-back'),
-              onPressed: () => _send(navigation.backKey),
+              onPressed: () {
+                if (!featureManagement ||
+                    (console.revision.value == managementRevision &&
+                        identical(console.navigation, navigation))) {
+                  _send(navigation.backKey);
+                }
+              },
               icon: const Icon(Icons.arrow_back, size: 16),
               label: JournalCommandLabel(
                 shortcut: navigation.backKey,
@@ -1987,8 +2006,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
               ),
               style: TextButton.styleFrom(minimumSize: const Size(40, 34)),
             ),
-      scrollStorageId:
-          equipment != null && equipment.phase != EquipmentPhase.inventory
+      scrollStorageId: featureManagement
+          ? 'journal-feature:${console.screen}:${console.actions.where((a) => a.entityType == 'prison-order' || a.entityType?.startsWith('front-business-') == true).firstOrNull?.entityCategory ?? 'roster'}'
+          : equipment != null && equipment.phase != EquipmentPhase.inventory
           ? 'equipment-recipient-scroll:${equipment.phase.name}'
           : console.recruitmentTarget == null
           ? 'journal-management-scroll:${navigation?.section ?? 'entry'}'

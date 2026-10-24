@@ -14,6 +14,7 @@ import 'package:lcs_new_age/creature/level.dart';
 import 'package:lcs_new_age/creature/monster_name.dart';
 import 'package:lcs_new_age/creature/name.dart';
 import 'package:lcs_new_age/creature/operation_record.dart';
+import 'package:lcs_new_age/creature/prison_activity.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
@@ -144,6 +145,9 @@ class Creature {
   late Gender genderAssignedAtBirth = gender;
   int sentence = 0;
   bool deathPenalty = false;
+
+  /// Optional so existing campaigns retain the historical default and RNG.
+  PrisonActivity? prisonActivity;
   int confessions = 0;
   @JsonKey(defaultValue: false)
   bool cannotDetransition = false;

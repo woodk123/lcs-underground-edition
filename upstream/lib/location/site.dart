@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:lcs_new_age/basemode/activities.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/gender.dart';
 import 'package:lcs_new_age/creature/name.dart';
@@ -13,6 +14,7 @@ import 'package:lcs_new_age/items/money.dart';
 import 'package:lcs_new_age/location/city.dart';
 import 'package:lcs_new_age/location/compound.dart';
 import 'package:lcs_new_age/location/district.dart';
+import 'package:lcs_new_age/location/front_business.dart';
 import 'package:lcs_new_age/location/location.dart';
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/location/siege.dart';
@@ -44,8 +46,14 @@ class Site extends Location {
   SiteType type;
   @JsonKey()
   Siege siege = Siege();
-  @JsonKey()
-  SiteController controller = SiteController.unaligned;
+  @JsonKey(name: 'controller', includeToJson: true, includeFromJson: true)
+  SiteController _controller = SiteController.unaligned;
+  SiteController get controller => _controller;
+  set controller(SiteController value) {
+    _controller = value;
+    if (value != SiteController.lcs) removeFrontBusiness();
+  }
+
   @JsonKey()
   int rent = 0;
   @JsonKey()
@@ -94,7 +102,25 @@ class Site extends Location {
     return _businessFront;
   }
 
-  set businessFront(bool value) => _businessFront = value;
+  set businessFront(bool value) {
+    _businessFront = value;
+    if (!value) removeFrontBusiness();
+  }
+
+  @JsonKey(includeIfNull: false)
+  FrontBusiness? frontBusiness;
+
+  /// Losing the premises or dismantling the cover ends every shop assignment.
+  void removeFrontBusiness() {
+    frontBusiness = null;
+    for (final person in pool) {
+      if (person.activity.type == ActivityType.workPrintShop &&
+          person.activity.idString == idString) {
+        person.activity = Activity.none();
+      }
+    }
+  }
+
   @JsonKey()
   int closed = 0;
   bool get isClosed => closed > 0;

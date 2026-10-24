@@ -60,7 +60,8 @@ enum Income {
   busking,
   thievery,
   tshirts,
-  ransom;
+  ransom,
+  printShop,
 }
 
 enum Expense {
@@ -80,5 +81,6 @@ enum Expense {
   training,
   travel,
   augmentation,
-  hospitalBills;
+  hospitalBills,
+  printShop,
 }

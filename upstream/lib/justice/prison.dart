@@ -4,10 +4,13 @@ import 'package:lcs_new_age/common_actions/common_actions.dart';
 import 'package:lcs_new_age/creature/attributes.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/creature/difficulty.dart';
+import 'package:lcs_new_age/creature/prison_activity.dart';
 import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/engine/engine.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/items/clothing.dart';
+import 'package:lcs_new_age/items/loot.dart';
+import 'package:lcs_new_age/items/loot_type.dart';
 import 'package:lcs_new_age/justice/crimes.dart';
 import 'package:lcs_new_age/location/location.dart';
 import 'package:lcs_new_age/location/location_type.dart';
@@ -20,7 +23,203 @@ import 'package:lcs_new_age/utils/lcsrandom.dart';
 
 /* monthly - move a liberal to jail */
 void imprison(Creature g) {
+  endPrisonActivity(g);
   g.location = findSiteInSameCity(g.location?.city, SiteType.prison);
+}
+
+/// Orders belong only to sentenced prisoners, never custody or sleeper staff.
+String? prisonOrderUnavailableReason(Creature person) {
+  if (!person.alive) return 'This person is deceased.';
+  if (person.align != Alignment.liberal) {
+    return 'Only LCS Liberals receive orders.';
+  }
+  if (person.sleeperAgent) return 'Sleeper staff are not prisoners.';
+  if (person.site?.type != SiteType.prison) {
+    return 'Orders require a sentenced prisoner at a prison.';
+  }
+  if (person.sentence == 0) return 'This person has no prison sentence.';
+  if (person.deathPenalty) return 'Death row does not allow prison projects.';
+  if (person.sentence == 1) {
+    return 'Release is due next month; projects are paused.';
+  }
+  return null;
+}
+
+String? prisonProjectUnavailableReason(Creature person, PrisonOrder order) {
+  final unavailable = prisonOrderUnavailableReason(person);
+  if (unavailable != null) return unavailable;
+  if ((order == PrisonOrder.studyLaw || order == PrisonOrder.studyWriting) &&
+      laws[Law.prisons] == DeepAlignment.archConservative) {
+    return 'Labor camps do not provide study materials.';
+  }
+  if (order == PrisonOrder.documentConditions &&
+      laws[Law.prisons] == DeepAlignment.eliteLiberal) {
+    return 'Rehabilitation provides no prison-abuse dossier to document.';
+  }
+  return null;
+}
+
+/// Reversible order change; never replaces personal or squad daily activities.
+bool setPrisonOrder(Creature person, PrisonOrder order) {
+  if (prisonProjectUnavailableReason(person, order) != null) return false;
+  if ((person.prisonActivity?.order ?? PrisonOrder.keepHeadDown) == order) {
+    return true;
+  }
+  (person.prisonActivity ??= PrisonActivity()).order = order;
+  return true;
+}
+
+/// Clear episode progress on release, rescue or a new sentence. A completed
+/// dossier awaiting a safe destination must survive until it can be delivered.
+void endPrisonActivity(Creature person) {
+  final state = person.prisonActivity;
+  if (state == null) return;
+  state
+    ..order = PrisonOrder.keepHeadDown
+    ..contacts = 0
+    ..documentProgress = 0
+    ..documentCompleted = false
+    ..lastResolvedMonth = null;
+}
+
+/// Available contacts are shared by LCS prisoners in the same institution.
+int prisonContacts(Creature person) => pool
+    .where(
+      (other) =>
+          other.alive &&
+          other.align == Alignment.liberal &&
+          !other.sleeperAgent &&
+          other.locationId == person.locationId &&
+          other.site?.type == SiteType.prison &&
+          other.sentence != 0,
+    )
+    .fold(0, (sum, other) => sum + (other.prisonActivity?.contacts ?? 0))
+    .clamp(0, maxPrisonContacts);
+
+/// No input or RNG. A pending document is consumed only after adding the
+/// existing publishable prison evidence to an accessible same-city safehouse.
+String? deliverPendingPrisonDocuments(Creature person) {
+  final state = person.prisonActivity;
+  if (state == null || !state.pendingDocument) return null;
+  final cityId =
+      state.pendingDocumentCityId ?? person.site?.cityId ?? person.base?.cityId;
+  if (cityId == null) return null;
+  final destination = sites.firstWhereOrNull(
+    (site) =>
+        site.cityId == cityId &&
+        site.controller == SiteController.lcs &&
+        !site.isPartOfTheJusticeSystem &&
+        !site.isClosed &&
+        !site.siege.underSiege,
+  );
+  if (destination == null) return null;
+  destination.loot.add(Loot(LootTypeIds.prisonFiles));
+  state.pendingDocument = false;
+  state.pendingDocumentCityId = null;
+  final report =
+      '${person.name}\'s prison dossier reached ${destination.getName(short: true)}.';
+  state.lastReport = report;
+  return report;
+}
+
+/// Monthly project resolution runs after the original prison scene, so escape
+/// and death prevent project rewards. The default consumes no extra randomness.
+String? resolvePrisonActivity(Creature person) {
+  final state = person.prisonActivity;
+  if (state == null ||
+      state.order == PrisonOrder.keepHeadDown ||
+      prisonOrderUnavailableReason(person) != null) {
+    return null;
+  }
+  final month = date.year * 12 + date.month;
+  if (state.lastResolvedMonth == month) return null;
+  state.lastResolvedMonth = month;
+  final unavailable = prisonProjectUnavailableReason(person, state.order);
+  if (unavailable != null) {
+    return state.lastReport = '${person.name}: $unavailable';
+  }
+
+  final prisonLaw = laws[Law.prisons]!;
+  switch (state.order) {
+    case PrisonOrder.keepHeadDown:
+      return null;
+    case PrisonOrder.studyLaw:
+    case PrisonOrder.studyWriting:
+      final skill = state.order == PrisonOrder.studyLaw
+          ? Skill.law
+          : Skill.writing;
+      final xp = switch (prisonLaw) {
+        DeepAlignment.conservative => 20,
+        DeepAlignment.liberal => 40,
+        DeepAlignment.eliteLiberal => 50,
+        _ => 30,
+      };
+      final before = person.skillXP(skill);
+      person.train(skill, xp);
+      final gained = person.skillXP(skill) - before;
+      return state.lastReport = gained > 0
+          ? '${person.name} studied ${skill.displayName} (+$gained XP).'
+          : '${person.name} studied ${skill.displayName}, already at their training limit.';
+    case PrisonOrder.buildContacts:
+      if (state.contacts >= maxPrisonContacts) {
+        return state.lastReport =
+            '${person.name} maintained their established prison contacts (6/6).';
+      }
+      final difficulty = prisonLaw == DeepAlignment.archConservative
+          ? Difficulty.challenging
+          : Difficulty.average;
+      if (person.skillCheck(Skill.persuasion, difficulty)) {
+        state.contacts++;
+        person.train(Skill.persuasion, 15);
+        addjuice(person, 5, 300);
+        return state.lastReport =
+            '${person.name} built a prison contact (${state.contacts}/6).';
+      }
+      state.contacts = (state.contacts - 1).clamp(0, maxPrisonContacts);
+      final before = person.juice;
+      addjuice(person, -5, -30);
+      return state.lastReport =
+          '${person.name}\'s organising was disrupted${_juiceSuffix(person.juice - before)}.';
+    case PrisonOrder.documentConditions:
+      if (state.pendingDocument) {
+        return state.lastReport =
+            '${person.name}\'s dossier awaits an accessible safehouse in the same city.';
+      }
+      if (state.documentCompleted) {
+        return state.lastReport =
+            '${person.name} already completed a dossier during this sentence.';
+      }
+      int difficulty = switch (prisonLaw) {
+        DeepAlignment.archConservative => Difficulty.hard,
+        DeepAlignment.conservative => Difficulty.challenging,
+        _ => Difficulty.average,
+      };
+      if (prisonContacts(person) >= 3) difficulty -= 2;
+      if (person.skillCheck(Skill.writing, difficulty) ||
+          person.skillCheck(Skill.stealth, difficulty)) {
+        state.documentProgress++;
+        person.train(Skill.writing, 15);
+        if (state.documentProgress >= prisonDocumentMonths) {
+          state.documentCompleted = true;
+          state.pendingDocument = true;
+          state.pendingDocumentCityId = person.site!.cityId;
+          return state.lastReport =
+              deliverPendingPrisonDocuments(person) ??
+              '${person.name} finished a prison dossier; delivery awaits a safehouse in the same city.';
+        }
+        return state.lastReport =
+            '${person.name} documented prison conditions (${state.documentProgress}/3 months).';
+      }
+      final lost = state.documentProgress > 0;
+      state.documentProgress = (state.documentProgress - 1).clamp(
+        0,
+        prisonDocumentMonths,
+      );
+      final before = person.juice;
+      addjuice(person, -10, -30);
+      return state.lastReport =
+          '${person.name}\'s notes were confiscated${lost ? ': lost one month of evidence' : ''}${_juiceSuffix(person.juice - before)}.';
+  }
 }
 
 String _juiceSuffix(int delta) {
@@ -31,7 +230,8 @@ String _juiceSuffix(int delta) {
 Future<void> _prisonSceneLine(String text) async {
   if (canSeeThings) {
     erase();
-    mvaddstrc(8, 1, white, text);
+    setColor(white);
+    addparagraph(8, 1, text, y2: 20, x2: 78);
     await acknowledge(title: 'Prison report');
     erase();
   } else {
@@ -88,6 +288,9 @@ Future<void> prison(Creature g) async {
         await prisonScene(g);
     }
   }
+
+  final activityReport = resolvePrisonActivity(g);
+  if (activityReport != null) await _prisonSceneLine(activityReport);
 
   if (g.sentence > 0) {
     //COMMUTE DEATH IN RIGHT CLIMATE
@@ -176,6 +379,7 @@ Future<void> prison(Creature g) async {
           );
         }
         g.location = g.base;
+        endPrisonActivity(g);
       }
     }
     //NOTIFY OF IMPENDING THINGS
@@ -391,8 +595,7 @@ Future<void> prisonScene(Creature g) async {
         experience =
             " puts on smuggled street clothes and calmly walks out of prison.";
       } else {
-        experience =
-            " puts on smuggled street clothes and calmly rolls out the front door!";
+        experience = " puts on smuggled street clothes and calmly rolls out the front door!";
       }
       g.giveArmor(Clothing("CLOTHING_CLOTHES"), null);
     } else if (g.skillCheck(Skill.security, Difficulty.hard) &&
@@ -496,6 +699,7 @@ void escape(Creature g, bool withFriends) {
   addjuice(g, 50, 1000);
   criminalize(g, Crime.escapingPrison);
   g.location = findSiteInSameCity(g.site?.city, SiteType.homelessEncampment);
+  endPrisonActivity(g);
 
   if (withFriends) {
     int numEscaped = 0;
@@ -503,6 +707,7 @@ void escape(Creature g, bool withFriends) {
       if (p.location == prison && !p.sleeperAgent) {
         criminalize(p, Crime.escapingPrison);
         p.location = g.location;
+        endPrisonActivity(p);
         numEscaped++;
       }
     }

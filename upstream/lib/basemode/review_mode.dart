@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:collection/collection.dart';
 import 'package:lcs_new_age/basemode/activate_regulars.dart';
 import 'package:lcs_new_age/basemode/activities.dart';
+import 'package:lcs_new_age/basemode/prison_management.dart';
 import 'package:lcs_new_age/common_actions/equipment.dart';
 import 'package:lcs_new_age/common_display/common_display.dart';
 import 'package:lcs_new_age/common_display/print_creature_info.dart';
@@ -503,12 +504,25 @@ Future<void> reviewMode(ReviewMode mode) async {
     }
     addPageButtons(y: 23, x: 0);
     addOptionText(23, 38, "T", "T - Sort Liberals");
+    if (mode == ReviewMode.justice) {
+      addOptionText(24, 0, 'U', 'U - Manage prison orders');
+      console.annotateActionEntity(
+        'u',
+        type: 'prison-management-open',
+        id: 'all',
+      );
+    }
 
     console.screen = mode == ReviewMode.all
         ? 'personnel-directory'
         : 'personnel-roster';
     declareMenuNavigation('people');
     int c = await getKey();
+
+    if (c == Key.u && mode == ReviewMode.justice) {
+      await managePrisoners();
+      continue;
+    }
 
     //PAGE UP
     if ((isPageUp(c) || c == Key.upArrow || c == Key.leftArrow) && page > 0) {
@@ -562,6 +576,13 @@ Future<void> reviewMode(ReviewMode mode) async {
           }
           if (tempp.isActiveLiberal) {
             addOptionText(22, 52, "A", "A - Assign a Task");
+          } else if (tempp.imprisoned && tempp.isLiberal && tempp.alive) {
+            addOptionText(22, 52, 'P', 'P - Prison orders');
+            console.annotateActionEntity(
+              'p',
+              type: 'prison-management-open',
+              id: tempp.id.toString(),
+            );
           }
           addOptionText(23, 0, "N", "N - Change Name");
           if (tempp.isLiberal) {
@@ -596,6 +617,14 @@ Future<void> reviewMode(ReviewMode mode) async {
 
           declareMenuNavigation('people');
           int c = await getKey();
+
+          if (c == Key.p &&
+              tempp.imprisoned &&
+              tempp.isLiberal &&
+              tempp.alive) {
+            await managePrisoners(personId: tempp.id);
+            continue;
+          }
 
           if (c == Key.a) {
             await assignTask(tempp);

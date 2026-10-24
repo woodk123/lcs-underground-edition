@@ -1493,17 +1493,16 @@ class DirectContent extends StatelessWidget {
     }
 
     final enabled = action.enabled;
-    return Semantics(
-      key: ValueKey('direct-action:${action.y}:${action.x}:${action.key}'),
-      container: true,
-      button: true,
-      enabled: enabled,
-      selected: selected,
-      label:
-          '${journalShortcutSpokenLabel(action.key)} ${_title(action)}${action.intentLabel == null ? '' : ' · ${action.intentLabel}'}',
-      value: description.isEmpty ? null : description,
-      onTap: enabled ? activate : null,
-      child: ExcludeSemantics(
+    return MergeSemantics(
+      child: Semantics(
+        key: ValueKey('direct-action:${action.y}:${action.x}:${action.key}'),
+        container: true,
+        button: true,
+        enabled: enabled,
+        selected: selected,
+        label:
+            '${journalShortcutSpokenLabel(action.key)} ${_title(action)}${action.intentLabel == null ? '' : ' · ${action.intentLabel}'}',
+        value: description.isEmpty ? null : description,
         child: TextButton(
           onPressed: enabled ? activate : null,
           style:
@@ -1557,7 +1556,7 @@ class DirectContent extends StatelessWidget {
                       : BorderSide.none;
                 }),
               ),
-          child: child,
+          child: ExcludeSemantics(child: child),
         ),
       ),
     );

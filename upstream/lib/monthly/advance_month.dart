@@ -128,8 +128,7 @@ Future<void> advanceMonth() async {
     {
       if (l.changes[c].flag == SITEBLOCK_GRAFFITI ||
           l.changes[c].flag == SITEBLOCK_GRAFFITI_CCS ||
-          l.changes[c].flag ==
-              SITEBLOCK_GRAFFITI_OTHER) // Find changes that refer specifically to graffiti
+          l.changes[c].flag == SITEBLOCK_GRAFFITI_OTHER) // Find changes that refer specifically to graffiti
       {
         // Purge graffiti from more secure sites
         if (securityable(l.type) > 0) {
@@ -254,6 +253,10 @@ Future<void> advanceMonth() async {
 
     if (!p.alive) continue;
     if (p.sleeperAgent) continue;
+    final documentDelivery = deliverPendingPrisonDocuments(p);
+    if (documentDelivery != null) {
+      await showMessageOrLog(documentDelivery);
+    }
     if (p.site?.type == SiteType.policeStation) {
       if (p.missing) {
         await showMessageOrLog(

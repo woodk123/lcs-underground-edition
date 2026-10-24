@@ -56,6 +56,30 @@ class BaseManagementController extends ChangeNotifier {
         return _send(action);
       });
 
+  Future<bool> openFrontBusiness(int siteId) => _run(() async {
+    final site = organisationBases()
+        .where((site) => site.id == siteId)
+        .firstOrNull;
+    if (site == null) return _fail('This location is no longer an LCS base.');
+    final reason = baseInvestmentUnavailableReason(site);
+    if (reason != null) return _fail(reason);
+    if (!await _openBaseHeadquarters(siteId, requireUnselectedSquad: true) ||
+        !await _sendKey('i')) {
+      return false;
+    }
+    final action = console.actions
+        .where(
+          (action) =>
+              action.entityType == 'front-business-open' &&
+              action.entityId == site.idString,
+        )
+        .firstOrNull;
+    if (action == null || !action.enabled) {
+      return _fail('Print shop management is unavailable at this base.');
+    }
+    return await _send(action) && console.screen == 'front-business';
+  });
+
   Future<bool> _openBaseHeadquarters(
     int siteId, {
     bool requireUnselectedSquad = false,

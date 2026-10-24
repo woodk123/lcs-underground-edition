@@ -101,6 +101,21 @@ ActivityMechanics activityMechanics(
     ),
   );
   switch (type) {
+    case ActivityType.workPrintShop:
+      return help(
+        'Work at a staffed print shop: commercial orders earn money, while '
+        'movement printing supports Free Speech.',
+        skills: const [Skill.business, Skill.writing],
+        cost:
+            '\$20 running costs per active worker per day; setup is separate.',
+        requirements: 'An open print shop at your current home base; at most two workers.',
+        details:
+            'Assign staff and choose the operating mode through Bases → Manage '
+            'print shop. This replaces the worker’s daily assignment. '
+            'Squad departures and unavailable staff do not produce shop work. '
+            'Closing the shop clears staff assignments. Commercial work trains '
+            'Business; movement printing trains Writing and needs available funds.',
+      );
     case ActivityType.none:
       if (undercover) {
         return help(
@@ -111,8 +126,7 @@ ActivityMechanics activityMechanics(
               'capped at 100%. This is job access and trust, not an automatic '
               'success chance. As with other crew set to Lay Low, clothing '
               'care may also run during daily processing.',
-          timing:
-              'Infiltration improves at month end; clothing care can run daily.',
+          timing: 'Infiltration improves at month end; clothing care can run daily.',
         );
       }
       return help(
@@ -228,8 +242,7 @@ ActivityMechanics activityMechanics(
         'Ask supporters for money; professional clothing improves donations.',
         skills: const [Skill.persuasion, Skill.streetSmarts],
         cost: 'No activity fee',
-        risk:
-            'Public activity: existing heat or indecent clothing can attract police',
+        risk: 'Public activity: existing heat or indecent clothing can attract police',
         details:
             'Income uses Persuasion and Street Smarts, public mood, clothing '
             'professionalism and a dice roll. More conservative public moods '
@@ -239,8 +252,7 @@ ActivityMechanics activityMechanics(
       return help(
         'Make and sell clothing to raise money.',
         skills: const [Skill.tailoring, Skill.business],
-        risk:
-            'Public activity: existing heat or indecent clothing can attract police',
+        risk: 'Public activity: existing heat or indecent clothing can attract police',
         details:
             'Income uses Tailoring and Business, public mood and a dice '
             'roll. This fundraising task does not craft a selected inventory '
@@ -250,8 +262,7 @@ ActivityMechanics activityMechanics(
       return help(
         'Create and sell art to raise money.',
         skills: const [Skill.art, Skill.business],
-        risk:
-            'Public activity: existing heat or indecent clothing can attract police',
+        risk: 'Public activity: existing heat or indecent clothing can attract police',
         details:
             'Income uses Art and Business, public mood and a dice roll. '
             'Strong Art can also add background political influence. '
@@ -261,8 +272,7 @@ ActivityMechanics activityMechanics(
       return help(
         'Busk for money; equip an instrument for full earnings.',
         skills: const [Skill.music, Skill.streetSmarts],
-        risk:
-            'Public activity: existing heat or indecent clothing can attract police',
+        risk: 'Public activity: existing heat or indecent clothing can attract police',
         details:
             'The implemented income formula uses Music and Street Smarts '
             '(not Business). Without an equipped instrument, its income '
@@ -272,8 +282,7 @@ ActivityMechanics activityMechanics(
       return help(
         'Sell weed brownies for income affected by drug laws.',
         skills: const [Skill.persuasion, Skill.business, Skill.streetSmarts],
-        risk:
-            'Police searches and drug-distribution charges; heat can expose your base to raids',
+        risk: 'Police searches and drug-distribution charges; heat can expose your base to raids',
         details:
             'Stricter drug laws increase income and expose sellers to '
             'police-search checks. Street Smarts helps avoid being caught. '
@@ -464,8 +473,7 @@ ActivityMechanics activityMechanics(
         'Train eligible crew in the same city without replacing their tasks.',
         skills: const [Skill.teaching],
         cost: 'Supplies up to \$$maximumCost per day, based on workload',
-        requirements:
-            'Students must be below the teacher’s skill and their own potential',
+        requirements: 'Students must be below the teacher’s skill and their own potential',
         details:
             'Teaches $subjects. Topic skill plus three times Teaching '
             'minus student skill sets training, with a per-skill cap and '
@@ -786,9 +794,8 @@ class ActivityCalculationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(fontSize: compact ? 11 : 13, height: 1.4);
+    final style = Theme.of(context).textTheme.bodySmall
+        ?.copyWith(fontSize: compact ? 11 : 13, height: 1.4);
     return Column(
       key: const ValueKey('activity-calculation'),
       crossAxisAlignment: CrossAxisAlignment.stretch,

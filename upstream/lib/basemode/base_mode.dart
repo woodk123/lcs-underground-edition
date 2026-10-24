@@ -10,6 +10,7 @@ import 'package:lcs_new_age/basemode/invest_in_location.dart';
 import 'package:lcs_new_age/basemode/liberal_agenda.dart';
 import 'package:lcs_new_age/basemode/media_overview.dart';
 import 'package:lcs_new_age/basemode/plan_site_visit.dart';
+import 'package:lcs_new_age/basemode/prison_management.dart';
 import 'package:lcs_new_age/basemode/review_mode.dart';
 import 'package:lcs_new_age/common_actions/equipment.dart';
 import 'package:lcs_new_age/common_display/common_display.dart';
@@ -23,6 +24,7 @@ import 'package:lcs_new_age/engine/organisation_context.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/gamestate/squad.dart';
 import 'package:lcs_new_age/gamestate/time.dart';
+import 'package:lcs_new_age/justice/prison.dart';
 import 'package:lcs_new_age/location/location_type.dart';
 import 'package:lcs_new_age/location/siege.dart';
 import 'package:lcs_new_age/location/site.dart';
@@ -31,14 +33,34 @@ import 'package:lcs_new_age/saveload/save_load.dart';
 import 'package:lcs_new_age/title_screen/game_over.dart';
 import 'package:lcs_new_age/utils/colors.dart';
 
+/// Offer one monthly planning opportunity while no outside crew can act.
+/// Returning to this reader does not itself advance time or resolve projects.
+Future<int?> reviewPrisonPlanBeforeBlindTime(int? lastPlannedMonth) async {
+  final prisonPlanMonth = year * 12 + month;
+  if (lastPlannedMonth == prisonPlanMonth ||
+      !pool.any((person) => prisonOrderUnavailableReason(person) == null)) {
+    return lastPlannedMonth;
+  }
+  await managePrisoners();
+  return prisonPlanMonth;
+}
+
 Future<bool> baseMode() async {
   int daysWithoutVision = 0;
+  int? lastBlindPrisonPlanMonth;
   disbanding = false;
 
   while (true) {
     bool forceWait = false;
     cantSeeReason = CantSeeReason.other;
     forceWait = await checkForVision();
+    // A movement entirely in custody still needs a chance to choose its
+    // monthly prison work before automatic time passing resumes.
+    if (forceWait) {
+      lastBlindPrisonPlanMonth = await reviewPrisonPlanBeforeBlindTime(
+        lastBlindPrisonPlanMonth,
+      );
+    }
 
     if (!forceWait) {
       await howTimesHaveChanged(daysWithoutVision);
@@ -532,8 +554,7 @@ SiegeBriefing _siegeBriefing(Site loc) {
       loc.type == SiteType.homelessEncampment
           ? 'Giving up means arrest for the Liberals here and confiscation of local equipment and vehicles.'
           : 'Giving up lets the police confiscate local equipment and vehicles. Wanted Liberals here face arrest.',
-    SiegeType.medicalDebtCollectors =>
-      'Giving up lets the collectors take available funds toward hospital debt and confiscate local supplies and vehicles.',
+    SiegeType.medicalDebtCollectors => 'Giving up lets the collectors take available funds toward hospital debt and confiscate local supplies and vehicles.',
     _ => 'Giving up to these attackers will kill everyone at this location.',
   };
   return SiegeBriefing(
@@ -555,10 +576,7 @@ SiegeBriefing _siegeBriefing(Site loc) {
         'Security cameras are offline.',
       if (loc.compound.cameras && !siege.camerasOff)
         'Security cameras are online.',
-      if (siege.underAttack)
-        'Respond before advancing time.'
-      else
-        'You may fight, try to escape, give up, or wait if the current orders allow it.',
+      if (siege.underAttack) 'Respond before advancing time.' else 'You may fight, try to escape, give up, or wait if the current orders allow it.',
     ],
   );
 }

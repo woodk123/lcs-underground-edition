@@ -67,6 +67,10 @@ The tactical field plan and full-floor map use site-specific surface textures an
 - Founder portrait selection keeps its original assignment age through background creation, headquarters and saves, including birthdays at an age-cohort boundary.
 - Crew and personnel illustrations depict contemporary grassroots activists.
 
+## Prison projects and working shops
+
+- Sentenced prisoners choose monthly study, shared contacts or evidence projects; all-imprisoned campaigns receive a monthly planning opportunity. Business fronts can become staffed print shops with commercial income, Free Speech printing and rush orders. Saved additions load historical campaigns; older builds may reject new order or ledger categories. See [the rules and save design](PRISON_AND_PRINT_SHOPS.md).
+
 ## Artwork and player size
 
 - Six original painted management sprites cover People, Bases, Stores, Leadership, Captives and Media. Their transparent PNG atlas, prompts, cell geometry and provenance are retained under root `assets/`; the runtime WebP follows the existing static-art pipeline.

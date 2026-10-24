@@ -89,6 +89,7 @@ Future<void> fundReport(bool disbanding, {bool management = false}) async {
           Income.thievery => "Thievery",
           Income.tshirts => "T-Shirt Sales",
           Income.ransom => "Ransoming Hostages",
+          Income.printShop => "Print Shop Sales",
         };
         showledger = true;
         if (page == numpages - 1) {
@@ -151,6 +152,7 @@ Future<void> fundReport(bool disbanding, {bool management = false}) async {
           Expense.training => "Training",
           Expense.travel => "Travel",
           Expense.hospitalBills => "Hospital Bills",
+          Expense.printShop => "Print Shop Running Costs",
         };
         showledger = true;
         if (page == numpages - 1) {
