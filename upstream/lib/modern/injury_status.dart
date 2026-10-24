@@ -485,10 +485,10 @@ InjuryLocation _bodyPartLocation(
             'Treatment leaves this part missing; it does not regrow.'
       : part.bleeding > 0
       ? 'First Aid during an operation or daily medical care can stop bleeding. '
-            '${part.missing ? _permanentLossCare : 'Non-bleeding wounds clear near full blood during daily injury recovery.'}'
+            '${part.missing ? _permanentLossCare : 'Non-bleeding wounds clear when daily injury treatment runs with blood within 5 points of maximum.'}'
       : part.missing
       ? _permanentLossCare
-      : 'Non-bleeding wounds clear near full blood during daily injury recovery. '
+      : 'Non-bleeding wounds clear when daily injury treatment runs with blood within 5 points of maximum. '
             'Tissue health is not a percentage of combat effectiveness.';
 
   return InjuryLocation(

@@ -6,6 +6,7 @@ import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/modern/injury_anatomy.dart';
 import 'package:lcs_new_age/modern/injury_status.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
+import 'package:lcs_new_age/modern/recovery_help.dart';
 
 const _amber = Color(0xFF956019);
 
@@ -238,6 +239,35 @@ class _CrewInjuryPanelState extends State<CrewInjuryPanel> {
             'Blood loss reduces Strength, Agility, Charisma and Intelligence. '
             'Their values scale with blood remaining, with rounding and a minimum of 1.',
             style: JournalPalette.small,
+          ),
+        ],
+        if (person.alive) ...[
+          const SizedBox(height: 12),
+          Text(
+            dailyRecoveryHelp(person).first,
+            key: const ValueKey('daily-recovery-rate'),
+            style: JournalPalette.small.copyWith(fontWeight: FontWeight.w700),
+          ),
+          Material(
+            type: MaterialType.transparency,
+            child: ExpansionTile(
+              key: const PageStorageKey('daily-recovery-explanation'),
+              tilePadding: EdgeInsets.zero,
+              title: const Text(
+                'How daily recovery works',
+                style: JournalPalette.small,
+              ),
+              children: [
+                for (final paragraph in dailyRecoveryHelp(person).skip(1))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(paragraph, style: JournalPalette.small),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
         if (!person.alive) ...[
@@ -524,9 +554,7 @@ class _CrewInjuryPanelState extends State<CrewInjuryPanel> {
           ),
           const SizedBox(height: 6),
           Text(
-            widget.person.alive
-                ? location.care
-                : 'Injuries are retained for the historical record. Treatment is unavailable after death.',
+            widget.person.alive ? location.care : 'Injuries are retained for the historical record. Treatment is unavailable after death.',
             style: JournalPalette.small,
           ),
         ],

@@ -49,9 +49,8 @@ Future<void> _mountPanel(
     MaterialApp(
       theme: buildJournalTheme(),
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(reading)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(reading)),
         child: child!,
       ),
       home: Scaffold(
@@ -109,9 +108,15 @@ bool _hasFocusedDescendant(String value) {
   var inside = false;
   final context = FocusManager.instance.primaryFocus?.context;
   if (context == null) return false;
-  if (context.widget.key == ValueKey(value)) return true;
+  if (context.widget.key == ValueKey(value) ||
+      context.widget.key == PageStorageKey(value)) {
+    return true;
+  }
   context.visitAncestorElements((element) {
-    if (element.widget.key == ValueKey(value)) inside = true;
+    if (element.widget.key == ValueKey(value) ||
+        element.widget.key == PageStorageKey(value)) {
+      inside = true;
+    }
     return !inside;
   });
   return inside;
@@ -151,6 +156,35 @@ void main() {
     person.blood = person.maxBlood;
   });
 
+  testWidgets(
+    'daily recovery help expands with keyboard and retains injury selection',
+    (tester) async {
+      person.blood = person.maxBlood - 15;
+      (person.body as HumanoidBody).torso.shot = true;
+      await _mountPanel(
+        tester,
+        person,
+        size: const Size(1024, 720),
+        reading: 1.5,
+      );
+      expect(_key('daily-recovery-rate'), findsOneWidget);
+      await _tap(tester, 'injury-zone:left-arm');
+      final help = find.byKey(
+        const PageStorageKey('daily-recovery-explanation'),
+      );
+      await tester.ensureVisible(help);
+      await _tabTo(tester, 'daily-recovery-explanation');
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('no medic assignment'), findsOneWidget);
+      expect(_key('injury-detail:left-arm'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(_key('injury-detail:left-arm'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('every healthy body region is directly selectable on the map', (
     tester,
   ) async {
@@ -169,9 +203,9 @@ void main() {
       expect(
         _detailText(id, tester),
         contains(
-          injuryLocations(
-            person,
-          ).singleWhere((location) => location.id == id).name,
+          injuryLocations(person)
+              .singleWhere((location) => location.id == id)
+              .name,
         ),
       );
     }
@@ -367,9 +401,8 @@ void main() {
       for (final id in ['right-lung', 'left-kidney', 'heart']) {
         expect(_key('injury-marker:$id'), findsOneWidget);
         await _tap(tester, 'injury-row:$id');
-        final model = injuryLocations(
-          person,
-        ).singleWhere((location) => location.id == id);
+        final model = injuryLocations(person)
+            .singleWhere((location) => location.id == id);
         final text = _detailText(id, tester);
         expect(text, contains(model.name));
         for (final finding in model.findings) {
@@ -393,9 +426,8 @@ void main() {
       await _mountPanel(tester, person);
       for (final id in ['left-arm', 'upper-spine']) {
         await _tap(tester, 'injury-row:$id');
-        final model = injuryLocations(
-          person,
-        ).singleWhere((location) => location.id == id);
+        final model = injuryLocations(person)
+            .singleWhere((location) => location.id == id);
         final text = _detailText(id, tester);
         for (final finding in model.findings) {
           expect(text, contains(finding));
@@ -471,9 +503,8 @@ void main() {
         ..bleeding = 1;
       await _mountPanel(tester, person);
       expect(_key('injury-map'), findsNothing);
-      final location = injuryLocations(
-        person,
-      ).firstWhere((location) => location.affected);
+      final location = injuryLocations(person)
+          .firstWhere((location) => location.affected);
       expect(location.region, isNull);
       await _tap(tester, 'injury-row:${location.id}');
       expect(_detailText(location.id, tester), contains('Left Front Leg'));

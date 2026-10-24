@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.6.8 — 2026-10-24
+
+* Explain daily blood recovery in medical records, including current care support, automatic First Aid help, injury limits, care experience and why recovery can vary.
+
 ## Underground Edition 0.6.6 — 2026-10-24
 
 * Keep laboratory equipment, cages, machinery and nursing-home beds out of walls and doorways, and fix prison stairs being placed inside walls. Legacy map generation no longer puts special rooms in blocked tiles when no valid space remains.

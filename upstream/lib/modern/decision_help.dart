@@ -17,6 +17,7 @@ import 'package:lcs_new_age/location/compound_upgrades.dart';
 import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/modern/catalogue_art.dart';
 import 'package:lcs_new_age/modern/journal_theme.dart';
+import 'package:lcs_new_age/modern/recovery_help.dart';
 import 'package:lcs_new_age/politics/laws.dart';
 import 'package:lcs_new_age/politics/views.dart';
 import 'package:lcs_new_age/vehicles/vehicle_type.dart';
@@ -213,6 +214,7 @@ List<String> decisionDetails(
       ];
     case DecisionTopic.health:
       return [
+        if (actor != null) ...dailyRecoveryHelp(actor),
         if (actor != null)
           '${actor.name}: blood ${actor.blood}/${actor.maxBlood}; health ${actor.health}; permanent health damage ${actor.permanentHealthDamage}. Blood fraction ${actor.maxBlood > 0 ? (100 * actor.blood / actor.maxBlood).toStringAsFixed(1) : '0'}%.',
         if (actor != null)

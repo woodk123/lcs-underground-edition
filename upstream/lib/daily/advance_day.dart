@@ -12,6 +12,7 @@ import 'package:lcs_new_age/creature/skills.dart';
 import 'package:lcs_new_age/daily/activities/solo_activities.dart';
 import 'package:lcs_new_age/daily/dating.dart';
 import 'package:lcs_new_age/daily/hostages/tend_hostage.dart';
+import 'package:lcs_new_age/daily/medical_support.dart';
 import 'package:lcs_new_age/daily/recruitment.dart';
 import 'package:lcs_new_age/daily/shopsnstuff.dart';
 import 'package:lcs_new_age/daily/siege.dart';
@@ -671,28 +672,10 @@ Future<Creature?> _promoteSubordinates(Creature cr) async {
 
 Future<void> _dailyHealing() async {
   // Healing - determine medical support at each location
-  Map<Site, int> medical = {}, injuries = {};
-  for (Site site in sites) {
-    medical[site] = 0;
-    injuries[site] = 0;
-    if (site.controller != SiteController.lcs) medical[site] = 6;
-    // Hospital is equal to a skill 16 liberal
-    if (site.type == SiteType.universityHospital) medical[site] = 16;
-  }
-  for (Creature p in pool) {
-    // First pass is to identify medics
-    if (!p.alive) continue;
-    if (p.inHiding) continue;
-    if (p.sleeperAgent) continue;
-    if (p.site != null) {
-      // Don't let starving locations heal
-      if (p.site!.foodDaysLeft < 1 && p.site!.siege.underSiege) continue;
-      // Anyone present can help heal, but only the highest skill matters
-      if ((medical[p.site] ?? 0) < p.skill(Skill.firstAid)) {
-        medical[p.site!] = p.skill(Skill.firstAid);
-      }
-    }
-  }
+  final medical = {
+    for (final site in sites) site: medicalSupportAt(site, pool),
+  };
+  Map<Site, int> injuries = {for (final site in sites) site: 0};
 
   //HEAL PEOPLE AND TRAIN
   for (Creature p in pool) {

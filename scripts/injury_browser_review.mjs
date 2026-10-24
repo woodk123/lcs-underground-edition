@@ -123,6 +123,20 @@ async function openDossier() {
   await page.getByRole('dialog').waitFor();
   await wait(/FIELD MEDICAL RECORD/);
 }
+async function inspectRecovery(name) {
+  const help = page.getByRole('dialog').getByText('How daily recovery works', { exact: true });
+  await show(help);
+  await help.click();
+  await wait(/no medic assignment or Lay Low order is required/);
+  await wait(/Medical support at/);
+  await wait(/Current medical recovery ceiling:/);
+  await capture(name);
+  await show(page.getByRole('dialog').getByText(/^Care is automatic:/));
+  await capture(`${name}-details`);
+  await show(help);
+  await help.click();
+  report.checks.push('Daily recovery rate and automatic care explanation open and close');
+}
 async function closeDossier() {
   await page.getByRole('dialog').getByRole('button', { name: 'Close dossier', exact: true }).last().click();
   await page.waitForTimeout(180);
@@ -173,6 +187,7 @@ try {
   assert.equal(before.date, fixture.date, 'Import and load must not advance campaign time.');
   report.checks.push('Prepared conditions survive real import and normalization');
   await openDossier();
+  await inspectRecovery('00-desktop-daily-recovery');
   assert.match(await uiText(), /Age 22: No age attribute modifiers/);
   await show(inspect('Right lung'));
   await inspect('Right lung').hover();
@@ -209,6 +224,7 @@ try {
   await page.getByRole('menuitem', { name: '150%', exact: true }).click();
   await page.setViewportSize({ width: 1024, height: 720 });
   await openDossier();
+  await inspectRecovery('06-1024x720-at150-daily-recovery');
   await show(inspect('Left Leg'));
   await capture('06-1024x720-at150-body');
   await pinRow('Right lung', /Adds 2 to the injury modifier/);
