@@ -680,7 +680,7 @@ async function dailyPlanJourney() {
   assert.equal(await button('Confirm order').count(), 0, 'Inspection must not create a draft.');
   check('Task Details expose full mechanics with modal key isolation and no preparation/source input');
   await click(/^Prepare Solicit Donations(?:$|\s)/);
-  await wait(/Prepared · awaiting confirmation/);
+  await wait(/Prepared change · confirm to assign/);
   const draft = await snapshot('daily-plan-local-draft');
   sameSource(orderFrame, draft, 'Preparing a daily order is a local draft');
   await capture('daily-plan-order-draft');
@@ -688,7 +688,7 @@ async function dailyPlanJourney() {
   await wait(/Calculation:/); await page.keyboard.press('Tab'); await waitForUiSettled(page);
   await keyboardFocus(button(/^Close$/, mechanics), 'Task Details Close');
   await page.keyboard.press('Enter'); await mechanics.waitFor({ state: 'hidden' });
-  await waitForUiSettled(page); await wait(/Prepared · awaiting confirmation/);
+  await waitForUiSettled(page); await wait(/Prepared change · confirm to assign/);
   assert.ok(await button('Confirm order').isEnabled(), 'Task inspection keeps the prepared confirmation reachable.');
   assert.match(await text(), /Soliciting Donations/, 'Task inspection retains the intended prepared order.');
   sameSource(draft, await snapshot('draft-after-task-details'), 'Task Details retain the prepared draft and source reader');
@@ -696,7 +696,7 @@ async function dailyPlanJourney() {
   await click(/^Cancel prepared order$/);
   sameSource(orderFrame, await snapshot('daily-plan-cancelled-draft'), 'Cancel retains the current actor and all existing assignments');
   check('Orders routes the clicked outside-squad actor; preparing and Cancel preserve full campaign and source actions');
-  await click(/^Prepare Solicit Donations(?:$|\s)/); await wait(/Prepared · awaiting confirmation/);
+  await click(/^Prepare Solicit Donations(?:$|\s)/); await wait(/Prepared change · confirm to assign/);
   const beforeConfirm = await snapshot('before-daily-plan-confirm');
   await sourceChoice('confirm clicked actor donations', action => action.entityType === 'activity'
     && action.entityId === 'donations' && action.entityCategory === String(orderActor.id), button('Confirm order'));
@@ -747,6 +747,21 @@ try {
     await waitForUiSettled(page);
     await equipmentJourney();
     await dailyPlanJourney();
+    const beforeMap = await snapshot('before-city-label-inspection');
+    // At 150% the City maps tab is outside the horizontal chapter strip.
+    // Use its existing journal shortcut, then inspect the actual routed map.
+    await page.keyboard.press('Alt+0');
+    await button(/^Show location index$/).waitFor({ state: 'visible' });
+    await waitForUiSettled(page);
+    await capture('city-labels');
+    await click(/^Show location index$/);
+    await wait(/Downtown Seattle/);
+    await capture('city-full-source-names');
+    await click(/^Show city plan$/);
+    await waitForUiSettled(page);
+    sameSource(beforeMap, await snapshot('after-city-label-inspection'),
+      'City label and full-name index inspection');
+    check('City labels and full source-name index preserve source input, campaign and queued destination');
     await verifyLoaded(expectedHash);
     await context.close(); context = null;
   }

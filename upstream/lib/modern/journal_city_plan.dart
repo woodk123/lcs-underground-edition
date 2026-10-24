@@ -20,6 +20,7 @@ class JournalMapPlace {
     required this.name,
     required this.kind,
     required this.enabled,
+    this.mapLabel,
     this.siteType,
     this.shortcut,
     this.current = false,
@@ -28,6 +29,9 @@ class JournalMapPlace {
   }) : assert(kind == 'city' || kind == 'district' || kind == 'site');
 
   final String id, name, kind;
+
+  /// Optional concise label; inspection and accessibility retain [name].
+  final String? mapLabel;
   final String? siteType, shortcut;
   final bool enabled, current, queued;
   final List<String> details;
@@ -375,14 +379,33 @@ class _JournalCityPlanState extends State<JournalCityPlan> {
                       horizontal: 5,
                       vertical: 4,
                     ),
-                    child: Text(
-                      place.name,
-                      softWrap: true,
+                    child: DefaultTextStyle(
                       style: TextStyle(
                         fontSize: 12 * labelScale,
                         height: 1.1,
                         fontWeight: FontWeight.w700,
                         color: place.enabled ? _ink : const Color(0xFF67634E),
+                      ),
+                      // Each word is a single line. Flutter's ordinary paragraph
+                      // wrapping splits long words when the fitted lot is narrow.
+                      child: Wrap(
+                        spacing: 3 * labelScale,
+                        children: [
+                          for (final word
+                              in (place.mapLabel ?? place.name).split(
+                                RegExp(r'\s+'),
+                              ))
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                word,
+                                softWrap: false,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
@@ -489,27 +512,23 @@ class _DistrictArtwork extends StatelessWidget {
 
   int get _cell {
     final name = place.name.toLowerCase();
-    if (RegExp(
-      r'shopping|store|shop|mall|dealer|cafe|bar\b|cosmetics|co-op',
-    ).hasMatch(name)) {
+    if (RegExp(r'shopping|store|shop|mall|dealer|cafe|bar\b|cosmetics|co-op')
+        .hasMatch(name)) {
       return 0;
     }
-    if (RegExp(
-      r'industrial|warehouse|factory|plant|mill|genetics|laboratory',
-    ).hasMatch(name)) {
+    if (RegExp(r'industrial|warehouse|factory|plant|mill|genetics|laboratory')
+        .hasMatch(name)) {
       return 2;
     }
     if (RegExp(r'university|college|campus|school|park\b').hasMatch(name)) {
       return 3;
     }
-    if (RegExp(
-      r'outskirts|rural|country|eastern|farm|mountain|desert',
-    ).hasMatch(name)) {
+    if (RegExp(r'outskirts|rural|country|eastern|farm|mountain|desert')
+        .hasMatch(name)) {
       return 5;
     }
-    if (RegExp(
-      r'residen|apartment|house|shelter|suburb|nursing|home\b',
-    ).hasMatch(name)) {
+    if (RegExp(r'residen|apartment|house|shelter|suburb|nursing|home\b')
+        .hasMatch(name)) {
       return 4;
     }
     return 1;

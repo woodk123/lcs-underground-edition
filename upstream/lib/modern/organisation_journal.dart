@@ -1286,8 +1286,8 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   members.length * (widget.textScale > 1.1 ? 56.0 : 44.0) + 56;
               final preferredJobHeight =
                   (bounds.maxHeight - headerHeight - crewDesired - 12).clamp(
-                    widget.textScale > 1.1 ? (planning ? 260.0 : 230.0) : 140.0,
-                    widget.textScale > 1.1 ? (planning ? 280.0 : 260.0) : 240.0,
+                    widget.textScale > 1.1 ? (planning ? 260.0 : 270.0) : 140.0,
+                    widget.textScale > 1.1 ? (planning ? 280.0 : 300.0) : 240.0,
                   );
               // Preserve a usable roster when the phone-width footer wraps.
               // The job's details already have their own scrolling viewport.
@@ -1899,6 +1899,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
               .copyWith(textScaler: TextScaler.linear(widget.textScale)),
           child: OrderMechanicsDialog(
             help: help,
+            juiceHint: person == null
+                ? null
+                : JuiceActivityHint(person: person!, activity: help.type),
             visitReadiness: help.type == ActivityType.visit
                 ? SquadReadiness(members)
                 : null,
@@ -2004,7 +2007,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                   ? 'Choose a building on the map'
                   : 'Destination unavailable'
             : prepared || planning
-            ? 'Prepared · awaiting confirmation'
+            ? 'Prepared change · confirm to assign'
             : actual?.type == ActivityType.visit
             ? visitInProgress
                   ? 'Visit in progress'
@@ -2024,13 +2027,12 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             ? hospitalVisit
                   ? 'Choose care or return to headquarters.'
                   : 'Use the location’s services or leave to finish this visit.'
+            : help.timing ==
+                  'Runs each day until changed, completed or interrupted.'
+            ? 'Daily · repeats until changed.'
             : help.timing,
         currentAssignment: prepared && actor != null
             ? 'Currently assigned: ${actual?.description ?? ActivityType.none.label}'
-            : null,
-        showAssignedOrderHint: activityFrame && !prepared && _showGuidance,
-        juiceHint: actor != null && _showGuidance
-            ? JuiceActivityHint(person: actor, activity: type)
             : null,
         travelNotice:
             !visitInProgress && type == ActivityType.visit && notices.isNotEmpty
@@ -2044,9 +2046,6 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             : estimatedIncome != null
             ? 'Estimated \$${estimatedIncome.round()}/day'
             : calculation.result,
-        factors: type != ActivityType.visit && help.factors.isNotEmpty
-            ? help.factors
-            : null,
         cost:
             type != ActivityType.visit &&
                 help.cost.isNotEmpty &&
@@ -2054,7 +2053,16 @@ class OrganisationJournalState extends State<OrganisationJournal> {
             ? help.cost
             : null,
         risk: type != ActivityType.visit && help.risk.isNotEmpty
-            ? help.risk
+            ? switch (type) {
+                ActivityType.donations ||
+                ActivityType.sellTshirts ||
+                ActivityType.sellArt ||
+                ActivityType.sellMusic =>
+                  'Police risk: heat or indecent clothing.',
+                ActivityType.sellDrugs =>
+                  'Drug charges, police searches and base raids possible.',
+                _ => help.risk,
+              }
             : null,
         unavailableReason: help.unavailableReason,
         destinationUnavailableReason:
@@ -2663,6 +2671,9 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         shortcut: planning ? action?.key : null,
         name:
             '${location.getName()}${travelSuffix(travelNotices(location, squad))}',
+        mapLabel: !planning && location is District
+            ? '${location.name.replaceFirst(RegExp('\\s+${RegExp.escape(location.city.name.split(',').first)}\$'), '')}${travelSuffix(travelNotices(location, squad))}'
+            : null,
         // SiteType.name is a display title; EnumName is the stable enum key.
         siteType: location is Site ? EnumName(location.type).name : null,
         kind: location is Site

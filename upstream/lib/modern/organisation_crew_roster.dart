@@ -134,30 +134,27 @@ class OrganisationCrewMemberView extends StatelessWidget {
     final nameLabel = Text(
       data.name,
       key: ValueKey('journal-member-name:${data.personId}'),
-      maxLines: stacked ? 2 : 1,
+      maxLines: 2,
       overflow: TextOverflow.ellipsis,
-      style: JournalPalette.body.copyWith(fontSize: 13, height: 1.25),
+      style: JournalPalette.body.copyWith(
+        fontSize: 13,
+        height: 1.25,
+        fontWeight: FontWeight.w600,
+      ),
     );
-    final contextLabel = Tooltip(
-      message: showingOrders
-          ? 'Current order: ${data.orderDescription}\nLocation: ${data.location}\nWearing: ${data.clothingSummary}'
-          : 'Wearing: ${data.clothingSummary}',
+    final assignmentLabel = Tooltip(
+      message:
+          'Current order: ${data.orderDescription}\nLocation: ${data.location}\nStrongest skills: ${data.skillSummary}\nWearing: ${data.clothingSummary}',
       child: Text(
-        showingOrders
-            ? '${data.orderDescription} · ${data.location}'
-            : data.clothingSummary,
-        key: ValueKey(
-          showingOrders
-              ? 'journal-member-order:${data.personId}'
-              : 'journal-member-clothing:${data.personId}',
-        ),
-        maxLines: stacked ? 2 : 1,
+        data.orderDescription,
+        key: ValueKey('journal-member-order:${data.personId}'),
+        maxLines: 2,
         overflow: TextOverflow.ellipsis,
         style: JournalPalette.small.copyWith(
           fontSize: 11,
           height: 1.3,
-          color: !showingOrders && data.clothingWarning
-              ? JournalPalette.danger
+          color: data.hasAssignment
+              ? JournalPalette.olive
               : JournalPalette.small.color,
         ),
       ),
@@ -199,78 +196,56 @@ class OrganisationCrewMemberView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (stacked) ...[
-                        nameLabel,
-                        contextLabel,
-                      ] else
-                        Row(
-                          children: [
-                            Expanded(flex: 5, child: nameLabel),
-                            const SizedBox(width: 8),
-                            Flexible(flex: 6, child: contextLabel),
-                          ],
+                      nameLabel,
+                      assignmentLabel,
+                      if (data.clothingWarning)
+                        Tooltip(
+                          message: 'Wearing: ${data.clothingSummary}',
+                          child: Text(
+                            data.clothingSummary,
+                            key: ValueKey(
+                              'journal-member-clothing:${data.personId}',
+                            ),
+                            style: JournalPalette.small.copyWith(
+                              fontSize: 11,
+                              color: JournalPalette.danger,
+                            ),
+                          ),
                         ),
-                      LayoutBuilder(
-                        builder: (context, bounds) => Row(
-                          children: [
-                            Expanded(
-                              child: Tooltip(
-                                message:
-                                    'Strongest skills: ${data.skillSummary}',
+                      if (injury != null)
+                        Tooltip(
+                          message: injury.details,
+                          child: Row(
+                            key: ValueKey(
+                              'journal-member-injury:${data.personId}',
+                            ),
+                            children: [
+                              Icon(
+                                injury.label == 'Bleeding'
+                                    ? Icons.bloodtype_outlined
+                                    : Icons.healing,
+                                size: 12,
+                                color: injury.urgent
+                                    ? JournalPalette.danger
+                                    : JournalPalette.brassDark,
+                              ),
+                              const SizedBox(width: 3),
+                              Expanded(
                                 child: Text(
-                                  data.skillSummary,
-                                  key: ValueKey(
-                                    'journal-member-skills:${data.personId}',
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  injury.label,
                                   style: JournalPalette.small.copyWith(
                                     fontSize: 11,
                                     height: 1.3,
+                                    fontWeight: FontWeight.w600,
+                                    color: injury.urgent
+                                        ? JournalPalette.danger
+                                        : JournalPalette.brassDark,
                                   ),
                                 ),
                               ),
-                            ),
-                            if (injury != null)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 6),
-                                child: Tooltip(
-                                  message: injury.details,
-                                  child: Row(
-                                    key: ValueKey(
-                                      'journal-member-injury:${data.personId}',
-                                    ),
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        injury.label == 'Bleeding'
-                                            ? Icons.bloodtype_outlined
-                                            : Icons.healing,
-                                        size: 12,
-                                        color: injury.urgent
-                                            ? JournalPalette.danger
-                                            : JournalPalette.brassDark,
-                                      ),
-                                      if (bounds.maxWidth >= 240) ...[
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          injury.label,
-                                          style: JournalPalette.small.copyWith(
-                                            fontSize: 11,
-                                            height: 1.3,
-                                            color: injury.urgent
-                                                ? JournalPalette.danger
-                                                : JournalPalette.brassDark,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
                       if (stacked) juiceBadge,
                     ],
                   ),
@@ -278,15 +253,6 @@ class OrganisationCrewMemberView extends StatelessWidget {
               ),
             ),
             if (!stacked) juiceBadge,
-            if (!stacked && data.hasAssignment)
-              Tooltip(
-                message: data.orderDescription,
-                child: const Icon(
-                  Icons.assignment,
-                  size: 13,
-                  color: JournalPalette.olive,
-                ),
-              ),
             SizedBox(
               width: 26,
               height: 26,
