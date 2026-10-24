@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart' show StringCharacters;
 import 'package:lcs_new_age/engine/console_char.dart';
 import 'package:lcs_new_age/engine/console_graphic.dart';
 import 'package:lcs_new_age/engine/creation_context.dart';
+import 'package:lcs_new_age/engine/equipment_context.dart';
 import 'package:lcs_new_age/engine/journal_context.dart';
 import 'package:lcs_new_age/engine/legislation_context.dart';
 import 'package:lcs_new_age/engine/pursuit_context.dart';
@@ -174,6 +175,7 @@ class Console {
   ConsoleNavigation? navigation;
   ConsoleArticle? article;
   CreationContext? creation;
+  EquipmentContext? equipment;
   RecruitmentContext? recruitment;
   RecruitmentTargetContext? recruitmentTarget;
   RecoveryContext? recovery;
@@ -422,6 +424,7 @@ class Console {
     navigation = null;
     article = null;
     creation = null;
+    equipment = null;
     recruitment = null;
     recruitmentTarget = null;
     recovery = null;

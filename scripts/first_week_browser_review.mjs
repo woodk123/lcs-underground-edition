@@ -269,11 +269,11 @@ try {
   await click(new RegExp(`^1 ${escape(fieldMember.name)}.*Unequip weapon`, 's'));
   const weaponName = current.lcs.pool.find(person => person.id === fieldMember.id).equippedWeapon.typeName;
   // The only weapon in this empty synthetic base's loot is the one just dropped.
-  await click(/^A /);
-  await wait(/Choose a Liberal squad member to receive it/);
+  await click(/^Equip /);
+  await wait(/Who receives /);
   await click(new RegExp(`^2 ${escape(prospect.name)}(?:$|\\s)`));
   await capture('04-equip-new-recruit-through-source-recipient-choice');
-  await click(/^Enter Done$/);
+  await click(/^(?:Enter )?Done$/);
   const equipped = (await exportGame('after-equipment-transfer')).state;
   const fieldTeam = equipped.lcs.squads.find(team => team.name === 'First-week field team');
   assert.deepEqual(fieldTeam.members, [fieldMember.id, prospect.id]);

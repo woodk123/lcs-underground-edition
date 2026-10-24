@@ -19,6 +19,8 @@ The order below preserves the shell's existing behaviour. A higher row wins when
 | 9 | Modifier key itself, or Ctrl/Meta/Alt still pressed | Leave input to the platform. Shift with a game character proceeds to the original case-sensitive conversion. |
 | 10 | Remaining KeyDown/KeyRepeat | Clear traversal intent, convert the key, then offer it to local ledger/journal handlers. Recheck source text entry before forwarding to the original reader. |
 
+The shell offers unmodified KeyDown Escape to the active Organisation management dialog before the generic overlay guard. This dismisses presentation when browser focus returns to the game beneath the dialog; it never forwards Escape to the pending source reader. The dialog also handles Escape locally while its own controls hold focus.
+
 Physical source keys can clear pointer drafts through `prepareForSourceInput`; they retain the original immediate task choices and Back hierarchy. Unfocused source text entry still gets the local-handler opportunity, but the shell's final live text check prevents forwarding edits into its hidden reader. The changelog retains its existing physical widget/reader path. A rendered-action revision does not gate raw physical keys.
 
 ## Development bridge
@@ -41,4 +43,4 @@ The global rendered-action guard checks help, navigation, controller work and th
 
 ## Verification
 
-`game_input_policy_test.dart` pins overlapping priorities and channel differences. `text_prompt_focus_test.dart` runs real text readers with an overlay after background focus restoration, F1 from an editor, Escape and in-flight submission. Keyboard, Classic parity, journal and enabled development-bridge regressions establish actual source dispatch and campaign/input/RNG preservation. Run the shared acceptance journey and affected browser checks described in [Testing](TESTING.md) for integrated verification.
+`game_input_policy_test.dart` pins overlapping priorities and channel differences. `text_prompt_focus_test.dart` runs real text readers with an overlay after background focus restoration, F1 from an editor, Escape and in-flight submission. `journal_daily_plan_test.dart` checks dismissal from search, Close and returned game focus while preserving drafts, pending input and campaign/RNG. Keyboard, Classic parity, journal and enabled development-bridge regressions establish actual source dispatch and campaign/input/RNG preservation. Run the shared acceptance journey and affected browser checks described in [Testing](TESTING.md) for integrated verification.

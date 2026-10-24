@@ -508,8 +508,8 @@ try {
   assert.ok((await uiText()).includes('Equipment'));
   assert.doesNotMatch(await uiText(), /Crew & choices|Equip the Squad|Cursors -/);
   await click(new RegExp(`^Select crew ${escape(crew[1].name)}(?:$|\\s)`));
-  const selectedEquipment = page.getByRole('button', { name: new RegExp(`^2 ${escape(crew[1].name)}(?:$|\\s)`) });
-  assert.ok(await selectedEquipment.evaluate(node => !!node.closest('[aria-current="true"], [aria-selected="true"]')),
+  const selectedEquipment = page.getByRole('button', { name: `Select equipment for ${crew[1].name}`, exact: true });
+  assert.ok(await selectedEquipment.evaluate(node => !!node.closest('[aria-current="true"], [aria-selected="true"], [aria-pressed="true"]')),
     'Equipment marks the selected person without invoking Unequip weapon.');
   await capture('18-equipment-follows-local-selection');
   await page.setViewportSize({ width: 2200, height: 1200 });

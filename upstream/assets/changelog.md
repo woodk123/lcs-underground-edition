@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## Underground Edition 0.5.0 — 2026-10-24
+
+* Prepare squad equipment with illustrated loadouts, clearly labelled ammunition and condition, item comparisons and readiness warnings. Supporting mechanics remain available on demand.
+* Review the whole movement's daily plan, including personal assignments, squad visits, unavailable crew and recruitment follow-ups. Search or filter the board and open the existing person and order controls.
+
 ## Underground Edition 0.4.2 — 2026-10-24
 
 * Recover from brief asset download failures during startup and offline preparation instead of getting stuck while loading. The local browser player also reuses connections when loading its assets.

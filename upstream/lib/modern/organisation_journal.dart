@@ -20,6 +20,7 @@ import 'package:lcs_new_age/modern/crew_portrait.dart';
 import 'package:lcs_new_age/modern/injury_status.dart';
 import 'package:lcs_new_age/modern/journal_bases.dart';
 import 'package:lcs_new_age/modern/journal_city_plan.dart';
+import 'package:lcs_new_age/modern/journal_daily_plan.dart';
 import 'package:lcs_new_age/modern/journal_navigation_shortcuts.dart';
 import 'package:lcs_new_age/modern/journal_network.dart';
 import 'package:lcs_new_age/modern/journal_order_icon.dart';
@@ -32,6 +33,7 @@ import 'package:lcs_new_age/modern/juice_indicator.dart';
 import 'package:lcs_new_age/modern/location_details.dart';
 import 'package:lcs_new_age/modern/location_help.dart';
 import 'package:lcs_new_age/modern/mechanics_help.dart';
+import 'package:lcs_new_age/modern/movement_daily_plan.dart';
 import 'package:lcs_new_age/modern/order_mechanics_dialog.dart';
 import 'package:lcs_new_age/modern/organisation_controller.dart';
 import 'package:lcs_new_age/modern/organisation_crew_pool.dart';
@@ -112,6 +114,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
   final _orderBrowser = OrganisationOrderBrowser();
   final PersonnelDirectoryController _personnel =
       PersonnelDirectoryController();
+  final DailyPlanController _dailyPlan = DailyPlanController();
 
   late final OrganisationVisitFlow _visitFlow;
 
@@ -137,6 +140,7 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     _visitFlow.removeListener(_visitChanged);
     _visitFlow.dispose();
     _personnel.dispose();
+    _dailyPlan.dispose();
     super.dispose();
   }
 
@@ -982,6 +986,102 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     });
   }
 
+  Future<void> _openDailyPlan() async {
+    if (_managementDialog || !controller.canNavigate) return;
+    final observedConsole = console;
+    final revision = console.revision.value;
+    final campaignId = game.gameState.uniqueGameId;
+    final snapshot = MovementDailyPlan.capture(currentPersonId: person?.id);
+    _dailyPlan.useSnapshot(snapshot);
+    final previousFocus = FocusManager.instance.primaryFocus;
+    _managementDialog = true;
+    DailyPlanRequest? request;
+    try {
+      request = await showDialog<DailyPlanRequest>(
+        context: context,
+        builder: (dialogContext) => JournalDailyPlan(
+          snapshot: snapshot,
+          controller: _dailyPlan,
+          navigationUnavailableReason: _hasUnconfirmedDraft
+              ? 'Finish or cancel the current draft before opening orders, profiles or a squad.'
+              : null,
+          portraitBuilder: (id) {
+            final actor = game.pool
+                .where((actor) => actor.id == id)
+                .firstOrNull;
+            return actor == null
+                ? const Icon(Icons.person_outline, size: 48)
+                : CrewPortrait(person: actor, size: 48);
+          },
+          onRequest: (request) {
+            // A retained row callback cannot pop a replacement dialog.
+            if (dialogContext.mounted &&
+                ModalRoute.of(dialogContext)?.isCurrent == true) {
+              Navigator.of(dialogContext).pop(request);
+            }
+          },
+          onClose: () {
+            if (dialogContext.mounted &&
+                ModalRoute.of(dialogContext)?.isCurrent == true) {
+              Navigator.of(dialogContext).pop();
+            }
+          },
+        ),
+      );
+    } finally {
+      _managementDialog = false;
+    }
+    if (!mounted) return;
+    final selectedRequest = request;
+    if (selectedRequest == null) {
+      if (previousFocus?.context != null) previousFocus!.requestFocus();
+      return;
+    }
+    if (!identical(console, observedConsole) ||
+        console.revision.value != revision ||
+        game.gameState.uniqueGameId != campaignId ||
+        !controller.canNavigate ||
+        _hasUnconfirmedDraft) {
+      return;
+    }
+    final actor = game.pool
+        .where(
+          (actor) =>
+              actor.id == selectedRequest.personId &&
+              actor.alive &&
+              actor.isLiberal,
+        )
+        .firstOrNull;
+    if (actor == null) return;
+    switch (selectedRequest.destination) {
+      case DailyPlanDestination.orders:
+        final liveRow = MovementDailyPlan.capture().people
+            .where((row) => row.id == actor.id)
+            .firstOrNull;
+        if (liveRow != null && liveRow.orderUnavailableReason == null) {
+          await preparePersonOrder(actor);
+        }
+      case DailyPlanDestination.profile:
+        widget.onCloseInspection?.call();
+        await controller.openPersonnelProfile(actor.id);
+      case DailyPlanDestination.squad:
+        final team = actor.squad;
+        if (team == null) return;
+        widget.onCloseInspection?.call();
+        if (await controller.selectSquad(team.id) &&
+            mounted &&
+            game.gameState.uniqueGameId == campaignId &&
+            game.pool.any((person) => identical(person, actor))) {
+          setState(() {
+            _pool = false;
+            _orders = false;
+            _showReports = false;
+          });
+          controller.inspectPerson(actor.id);
+        }
+    }
+  }
+
   Future<void> _promotePerson(Creature actor) async {
     final action = await controller.preparePromotion(actor.id);
     if (action == null || !mounted) return;
@@ -1028,6 +1128,30 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     width: narrow ? 43 : 57,
     child: Column(
       children: [
+        OutlinedButton(
+          key: const ValueKey('journal-daily-plan'),
+          onPressed: controller.canNavigate
+              ? () => unawaited(_openDailyPlan())
+              : null,
+          style: OutlinedButton.styleFrom(
+            backgroundColor: JournalPalette.page,
+            foregroundColor: JournalPalette.ink,
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            minimumSize: const Size(44, 44),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.view_agenda_outlined, size: 20),
+              Text(
+                'Daily\nplan',
+                semanticsLabel: 'Daily plan',
+                textAlign: TextAlign.center,
+                style: JournalPalette.small.copyWith(fontSize: 9, height: 1.1),
+              ),
+            ],
+          ),
+        ),
         Expanded(
           child: ListView(
             children: [

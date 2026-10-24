@@ -9,6 +9,7 @@ import 'package:lcs_new_age/engine/changelog.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/console_widget.dart';
 import 'package:lcs_new_age/engine/engine.dart' as engine;
+import 'package:lcs_new_age/engine/equipment_context.dart';
 import 'package:lcs_new_age/engine/ledger_context.dart';
 import 'package:lcs_new_age/engine/media_context.dart';
 import 'package:lcs_new_age/engine/organisation_context.dart';
@@ -29,6 +30,7 @@ import 'package:lcs_new_age/modern/game_input_policy.dart';
 import 'package:lcs_new_age/modern/headquarters_view.dart';
 import 'package:lcs_new_age/modern/journal_agenda.dart';
 import 'package:lcs_new_age/modern/journal_creation.dart';
+import 'package:lcs_new_age/modern/journal_equipment.dart';
 import 'package:lcs_new_age/modern/journal_field_operation_view.dart';
 import 'package:lcs_new_age/modern/journal_ledger.dart';
 import 'package:lcs_new_age/modern/journal_legislation.dart';
@@ -376,6 +378,17 @@ class _ModernGameShellState extends State<ModernGameShell> {
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.tab) {
       _keyboardTraversal = true;
+    }
+    // Game focus may remain beneath a management dialog. Dismiss the dialog
+    // before the overlay guard ignores keys, without entering source input.
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape &&
+        !HardwareKeyboard.instance.isAltPressed &&
+        !HardwareKeyboard.instance.isControlPressed &&
+        !HardwareKeyboard.instance.isMetaPressed &&
+        !HardwareKeyboard.instance.isShiftPressed &&
+        _journalKey.currentState?.handleGameShortcut('Escape') == true) {
+      return KeyEventResult.handled;
     }
     final decision = GameInputPolicy.keyboard(
       _inputState(),
@@ -1727,6 +1740,9 @@ class _ModernGameShellState extends State<ModernGameShell> {
     bool compact, {
     bool embeddedJournal = false,
   }) {
+    if (!classic && equipmentContext(console) != null) {
+      return _journalManagementPage();
+    }
     if (!classic && pursuitContext(console) != null) {
       return JournalPursuitView(console: console, onAction: _send);
     }
@@ -1940,6 +1956,7 @@ class _ModernGameShellState extends State<ModernGameShell> {
   }
 
   Widget _journalManagementPage() {
+    final equipment = equipmentContext(console);
     final rows = console.buffer
         .map((row) => row.map((cell) => cell.glyph).join().trim())
         .where((row) => row.isNotEmpty)
@@ -1970,24 +1987,35 @@ class _ModernGameShellState extends State<ModernGameShell> {
               ),
               style: TextButton.styleFrom(minimumSize: const Size(40, 34)),
             ),
-      scrollStorageId: console.recruitmentTarget == null
+      scrollStorageId:
+          equipment != null && equipment.phase != EquipmentPhase.inventory
+          ? 'equipment-recipient-scroll:${equipment.phase.name}'
+          : console.recruitmentTarget == null
           ? 'journal-management-scroll:${navigation?.section ?? 'entry'}'
           : 'recruitment-targets:${console.recruitmentTarget!.recruiter.id}:${console.recruitmentTarget!.page}',
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (console.graphics.isNotEmpty) _sourceGraphics(),
-          DirectContent(
-            console: console,
-            onAction: _send,
-            onInspect: _openDossier,
-            textInput: console.textInput,
-            journalPage: true,
-            selectedPersonId: selectedId,
-            hiddenRows: const {0},
-          ),
-        ],
-      ),
+      content: equipment != null
+          ? JournalEquipmentView(
+              console: console,
+              onAction: _send,
+              selectedPersonId: selectedId,
+              onInspect: _openDossier,
+              onSelect: (person) => _organisation.inspectPerson(person.id),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (console.graphics.isNotEmpty) _sourceGraphics(),
+                DirectContent(
+                  console: console,
+                  onAction: _send,
+                  onInspect: _openDossier,
+                  textInput: console.textInput,
+                  journalPage: true,
+                  selectedPersonId: selectedId,
+                  hiddenRows: const {0},
+                ),
+              ],
+            ),
       input: console.textInput ? _inputBar() : null,
     );
   }
