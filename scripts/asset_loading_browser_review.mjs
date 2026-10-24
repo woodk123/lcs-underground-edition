@@ -1,5 +1,7 @@
 // Startup timeout regression through actual import, headquarters and save UI.
 // Only declared page-owned asset requests are faulted; service workers remain enabled.
+// Page-only cache bypass models startup before worker control; it does not test
+// worker-cached responses or establish the cause of an operating-system timeout.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
@@ -9,9 +11,17 @@ import { fileURLToPath } from 'node:url';
 import { assertQaUrl, chromiumLaunchOptions, observeMainScript, waitForSemantics } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const args = process.argv.slice(2);
+if (args.includes('--help')) {
+  console.log('Usage: node scripts/asset_loading_browser_review.mjs --expected-hash SHA256 [--fault-count 1|2|all] [--url URL] [--out FRESH_IGNORED_DIRECTORY]\n'
+    + 'Fault fixture: bypass the service worker only for page requests, modeling startup before worker control. '
+    + 'Worker registration and precaching remain enabled. Abort the first one/two page flags.xml requests, '
+    + 'then require the enabled title within 20 seconds and an unchanged Felix save round trip. '
+    + 'This does not intercept worker-cached responses or prove the original OS timeout trigger.');
+  process.exit(0);
+}
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
 const { chromium } = require('playwright');
-const args = process.argv.slice(2);
 const arg = (flag, fallback) => {
   const index = args.indexOf(flag);
   if (index < 0) return fallback;
@@ -36,8 +46,10 @@ const fixture = resolve(root, 'upstream/test/saves/felix_1_0.json');
 const fixtureBytes = await readFile(fixture);
 const report = {
   status: 'running', started: new Date().toISOString(), url, expectedHash: expected,
-  scope: 'Fresh profiles with the first one or two page-owned flags.xml GETs aborted as timedout; '
-    + 'service workers remain allowed and unmodified. Actual title within 20 seconds, unmodified bundled Felix import, '
+  scope: 'Fresh profiles with page-only service-worker cache bypass to model startup before worker control; '
+    + 'worker registration and precaching remain enabled and unmodified. The first one or two page-owned flags.xml GETs '
+    + 'are aborted as timedout. This does not intercept worker-cached responses or prove the original OS timeout trigger. '
+    + 'Actual title within 20 seconds, unmodified bundled Felix import, '
     + 'headquarters, save/exit/export and complete campaign equality after reload/save/exit/export. No gameplay turns.',
   fixture: { path: relative(root, fixture), sha256: createHash('sha256').update(fixtureBytes).digest('hex'), changes: [] },
   assetUrl, scenarios: [], loadedMainJsHashes: [],
@@ -53,7 +65,8 @@ try {
   browser = await chromium.launch(chromiumLaunchOptions({ args }));
   for (const faultCount of counts) {
     const scenario = { faultCount, status: 'running', checks: [], injected: [], requests: [], pageErrors: [],
-      consoleErrors: [], failedRequests: [], workerConsole: [], loadedMainJsHashes: [], screenshots: [] };
+      consoleErrors: [], failedRequests: [], workerConsole: [], loadedMainJsHashes: [], screenshots: [],
+      fixture: { pageServiceWorkerCacheBypass: true, workerRegistrationAndPrecache: 'allowed, unmodified' } };
     report.scenarios.push(scenario);
     const directory = resolve(output, `timeouts-${faultCount}`);
     await mkdir(directory);
@@ -114,6 +127,9 @@ try {
         scenario.workerConsole.push({ type: message.type(), text: message.text(), location: message.location(), elapsedMs: elapsed() });
       }
     });
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('Network.enable');
+    await cdp.send('Network.setBypassServiceWorker', { bypass: true });
     await page.route(assetUrl, async route => {
       const request = route.request();
       // Do not inject into the worker's separate install/precache traffic.
@@ -160,6 +176,7 @@ try {
       assert.equal(scenario.injected.length, faultCount, 'Exercise every declared foreground timeout.');
       const successes = scenario.requests.filter(r => r.url === assetUrl && !r.serviceWorker && r.status === 200);
       assert.ok(successes.length, 'The page must receive flags.xml successfully after the injected failures.');
+      assert.ok(successes.every(r => r.fromServiceWorker === false), 'The declared cold-start page fixture must use network responses.');
       check('declared page faults followed by a successful asset response');
       await capture('title');
       const choosing = page.waitForEvent('filechooser');
