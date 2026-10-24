@@ -44,6 +44,8 @@ class OrganisationCrewRosterView extends StatelessWidget {
     required this.onTransfer,
     this.hint,
     this.onDone,
+    this.showReorder = false,
+    this.onReorder,
   });
 
   final String title;
@@ -53,51 +55,67 @@ class OrganisationCrewRosterView extends StatelessWidget {
   final ValueChanged<int> onTransfer;
   final String? hint;
   final VoidCallback? onDone;
+  final bool showReorder;
+  final VoidCallback? onReorder;
 
   @override
   Widget build(BuildContext context) => DragTarget<int>(
     onWillAcceptWithDetails: (details) => canAcceptPerson(details.data),
     onAcceptWithDetails: (details) => onTransfer(details.data),
-    builder: (context, candidates, rejected) => JournalSurface(
-      lined: true,
-      inset: true,
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.attach_file,
-                size: 19,
-                color: JournalPalette.brassDark,
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  title,
-                  style: JournalPalette.heading.copyWith(fontSize: 14),
+    builder: (context, candidates, rejected) => LayoutBuilder(
+      builder: (context, bounds) => JournalSurface(
+        lined: true,
+        inset: true,
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.attach_file,
+                  size: 19,
+                  color: JournalPalette.brassDark,
                 ),
-              ),
-              if (showDone)
-                TextButton(onPressed: onDone, child: const Text('Done')),
-            ],
-          ),
-          if (candidates.isNotEmpty)
-            const Text(
-              'Drop to add to this squad',
-              style: JournalPalette.small,
-            ),
-          Expanded(
-            child: rows.isEmpty
-                ? const Center(child: Text('Choose crew from the pool.'))
-                : ListView(
-                    key: const ValueKey('journal-crew-list'),
-                    children: rows,
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: JournalPalette.heading.copyWith(fontSize: 14),
                   ),
-          ),
-          if (hint != null) Text(hint!, style: JournalPalette.small),
-        ],
+                ),
+                if (showDone)
+                  TextButton(onPressed: onDone, child: const Text('Done')),
+                if (showReorder &&
+                    bounds.maxHeight >= 112 &&
+                    bounds.maxWidth >= 230)
+                  Tooltip(
+                    message:
+                        'Change squad order and who leads. At headquarters: O.',
+                    child: TextButton(
+                      key: const ValueKey('journal-reorder-squad'),
+                      onPressed: onReorder,
+                      child: const Text('Reorder'),
+                    ),
+                  ),
+              ],
+            ),
+            if (candidates.isNotEmpty)
+              const Text(
+                'Drop to add to this squad',
+                style: JournalPalette.small,
+              ),
+            Expanded(
+              child: rows.isEmpty
+                  ? const Center(child: Text('Choose crew from the pool.'))
+                  : ListView(
+                      key: const ValueKey('journal-crew-list'),
+                      children: rows,
+                    ),
+            ),
+            if (hint != null) Text(hint!, style: JournalPalette.small),
+          ],
+        ),
       ),
     ),
   );

@@ -301,6 +301,12 @@ class OrganisationJournalState extends State<OrganisationJournal> {
 
   void pointerInputStarted() => _sourceKeyboardInput = false;
 
+  /// Explicitly revisiting People returns to the retained searchable directory.
+  /// Raw game keys may temporarily expose the original roster tools instead.
+  void showPersonnelDirectory() {
+    if (mounted) setState(() => _personnelTools = false);
+  }
+
   void _syncSourceCategory() {
     final frame = activityOrderFrame(console);
     if (frame == null) return;
@@ -473,6 +479,15 @@ class OrganisationJournalState extends State<OrganisationJournal> {
                                 widget.onCloseInspection ?? () {},
                             inspectedPerson: widget.inspectedPerson,
                             onDraftChanged: _draftChanged,
+                            onBulkOrders:
+                                controller.headquartersAction('b')?.enabled ==
+                                    true
+                                ? _gameplayCommand(
+                                    () => controller.openBulkOrders(
+                                      sleeper: true,
+                                    ),
+                                  )
+                                : null,
                           )
                         : (widget.section != JournalSection.organisation.id &&
                                       widget.section != peopleJournalSection ||
@@ -754,16 +769,33 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     children: [
       Align(
         alignment: Alignment.centerRight,
-        child: TextButton.icon(
-          key: const ValueKey('journal-equipment'),
-          onPressed: controller.canNavigate
-              ? () => _openManagementSection('e')
-              : null,
-          icon: const JournalIllustratedIcon(
-            icon: JournalIcon.stores,
-            size: 22,
-          ),
-          label: const Text('Equipment'),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          alignment: WrapAlignment.end,
+          children: [
+            OutlinedButton.icon(
+              key: const ValueKey('journal-bulk-orders'),
+              onPressed: controller.headquartersAction('a')?.enabled == true
+                  ? _gameplayCommand(
+                      () => controller.openBulkOrders(sleeper: false),
+                    )
+                  : null,
+              icon: const Icon(Icons.playlist_add_check, size: 18),
+              label: const Text('Bulk crew orders'),
+            ),
+            TextButton.icon(
+              key: const ValueKey('journal-equipment'),
+              onPressed: controller.canNavigate
+                  ? () => _openManagementSection('e')
+                  : null,
+              icon: const JournalIllustratedIcon(
+                icon: JournalIcon.stores,
+                size: 22,
+              ),
+              label: const Text('Equipment'),
+            ),
+          ],
         ),
       ),
       Expanded(
@@ -1732,6 +1764,16 @@ class OrganisationJournalState extends State<OrganisationJournal> {
         ? 'Individual assignment'
         : 'Crew · ${members.length}/6',
     rows: [for (final member in members) _memberView(member)],
+    showReorder:
+        !undercover &&
+        !allocating &&
+        !_orders &&
+        !activityFrame &&
+        !planning &&
+        members.length > 1,
+    onReorder: controller.headquartersAction('o')?.enabled == true
+        ? _gameplayCommand(() => controller.openSection('o'))
+        : null,
     showDone: allocating,
     onDone: controller.busy
         ? null
@@ -2824,6 +2866,31 @@ class OrganisationJournalState extends State<OrganisationJournal> {
     final revision = console.revision.value;
     if (widget.onCloseInspection != null) widget.onCloseInspection!();
     await controller.sendAction(action, revision: revision);
+  }
+
+  /// Navigation buttons retain the same draft and stale-callback boundary as
+  /// the HQ menu. Resolve fresh source actions only after returning safely.
+  VoidCallback? _gameplayCommand(Future<bool> Function() command) {
+    if (!controller.canNavigate || _hasUnconfirmedDraft) return null;
+    final revision = console.revision.value;
+    final campaign = game.gameState;
+    return () async {
+      if (!mounted ||
+          !identical(game.gameState, campaign) ||
+          console.revision.value != revision ||
+          !controller.canNavigate ||
+          _hasUnconfirmedDraft) {
+        return;
+      }
+      widget.onCloseInspection?.call();
+      setState(() {
+        _orders = false;
+        _pool = false;
+        _showReports = false;
+        _pendingOrder = null;
+      });
+      await command();
+    };
   }
 
   Future<void> _headquartersCommands() async {

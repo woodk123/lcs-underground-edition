@@ -314,6 +314,24 @@ class OrganisationController extends ChangeNotifier {
 
   Future<bool> returnToHeadquarters() => _run(_toHeadquarters);
 
+  /// Enter the original bulk picker through its current roster action. Merely
+  /// opening either reader leaves every assignment unchanged.
+  Future<bool> openBulkOrders({required bool sleeper}) => _run(() async {
+    if (!await _toHeadquarters()) return false;
+    final roster = _action(sleeper ? 'b' : 'a');
+    if (roster == null || !roster.enabled || !await _dispatch(roster)) {
+      return _fail('No eligible people are available for these orders.');
+    }
+    if (console.navigation?.section != 'assignments') return false;
+    final bulk = _action('z');
+    if (bulk == null || !bulk.enabled || !await _dispatch(bulk)) return false;
+    return console.actions.any(
+      (action) =>
+          action.entityType ==
+          (sleeper ? 'sleeper-bulk-selected' : 'bulk-activity-selected'),
+    );
+  });
+
   /// The complete personnel reader, preserving the original profile actions.
   Future<bool> openPersonnelDirectory() => _run(_openPersonnelDirectory);
 

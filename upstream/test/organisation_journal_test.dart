@@ -2982,8 +2982,12 @@ void main() {
     await _settle(tester);
     final before = campaignSnapshot();
     await _tap(tester, 'journal-more-commands');
-    await tester.ensureVisible(find.text('Reorder'));
-    await tester.tap(find.text('Reorder'));
+    final reorder = find.descendant(
+      of: find.byType(PopupMenuItem<ConsoleAction>),
+      matching: find.text('Reorder'),
+    );
+    await tester.ensureVisible(reorder);
+    await tester.tap(reorder);
     await _settle(tester);
     for (var step = 0; step < 2; step++) {
       expect(engine.console.screen, 'squad_choice');
@@ -3027,8 +3031,12 @@ void main() {
       for (final item in items) {
         expect(item.enabled, item.value!.enabled);
       }
-      await tester.ensureVisible(find.text('Reorder'));
-      await tester.tap(find.text('Reorder'));
+      final reorder = find.descendant(
+        of: find.byType(PopupMenuItem<ConsoleAction>),
+        matching: find.text('Reorder'),
+      );
+      await tester.ensureVisible(reorder);
+      await tester.tap(reorder);
       await _settle(tester);
       expect(harness.dispatched.last, engine.Key.o);
       expect(engine.console.awaitingInput, isTrue);

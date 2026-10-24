@@ -36,7 +36,8 @@ String nextSleeperResolution(DateTime date) {
 }
 
 /// A permanent, read-only network directory around the original order readers.
-/// Drafts are local; only commitOrder may change a campaign assignment.
+/// Individual drafts are local. Confirmations and bulk tools enter the original
+/// order readers; this view never assigns campaign work itself.
 class JournalNetworkView extends StatefulWidget {
   const JournalNetworkView({
     super.key,
@@ -46,6 +47,7 @@ class JournalNetworkView extends StatefulWidget {
     required this.onCloseInspection,
     this.inspectedPerson,
     this.onDraftChanged,
+    this.onBulkOrders,
   });
 
   final Console console;
@@ -54,6 +56,7 @@ class JournalNetworkView extends StatefulWidget {
   final VoidCallback onCloseInspection;
   final Creature? inspectedPerson;
   final ValueChanged<bool>? onDraftChanged;
+  final VoidCallback? onBulkOrders;
 
   @override
   State<JournalNetworkView> createState() => JournalNetworkViewState();
@@ -382,6 +385,15 @@ class JournalNetworkViewState extends State<JournalNetworkView> {
             ),
           ),
           const Divider(color: JournalPalette.rule),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              key: const ValueKey('network-bulk-orders'),
+              onPressed: _busy || _validDraft ? null : widget.onBulkOrders,
+              icon: const Icon(Icons.playlist_add_check, size: 18),
+              label: const Text('Bulk sleeper orders'),
+            ),
+          ),
           const Text(
             'Lay Low builds infiltration. No daily reassignment needed.',
             style: JournalPalette.small,
