@@ -379,6 +379,17 @@ class _ModernGameShellState extends State<ModernGameShell> {
     if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.tab) {
       _keyboardTraversal = true;
     }
+    // Game focus may remain beneath a management dialog. Dismiss the dialog
+    // before the overlay guard ignores keys, without entering source input.
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape &&
+        !HardwareKeyboard.instance.isAltPressed &&
+        !HardwareKeyboard.instance.isControlPressed &&
+        !HardwareKeyboard.instance.isMetaPressed &&
+        !HardwareKeyboard.instance.isShiftPressed &&
+        _journalKey.currentState?.handleGameShortcut('Escape') == true) {
+      return KeyEventResult.handled;
+    }
     final decision = GameInputPolicy.keyboard(
       _inputState(),
       event,
