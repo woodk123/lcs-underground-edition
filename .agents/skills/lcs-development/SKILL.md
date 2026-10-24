@@ -32,6 +32,8 @@ For internal tools or documentation, run the relevant tooling tests or verify th
 
 For UI or routing work, define the complete interaction before editing: retained selection/scroll, cancellation, revisiting, focus and relevant compact/enlarged layouts. Once source settles, use the shared acceptance journey for changes spanning creation, orders, navigation or saves. Preserve its new founder's continuation and separately declared prepared scenarios. Follow the testing guide for supplemental journeys outside that coverage.
 
+When simplifying a dense management reader, inspect its handler as well as its action list. Equipment number keys unequip rather than select, and existing page keys may lack clickable metadata. Keep comparison/selection separate from those commands; expose missing capabilities from the original reader with its existing keys rather than inventing journal-only inputs. Keep decision-critical costs, eligibility and warnings visible when moving supporting explanations into details.
+
 For browser-helper changes, follow the [current-reader readiness rules](../../../docs/TESTING.md#browser-regressions). Use the current routed reader, actual enabled controls and measured visible bounds; retain the original campaign and outcome checks when repairing timing or geometry assumptions. Run supplemental gameplay journeys sequentially as the guide requires; the shared acceptance runner owns its separate worker limit.
 
 ## Investigate through the development MCP

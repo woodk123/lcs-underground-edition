@@ -8,6 +8,7 @@ import 'package:lcs_new_age/common_display/print_party.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/engine/console.dart';
 import 'package:lcs_new_age/engine/engine.dart';
+import 'package:lcs_new_age/engine/equipment_context.dart';
 import 'package:lcs_new_age/engine/item_help_context.dart';
 import 'package:lcs_new_age/gamestate/game_mode.dart';
 import 'package:lcs_new_age/gamestate/game_state.dart';
@@ -21,6 +22,73 @@ import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/utils/colors.dart';
 import 'package:lcs_new_age/utils/interface_options.dart';
 
+bool _canEquipItem(Item item, Iterable<Creature> people) =>
+    item is Weapon ||
+    item is Clothing ||
+    people.any((person) => person.weapon.acceptableAmmo.contains(item.type));
+
+void _describeEquipmentReader(
+  List<Item> loot, {
+  required EquipmentPhase phase,
+  required int page,
+  Iterable<EquipmentStock> stock = const [],
+  Item? pendingItem,
+  String? notice,
+}) {
+  console.screen = 'equipment';
+  console.equipment = EquipmentContext(
+    phase: phase,
+    campaignId: gameState.uniqueGameId,
+    people: squad,
+    stock: stock,
+    actions: console.actions,
+    transportation: {
+      for (var i = 0; i < squad.length; i++)
+        squad[i].id: console.buffer[i + 2]
+            .sublist(70, 80)
+            .map((cell) => cell.glyph)
+            .join()
+            .trim(),
+    },
+    page: page,
+    itemCount: loot.length,
+    inventoryName: identical(loot, activeSite?.loot)
+        ? activeSite!.getName(short: true)
+        : 'Squad inventory',
+    pendingItem: pendingItem,
+    notice: notice,
+  );
+}
+
+Future<int> _equipmentRecipient(
+  List<Item> loot, {
+  required EquipmentPhase phase,
+  required int page,
+  Item? pendingItem,
+}) async {
+  // Equivalent to getKey(choices: ...), with metadata captured after the exact
+  // nested choices replace the parent reader's actions and navigation.
+  console.replaceActions({
+    for (var i = 0; i < squad.length; i++) '${i + 1}': squad[i].name,
+    'Enter': 'Cancel',
+  });
+  for (var i = 0; i < squad.length; i++) {
+    console.annotateActionEntity(
+      '${i + 1}',
+      type: 'equipment-recipient',
+      id: squad[i].id.toString(),
+      category: phase.name,
+    );
+  }
+  _describeEquipmentReader(
+    loot,
+    phase: phase,
+    page: page,
+    pendingItem: pendingItem,
+  );
+  return getKey();
+}
+
 Future<void> equip(List<Item>? loot) async {
   if (activeSquad == null || loot == null) return;
 
@@ -33,12 +101,14 @@ Future<void> equip(List<Item>? loot) async {
 
   while (true) {
     erase();
+    final stock = <EquipmentStock>[];
     mvaddstrc(0, 0, lightGray, "Equip the Squad");
     printParty(fullParty: true);
     for (var i = 0; i < squad.length; i++) {
       console.annotateAction('${i + 1}', 'Unequip weapon');
     }
 
+    final notice = errmsg;
     if (errmsg != null) {
       move(8, 20);
       setColor(lightBlue);
@@ -51,7 +121,23 @@ Future<void> equip(List<Item>? loot) async {
     for (int l = page * 18; l < loot.length && l < page * 18 + 18; l++) {
       String let = letterAPlus(l - page * 18, capitalize: true);
       addOptionText(y, x, let, "$let - ${loot[l].equipTitle()}");
+      console.annotateActionEntity(
+        let,
+        type: 'equipment-stock',
+        id: l.toString(),
+        category: loot[l].type.idName,
+        label: loot[l].type.name,
+      );
       describeChoiceItem(console, let, loot[l]);
+      stock.add(
+        EquipmentStock(
+          item: loot[l],
+          canEquip: _canEquipItem(loot[l], squad),
+          action: console.actions.firstWhere(
+            (action) => action.key == normalizeConsoleKey(let),
+          ),
+        ),
+      );
       if (loot[l].stackSize > 1 && !loot[l].type.isMoney) {
         addstrc(lightGray, " x${loot[l].stackSize}");
       }
@@ -66,10 +152,14 @@ Future<void> equip(List<Item>? loot) async {
     //PAGE UP
     if (page > 0) {
       mvaddstr(17, 1, previousPageStr);
+      move(17, 1);
+      console.addAction('PageUp', previousPageStr);
     }
     //PAGE DOWN
     if ((page + 1) * 18 < loot.length) {
       mvaddstr(17, 53, nextPageStr);
+      move(17, 53);
+      console.addAction('PageDown', nextPageStr);
     }
 
     mvaddstrc(19, 1, lightGray, "Press a letter to equip a Liberal item");
@@ -101,6 +191,13 @@ Future<void> equip(List<Item>? loot) async {
     addOptionText(24, 1, "Enter", "Enter - Done");
 
     if (mode == GameMode.base) declareMenuNavigation('equipment');
+    _describeEquipmentReader(
+      loot,
+      phase: EquipmentPhase.inventory,
+      page: page,
+      stock: stock,
+      notice: notice,
+    );
     int c = await getKey();
 
     bool increaseammo = (c == Key.upArrow), decreaseammo = (c == Key.downArrow);
@@ -115,12 +212,7 @@ Future<void> equip(List<Item>? loot) async {
       } else {
         if (slot < 0 || slot >= loot.length) continue; // Out of range.
 
-        bool isWeapon = loot[slot] is Weapon;
-        bool isArmor = loot[slot] is Clothing;
-        bool isAmmo = squad.any(
-          (m) => m.weapon.acceptableAmmo.contains(loot[slot].type),
-        );
-        if (!isWeapon && !isArmor && !isAmmo) {
+        if (!_canEquipItem(loot[slot], squad)) {
           errmsg = "You can't equip that.";
           continue;
         }
@@ -140,11 +232,15 @@ Future<void> equip(List<Item>? loot) async {
           addstr("Choose a Liberal squad member to receive it.");
         }
 
-        c = await getKey(
-          choices: {
-            for (var i = 0; i < squad.length; i++) '${i + 1}': squad[i].name,
-            'Enter': 'Cancel',
-          },
+        c = await _equipmentRecipient(
+          loot,
+          phase: increaseammo
+              ? EquipmentPhase.increaseAmmo
+              : decreaseammo
+              ? EquipmentPhase.decreaseAmmo
+              : EquipmentPhase.giveItem,
+          page: page,
+          pendingItem: slot >= 0 ? loot[slot] : null,
         );
       }
 
@@ -265,11 +361,10 @@ Future<void> equip(List<Item>? loot) async {
         setColor(white);
         addstr("Choose a Liberal squad member to strip down.");
 
-        c = await getKey(
-          choices: {
-            for (var i = 0; i < squad.length; i++) '${i + 1}': squad[i].name,
-            'Enter': 'Cancel',
-          },
+        c = await _equipmentRecipient(
+          loot,
+          phase: EquipmentPhase.strip,
+          page: page,
         );
       }
       int index = c - Key.num1;

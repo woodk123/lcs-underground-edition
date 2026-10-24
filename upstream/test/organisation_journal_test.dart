@@ -841,12 +841,14 @@ void main() {
         final second = game.squad[1];
         final before = campaignSnapshot();
         final revision = engine.console.revision.value;
-        final scroll = find.descendant(
-          of: find.byKey(
-            const PageStorageKey('journal-management-scroll:equipment'),
-          ),
-          matching: find.byType(Scrollable),
-        );
+        final scroll = find
+            .descendant(
+              of: find.byKey(
+                const PageStorageKey('journal-management-scroll:equipment'),
+              ),
+              matching: find.byType(Scrollable),
+            )
+            .first; // The loadout panel and filter editor scroll independently.
         final position = tester.state<ScrollableState>(scroll).position;
         final offset = position.maxScrollExtent.clamp(0, 90).toDouble();
         position.jumpTo(offset);
@@ -859,7 +861,7 @@ void main() {
         await _tap(tester, 'journal-member:${second.id}');
         expect(
           tester
-              .widget<Semantics>(_key('journal-person-row:${second.id}'))
+              .widget<Semantics>(_key('equipment-person-row:${second.id}'))
               .properties
               .selected,
           isTrue,
@@ -867,7 +869,7 @@ void main() {
         expect(
           tester
               .widget<Semantics>(
-                _key('journal-person-row:${game.squad.first.id}'),
+                _key('equipment-person-row:${game.squad.first.id}'),
               )
               .properties
               .selected,
@@ -954,7 +956,7 @@ void main() {
       expect(
         tester
             .widget<Semantics>(
-              _key('journal-person-row:${original.members.first.id}'),
+              _key('equipment-person-row:${original.members.first.id}'),
             )
             .properties
             .selected,

@@ -27,6 +27,8 @@ The tactical field plan and full-floor map use site-specific surface textures an
 ## Interface and portrait behavior
 
 - Orders are prepared locally, with explicit confirmation and safe cancellation. Switching crew members retains the category and map; ordinary confirmations keep the category open for repeated assignments.
+- Organisation's Daily plan brings living crew and sleepers across the movement into one searchable, filtered view. It distinguishes squad visits from stored personal work, shows unavailable people and recruitment follow-ups, and opens existing Orders, Profile and squad routes. Reading preferences stay local; the board assigns nothing itself.
+- Equipment preparation shows illustrated loadouts, labelled ammunition, base weapon skill, outfit condition and current readiness. Previewing stock compares it with the selected person's actual gear; filters apply to the current source page. Equip still asks for the original recipient, number keys still unequip weapons, and supporting mechanics expand on demand.
 - Destination labels show relevant travel prices and requirements; general travel rules are available on request.
 - Squad visits use the original destination planner and shared order card.
 - Skill levels sit next to their names; XP is secondary.
