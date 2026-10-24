@@ -824,6 +824,13 @@ void main() {
       },
     );
 
+  }
+
+  for (final size in [
+    const Size(2200, 1200),
+    const Size(1440, 1000),
+    const Size(1024, 720),
+  ]) {
     testWidgets(
       'equipment follows left selection without dispatch or scroll reset at $size',
       (tester) async {
@@ -836,11 +843,27 @@ void main() {
         }
         await business(tester);
         await _tap(tester, 'journal-activity:donations');
+        // Prepared stock makes the retained filter/preview part of this journey.
+        game.activeSquad!.site!.loot.add(game.squad.first.weapon.clone());
         await _tap(tester, 'journal-equipment');
         expect(_key('journal-confirm-order'), findsNothing);
         final second = game.squad[1];
+        final frame = engine.console.equipment!;
+        final stock = frame.stock.firstWhere((choice) => choice.item.isWeapon);
+        await tester.ensureVisible(_key('equipment-filter:weapons'));
+        await _settle(tester);
+        await _tap(tester, 'equipment-filter:weapons');
+        await tester.ensureVisible(_key('equipment-search'));
+        await tester.enterText(_key('equipment-search'), stock.item.type.name);
+        await _settle(tester);
+        await tester.ensureVisible(_key('equipment-stock:${stock.action.key}'));
+        await _settle(tester);
+        await _tap(tester, 'equipment-stock:${stock.action.key}');
+        await _showCrewMember(tester, game.squad.first.id);
+        await _tap(tester, 'journal-member:${game.squad.first.id}');
         final before = campaignSnapshot();
         final revision = engine.console.revision.value;
+        final actions = List.of(engine.console.actions);
         final scroll = find
             .descendant(
               of: find.byKey(
@@ -852,7 +875,32 @@ void main() {
         final position = tester.state<ScrollableState>(scroll).position;
         final offset = position.maxScrollExtent.clamp(0, 90).toDouble();
         position.jumpTo(offset);
+        final inner = find
+            .descendant(
+              of: find.byKey(const PageStorageKey('equipment-loadout-scroll')),
+              matching: find.byType(Scrollable),
+            )
+            .first;
+        tester.state<ScrollableState>(inner).position.jumpTo(0);
         await _settle(tester);
+        final selectedCard = _key('equipment-loadout:${second.id}');
+        final selectedFacts = [
+          find.descendant(of: selectedCard, matching: find.text(second.weapon.type.name)),
+          find.descendant(of: selectedCard, matching: find.byWidgetPredicate(
+            (widget) => widget is Text && widget.data?.startsWith('Loaded:') == true,
+          )),
+        ];
+        final initialViewport = tester.getRect(
+          find.byKey(const PageStorageKey('equipment-loadout-scroll')),
+        );
+        final initiallyClipped = selectedFacts.any((fact) {
+          final rect = tester.getRect(fact);
+          return rect.top < initialViewport.top - 1 || rect.bottom > initialViewport.bottom + 1;
+        });
+        if (size.width <= 1440) {
+          expect(initiallyClipped, isTrue,
+            reason: 'The reproduced embedded and enlarged layouts initially clip the second loadout.');
+        }
         reseedRNG(seed: 29471);
         final rolls = List.generate(10, (_) => lcsRandom(100000));
         reseedRNG(seed: 29471);
@@ -879,6 +927,48 @@ void main() {
           tester.widget<Text>(_key('journal-selected-person')).data,
           second.name,
         );
+        void expectSelectedLoadoutVisible() {
+          final viewport = tester.getRect(
+            find.byKey(const PageStorageKey('equipment-loadout-scroll')),
+          );
+          for (final fact in selectedFacts) {
+            expect(fact, findsOneWidget);
+            final rect = tester.getRect(fact);
+            expect(rect.top, greaterThanOrEqualTo(viewport.top - 1));
+            expect(rect.bottom, lessThanOrEqualTo(viewport.bottom + 1));
+          }
+        }
+
+        if (initiallyClipped) {
+          expect(tester.state<ScrollableState>(inner).position.pixels, greaterThan(0),
+            reason: 'Selecting through the left roster must reveal its loadout.');
+        }
+        expectSelectedLoadoutVisible();
+        expect(
+          tester.widget<TextField>(_key('equipment-search')).controller!.text,
+          stock.item.type.name,
+        );
+        expect(
+          tester.widget<ChoiceChip>(_key('equipment-filter:weapons')).selected,
+          isTrue,
+        );
+        expect(_key('equipment-compare'), findsOneWidget);
+        expect(
+          find.text('Compare equipment for ${second.name}'),
+          findsOneWidget,
+        );
+
+        // A deliberate local click still reveals an already selected person.
+        // Invoke the actual button callback without a test scroll hiding the bug.
+        tester.state<ScrollableState>(inner).position.jumpTo(0);
+        await _settle(tester);
+        final focused = FocusManager.instance.primaryFocus;
+        tester
+            .widget<TextButton>(_key('equipment-person:${second.id}'))
+            .onPressed!();
+        await _settle(tester);
+        expectSelectedLoadoutVisible();
+        expect(FocusManager.instance.primaryFocus, same(focused));
         expect(
           tester.state<ScrollableState>(scroll).position.pixels,
           closeTo(offset, .01),
@@ -889,6 +979,8 @@ void main() {
           reason: 'Selection must never send the numbered unequip command.',
         );
         expect(campaignSnapshot(), before);
+        expect(engine.console.actions, orderedEquals(actions));
+        expect(engine.console.lastKey, isNull);
         expect(List.generate(10, (_) => lcsRandom(100000)), rolls);
         expect(tester.takeException(), isNull);
       },

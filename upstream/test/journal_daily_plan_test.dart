@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show SemanticsAction, Tristate;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -163,7 +164,74 @@ void main() {
             closeRect.bottom,
             lessThanOrEqualTo(tester.view.physicalSize.height),
           );
-          await select(tester, actor);
+          Future<void> keyboardSelect(
+            Creature person,
+            LogicalKeyboardKey key,
+          ) async {
+            await tester.enterText(_key('daily-plan-search'), person.name);
+            await _settle(tester);
+            final named = find.bySemanticsLabel(
+              'Select daily plan for ${person.name}',
+            );
+            expect(named, findsOneWidget);
+            final data = tester.getSemantics(named).getSemanticsData();
+            expect(data.flagsCollection.isButton, true);
+            expect(
+              data.flagsCollection.isFocused,
+              isNot(Tristate.none),
+              reason:
+                  'The named button must retain native focusable semantics.',
+            );
+            expect(data.flagsCollection.isSelected, Tristate.isFalse);
+            expect(data.hasAction(SemanticsAction.tap), true);
+            for (
+              var step = 0;
+              step < 12 &&
+                  tester
+                          .getSemantics(named)
+                          .getSemanticsData()
+                          .flagsCollection
+                          .isFocused !=
+                      Tristate.isTrue;
+              step++
+            ) {
+              await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+              await _settle(tester);
+            }
+            expect(
+              tester
+                  .getSemantics(named)
+                  .getSemanticsData()
+                  .flagsCollection
+                  .isFocused,
+              Tristate.isTrue,
+              reason: 'Tab must reach the same named selection button.',
+            );
+            await tester.sendKeyEvent(
+              key,
+              character: key == LogicalKeyboardKey.space ? ' ' : null,
+            );
+            await _settle(tester);
+            expect(find.text('Selected: ${person.name}'), findsOneWidget);
+            expect(
+              tester
+                  .getSemantics(named)
+                  .getSemanticsData()
+                  .flagsCollection
+                  .isSelected,
+              Tristate.isTrue,
+            );
+            expect(campaignSnapshot(), before);
+            expect(source.revision.value, revision);
+            expect(source.actions, actions);
+            expect(identical(source.nextKeyEvent, pending), true);
+            expect(organisation.controller.selectedPersonId, selectedBefore);
+            expect(game.activeSquadMember, same(sourceActorBefore));
+            expect(harness.dispatched, isEmpty);
+          }
+
+          await keyboardSelect(extra[19], LogicalKeyboardKey.enter);
+          await keyboardSelect(actor, LogicalKeyboardKey.space);
           expect(
             find.bySemanticsLabel('Orders for ${actor.name}'),
             findsOneWidget,

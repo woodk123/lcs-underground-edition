@@ -194,6 +194,12 @@ async function click(name, scope = page) {
   await reveal(control, scope); await control.click();
   await page.mouse.move(2, 2); await waitForUiSettled(page);
 }
+async function chooseFilter(name, scope = page) {
+  const control = scope.getByRole('checkbox', { name }).first();
+  await reveal(control, scope); await control.click();
+  await page.mouse.move(2, 2); await waitForUiSettled(page);
+  assert.ok(await control.isChecked(), 'The actual ChoiceChip must retain the selected filter.');
+}
 async function capture(name) {
   const filename = `${layout}-${++captureIndex}-${name}`;
   await page.screenshot({ path: resolve(output, `${filename}.png`), fullPage: true });
@@ -268,7 +274,7 @@ async function equipmentBack(name = 'equipment source Back') {
 }
 async function openEquipment() {
   const action = await headquartersEquipmentAction();
-  await sourceChoice('open original equipment reader', choice => choice.id === action.id, button(/^Equipment$/));
+  await sourceChoice('open original equipment reader', choice => choice.id === action.id, button(/^Equipment(?:$|\s)/));
   await wait(/Increase ammo allocation/);
 }
 async function headquartersEquipmentAction() {
@@ -332,7 +338,7 @@ async function equipmentJourney() {
   await click(/^Preparation details/);
   await selectedEquipmentPerson(prepared.lcs.pool[0].name);
   await selectedEquipmentPerson(equipmentActor.name);
-  await click(/^Weapons$/);
+  await chooseFilter('Weapons');
   await query(page.getByRole('textbox', { name: 'Filter this page', exact: true }), 'ak');
   const rifle = await inventoryAction('WEAPON_AK102');
   await click(new RegExp(`^Preview ${escape(rifle.entityLabel)}(?:$|\\s)`));
@@ -341,7 +347,7 @@ async function equipmentJourney() {
   await click(/^Equipment details/); await wait(/Damage and hit chances/); await capture('weapon-comparison-details');
   await click(/^Equipment details/);
   await query(page.getByRole('textbox', { name: 'Filter this page', exact: true }), '');
-  for (const filter of ['Outfits', 'Ammo', 'Other', 'All']) await click(new RegExp(`^${filter}$`));
+  for (const filter of ['Outfits', 'Ammo', 'Other', 'All']) await chooseFilter(new RegExp(`^${filter}$`));
   const afterInspection = await snapshot('equipment-after-inspection');
   sameSource(beforeInspection, afterInspection, 'Equipment selection, filtering, comparison and details');
   check('equipment inspection preserves full campaign, source reader/actions/revision and original actor');
@@ -351,12 +357,12 @@ async function equipmentJourney() {
   const pageTwoStock = pageTwo.observation.actions.filter(action => action.entityType === 'equipment-stock');
   assert.ok(pageTwoStock.length && pageTwoStock.every(action => Number(action.entityId) >= 18),
     'Source page two keeps the original absolute item indices.');
-  await click(/^Ammo$/);
+  await chooseFilter('Ammo');
   const ammo = await inventoryAction('AMMO_556'); await click(new RegExp(`^Preview ${escape(ammo.entityLabel)}(?:$|\\s)`));
   const filteredPageTwo = await snapshot('inventory-filtered-page-two');
   sameSource(pageTwo, filteredPageTwo, 'Filtering and preview on original page two');
   await capture('inventory-page-two-ammo-preview');
-  await click(/^All$/);
+  await chooseFilter('All');
   await sourceChoice('original inventory previous page', action => /\bPrevious$/.test(action.label), button('Previous page'));
   await wait(/Page 1 of 2/);
   assert.deepEqual((await snapshot('inventory-paging-return')).campaign, canonical);
@@ -455,7 +461,7 @@ async function dailyPlanJourney() {
   // equipment/Back keys, then baseline its new reader identity separately.
   const equipmentCommand = await headquartersEquipmentAction();
   await sourceChoice('original keyboard equipment after modal Escape', action => action.id === equipmentCommand.id,
-    button(/^Equipment$/), { keyboard: equipmentCommand.key });
+    button(/^Equipment(?:$|\s)/), { keyboard: equipmentCommand.key });
   await sourceChoice('original keyboard Back after modal Escape', action => action.key === 'Enter', button(/^(?:Enter\s+)?Done$/), { keyboard: true });
   await wait(/Save & exit/);
   const continued = await snapshot('source-keyboard-continued-after-modal');
@@ -464,11 +470,11 @@ async function dailyPlanJourney() {
   check('modal-focused bare W/P/D cannot reach gameplay; Escape restores original equipment/Back keyboard continuation');
   board = await openBoard();
   for (const [label, count] of [['All', 21], ['Needs order', 7], ['Assigned', 12], ['Unavailable', 2]]) {
-    assert.equal(await board.getByRole('button', { name: `${label} (${count})`, exact: true }).count(), 1,
+    assert.equal(await board.getByRole('checkbox', { name: `${label} (${count})`, exact: true }).count(), 1,
       'Movement-wide counts include the explicitly prepared people outside the active squad.');
   }
   await capture('daily-plan-movement-overview');
-  await click(/^Needs order \(/, board);
+  await chooseFilter(/^Needs order \(/, board);
   await wait(/Available active crew currently Laying Low/);
   await boardQuery(board, 'Zed Planner');
   const lastName = 'Zed Planner 10';
@@ -488,12 +494,12 @@ async function dailyPlanJourney() {
   assert.ok(beforeBounds && afterBounds && Math.abs(beforeBounds.y - afterBounds.y) <= 4,
     'Reopening the unchanged board retains the actual list scroll anchor.');
   check('Daily plan retains search, Needs order filter, selected person, expanded detail and list scroll after keyboard Close/reopen');
-  await click(/^Unavailable \(/, board); await boardQuery(board, hospitalPerson.name);
+  await chooseFilter(/^Unavailable \(/, board); await boardQuery(board, hospitalPerson.name);
   await boardSelect(board, hospitalPerson.name, { details: true });
   await wait(/Hospitalized/); await wait(new RegExp(escape(hospital.name)));
   assert.equal(await button(`Orders for ${hospitalPerson.name}`, board).isEnabled(), false);
   await capture('daily-plan-unavailable-hospital');
-  await click(/^All \(/, board); await boardQuery(board, sleeper.name);
+  await chooseFilter(/^All \(/, board); await boardQuery(board, sleeper.name);
   await boardSelect(board, sleeper.name, { details: true });
   await wait(/sleeper standing order/); await capture('daily-plan-sleeper-standing-order');
   await boardQuery(board, prospect.name);
@@ -526,7 +532,7 @@ async function dailyPlanJourney() {
     'Restoring the active squad preserves the queued departure and every other field.');
   check('View squad follows the original queued team and returns without canceling departure');
 
-  board = await openBoard(); await click(/^All \(/, board); await boardQuery(board, hospitalPerson.name);
+  board = await openBoard(); await chooseFilter(/^All \(/, board); await boardQuery(board, hospitalPerson.name);
   await boardSelect(board, hospitalPerson.name);
   await click(`Profile for ${hospitalPerson.name}`, board); await board.waitFor({ state: 'hidden' });
   await wait(/Back to directory/); await wait(new RegExp(escape(hospitalPerson.name)));
@@ -536,7 +542,7 @@ async function dailyPlanJourney() {
   assert.deepEqual((await snapshot('after-native-profile')).campaign, initial.campaign);
   check('Profile opens the original intended person and Back returns without changing campaign');
 
-  board = await openBoard(); await click(/^Needs order \(/, board); await boardQuery(board, orderActor.name);
+  board = await openBoard(); await chooseFilter(/^Needs order \(/, board); await boardQuery(board, orderActor.name);
   await boardSelect(board, orderActor.name);
   await click(`Orders for ${orderActor.name}`, board); await board.waitFor({ state: 'hidden' });
   await click(/^Business(?:$|\s)/); await wait(/Prepare Solicit Donations/);
@@ -565,7 +571,7 @@ async function dailyPlanJourney() {
   await click(/^Return to planning; keep assigned orders$/);
   await wait(/Save & exit/);
   assert.deepEqual(await exportGame('final-planned-equipped-campaign'), confirmedExpected);
-  board = await openBoard(); await click(/^Assigned \(/, board); await boardQuery(board, orderActor.name);
+  board = await openBoard(); await chooseFilter(/^Assigned \(/, board); await boardQuery(board, orderActor.name);
   await boardSelect(board, orderActor.name, { details: true });
   await wait(/Personal order: Soliciting Donations/);
   await capture('daily-plan-refreshed-after-confirmation');
@@ -615,6 +621,13 @@ try {
   report.errors.push({ layout, error: report.failure });
   if (page && !page.isClosed()) {
     await capture('FAILURE').catch(error => { report.captureError = String(error); });
+    await writeFile(resolve(output, `${layout}-failure-semantics.html`), await page.locator('flt-semantics-host').innerHTML())
+      .catch(error => { report.domCaptureError = String(error); });
+    report.failureControls = await page.locator('flt-semantics[role]').evaluateAll(nodes => nodes.map(node => ({
+      role: node.getAttribute('role'), label: node.getAttribute('aria-label'), text: node.textContent,
+      selected: node.getAttribute('aria-selected'), checked: node.getAttribute('aria-checked'),
+      bounds: node.getBoundingClientRect().toJSON(),
+    }))).catch(error => [{ error: String(error) }]);
     await snapshot('failure').catch(error => { report.observationError = String(error); });
     await verifyLoaded?.(expectedHash).catch(error => { report.loadedScriptError = String(error); });
   }

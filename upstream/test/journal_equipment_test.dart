@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show SemanticsAction, Tristate;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -33,6 +34,31 @@ Future<void> _tap(WidgetTester tester, Finder finder) async {
   await tester.pumpAndSettle();
   await tester.tap(finder);
   await tester.pumpAndSettle();
+}
+
+Future<void> _tabToNativeButton(WidgetTester tester, Finder control) async {
+  var data = tester.getSemantics(control).getSemanticsData();
+  expect(data.flagsCollection.isButton, isTrue);
+  expect(
+    data.flagsCollection.isFocused,
+    isNot(Tristate.none),
+    reason: 'The named control must retain native focusable semantics.',
+  );
+  expect(data.hasAction(SemanticsAction.tap), isTrue);
+  for (
+    var step = 0;
+    step < 100 && data.flagsCollection.isFocused != Tristate.isTrue;
+    step++
+  ) {
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pumpAndSettle();
+    data = tester.getSemantics(control).getSemanticsData();
+  }
+  expect(
+    data.flagsCollection.isFocused,
+    Tristate.isTrue,
+    reason: 'Actual Tab traversal must focus this same named control.',
+  );
 }
 
 class _Reader {
@@ -121,6 +147,39 @@ void main() {
       expect(find.textContaining('Filter this page'), findsOneWidget);
       expect(find.textContaining('22/7'), findsNothing);
       expect(find.textContaining('30/8'), findsNothing);
+      final before = campaignSnapshot();
+      final revision = engine.console.revision.value;
+      final actions = List.of(engine.console.actions);
+      final person = game.squad.first;
+      await _tabToNativeButton(
+        tester,
+        _key('equipment-person-row:${person.id}'),
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.space, character: ' ');
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .getSemantics(_key('equipment-person-row:${person.id}'))
+            .getSemanticsData()
+            .flagsCollection
+            .isSelected,
+        Tristate.isTrue,
+      );
+      expect(campaignSnapshot(), before);
+      expect(engine.console.revision.value, revision);
+      expect(engine.console.actions, orderedEquals(actions));
+      expect(engine.console.lastKey, isNull);
+      final choice = equipmentContext(engine.console)!.stock.first;
+      await _tap(tester, _action(choice.action));
+      final recipient = equipmentContext(engine.console)!;
+      final cancel = recipient.actions.singleWhere(
+        (action) => action.key == 'Enter',
+      );
+      await _tabToNativeButton(tester, _action(cancel));
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(equipmentContext(engine.console)!.phase, EquipmentPhase.inventory);
+      expect(campaignSnapshot(), before);
       expect(tester.takeException(), isNull);
     });
   }
@@ -457,6 +516,11 @@ void main() {
   testWidgets(
     'page browsing restores on revisit and stays separate from another campaign',
     (tester) async {
+      while (game.squad.length < 6) {
+        addTestCrewMember(name: 'Retained loadout ${game.squad.length + 1}')
+                .squad =
+            game.activeSquad;
+      }
       final stock = <Item>[
         Weapon('WEAPON_AK102'),
         Clothing('CLOTHING_CATSUIT'),
@@ -470,6 +534,17 @@ void main() {
       final weapon = equipmentContext(engine.console)!.stock
           .singleWhere((choice) => choice.item is Weapon);
       await _tap(tester, _key('equipment-stock:${weapon.action.key}'));
+      final inner = find
+          .descendant(
+            of: find.byKey(const PageStorageKey('equipment-loadout-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      final position = tester.state<ScrollableState>(inner).position;
+      final manualOffset = position.maxScrollExtent.clamp(0, 90).toDouble();
+      expect(manualOffset, greaterThan(0));
+      position.jumpTo(manualOffset);
+      await tester.pumpAndSettle();
       await _tap(
         tester,
         _action(
@@ -492,6 +567,11 @@ void main() {
         isTrue,
       );
       expect(_key('equipment-compare'), findsOneWidget);
+      expect(
+        tester.state<ScrollableState>(inner).position.pixels,
+        closeTo(manualOffset, .01),
+        reason: 'Same-selection revisit retains deliberate inner scrolling.',
+      );
       await _tap(
         tester,
         _action(
@@ -517,6 +597,11 @@ void main() {
         isTrue,
       );
       expect(_key('equipment-compare'), findsNothing);
+      expect(
+        tester.state<ScrollableState>(inner).position.pixels,
+        closeTo(0, .01),
+        reason: 'A new campaign initially reveals its selected person.',
+      );
       expect(tester.takeException(), isNull);
     },
   );

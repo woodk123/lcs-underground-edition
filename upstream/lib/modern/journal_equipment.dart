@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lcs_new_age/creature/creature.dart';
 import 'package:lcs_new_age/engine/console.dart';
@@ -42,6 +44,9 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
   Item? _preview;
   int? _personId;
   String? _browsingIdentity;
+  (String, int)? _requestedReveal;
+  int? _revealedPersonId;
+  int _revealGeneration = 0;
 
   String? get _storageId {
     final frame = equipmentContext(widget.console);
@@ -59,12 +64,25 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
   void _restoreBrowsing() {
     final id = _storageId;
     if (_browsingIdentity != id && id != null) {
+      _requestedReveal = null;
+      _revealedPersonId = null;
+      _revealGeneration++;
       final stored = PageStorage.maybeOf(context)
           ?.readState(context, identifier: id);
       if (stored is _EquipmentBrowsing) {
         _search.text = stored.search;
         _filter = stored.filter;
         _preview = stored.preview;
+        _revealedPersonId = stored.revealedPersonId;
+        final frame = equipmentContext(widget.console)!;
+        final selected = _selectedPerson(frame);
+        if (frame.phase == EquipmentPhase.inventory &&
+            selected != null &&
+            selected.id == _revealedPersonId) {
+          // The inner ScrollPosition restores its own PageStorage offset.
+          // A same-selection revisit should retain deliberate manual scrolling.
+          _requestedReveal = (id, selected.id);
+        }
       } else {
         _search.clear();
         _filter = EquipmentFilter.all;
@@ -79,15 +97,65 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
     if (id != null) {
       PageStorage.maybeOf(context)?.writeState(
         context,
-        _EquipmentBrowsing(_search.text, _filter, _preview),
+        _EquipmentBrowsing(_search.text, _filter, _preview, _revealedPersonId),
         identifier: id,
       );
     }
   }
 
   bool _current(EquipmentContext frame, int revision) =>
+      mounted &&
       identical(equipmentContext(widget.console), frame) &&
       widget.console.revision.value == revision;
+
+  Creature? _selectedPerson(EquipmentContext frame) =>
+      frame.people.where((person) => person.id == _personId).firstOrNull ??
+      frame.people.firstOrNull;
+
+  void _selectPerson(EquipmentContext frame, Creature person, int revision) {
+    if (!_current(frame, revision)) return;
+    setState(() {
+      _personId = person.id;
+      _requestedReveal =
+          null; // Explicit local clicks also reveal the same person.
+    });
+    widget.onSelect?.call(person);
+  }
+
+  void _revealSelectedCard(BuildContext cardContext, int personId) {
+    final id = _storageId;
+    if (id == null || _requestedReveal == (id, personId)) return;
+    final request = (id, personId);
+    _requestedReveal = request;
+    final generation = ++_revealGeneration;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final frame = equipmentContext(widget.console);
+      if (!mounted ||
+          !cardContext.mounted ||
+          generation != _revealGeneration ||
+          _requestedReveal != request ||
+          _storageId != id ||
+          frame == null ||
+          _selectedPerson(frame)?.id != personId ||
+          !_loadoutScroll.hasClients ||
+          !_loadoutScroll.position.hasContentDimensions) {
+        return;
+      }
+      final target = cardContext.findRenderObject();
+      if (target == null || !target.attached) return;
+      // Use this position directly: Scrollable.ensureVisible also scrolls outer
+      // ancestors, which would move the inventory/filter/comparison workspace.
+      unawaited(
+        _loadoutScroll.position.ensureVisible(
+          target,
+          alignment: 0,
+          duration: Duration.zero,
+        ),
+      );
+      _revealedPersonId = personId;
+      _rememberBrowsing();
+    });
+  }
 
   @override
   void initState() {
@@ -98,10 +166,10 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
   @override
   void didUpdateWidget(covariant JournalEquipmentView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _restoreBrowsing();
     if (oldWidget.selectedPersonId != widget.selectedPersonId) {
       _personId = widget.selectedPersonId;
     }
+    _restoreBrowsing();
   }
 
   @override
@@ -117,12 +185,13 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
     int revision,
   ) => action.enabled
       ? () {
-          if (equipmentActionIsCurrent(
-            widget.console,
-            frame,
-            action,
-            revision,
-          )) {
+          if (mounted &&
+              equipmentActionIsCurrent(
+                widget.console,
+                frame,
+                action,
+                revision,
+              )) {
             widget.onAction(action.key);
           }
         }
@@ -159,18 +228,19 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
         (actor != null
             ? '${action.key} ${actor.name}${action.intentLabel == null ? '' : ' · ${action.intentLabel}'}'
             : title);
-    return Semantics(
-      key: directIdentity
-          ? ValueKey('direct-action:${action.y}:${action.x}:${action.key}')
-          : ValueKey('equipment-apply:${action.key}'),
-      button: true,
-      enabled: activate != null,
-      label: accessible,
-      onTap: activate,
-      child: ExcludeSemantics(
+    return MergeSemantics(
+      child: Semantics(
+        key: directIdentity
+            ? ValueKey('direct-action:${action.y}:${action.x}:${action.key}')
+            : ValueKey('equipment-apply:${action.key}'),
+        button: true,
+        enabled: activate != null,
+        label: accessible,
         child: OutlinedButton(
           onPressed: activate,
-          child: JournalCommandLabel(shortcut: action.key, label: title),
+          child: ExcludeSemantics(
+            child: JournalCommandLabel(shortcut: action.key, label: title),
+          ),
         ),
       ),
     );
@@ -220,123 +290,124 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
                   action.entityType == 'equipment-recipient'),
         )
         .firstOrNull;
-    return _card([
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CrewPortrait(person: person, size: 56),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Semantics(
-              key: ValueKey('equipment-person-row:${person.id}'),
-              button: true,
-              selected: person.id == selectedId,
-              label: 'Select equipment for ${person.name}',
-              onTap: () {
-                if (!_current(frame, revision)) return;
-                setState(() => _personId = person.id);
-                widget.onSelect?.call(person);
-              },
-              child: ExcludeSemantics(
-                child: TextButton(
-                  key: ValueKey('equipment-person:${person.id}'),
-                  onPressed: () {
-                    if (!_current(frame, revision)) return;
-                    setState(() => _personId = person.id);
-                    widget.onSelect?.call(person);
-                  },
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    alignment: Alignment.centerLeft,
-                  ),
-                  child: Text(
-                    person.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+    return Builder(
+      key: ValueKey('equipment-loadout:${person.id}'),
+      builder: (cardContext) {
+        if (person.id == selectedId) {
+          _revealSelectedCard(cardContext, person.id);
+        }
+        return _card([
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CrewPortrait(person: person, size: 56),
+              const SizedBox(width: 8),
+              Expanded(
+                child: MergeSemantics(
+                  child: Semantics(
+                    key: ValueKey('equipment-person-row:${person.id}'),
+                    button: true,
+                    selected: person.id == selectedId,
+                    label: 'Select equipment for ${person.name}',
+                    child: TextButton(
+                      key: ValueKey('equipment-person:${person.id}'),
+                      onPressed: () => _selectPerson(frame, person, revision),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        alignment: Alignment.centerLeft,
+                      ),
+                      child: ExcludeSemantics(
+                        child: Text(
+                          person.name,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-          if (widget.onInspect != null)
-            IconButton(
-              tooltip: 'Inspect ${person.name}',
-              onPressed: () {
-                if (_current(frame, revision)) widget.onInspect!(person);
-              },
-              icon: const Icon(Icons.badge_outlined, size: 20),
-            ),
-        ],
-      ),
-      const SizedBox(height: 6),
-      Row(
-        children: [
-          _art(person.weapon),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  loadout.weaponName,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                Text(loadout.skill),
-                Text(loadout.ammunition, style: JournalPalette.small),
-              ],
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 6),
-      Row(
-        children: [
-          _art(person.clothing, width: 45, height: 42),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Outfit: ${loadout.outfitName}'),
-                Text(loadout.condition, style: JournalPalette.small),
-              ],
-            ),
-          ),
-        ],
-      ),
-      for (final warning in loadout.warnings)
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            warning,
-            style: const TextStyle(
-              color: JournalPalette.danger,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      if (action != null && frame.phase == EquipmentPhase.inventory) ...[
-        const SizedBox(height: 6),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: _sourceButton(
-            frame,
-            action,
-            revision,
-            label: frame.phase == EquipmentPhase.inventory
-                ? 'Unequip weapon'
-                : switch (frame.phase) {
-                    EquipmentPhase.giveItem => 'Give to ${person.name}',
-                    EquipmentPhase.increaseAmmo =>
-                      'Give ammo to ${person.name}',
-                    EquipmentPhase.decreaseAmmo =>
-                      'Drop ammo for ${person.name}',
-                    EquipmentPhase.strip => 'Strip ${person.name}',
-                    EquipmentPhase.inventory => 'Unequip weapon',
+              if (widget.onInspect != null)
+                IconButton(
+                  tooltip: 'Inspect ${person.name}',
+                  onPressed: () {
+                    if (_current(frame, revision)) widget.onInspect!(person);
                   },
+                  icon: const Icon(Icons.badge_outlined, size: 20),
+                ),
+            ],
           ),
-        ),
-      ],
-    ], selected: person.id == selectedId);
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              _art(person.weapon),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      loadout.weaponName,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    Text(loadout.skill),
+                    Text(loadout.ammunition, style: JournalPalette.small),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              _art(person.clothing, width: 45, height: 42),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Outfit: ${loadout.outfitName}'),
+                    Text(loadout.condition, style: JournalPalette.small),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          for (final warning in loadout.warnings)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                warning,
+                style: const TextStyle(
+                  color: JournalPalette.danger,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          if (action != null && frame.phase == EquipmentPhase.inventory) ...[
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: _sourceButton(
+                frame,
+                action,
+                revision,
+                label: frame.phase == EquipmentPhase.inventory
+                    ? 'Unequip weapon'
+                    : switch (frame.phase) {
+                        EquipmentPhase.giveItem => 'Give to ${person.name}',
+                        EquipmentPhase.increaseAmmo =>
+                          'Give ammo to ${person.name}',
+                        EquipmentPhase.decreaseAmmo =>
+                          'Drop ammo for ${person.name}',
+                        EquipmentPhase.strip => 'Strip ${person.name}',
+                        EquipmentPhase.inventory => 'Unequip weapon',
+                      },
+              ),
+            ),
+          ],
+        ], selected: person.id == selectedId);
+      },
+    );
   }
 
   Widget _comparison(
@@ -586,9 +657,7 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
         _preview = null;
       }
       final revision = widget.console.revision.value;
-      final selected =
-          frame.people.where((person) => person.id == _personId).firstOrNull ??
-          frame.people.first;
+      final selected = _selectedPerson(frame)!;
       final readiness = SquadReadiness(frame.people);
       final stockActions = frame.stock.map((choice) => choice.action).toSet();
       final personActions = frame.actions
@@ -756,8 +825,14 @@ class _JournalEquipmentViewState extends State<JournalEquipmentView> {
 }
 
 class _EquipmentBrowsing {
-  const _EquipmentBrowsing(this.search, this.filter, this.preview);
+  const _EquipmentBrowsing(
+    this.search,
+    this.filter,
+    this.preview,
+    this.revealedPersonId,
+  );
   final String search;
   final EquipmentFilter filter;
   final Item? preview;
+  final int? revealedPersonId;
 }

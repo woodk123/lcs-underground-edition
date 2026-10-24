@@ -257,17 +257,20 @@ class _JournalDailyPlanState extends State<JournalDailyPlan> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Semantics(
-                  label: 'Select daily plan for ${person.name}',
-                  button: true,
-                  selected: controller.selectedId == person.id,
-                  excludeSemantics: true,
-                  child: InkWell(
-                    key: ValueKey('daily-plan-person:${person.id}'),
-                    onTap: () => controller.selectPerson(person.id),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: widget.portraitBuilder(person.id),
+                MergeSemantics(
+                  child: Semantics(
+                    label: 'Select daily plan for ${person.name}',
+                    button: true,
+                    selected: controller.selectedId == person.id,
+                    child: InkWell(
+                      key: ValueKey('daily-plan-person:${person.id}'),
+                      onTap: () => controller.selectPerson(person.id),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: ExcludeSemantics(
+                          child: widget.portraitBuilder(person.id),
+                        ),
+                      ),
                     ),
                   ),
                 ),

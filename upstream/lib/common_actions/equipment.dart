@@ -35,6 +35,10 @@ void _describeEquipmentReader(
   Item? pendingItem,
   String? notice,
 }) {
+  final inventorySite = [
+    activeSquad?.site,
+    activeSite,
+  ].nonNulls.where((site) => identical(loot, site.loot)).firstOrNull;
   console.screen = 'equipment';
   console.equipment = EquipmentContext(
     phase: phase,
@@ -52,9 +56,7 @@ void _describeEquipmentReader(
     },
     page: page,
     itemCount: loot.length,
-    inventoryName: identical(loot, activeSite?.loot)
-        ? activeSite!.getName(short: true)
-        : 'Squad inventory',
+    inventoryName: inventorySite?.getName(short: true) ?? 'Squad inventory',
     pendingItem: pendingItem,
     notice: notice,
   );
