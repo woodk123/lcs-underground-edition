@@ -500,12 +500,19 @@ async function dailyPlanJourney() {
   await closeBoard(board, { keyboard: true });
   sameSource(initial, await snapshot('daily-plan-closed'), 'Daily plan inspection and keyboard Close');
   board = await openBoard();
-  assert.equal(await board.getByRole('textbox', { name: 'Search daily plan', exact: true }).inputValue(), 'Zed Planner');
   await wait(new RegExp(`Selected: ${lastName}`));
+  assert.ok(await board.getByRole('checkbox', { name: /^Needs order \(/ }).isChecked(), 'Reopening retains the selected Needs order filter.');
   assert.equal(await button(`Hide daily plan details for ${lastName}`, board).count(), 1);
   const afterBounds = await button(`Select daily plan for ${lastName}`, board).boundingBox();
   assert.ok(beforeBounds && afterBounds && Math.abs(beforeBounds.y - afterBounds.y) <= 4,
     'Reopening the unchanged board retains the actual list scroll anchor.');
+  // Flutter synchronizes the recreated semantic input with its retained editor
+  // value only when editing is active; inspect scroll/selection before focusing.
+  const retainedSearch = board.getByRole('textbox', { name: 'Search daily plan', exact: true });
+  await reveal(retainedSearch, board); await retainedSearch.click(); await waitForUiSettled(page);
+  assert.ok(await retainedSearch.evaluate(node => node === document.activeElement || node.contains(document.activeElement)),
+    'The actual reopened search input must own editing focus.');
+  assert.equal(await retainedSearch.inputValue(), 'Zed Planner');
   check('Daily plan retains search, Needs order filter, selected person, expanded detail and list scroll after keyboard Close/reopen');
   await chooseFilter(/^Unavailable \(/, board); await boardQuery(board, hospitalPerson.name);
   await boardSelect(board, hospitalPerson.name, { details: true });
