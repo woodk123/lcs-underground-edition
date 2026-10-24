@@ -264,151 +264,192 @@ class _JournalDailyPlanState extends State<JournalDailyPlan> {
   Widget _person(MovementDailyPlanPerson person) {
     final controller = widget.controller;
     final expanded = controller.expandedIds.contains(person.id);
+    final selected = controller.selectedId == person.id;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: JournalSurface(
-        inset: controller.selectedId == person.id,
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                MergeSemantics(
-                  child: Semantics(
-                    label: 'Select daily plan for ${person.name}',
-                    button: true,
-                    selected: controller.selectedId == person.id,
-                    child: InkWell(
-                      key: ValueKey('daily-plan-person:${person.id}'),
-                      onTap: () => controller.selectPerson(person.id),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: ExcludeSemantics(
-                          child: widget.portraitBuilder(person.id),
-                        ),
-                      ),
+        inset: selected,
+        padding: EdgeInsets.zero,
+        child: Material(
+          color: selected
+              ? JournalPalette.brass.withValues(alpha: .22)
+              : Colors.transparent,
+          child: Semantics(
+            label: 'Select daily plan for ${person.name}',
+            button: true,
+            selected: selected,
+            child: InkWell(
+              key: ValueKey('daily-plan-person:${person.id}'),
+              onTap: () => controller.selectPerson(person.id),
+              child: Semantics(
+                container: true,
+                explicitChildNodes: true,
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: selected
+                          ? JournalPalette.brassDark
+                          : Colors.transparent,
+                      width: 2,
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
+                  padding: const EdgeInsets.all(8),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(person.name, style: JournalPalette.heading),
-                      if (widget.snapshot.currentPersonId == person.id)
-                        const Text(
-                          'Current actor',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      if (person.unavailable ||
-                          person.needsOrder ||
-                          person.sleeper ||
-                          person.condition != 'No recorded injuries')
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 2,
-                          children: [
-                            if (person.unavailable || person.needsOrder)
-                              Text(
-                                person.unavailable
-                                    ? 'Unavailable · ${person.status}'
-                                    : 'Needs order',
-                                key: ValueKey(
-                                  'daily-plan-exception:${person.id}',
-                                ),
-                                style: TextStyle(
-                                  color: person.unavailable
-                                      ? JournalPalette.danger
-                                      : JournalPalette.brassDark,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              )
-                            else if (person.sleeper)
-                              Text(person.status),
-                            if (person.condition != 'No recorded injuries')
-                              Text(
-                                person.condition,
-                                key: ValueKey(
-                                  'daily-plan-condition:${person.id}',
-                                ),
-                                style: const TextStyle(
-                                  color: JournalPalette.danger,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                          ],
-                        ),
-                      const SizedBox(height: 3),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.assignment_outlined,
-                            size: 15,
-                            color: JournalPalette.olive,
+                          Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: ExcludeSemantics(
+                              child: widget.portraitBuilder(person.id),
+                            ),
                           ),
-                          const SizedBox(width: 5),
+                          const SizedBox(width: 10),
                           Expanded(
-                            child: Text(
-                              person.effectiveOrder,
-                              key: ValueKey(
-                                'daily-plan-assignment:${person.id}',
-                              ),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        person.name,
+                                        style: JournalPalette.heading,
+                                      ),
+                                    ),
+                                    if (selected)
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: JournalPalette.brassDark,
+                                        semanticLabel: 'Selected',
+                                      ),
+                                  ],
+                                ),
+                                if (widget.snapshot.currentPersonId ==
+                                    person.id)
+                                  const Text(
+                                    'Current actor',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                if (person.unavailable ||
+                                    person.needsOrder ||
+                                    person.sleeper ||
+                                    person.condition != 'No recorded injuries')
+                                  Wrap(
+                                    spacing: 10,
+                                    runSpacing: 2,
+                                    children: [
+                                      if (person.unavailable ||
+                                          person.needsOrder)
+                                        Text(
+                                          person.unavailable
+                                              ? 'Unavailable · ${person.status}'
+                                              : 'Needs order',
+                                          key: ValueKey(
+                                            'daily-plan-exception:${person.id}',
+                                          ),
+                                          style: TextStyle(
+                                            color: person.unavailable
+                                                ? JournalPalette.danger
+                                                : JournalPalette.brassDark,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        )
+                                      else if (person.sleeper)
+                                        Text(person.status),
+                                      if (person.condition !=
+                                          'No recorded injuries')
+                                        Text(
+                                          person.condition,
+                                          key: ValueKey(
+                                            'daily-plan-condition:${person.id}',
+                                          ),
+                                          style: const TextStyle(
+                                            color: JournalPalette.danger,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                const SizedBox(height: 3),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(
+                                      Icons.assignment_outlined,
+                                      size: 15,
+                                      color: JournalPalette.olive,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Expanded(
+                                      child: Text(
+                                        person.effectiveOrder,
+                                        key: ValueKey(
+                                          'daily-plan-assignment:${person.id}',
+                                        ),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: Text(person.location),
+                                ),
+                                if (person.meetings.isNotEmpty)
+                                  Text(
+                                    'Recruitment follow-ups: ${person.meetings.length}',
+                                  ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            key: ValueKey('daily-plan-details:${person.id}'),
+                            tooltip:
+                                '${expanded ? 'Hide' : 'Show'} daily plan details for ${person.name}',
+                            onPressed: () =>
+                                controller.toggleDetails(person.id),
+                            icon: Icon(
+                              expanded ? Icons.expand_less : Icons.expand_more,
+                              semanticLabel:
+                                  '${expanded ? 'Hide' : 'Show'} daily plan details for ${person.name}',
                             ),
                           ),
                         ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20),
-                        child: Text(person.location),
-                      ),
-                      if (person.meetings.isNotEmpty)
+                      if (expanded) ...[
+                        const Divider(),
                         Text(
-                          'Recruitment follow-ups: ${person.meetings.length}',
+                          'Personal order: ${person.personalOrder}${person.sleeper ? ' (sleeper standing order)' : ''}',
                         ),
+                        Text('Squad: ${person.squadName ?? 'Outside squads'}'),
+                        Text('Status: ${person.status} · ${person.condition}'),
+                        if (person.squadOrder != null) ...[
+                          Text(
+                            'Squad order overrides personal work: ${person.squadOrder}',
+                          ),
+                          const Text(
+                            'Departure is checked when the day runs, including access, transport and funds.',
+                          ),
+                        ],
+                        if (person.availabilityReason != null)
+                          Text(person.availabilityReason!),
+                        Text(person.medicalDetails),
+                        for (final meeting in person.meetings)
+                          _meeting(meeting),
+                      ],
                     ],
                   ),
                 ),
-                IconButton(
-                  key: ValueKey('daily-plan-details:${person.id}'),
-                  tooltip:
-                      '${expanded ? 'Hide' : 'Show'} daily plan details for ${person.name}',
-                  onPressed: () => controller.toggleDetails(person.id),
-                  icon: Icon(
-                    expanded ? Icons.expand_less : Icons.expand_more,
-                    semanticLabel:
-                        '${expanded ? 'Hide' : 'Show'} daily plan details for ${person.name}',
-                  ),
-                ),
-              ],
-            ),
-            if (expanded) ...[
-              const Divider(),
-              Text(
-                'Personal order: ${person.personalOrder}${person.sleeper ? ' (sleeper standing order)' : ''}',
               ),
-              Text('Squad: ${person.squadName ?? 'Outside squads'}'),
-              Text('Status: ${person.status} · ${person.condition}'),
-              if (person.squadOrder != null) ...[
-                Text(
-                  'Squad order overrides personal work: ${person.squadOrder}',
-                ),
-                const Text(
-                  'Departure is checked when the day runs, including access, transport and funds.',
-                ),
-              ],
-              if (person.availabilityReason != null)
-                Text(person.availabilityReason!),
-              Text(person.medicalDetails),
-              for (final meeting in person.meetings) _meeting(meeting),
-            ],
-          ],
+            ),
+          ),
         ),
       ),
     );

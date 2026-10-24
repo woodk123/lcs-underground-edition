@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.6.10 — 2026-10-24
+
+* Click anywhere on a Daily plan member row to select them for Orders, Profile or View squad, with a clear highlight and checkmark.
+
 ## Underground Edition 0.6.9 — 2026-10-24
 
 * Show each squad-assignment candidate's three strongest trained skills, equipped weapon, loaded ammunition and clothing condition directly in the pool, with wrapping text for easier comparison.

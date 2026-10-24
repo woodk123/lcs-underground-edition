@@ -118,6 +118,70 @@ void main() {
 
   for (final large in [false, true]) {
     testWidgets(
+      'whole daily plan row selects and highlights the order recipient, large=$large',
+      (tester) async {
+        final first = addTestCrewMember(name: 'Click crew Alpha');
+        final second = addTestCrewMember(name: 'Click crew Bravo');
+        await mount(tester, large: large);
+        final before = campaignSnapshot();
+        final source = engine.console;
+        final revision = source.revision.value;
+        final pending = source.nextKeyEvent;
+        await _tap(tester, 'journal-daily-plan');
+        await tester.enterText(_key('daily-plan-search'), 'Click crew');
+        await _settle(tester);
+        await tester.tap(find.text(first.name).hitTestable());
+        await _settle(tester);
+        expect(find.text('Selected: ${first.name}'), findsOneWidget);
+        Material rowMaterial(Creature person) => tester.widget<Material>(
+          find
+              .ancestor(
+                of: _key('daily-plan-person:${person.id}'),
+                matching: find.byType(Material),
+              )
+              .first,
+        );
+        expect(
+          rowMaterial(first).color,
+          JournalPalette.brass.withValues(alpha: .22),
+        );
+        expect(rowMaterial(second).color, Colors.transparent);
+        expect(find.byIcon(Icons.check_circle), findsOneWidget);
+        // Blank space at the bottom of the card is also a selection target.
+        final row = tester.getRect(_key('daily-plan-person:${second.id}'));
+        await tester.tapAt(row.bottomRight - const Offset(20, 12));
+        await _settle(tester);
+        expect(find.text('Selected: ${second.name}'), findsOneWidget);
+        expect(rowMaterial(first).color, Colors.transparent);
+        expect(
+          rowMaterial(second).color,
+          JournalPalette.brass.withValues(alpha: .22),
+        );
+        await _tap(tester, 'daily-plan-details:${first.id}');
+        expect(find.text('Selected: ${second.name}'), findsOneWidget);
+        expect(find.textContaining('Personal order:'), findsOneWidget);
+        await _tap(tester, 'daily-plan-details:${first.id}');
+        final offset = tester
+            .widget<ListView>(_key('daily-plan-list'))
+            .controller!
+            .offset;
+        await _tap(tester, 'daily-plan-close');
+        await _tap(tester, 'journal-daily-plan');
+        expect(find.text('Selected: ${second.name}'), findsOneWidget);
+        expect(
+          tester.widget<ListView>(_key('daily-plan-list')).controller!.offset,
+          closeTo(offset, .1),
+        );
+        expect(campaignSnapshot(), before);
+        expect(source.revision.value, revision);
+        expect(identical(source.nextKeyEvent, pending), true);
+        await _tap(tester, 'daily-plan-orders:${second.id}');
+        expect(activityOrderFrame(source)?.actorId, second.id);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
       'movement modal retains inspection and reader state, large=$large',
       (tester) async {
         final extra = List.generate(
