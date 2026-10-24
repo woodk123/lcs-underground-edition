@@ -179,12 +179,45 @@ async function reveal(control, scope = page) {
     const area = scope === page ? { x: 0, y: 0, ...viewport } : await scope.boundingBox();
     assert.ok(area, 'Keep the current reader mounted while scrolling.');
     const box = await control.count() ? await control.boundingBox() : null;
-    if (box && box.height > 4 && box.y >= area.y && box.y + box.height <= area.y + area.height) {
+    const clips = box ? await control.evaluate((node, boundary) => {
+      const rectangles = [];
+      for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+        const style = getComputedStyle(parent);
+        if (!/(?:hidden|auto|scroll)/.test(`${style.overflowX} ${style.overflowY}`)) continue;
+        const rect = parent.getBoundingClientRect();
+        rectangles.push({ x: rect.x, y: rect.y, width: rect.width, height: rect.height });
+      }
+      return rectangles.map((rect, index) => {
+        const enclosing = [boundary, ...rectangles.slice(index + 1)];
+        const left = Math.max(rect.x, ...enclosing.map(outer => outer.x));
+        const top = Math.max(rect.y, ...enclosing.map(outer => outer.y));
+        const right = Math.min(rect.x + rect.width, ...enclosing.map(outer => outer.x + outer.width));
+        const bottom = Math.min(rect.y + rect.height, ...enclosing.map(outer => outer.y + outer.height));
+        return { rect, visible: { x: left, y: top, width: Math.max(0, right - left), height: Math.max(0, bottom - top) } };
+      });
+    }, area) : [];
+    const visible = clips[0]?.visible ?? area;
+    if (box && box.height > 4 && box.x >= visible.x && box.x + box.width <= visible.x + visible.width
+      && box.y >= visible.y && box.y + box.height <= visible.y + visible.height) {
       try { await control.click({ trial: true, timeout: 300 }); return control; }
       catch (error) { lastError = String(error); }
     }
-    await page.mouse.move(area.x + area.width * .76, area.y + area.height * .58);
-    await page.mouse.wheel(0, box && box.y < area.y ? -230 : 230);
+    let scrollArea = visible, scrollTarget = box, excluded;
+    // A partially exposed nested scroller cannot reveal a larger control until
+    // its outer scroller exposes it. Keep the real wheel outside that child.
+    for (let index = 0; box && index < clips.length
+      && (scrollArea.height < box.height || scrollArea.width < box.width); index++) {
+      excluded = clips[index].visible;
+      scrollTarget = clips[index].rect;
+      scrollArea = clips[index + 1]?.visible ?? area;
+    }
+    if (scrollArea.width <= 4 || scrollArea.height <= 4) { lastError = 'No exposed scroll viewport'; continue; }
+    const points = [[.76, .58], [.24, .2], [.76, .8], [.24, .8], [.5, .1]]
+      .map(([x, y]) => ({ x: scrollArea.x + scrollArea.width * x, y: scrollArea.y + scrollArea.height * y }));
+    const point = points.find(({ x, y }) => !excluded || x < excluded.x || x > excluded.x + excluded.width
+      || y < excluded.y || y > excluded.y + excluded.height) ?? points[0];
+    await page.mouse.move(point.x, point.y);
+    await page.mouse.wheel(0, scrollTarget && scrollTarget.y < scrollArea.y ? -230 : 230);
     await waitForUiSettled(page);
   }
   throw Error(`Cannot reach the current reader's control: ${lastError ?? await control.count() + ' semantic nodes'}`);
