@@ -557,7 +557,19 @@ class ConfigSiteSpecial extends ConfigSiteCommand {
     for (int x = xstart; x <= xend; x++) {
       for (int y = ystart; y <= yend; y++) {
         for (int z = zstart; z <= zend; z++) {
-          if (lcsRandom(freq) == 0) levelMap[x][y][z].special = special;
+          // Keep one roll per coordinate, including blocked tiles. Other
+          // scripts intentionally overlay fixtures; claims terminals need an
+          // unoccupied, enterable tile for their manual interaction.
+          final place = lcsRandom(freq) == 0;
+          final tile = levelMap[x][y][z];
+          if (special == TileSpecial.insuranceClaimsTerminal &&
+              (tile.wall ||
+                  tile.door ||
+                  tile.exit ||
+                  tile.special != TileSpecial.none)) {
+            continue;
+          }
+          if (place) tile.special = special;
         }
       }
     }

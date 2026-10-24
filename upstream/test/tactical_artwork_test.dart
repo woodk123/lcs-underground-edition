@@ -203,6 +203,53 @@ void main() {
     },
   );
 
+  for (final compact in [false, true]) {
+    testWidgets(
+      'legacy wall terminal inspection and revisit (compact=$compact)',
+      (tester) async {
+        levelMap[35][10][0].special = TileSpecial.insuranceClaimsTerminal;
+        final before = _state();
+        final moves = <String>[];
+        await mount(tester, moves);
+        if (compact) {
+          tester.view.physicalSize = const Size(1024, 720);
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: buildJournalTheme(),
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(1.5)),
+                child: child!,
+              ),
+              home: Scaffold(
+                body: SingleChildScrollView(
+                  child: TacticalMapView(onMove: moves.add),
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+        }
+        for (var visit = 0; visit < 2; visit++) {
+          await tapTile(tester, 35, 10);
+          final text = _inspectorText(tester);
+          expect(text, contains('Solid wall. You cannot move onto this tile.'));
+          expect(text, isNot(contains('reach this tile')));
+          expect(text, isNot(contains('press U')));
+          expect(
+            _cellAt(TacticalMapSnapshot.capture(), 35, 10).objectSprite,
+            isNull,
+          );
+          await tapTile(tester, 37, 11);
+          expect(_inspectorText(tester), contains('Radio studio'));
+        }
+        expect(moves, isEmpty);
+        expect(_state(), before);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('artwork, hover and inspection preserve campaign state and RNG', (
     tester,
   ) async {

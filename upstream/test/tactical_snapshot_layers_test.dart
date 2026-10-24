@@ -202,6 +202,31 @@ void main() {
     expect(cell.semanticLabel, isNot(contains('Enemy')));
   });
 
+  test('legacy terminal in a wall has no fixture art or interaction hint', () {
+    final tile = levelMap[36][11][0]
+      ..known = true
+      ..wall = true
+      ..special = TileSpecial.insuranceClaimsTerminal;
+    reseedRNG(seed: 915);
+    final expectedRoll = lcsRandom(100000);
+    reseedRNG(seed: 915);
+    for (final fullMap in [false, true]) {
+      final cell = _cellAt(
+        TacticalMapSnapshot.capture(fullMap: fullMap),
+        36,
+        11,
+      );
+      expect(cell.kind, TacticalTileKind.wall);
+      expect(cell.objectSprite, isNull);
+      expect(cell.pointOfInterest, isFalse);
+      expect(cell.actionHint, 'Solid wall. You cannot move onto this tile.');
+      expect(cell.semanticLabel, isNot(contains('press U')));
+    }
+    expect(tile.wall, isTrue);
+    expect(tile.special, TileSpecial.insuranceClaimsTerminal);
+    expect(lcsRandom(100000), expectedRoll);
+  });
+
   test('hidden neighboring marks do not decorate a known wall', () {
     levelMap[36][11][0]
       ..known = true

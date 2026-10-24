@@ -307,7 +307,7 @@ TacticalMapCell _describeTile(SiteTile? tile, int x, int y, bool cameras) {
     horizontalDoor: tile.door && (knownLeftWall || knownRightWall),
     restricted: tile.restricted,
     burning: tile.burning,
-    pointOfInterest: tile.special != TileSpecial.none,
+    pointOfInterest: !tile.wall && tile.special != TileSpecial.none,
     lootAvailable: tile.loot || droppedLoot,
     droppedItems: droppedItems,
     unsearchedLoot: tile.loot,
@@ -319,9 +319,10 @@ TacticalMapCell _describeTile(SiteTile? tile, int x, int y, bool cameras) {
       _ => null,
     },
     visited: tile.special == TileSpecial.nursingHomePatientDone,
-    objectSprite:
-        _objectSprite(tile.special) ??
-        (tile.loot || droppedLoot ? TacticalObjectCell.crate : null),
+    objectSprite: tile.wall
+        ? null
+        : _objectSprite(tile.special) ??
+              (tile.loot || droppedLoot ? TacticalObjectCell.crate : null),
     objectQuadrant: switch (tile.special) {
       TileSpecial.ovalOfficeNW => 0,
       TileSpecial.ovalOfficeNE => 1,
@@ -565,6 +566,7 @@ String _currentDescription(SiteTile? tile) {
 }
 
 String _actionHint(SiteTile tile, {bool droppedLoot = false}) {
+  if (tile.wall) return 'Solid wall. You cannot move onto this tile.';
   if (tile.door) {
     if (tile.metal) {
       return 'Impenetrable vault door. Find another route or a vault control.';

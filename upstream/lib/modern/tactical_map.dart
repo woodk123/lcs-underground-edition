@@ -672,6 +672,8 @@ class TacticalTileInspector extends StatelessWidget {
               : 'Use arrow controls or an outlined tile to move one step.'
         : !known
         ? 'Unexplored. Hidden contents remain concealed.'
+        : tile.kind == TacticalTileKind.wall
+        ? tile.actionHint
         : inspectionOnly
         ? 'Inspection only. Return to the operation to move or act. ${tile.actionHint}'
         : !movementEnabled

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.6.5 — 2026-10-24
+
+* Keep insurance claims terminals off walls, doors, exits and existing fixtures. Wall inspection no longer shows unusable fixture artwork or suggests walking into the wall.
+
 ## Underground Edition 0.6.4 — 2026-10-24
 
 * Put people on the current square above the squad roster during field operations, with clearer names and labelled clothing, weapon and health details.
