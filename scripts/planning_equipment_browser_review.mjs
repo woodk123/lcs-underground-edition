@@ -540,13 +540,15 @@ async function dailyPlanJourney() {
   // View squad is an original source selection, not a read-only preview. Pin
   // its exact active-squad delta, then restore it before later comparisons.
   board = await openBoard();
+  await chooseFilter(/^All \(/, board); await boardQuery(board, 'Quinn Scout');
+  await boardSelect(board, 'Quinn Scout');
   await click(`View ${queuedSquad.name} squad`, board); await board.waitFor({ state: 'hidden' });
   await wait(/Visit queued/);
   const selectedSquad = await snapshot('queued-squad-view');
   const selectedExpected = structuredClone(initial.campaign); selectedExpected.activeSquadId = queuedSquad.id;
   assert.deepEqual(selectedSquad.campaign, selectedExpected, 'View squad changes only the original active squad selection.');
   await capture('queued-squad-source-view');
-  await click(new RegExp(`^Select squad ${escape(prepared.lcs.squads[0].name)}(?:$|\\s)`));
+  await click(new RegExp(`(?:^|\\s)Select squad ${escape(prepared.lcs.squads[0].name)}(?:$|\\s)`));
   await wait(/Save & exit/);
   assert.deepEqual((await snapshot('restored-equipment-squad')).campaign, initial.campaign,
     'Restoring the active squad preserves the queued departure and every other field.');
