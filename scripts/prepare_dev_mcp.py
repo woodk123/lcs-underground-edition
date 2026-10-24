@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tomllib
@@ -36,11 +37,20 @@ def source_identity(root: Path) -> dict:
     return {'commit': commit, 'inputs_sha256': checksum.hexdigest()}
 
 
+def valid_source(source: object) -> bool:
+    return isinstance(source, dict) and all(
+        isinstance(source.get(key), str) and re.fullmatch(pattern, source[key])
+        for key, pattern in (('commit', r'[0-9a-f]{40}'), ('inputs_sha256', r'[0-9a-f]{64}')))
+
+
 def cached_build(path: Path, source: dict, web: Path) -> dict | None:
     try:
         info = json.loads(path.read_text(encoding='utf-8'))
         if (not isinstance(info, dict) or info.get('schema') != 1 or info.get('status') != 'ready'
-                or info.get('source') != source or info.get('web_root') != str(web)
+                or not valid_source(source) or not valid_source(info.get('source'))
+                or info['source']['inputs_sha256'] != source['inputs_sha256']
+                or info.get('build_id') != f'{info["source"]["commit"][:8]}-{info["source"]["inputs_sha256"][:8]}'
+                or info.get('web_root') != str(web)
                 or info.get('devtools') is not True):
             return None
         if not all((web / name).is_file() for name in ('main.dart.js', 'index.html', 'sw.js')):
@@ -143,8 +153,8 @@ def prepare(args) -> dict:
     manifest = output / 'build.json'
     info = None if args.rebuild else cached_build(manifest, source, web)
     if info:
-        print(f'Reusing verified development build {info["build_id"]}', flush=True)
-        return info
+        print(f'Reusing verified development build {info["build_id"]}; inputs match checkout {source["commit"][:8]}.', flush=True)
+        return {**info, 'checked_source': source}
     write_json(manifest, {'schema': 1, 'status': 'building', 'source': source})
     run([str(flutter), 'pub', 'get'], ROOT / 'upstream')
     run([str(dart), 'run', 'build_runner', 'build'], ROOT / 'upstream')
@@ -161,30 +171,32 @@ def prepare(args) -> dict:
             'build_id': build_id, 'toolchain': pin, 'web_root': str(web),
             'main_js_sha256': digest(web / 'main.dart.js'), 'payload_hashes': file_hashes(web)}
     write_json(manifest, info)
-    return info
+    return {**info, 'checked_source': source}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', default='.local/dev-mcp')
-    parser.add_argument('--rebuild', action='store_true', help='Rebuild even when source and payload hashes match.')
+    parser.add_argument('--rebuild', action='store_true', help='Rebuild even when input and payload hashes match.')
     parser.add_argument('--configure-codex', action='store_true', help='Add this MCP to the local project Codex config.')
-    parser.add_argument('--check', action='store_true', help='Read-only freshness check; print JSON or fail without building.')
+    parser.add_argument('--check', action='store_true', help='Read-only input/payload check; print compiled and checked source identities without building.')
     args = parser.parse_args()
     try:
         if args.check:
             output = (ROOT / args.out).resolve()
-            info = cached_build(output / 'build.json', source_identity(ROOT), output / 'web')
+            source = source_identity(ROOT)
+            info = cached_build(output / 'build.json', source, output / 'web')
             if not info:
                 raise ValueError('Development MCP build is missing, stale or modified; run python scripts/prepare_dev_mcp.py.')
-            print(json.dumps({key: info[key] for key in ('web_root', 'build_id', 'main_js_sha256', 'source')}))
+            print(json.dumps({**{key: info[key] for key in ('web_root', 'build_id', 'main_js_sha256', 'source')},
+                              'checked_source': source}))
             return
         info = prepare(args)
         if args.configure_codex:
             print(f'Configured {configure_codex(ROOT)}; reconnect MCP servers or start a new chat to load it.')
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         parser.exit(1, f'{error}\n')
-    print(json.dumps({key: info[key] for key in ('web_root', 'build_id', 'main_js_sha256')}, indent=2))
+    print(json.dumps({key: info[key] for key in ('web_root', 'build_id', 'main_js_sha256', 'source', 'checked_source')}, indent=2))
     print('Ready. Start the MCP server with: node scripts/dev_mcp/server.mjs')
 
 

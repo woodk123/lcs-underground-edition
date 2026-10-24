@@ -1,8 +1,11 @@
 """The development build cache must reject changed source and tampered artifacts."""
 import json
+import io
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 import tempfile
 import subprocess
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -22,6 +25,7 @@ class DevelopmentBuildTests(unittest.TestCase):
         self.source = {'commit': 'a' * 40, 'inputs_sha256': 'b' * 64}
         self.info = {'schema': 1, 'status': 'ready', 'devtools': True,
                      'source': self.source, 'web_root': str(self.web),
+                     'build_id': 'aaaaaaaa-bbbbbbbb',
                      'main_js_sha256': digest(self.web / 'main.dart.js'),
                      'payload_hashes': file_hashes(self.web)}
         self.path = self.web.parent / 'build.json'
@@ -30,11 +34,106 @@ class DevelopmentBuildTests(unittest.TestCase):
     def write(self):
         self.path.write_text(json.dumps(self.info))
 
-    def test_unchanged_build_reuses_but_source_changes_invalidate(self):
+    def test_unchanged_build_reuses_but_malformed_or_changed_inputs_invalidate(self):
         self.assertEqual(prepare.cached_build(self.path, self.source, self.web), self.info)
         for key in self.source:
             changed = {**self.source, key: 'changed'}
             self.assertIsNone(prepare.cached_build(self.path, changed, self.web))
+        changed = {'commit': 'c' * 40, 'inputs_sha256': 'b' * 8 + 'c' * 56}
+        self.assertIsNone(prepare.cached_build(self.path, changed, self.web), 'Compare the full fingerprint, not its build-ID prefix.')
+
+    def test_commit_only_change_preserves_compiled_identity_and_manifest_bytes(self):
+        before = self.path.read_bytes()
+        current = {**self.source, 'commit': 'c' * 40}
+        reused = prepare.cached_build(self.path, current, self.web)
+        self.assertEqual(reused, self.info)
+        self.assertEqual(reused['source'], self.source)
+        self.assertNotEqual(reused['source']['commit'], current['commit'])
+        self.assertEqual(self.path.read_bytes(), before)
+
+    def test_normal_cli_retains_existing_fields_and_reports_both_sources(self):
+        current = {**self.source, 'commit': 'c' * 40}
+        output = io.StringIO()
+        with patch.object(prepare, 'prepare', return_value={**self.info, 'checked_source': current}), \
+                patch.object(sys, 'argv', ['prepare_dev_mcp.py']), redirect_stdout(output):
+            prepare.main()
+        summary, _ = json.JSONDecoder().raw_decode(output.getvalue())
+        self.assertEqual(summary, {
+            **{key: self.info[key] for key in ('web_root', 'build_id', 'main_js_sha256', 'source')},
+            'checked_source': current})
+
+    def test_missing_malformed_and_inconsistent_original_identities_invalidate(self):
+        for source in (None, [], {}, {'commit': 'a' * 40}, {'inputs_sha256': 'b' * 64},
+                       {'commit': 7, 'inputs_sha256': 'b' * 64},
+                       {'commit': 'a' * 40, 'inputs_sha256': None},
+                       {'commit': 'a' * 39, 'inputs_sha256': 'b' * 64},
+                       {'commit': 'a' * 40, 'inputs_sha256': 'b' * 63}):
+            with self.subTest(source=source):
+                self.assertIsNone(prepare.cached_build(self.path, source, self.web))
+                self.info['source'] = source
+                self.write()
+                self.assertIsNone(prepare.cached_build(self.path, self.source, self.web))
+                self.assertIsNone(prepare.cached_build(self.path, source, self.web))
+                self.info['source'] = self.source
+                self.write()
+        for build_id in (None, 1, '', 'changed', 'cccccccc-bbbbbbbb', 'aaaaaaaa-cccccccc'):
+            with self.subTest(build_id=build_id):
+                self.info['build_id'] = build_id
+                self.write()
+                self.assertIsNone(prepare.cached_build(self.path, self.source, self.web))
+
+    def test_real_non_compiled_commit_reuses_and_check_reports_both_sources_without_writes(self):
+        def git(*arguments):
+            return subprocess.run(['git', '-C', str(self.root), *arguments], check=True,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (self.root / '.gitignore').write_text('.local/\n*.g.dart\n')
+        source = self.root / 'upstream/lib/model.dart'
+        source.parent.mkdir(parents=True)
+        source.write_text("part 'model.g.dart';\n")
+        source.with_name('model.g.dart').write_text('unchanged ignored serializer')
+        readme = self.root / 'README.md'
+        readme.write_text('first documentation')
+        git('init', '-q')
+        git('add', '.')
+        git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'compiled fixture')
+        compiled = prepare.source_identity(self.root)
+        self.info['source'] = compiled
+        self.info['build_id'] = f'{compiled["commit"][:8]}-{compiled["inputs_sha256"][:8]}'
+        self.write()
+        readme.write_text('updated documentation')
+        for name in ('upstream/test/model_test.dart', 'scripts/browser_review.mjs'):
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('non-compiled check change')
+        git('add', '.')
+        git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'docs and checks only')
+        current = prepare.source_identity(self.root)
+        self.assertNotEqual(current['commit'], compiled['commit'])
+        self.assertEqual(current['inputs_sha256'], compiled['inputs_sha256'])
+        before = {path.relative_to(self.root): path.read_bytes() for path in self.root.rglob('*') if path.is_file()}
+        self.assertEqual(prepare.cached_build(self.path, current, self.web), self.info)
+        output = io.StringIO()
+        with patch.object(prepare, 'ROOT', self.root), \
+                patch.object(sys, 'argv', ['prepare_dev_mcp.py', '--check']), redirect_stdout(output):
+            prepare.main()
+        self.assertEqual(json.loads(output.getvalue()), {
+            **{key: self.info[key] for key in ('web_root', 'build_id', 'main_js_sha256', 'source')},
+            'checked_source': current})
+        self.assertEqual({path.relative_to(self.root): path.read_bytes()
+                          for path in self.root.rglob('*') if path.is_file()}, before)
+        source.write_text('runtime input changed after the docs commit')
+        self.assertIsNone(prepare.cached_build(self.path, prepare.source_identity(self.root), self.web))
+        before = {path.relative_to(self.root): path.read_bytes() for path in self.root.rglob('*') if path.is_file()}
+        errors = io.StringIO()
+        with patch.object(prepare, 'ROOT', self.root), patch.object(prepare, 'run') as commands, \
+                patch.object(sys, 'argv', ['prepare_dev_mcp.py', '--check']), redirect_stderr(errors):
+            with self.assertRaises(SystemExit) as rejected:
+                prepare.main()
+        self.assertEqual(rejected.exception.code, 1)
+        self.assertIn('missing, stale or modified', errors.getvalue())
+        commands.assert_not_called()
+        self.assertEqual({path.relative_to(self.root): path.read_bytes()
+                          for path in self.root.rglob('*') if path.is_file()}, before)
 
     def test_modified_extra_missing_and_incomplete_outputs_invalidate(self):
         for name in ('index.html', 'main.dart.js', 'sw.js', 'extra.txt'):
@@ -96,6 +195,7 @@ class DevelopmentBuildTests(unittest.TestCase):
         subprocess.run(['git', '-C', str(self.root), '-c', 'user.name=Test',
                         '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'fixture'], check=True)
         self.info['source'] = original = prepare.source_identity(self.root)
+        self.info['build_id'] = f'{original["commit"][:8]}-{original["inputs_sha256"][:8]}'
         self.write()
         self.assertEqual(prepare.cached_build(self.path, original, self.web), self.info)
         for path in recipes:
@@ -124,6 +224,7 @@ class DevelopmentBuildTests(unittest.TestCase):
                                            '--others', '--ignored', '--exclude-standard'], text=True)
         self.assertIn('upstream/lib/model.g.dart', ignored)
         self.info['source'] = original = prepare.source_identity(self.root)
+        self.info['build_id'] = f'{original["commit"][:8]}-{original["inputs_sha256"][:8]}'
         self.write()
         self.assertEqual(prepare.cached_build(self.path, original, self.web), self.info)
         generated.write_text('edited generated serializer')

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { EventEmitter } from 'node:events';
-import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import test from 'node:test';
@@ -14,6 +14,21 @@ async function fixture(t) {
   await writeFile(resolve(root, 'web/index.html'), '<html>Test build</html>');
   await writeFile(resolve(root, 'web/main.dart.js'), 'test compiled bytes');
   return root;
+}
+
+async function preparedFixture(root, path = '.local/dev-mcp/web') {
+  const directory = resolve(root, path);
+  await mkdir(directory, { recursive: true });
+  const payload = { 'index.html': '<html>Prepared build</html>', 'main.dart.js': 'test compiled bytes', 'sw.js': 'test manifest' };
+  for (const [name, bytes] of Object.entries(payload)) await writeFile(resolve(directory, name), bytes);
+  const source = { commit: 'a'.repeat(40), inputs_sha256: 'b'.repeat(64) };
+  const prepared = { schema: 1, status: 'ready', devtools: true, source,
+    build_id: 'aaaaaaaa-bbbbbbbb', web_root: await realpath(directory),
+    main_js_sha256: createHash('sha256').update(payload['main.dart.js']).digest('hex'),
+    payload_hashes: Object.fromEntries(Object.entries(payload).map(([name, bytes]) => [name, createHash('sha256').update(bytes).digest('hex')])) };
+  const manifest = resolve(directory, '../build.json');
+  await writeFile(manifest, JSON.stringify(prepared));
+  return { prepared, manifest, validation: { ...prepared, checked_source: { ...source, commit: 'c'.repeat(40) } } };
 }
 
 function fakeBrowser({ frames, download } = {}) {
@@ -88,6 +103,9 @@ test('session identifies actual loaded build, preserves inspection, serializes m
   const session = new DevelopmentSession({ root, launchBrowser: async () => fake.browser });
   t.session = session;
   const started = await session.start({ webRoot: 'web', output: 'reports/session' });
+  assert.equal(started.sourceFreshness, 'not_checked_custom_build');
+  assert.equal(started.compiledSource, null);
+  assert.equal(started.checkedSource, null);
   assert.equal(started.mainJsSha256, createHash('sha256').update('test compiled bytes').digest('hex'));
   assert.equal(fake.browser.options.serviceWorkers, 'block');
   const before = await session.inspect({ scope: 'campaign' });
@@ -503,6 +521,95 @@ test('cached default build must pass current-source validation before browser la
   });
   await assert.rejects(session.start({}), /Source changed/);
   assert.equal(checks, 1); assert.equal(launches, 0);
+});
+
+test('input-equivalent checkout retains original compiled identity and separate checked source in all session evidence', async t => {
+  const root = await fixture(t), { prepared, manifest, validation } = await preparedFixture(root);
+  const originalManifest = await readFile(manifest);
+  const fake = fakeBrowser({ frames: [{ build: { source: prepared.build_id } }] });
+  const session = t.session = new DevelopmentSession({ root, validatePrepared: async () => validation, launchBrowser: async () => fake.browser });
+  const started = await session.start({ output: 'reports/equivalent-inputs' });
+  assert.equal(started.sourceFreshness, 'verified_current_inputs');
+  assert.deepEqual(started.compiledSource, prepared.source);
+  assert.deepEqual(started.checkedSource, validation.checked_source);
+  assert.equal(started.observation.build.source, prepared.build_id);
+  await session.close();
+  const report = JSON.parse(await readFile(resolve(started.evidenceDirectory, 'session.json')));
+  assert.equal(report.sourceFreshness, 'verified_current_inputs');
+  assert.deepEqual(report.preparedBuild, prepared);
+  assert.deepEqual(report.compiledSource, prepared.source);
+  assert.deepEqual(report.checkedSource, validation.checked_source);
+  assert.equal(report.build.source, prepared.build_id);
+  const trace = (await readFile(resolve(started.evidenceDirectory, 'trace.jsonl'), 'utf8')).trim().split('\n').map(JSON.parse);
+  const event = trace.find(item => item.operation === 'session_start');
+  assert.deepEqual(event.compiledSource, prepared.source);
+  assert.deepEqual(event.checkedSource, validation.checked_source);
+  assert.deepEqual(await readFile(manifest), originalManifest);
+});
+
+test('explicit historical custom build keeps its identity without claiming checked-current inputs', async t => {
+  const root = await fixture(t), { prepared, manifest } = await preparedFixture(root, 'web');
+  const before = await readFile(manifest);
+  const fake = fakeBrowser({ frames: [{ build: { source: prepared.build_id } }] });
+  const session = t.session = new DevelopmentSession({ root,
+    validatePrepared: async () => { throw Error('Custom historical build must not be checked against current source.'); },
+    launchBrowser: async () => fake.browser });
+  const started = await session.start({ webRoot: 'web', output: 'reports/historical' });
+  assert.equal(started.sourceFreshness, 'not_checked_custom_build');
+  assert.deepEqual(started.compiledSource, prepared.source);
+  assert.equal(started.checkedSource, null);
+  assert.equal(started.observation.build.source, prepared.build_id);
+  assert.deepEqual(await readFile(manifest), before);
+});
+
+test('invalid default source validation cannot become an unchecked historical session', async t => {
+  const variants = [
+    ['missing response', () => null],
+    ['missing current identity', value => ({ ...value, checked_source: undefined })],
+    ['malformed original identity', value => ({ ...value, source: { ...value.source, commit: 'bad' } })],
+    ['malformed current identity', value => ({ ...value, checked_source: {} })],
+    ['different full inputs', value => ({ ...value, checked_source: { ...value.checked_source, inputs_sha256: 'b'.repeat(8) + 'd'.repeat(56) } })],
+    ['different original build ID', value => ({ ...value, build_id: 'cccccccc-bbbbbbbb' })],
+    ['changed JavaScript', value => ({ ...value, main_js_sha256: '0'.repeat(64) })],
+    ['different directory', value => ({ ...value, web_root: resolve(value.web_root, '../elsewhere') })],
+  ];
+  for (const [name, change] of variants) await t.test(name, async t => {
+    const root = await fixture(t), { validation } = await preparedFixture(root);
+    let launches = 0;
+    const session = t.session = new DevelopmentSession({ root, validatePrepared: async () => change(validation),
+      launchBrowser: async () => { launches++; throw Error('Invalid validation must not launch a browser.'); } });
+    await assert.rejects(session.start({}), /Invalid prepared|inputs do not match|identity is inconsistent|changed during validation/);
+    assert.equal(launches, 0);
+  });
+});
+
+test('prepared metadata changed or removed after validation is rejected before browser startup', async t => {
+  for (const removed of [false, true]) await t.test(removed ? 'removed' : 'changed', async t => {
+    const root = await fixture(t), { prepared, manifest, validation } = await preparedFixture(root);
+    let launches = 0;
+    const session = t.session = new DevelopmentSession({ root, validatePrepared: async () => {
+      if (removed) await rm(manifest);
+      else await writeFile(manifest, JSON.stringify({ ...prepared, source: { ...prepared.source, commit: 'd'.repeat(40) } }));
+      return validation;
+    }, launchBrowser: async () => { launches++; throw Error('Changed metadata must not launch a browser.'); } });
+    await assert.rejects(session.start({ output: 'reports/changed-metadata' }), /metadata changed|metadata disappeared/);
+    assert.equal(launches, 0);
+  });
+});
+
+test('observed bridge build ID must match prepared metadata even when JavaScript hashes match', async t => {
+  const root = await fixture(t), { prepared, validation } = await preparedFixture(root);
+  const fake = fakeBrowser({ frames: [{ build: { source: 'dddddddd-bbbbbbbb' } }] });
+  const session = t.session = new DevelopmentSession({ root, validatePrepared: async () => validation, launchBrowser: async () => fake.browser });
+  await assert.rejects(session.start({ output: 'reports/wrong-bridge-id' }), /Observed bridge build ID does not match/);
+  assert.ok(fake.browser.closed && fake.context.closed);
+  assert.equal(session.server, undefined);
+  const report = JSON.parse(await readFile(resolve(root, 'reports/wrong-bridge-id/session.json')));
+  assert.equal(report.status, 'failed');
+  assert.equal(report.build.source, 'dddddddd-bbbbbbbb');
+  assert.equal(report.preparedBuild.build_id, prepared.build_id);
+  assert.deepEqual(report.compiledSource, prepared.source);
+  assert.deepEqual(report.checkedSource, validation.checked_source);
 });
 
 test('a root path alias cannot bypass cached default source validation', async t => {

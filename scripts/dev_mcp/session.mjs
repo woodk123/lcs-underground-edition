@@ -16,6 +16,9 @@ const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const contained = (root, path) => { const part = relative(root, path); return part !== '..' && !part.startsWith(`..${sep}`) && !isAbsolute(part); };
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const runFile = promisify(execFile);
+const validSource = value => value && typeof value === 'object' && !Array.isArray(value)
+  && typeof value.commit === 'string' && /^[0-9a-f]{40}$/.test(value.commit)
+  && typeof value.inputs_sha256 === 'string' && /^[0-9a-f]{64}$/.test(value.inputs_sha256);
 
 export class BridgeError extends Error {
   constructor(error, observation) { super(error.message); this.code = error.code; this.observation = observation; }
@@ -164,14 +167,23 @@ export class DevelopmentSession {
       let defaultWebRoot;
       try { defaultWebRoot = await realpath(resolve(this.root, '.local/dev-mcp/web')); }
       catch (error) { if (error.code !== 'ENOENT') throw error; }
-      const currentPrepared = defaultWebRoot && relative(defaultWebRoot, webRoot) === ''
-        ? await this.validatePrepared(webRoot) : undefined;
+      const isDefaultBuild = defaultWebRoot && relative(defaultWebRoot, webRoot) === '';
+      const currentPrepared = isDefaultBuild ? await this.validatePrepared(webRoot) : undefined;
       assert.ok(!this.disconnected, 'MCP client disconnected.');
+      if (isDefaultBuild) {
+        assert.ok(currentPrepared && validSource(currentPrepared.source) && validSource(currentPrepared.checked_source), 'Invalid prepared source identities. Run prepare_dev_mcp.py.');
+        assert.equal(currentPrepared.source.inputs_sha256, currentPrepared.checked_source.inputs_sha256, 'Prepared build inputs do not match the checked checkout.');
+        assert.equal(currentPrepared.build_id, `${currentPrepared.source.commit.slice(0, 8)}-${currentPrepared.source.inputs_sha256.slice(0, 8)}`, 'Prepared build identity is inconsistent.');
+        assert.equal(currentPrepared.main_js_sha256, expected, 'Prepared build changed during validation.');
+        assert.ok(typeof currentPrepared.web_root === 'string' && isAbsolute(currentPrepared.web_root)
+          && relative(webRoot, resolve(currentPrepared.web_root)) === '', 'Prepared build directory changed during validation.');
+      }
       const requested = options.output ?? `reports/dev-mcp/${new Date().toISOString().replaceAll(':', '-')}-${randomUUID().slice(0, 8)}`;
       this.output = await evidenceDirectory(this.root, requested);
       assert.ok(!this.disconnected, 'MCP client disconnected.');
       this.report = { schema: 1, status: 'starting', started: new Date().toISOString(), webRoot,
-        sourceFreshness: currentPrepared ? 'verified_current_checkout' : 'not_checked_custom_build',
+        sourceFreshness: currentPrepared ? 'verified_current_inputs' : 'not_checked_custom_build',
+        compiledSource: currentPrepared?.source ?? null, checkedSource: currentPrepared?.checked_source ?? null,
         mainJsSha256: expected, loadedMainJsHashes: [], failures: [], pageErrors: [], consoleErrors: [], failedRequests: [],
         downloads: [], downloadErrors: [],
         preparedFixture: options.fixture ? resolve(this.root, options.fixture) : null,
@@ -181,9 +193,16 @@ export class DevelopmentSession {
         if (resolve(prepared.web_root ?? '') === webRoot) {
           assert.equal(prepared.status, 'ready', 'Prepared build is not ready. Run prepare_dev_mcp.py.');
           assert.equal(prepared.main_js_sha256, expected, 'Prepared build metadata is stale. Run prepare_dev_mcp.py.');
+          assert.ok(typeof prepared.build_id === 'string' && prepared.build_id, 'Prepared build identity is missing.');
+          if (currentPrepared) {
+            assert.deepEqual(prepared.source, currentPrepared.source, 'Prepared source metadata changed during validation.');
+            assert.equal(prepared.build_id, currentPrepared.build_id, 'Prepared build identity changed during validation.');
+          }
           this.report.preparedBuild = prepared;
+          this.report.compiledSource = prepared.source ?? null;
         }
       } catch (error) { if (error.code !== 'ENOENT') throw error; }
+      if (currentPrepared) assert.ok(this.report.preparedBuild, 'Prepared build metadata disappeared during validation.');
       await this._claimResource('server', serveBuild(webRoot));
       assert.ok(!this.disconnected, 'MCP client disconnected.');
       this.report.url = this.server.url;
@@ -210,13 +229,16 @@ export class DevelopmentSession {
       assert.equal(observation.bridgeVersion, 1, 'Unsupported development bridge version.');
       await verify(expected);
       this.report.build = observation.build;
+      if (this.report.preparedBuild) assert.equal(observation.build?.source, this.report.preparedBuild.build_id, 'Observed bridge build ID does not match prepared metadata.');
       if (options.fixture) { await this._importFixture(resolve(this.root, options.fixture)); observation = await this._wait({ timeoutMs: 30000 }); }
       assert.ok(!this.disconnected, 'MCP client disconnected.');
       this.report.status = 'active';
       this.report.startupElapsedMs = Math.round(performance.now() - startedAt);
-      await this._record('session_start', { build: this.report.build, mainJsSha256: expected, fixture: this.report.preparedFixture, observation, elapsedMs: this.report.startupElapsedMs });
+      await this._record('session_start', { build: this.report.build, compiledSource: this.report.compiledSource,
+        checkedSource: this.report.checkedSource, mainJsSha256: expected, fixture: this.report.preparedFixture, observation, elapsedMs: this.report.startupElapsedMs });
       await this._report();
-      return { evidenceDirectory: this.output, mainJsSha256: expected, sourceFreshness: this.report.sourceFreshness, url: this.server.url, observation };
+      return { evidenceDirectory: this.output, mainJsSha256: expected, sourceFreshness: this.report.sourceFreshness,
+        compiledSource: this.report.compiledSource, checkedSource: this.report.checkedSource, url: this.server.url, observation };
     } catch (error) {
       await this._failure('session_start', error, options);
       await this._close('failed');

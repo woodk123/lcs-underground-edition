@@ -87,15 +87,20 @@ class FlutterBootstrapTests(unittest.TestCase):
         self.assertIn('--version', calls[1])
         self.assertIn('--machine', calls[1])
 
-    def test_mcp_cold_sdk_reuses_verified_cache_without_leaking_stdout(self):
-        source = {'commit': 'b' * 40, 'inputs_sha256': 'c' * 64}
+    def cached_mcp_fixture(self, source):
         web = self.root / '.local/dev-mcp/web'
         for name in ('index.html', 'main.dart.js', 'sw.js'):
             self.put(f'.local/dev-mcp/web/{name}', name)
         info = {'schema': 1, 'status': 'ready', 'devtools': True, 'source': source,
-                'web_root': str(web), 'build_id': 'cached-fixture', 'toolchain': self.pin,
+                'web_root': str(web), 'build_id': f'{source["commit"][:8]}-{source["inputs_sha256"][:8]}',
+                'toolchain': self.pin,
                 'main_js_sha256': digest(web / 'main.dart.js'), 'payload_hashes': file_hashes(web)}
         self.put('.local/dev-mcp/build.json', info)
+        return web, info
+
+    def test_mcp_cold_sdk_reuses_verified_cache_without_leaking_stdout(self):
+        source = {'commit': 'b' * 40, 'inputs_sha256': 'c' * 64}
+        _, info = self.cached_mcp_fixture(source)
         output = io.StringIO()
         with patch.object(prepare, 'ROOT', self.root), \
                 patch.object(prepare, 'install_dependencies') as install, \
@@ -103,11 +108,50 @@ class FlutterBootstrapTests(unittest.TestCase):
                 patch.object(prepare, 'run') as game_commands, \
                 patch.object(prepare.subprocess, 'check_output', side_effect=self.query), \
                 redirect_stdout(output):
-            self.assertEqual(prepare.prepare(Namespace(out='.local/dev-mcp', rebuild=False)), info)
+            self.assertEqual(prepare.prepare(Namespace(out='.local/dev-mcp', rebuild=False)),
+                             {**info, 'checked_source': source})
         self.assert_bootstrapped()
         install.assert_called_once()
         game_commands.assert_not_called()
-        self.assertEqual(output.getvalue().strip(), 'Reusing verified development build cached-fixture')
+        self.assertEqual(output.getvalue().strip(), 'Reusing verified development build bbbbbbbb-cccccccc; inputs match checkout bbbbbbbb.')
+
+    def test_mcp_commit_only_reuse_returns_current_check_without_rewriting_artifact(self):
+        compiled = {'commit': 'b' * 40, 'inputs_sha256': 'c' * 64}
+        current = {**compiled, 'commit': 'd' * 40}
+        web, info = self.cached_mcp_fixture(compiled)
+        before = (web.parent / 'build.json').read_bytes()
+        output = io.StringIO()
+        with patch.object(prepare, 'ROOT', self.root), \
+                patch.object(prepare, 'install_dependencies'), \
+                patch.object(prepare, 'source_identity', return_value=current), \
+                patch.object(prepare, 'run') as commands, \
+                patch.object(prepare.subprocess, 'check_output', side_effect=self.query), redirect_stdout(output):
+            self.assertEqual(prepare.prepare(Namespace(out='.local/dev-mcp', rebuild=False)),
+                             {**info, 'checked_source': current})
+        commands.assert_not_called()
+        self.assertIn('build bbbbbbbb-cccccccc; inputs match checkout dddddddd', output.getvalue())
+        self.assertEqual((web.parent / 'build.json').read_bytes(), before)
+        self.assertEqual(file_hashes(web), info['payload_hashes'])
+
+    def test_mcp_forced_rebuild_generates_current_identity_and_keeps_check_out_of_manifest(self):
+        compiled = {'commit': 'b' * 40, 'inputs_sha256': 'c' * 64}
+        current = {**compiled, 'commit': 'd' * 40}
+        web, _ = self.cached_mcp_fixture(compiled)
+        with patch.object(prepare, 'ROOT', self.root), \
+                patch.object(prepare, 'install_dependencies'), \
+                patch.object(prepare, 'source_identity', return_value=current), \
+                patch.object(prepare, 'run') as commands, \
+                patch.object(prepare.subprocess, 'check_output', side_effect=self.query):
+            result = prepare.prepare(Namespace(out='.local/dev-mcp', rebuild=True))
+        self.assertEqual(commands.call_count, 4)
+        self.assertEqual(commands.call_args_list[0].args[0][1:], ['pub', 'get'])
+        self.assertEqual(commands.call_args_list[1].args[0][1:], ['run', 'build_runner', 'build'])
+        self.assertIn('--dart-define=LCS_BUILD=dddddddd-cccccccc', commands.call_args_list[2].args[0])
+        manifest = json.loads((web.parent / 'build.json').read_text())
+        self.assertEqual(manifest['source'], current)
+        self.assertEqual(manifest['build_id'], 'dddddddd-cccccccc')
+        self.assertNotIn('checked_source', manifest)
+        self.assertEqual(result, {**manifest, 'checked_source': current})
 
     def test_mcp_wrong_pin_stops_before_package_installation_or_game_commands(self):
         self.put('.tools/flutter/fake-version.json', {**self.version, 'frameworkRevision': 'wrong'})

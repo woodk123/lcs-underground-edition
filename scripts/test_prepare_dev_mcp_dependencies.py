@@ -196,7 +196,7 @@ class DependencyReadinessTests(unittest.TestCase):
             (web / name).write_text('synthetic compiled fixture ' + name)
         source = {'commit': 'a' * 40, 'inputs_sha256': 'b' * 64}
         info = {'schema': 1, 'status': 'ready', 'devtools': True, 'source': source,
-                'web_root': str(web), 'build_id': 'compiled-fixture',
+                'web_root': str(web), 'build_id': 'aaaaaaaa-bbbbbbbb',
                 'main_js_sha256': digest(web / 'main.dart.js'), 'payload_hashes': file_hashes(web)}
         write_json(self.output / 'build.json', info)
         return web, source, info
@@ -223,7 +223,8 @@ class DependencyReadinessTests(unittest.TestCase):
                 redirect_stdout(output):
             prepare.main()
         self.assertEqual(json.loads(output.getvalue()),
-                         {key: info[key] for key in ('web_root', 'build_id', 'main_js_sha256', 'source')})
+                         {**{key: info[key] for key in ('web_root', 'build_id', 'main_js_sha256', 'source')},
+                          'checked_source': source})
         self.node.assert_not_called()
         self.run.assert_not_called()
         self.assertEqual({path.relative_to(self.root): path.read_bytes()
