@@ -11,12 +11,14 @@ class OrderMechanicsDialog extends StatelessWidget {
     required this.help,
     required this.onClose,
     this.visitReadiness,
+    this.juiceHint,
     this.visitMemberNames = const [],
   });
 
   final ActivityMechanics help;
   final VoidCallback onClose;
   final SquadReadiness? visitReadiness;
+  final Widget? juiceHint;
   final List<String> visitMemberNames;
 
   @override
@@ -34,6 +36,7 @@ class OrderMechanicsDialog extends StatelessWidget {
               Text(help.summary),
               const SizedBox(height: 8),
               Text(help.timing),
+              ?juiceHint,
               if (help.factors.isNotEmpty) Text('Uses: ${help.factors}'),
               if (help.cost.isNotEmpty) Text('Cost: ${help.cost}'),
               if (help.requirements.isNotEmpty)

@@ -71,6 +71,40 @@ Future<void> mount(
 }
 
 void main() {
+  testWidgets('map labels wrap at words and retain full source inspection', (
+    tester,
+  ) async {
+    const place = JournalMapPlace(
+      id: 'district:east',
+      name: 'Downtown Seattle (needs car)',
+      mapLabel: 'Downtown (needs car)',
+      kind: 'district',
+      enabled: true,
+      queued: true,
+    );
+    final actions = <String>[];
+    await mount(tester, data: [place], textScale: 1.5, onSelect: actions.add);
+    final words = tester.widgetList<Text>(
+      find.descendant(of: block(place.id), matching: find.byType(Text)),
+    );
+    expect(words.map((word) => word.data), ['Downtown', '(needs', 'car)']);
+    for (final word in words) {
+      expect(word.softWrap, isFalse);
+      expect(word.maxLines, 1);
+      expect(word.overflow, TextOverflow.ellipsis);
+    }
+    expect(
+      find.byTooltip('${place.name}. district. Queued destination'),
+      findsOneWidget,
+    );
+    await tester.tap(block(place.id));
+    expect(actions, [place.id]);
+    await tester.tap(find.byTooltip('Show location index'));
+    await tester.pumpAndSettle();
+    expect(find.text(place.name), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('only supplied known places become selectable blocks', (
     tester,
   ) async {

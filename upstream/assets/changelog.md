@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## Underground Edition 0.5.2 — 2026-10-24
+
+* Distinguish prepared Orders changes from current assignments, with costs, income estimates and key warnings ahead of confirmation. Keep full calculations in Details.
+* Give crew names and assignments more room, and highlight health and availability problems in the roster and Daily Plan without repeating healthy status text.
+* Keep city map labels together at word boundaries and shorten redundant city names, with full names retained for inspection.
+
 ## Underground Edition 0.5.1 — 2026-10-24
 
 * Use compact crew headers in shorter journal windows, with clearly labelled Cancel and Back controls for orders.

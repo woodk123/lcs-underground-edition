@@ -13,12 +13,9 @@ class OrganisationOrderCardData {
     required this.timing,
     this.previousOrder,
     this.currentAssignment,
-    this.showAssignedOrderHint = false,
-    this.juiceHint,
     this.travelNotice,
     this.readinessSummary,
     this.calculationResult,
-    this.factors,
     this.cost,
     this.risk,
     this.unavailableReason,
@@ -32,12 +29,9 @@ class OrganisationOrderCardData {
   final String timing;
   final Widget? previousOrder;
   final String? currentAssignment;
-  final bool showAssignedOrderHint;
-  final Widget? juiceHint;
   final String? travelNotice;
   final String? readinessSummary;
   final String? calculationResult;
-  final String? factors;
   final String? cost;
   final String? risk;
   final String? unavailableReason;
@@ -79,6 +73,10 @@ class OrganisationOrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final summaryStyle = JournalPalette.small.copyWith(
+      fontSize: 11,
+      height: 1.2,
+    );
     final heading = <Widget>[
       Text(
         data.title,
@@ -146,72 +144,68 @@ class OrganisationOrderCard extends StatelessWidget {
                 children: [
                   if (scrollHeading) ...heading,
                   ?data.previousOrder,
-                  Text(data.timing, style: JournalPalette.small),
                   if (data.currentAssignment case final assignment?)
                     Text(
                       assignment,
                       key: const ValueKey('journal-assigned-order'),
-                      style: JournalPalette.small,
+                      style: summaryStyle,
                     ),
-                  if (data.showAssignedOrderHint)
-                    const Text(
-                      'This describes the assigned order. Prepare a choice to review it.',
-                      style: JournalPalette.small,
-                    ),
-                  ?data.juiceHint,
-                  if (data.travelNotice case final notice?)
-                    Text(
-                      notice,
-                      key: const ValueKey('journal-travel-notices'),
-                      style: JournalPalette.small,
-                    ),
-                  if (data.readinessSummary case final summary?) ...[
-                    Text(
-                      'Readiness: $summary',
-                      key: const ValueKey('journal-readiness-summary'),
-                      style: JournalPalette.small,
-                    ),
-                    TextButton(
-                      key: const ValueKey('journal-review-readiness'),
-                      onPressed: onDetails,
-                      child: const Text(
-                        'Review weapons, ammunition and medical support',
-                      ),
-                    ),
-                  ],
                   if (data.calculationResult case final result?)
                     Text(
                       result,
                       key: const ValueKey('journal-calculation-result'),
-                      style: JournalPalette.small.copyWith(
-                        fontWeight: FontWeight.w700,
+                      style: summaryStyle.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  if (data.cost case final cost?)
+                    Text(
+                      'Cost: $cost',
+                      key: const ValueKey('journal-order-cost'),
+                      style: summaryStyle.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  if (data.travelNotice case final notice?)
+                    Text(
+                      notice,
+                      key: const ValueKey('journal-travel-notices'),
+                      style: summaryStyle.copyWith(
+                        color: JournalPalette.danger,
                       ),
                     ),
-                  if (data.factors case final factors?)
-                    Text('Uses: $factors', style: JournalPalette.small),
-                  if (data.cost case final cost?)
-                    Text('Cost: $cost', style: JournalPalette.small),
+                  if (data.readinessSummary case final summary?)
+                    Text(
+                      'Readiness: $summary',
+                      key: const ValueKey('journal-readiness-summary'),
+                      style: summaryStyle,
+                    ),
                   if (data.risk case final risk?)
                     Text(
                       risk,
-                      style: JournalPalette.small.copyWith(
+                      key: const ValueKey('journal-order-risk'),
+                      style: summaryStyle.copyWith(
                         color: JournalPalette.danger,
                       ),
                     ),
                   if (data.unavailableReason case final reason?)
                     Text(
                       reason,
-                      style: JournalPalette.small.copyWith(
+                      style: summaryStyle.copyWith(
                         color: JournalPalette.danger,
                       ),
                     ),
                   if (data.destinationUnavailableReason case final reason?)
                     Text(
                       reason,
-                      style: JournalPalette.small.copyWith(
+                      style: summaryStyle.copyWith(
                         color: JournalPalette.danger,
                       ),
                     ),
+                  Text(
+                    data.timing,
+                    key: const ValueKey('journal-order-timing'),
+                    style: JournalPalette.small.copyWith(
+                      fontSize: 11,
+                      height: 1.2,
+                    ),
+                  ),
                 ],
               ),
             ),

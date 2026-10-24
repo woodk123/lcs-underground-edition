@@ -204,7 +204,7 @@ async function runScenario({ name, viewport, compact, classic }) {
       for (const command of opening) await key(command);
       await wait(/Choose a task/);
       await click(/^Prepare .*Make and Sell Art/);
-      await wait(/Prepared, awaiting confirmation|Prepared · awaiting confirmation/);
+      await wait(/Prepared, awaiting confirmation|Prepared change · confirm to assign/);
       assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 1);
       await key('Alt+w');
       assert.equal(await page.getByRole('button', { name: 'Confirm order', exact: true }).count(), 1,

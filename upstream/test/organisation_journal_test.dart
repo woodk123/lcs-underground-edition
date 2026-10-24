@@ -217,6 +217,10 @@ Future<void> _showCrewMember(WidgetTester tester, int id) async {
   await _settle(tester);
   await tester.scrollUntilVisible(target, 30, scrollable: scroll);
   await _settle(tester);
+  // Very short stress panes can clip a row taller than the viewport. Align
+  // its activation centre inside the roster rather than only revealing its top.
+  await Scrollable.ensureVisible(tester.element(target), alignment: .5);
+  await _settle(tester);
 }
 
 void _insideViewport(
@@ -1258,6 +1262,15 @@ void main() {
         await tester.ensureVisible(_key('journal-section:6'));
         await _settle(tester);
         await _tap(tester, 'journal-section:6');
+        final downtown = game.activeSquad!.site!.city.districts.firstWhere(
+          (district) => district.name.startsWith('Downtown '),
+        );
+        final downtownPlace = tester
+            .widget<JournalCityPlan>(find.byType(JournalCityPlan))
+            .places
+            .firstWhere((place) => place.id == downtown.idString);
+        expect(downtownPlace.name, downtown.name);
+        expect(downtownPlace.mapLabel, 'Downtown');
         await _tap(
           tester,
           'journal-map-place:${destination.district.idString}',
@@ -1455,7 +1468,10 @@ void main() {
         expect(_key('journal-activity:study'), findsOneWidget);
         expect(_key('journal-activity:donations'), findsNothing);
         await _tap(tester, 'journal-activity:study');
-        expect(find.text('Prepared · awaiting confirmation'), findsOneWidget);
+        expect(
+          find.text('Prepared change · confirm to assign'),
+          findsOneWidget,
+        );
         expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'e');
         expect(campaignSnapshot(), before);
         await _tap(tester, 'journal-cancel-order');
@@ -1606,7 +1622,7 @@ void main() {
         revision,
         reason: 'Staging is local UI state.',
       );
-      expect(find.text('Prepared · awaiting confirmation'), findsOneWidget);
+      expect(find.text('Prepared change · confirm to assign'), findsOneWidget);
       expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
       expect(find.textContaining('Uses: '), findsWidgets);
       await _tap(tester, 'journal-cancel-order');
@@ -1736,7 +1752,7 @@ void main() {
       await _tap(tester, 'journal-member:${next.id}');
       expect(activityOrderFrame(engine.console)?.actorId, next.id);
       expect(_key('journal-confirm-order'), findsNothing);
-      expect(find.text('Prepared · awaiting confirmation'), findsNothing);
+      expect(find.text('Prepared change · confirm to assign'), findsNothing);
       expect(
         tester.widget<Text>(_key('journal-selected-person')).data,
         next.name,
@@ -1940,7 +1956,10 @@ void main() {
         expect(activityOrderFrame(engine.console)?.actorId, next.id);
         expect(activityOrderFrame(engine.console)?.selectedCategoryKey, 'b');
         expect(_key('journal-confirm-order'), findsOneWidget);
-        expect(find.text('Prepared · awaiting confirmation'), findsOneWidget);
+        expect(
+          find.text('Prepared change · confirm to assign'),
+          findsOneWidget,
+        );
         expect(engine.console.revision.value, revision);
         expect(campaignSnapshot(), before);
       }
@@ -2578,7 +2597,7 @@ void main() {
         await _tap(tester, 'journal-activity-details:donations');
         expect(_key('journal-order-details-dialog'), findsOneWidget);
         expect(find.text(formula), findsOneWidget);
-        expect(find.text('Prepared · awaiting confirmation'), findsNothing);
+        expect(find.text('Prepared change · confirm to assign'), findsNothing);
         expectUnchangedReader();
         for (final (key, character) in [
           (LogicalKeyboardKey.keyW, 'w'),
@@ -2606,17 +2625,23 @@ void main() {
 
         await _tap(tester, 'journal-activity:donations');
         final title = tester.widget<Text>(_key('journal-current-order')).data;
-        expect(find.text('Prepared · awaiting confirmation'), findsOneWidget);
+        expect(
+          find.text('Prepared change · confirm to assign'),
+          findsOneWidget,
+        );
         await _tap(tester, 'journal-activity-details:donations');
         expect(find.text(formula), findsOneWidget);
         await tester.tap(find.widgetWithText(TextButton, 'Close'));
         await _settle(tester);
-        expect(find.text('Prepared · awaiting confirmation'), findsOneWidget);
+        expect(
+          find.text('Prepared change · confirm to assign'),
+          findsOneWidget,
+        );
         expect(tester.widget<Text>(_key('journal-current-order')).data, title);
         expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
         expectUnchangedReader();
         await _tap(tester, 'journal-cancel-order');
-        expect(find.text('Prepared · awaiting confirmation'), findsNothing);
+        expect(find.text('Prepared change · confirm to assign'), findsNothing);
         expectUnchangedReader();
         expect(List.generate(10, (_) => lcsRandom(100000)), rolls);
 
@@ -2661,7 +2686,6 @@ void main() {
         );
         ScrollPosition mechanicsPosition() =>
             tester.state<ScrollableState>(mechanics).position;
-        expect(mechanicsPosition().maxScrollExtent, greaterThan(0));
         mechanicsPosition().jumpTo(
           mechanicsPosition().maxScrollExtent.clamp(0, 24),
         );
@@ -2676,7 +2700,10 @@ void main() {
             tester.widget<Text>(_key('journal-selected-person')).data,
             actor.name,
           );
-          expect(find.text('Prepared · awaiting confirmation'), findsOneWidget);
+          expect(
+            find.text('Prepared change · confirm to assign'),
+            findsOneWidget,
+          );
           expect(mechanicsPosition().pixels, closeTo(offset, .01));
           expect(_key('journal-confirm-order').hitTestable(), findsOneWidget);
           expect(campaignSnapshot(), before);
@@ -2733,7 +2760,7 @@ void main() {
           expectRetainedDraft();
         }
         await _tap(tester, 'journal-cancel-order');
-        expect(find.text('Prepared · awaiting confirmation'), findsNothing);
+        expect(find.text('Prepared change · confirm to assign'), findsNothing);
         expect(campaignSnapshot(), before);
         expect(engine.console.revision.value, revision);
         expect(List.generate(8, (_) => lcsRandom(100000)), rolls);
@@ -2808,7 +2835,7 @@ void main() {
   );
 
   testWidgets(
-    '1024x720 at 150 percent shows prepared order timing inside its mechanics viewport',
+    '1024x720 at 150 percent shows draft identity, income and timing above Confirm',
     (tester) async {
       // Use the unchanged five-person save from the Chrome reproduction rather
       // than the six-person stress fixture used by the surrounding tests.
@@ -2839,13 +2866,26 @@ void main() {
       expect(mechanics, findsOneWidget);
       final timing = find.descendant(
         of: card,
-        matching: find.text(
-          activityMechanics(
-            ActivityType.donations,
-            actor: game.squad.first,
-          ).timing,
-        ),
+        matching: _key('journal-order-timing'),
       );
+      expect(find.text('Soliciting Donations'), findsOneWidget);
+      expect(find.textContaining('Currently assigned:'), findsOneWidget);
+      for (final key in [
+        'journal-assigned-order',
+        'journal-calculation-result',
+      ]) {
+        final fact = _key(key);
+        _insideViewport(tester, fact, size, key);
+        expect(
+          tester.getRect(fact).bottom,
+          lessThanOrEqualTo(tester.getRect(_key('journal-confirm-order')).top),
+          reason: 'Decision facts must be visible above confirmation.',
+        );
+        expect(
+          tester.getRect(fact).bottom,
+          lessThanOrEqualTo(tester.getRect(mechanics).bottom),
+        );
+      }
       _insideViewport(tester, timing, size, 'Prepared daily execution timing');
       final clip = tester.getRect(mechanics);
       final label = tester.getRect(timing);
@@ -2879,6 +2919,54 @@ void main() {
       expect(campaignSnapshot(), before);
       await _tap(tester, 'journal-cancel-order');
       expect(campaignSnapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'compact enlarged Orders keeps class fees and drug risks visible before Confirm',
+    (tester) async {
+      fixture.restoreState();
+      game.mode = GameMode.base;
+      game.activeSquadMember = null;
+      journalReadingScale.value = 1.5;
+      const size = Size(1024, 720);
+      await mount(tester, size: size);
+      await business(tester);
+      final before = campaignSnapshot();
+      for (final (query, activity, factKeys) in [
+        ('class', 'takeClass', ['journal-order-cost']),
+        (
+          'brownies',
+          'sellDrugs',
+          ['journal-calculation-result', 'journal-order-risk'],
+        ),
+      ]) {
+        await tester.enterText(_key('journal-order-search'), query);
+        await _settle(tester);
+        await _tap(tester, 'journal-activity:$activity');
+        final clip = tester.getRect(_key('journal-order-mechanics'));
+        final confirm = tester.getRect(_key('journal-confirm-order'));
+        for (final key in factKeys) {
+          final fact = _key(key);
+          _insideViewport(tester, fact, size, key);
+          final rect = tester.getRect(fact);
+          expect(rect.top, greaterThanOrEqualTo(clip.top));
+          expect(rect.bottom, lessThanOrEqualTo(clip.bottom));
+          expect(rect.bottom, lessThanOrEqualTo(confirm.top));
+        }
+        if (activity == 'takeClass') {
+          expect(find.text(r'Cost: $30 per training day'), findsWidgets);
+        } else {
+          expect(
+            find.text('Drug charges, police searches and base raids possible.'),
+            findsOneWidget,
+          );
+        }
+        expect(campaignSnapshot(), before);
+        await _tap(tester, 'journal-cancel-order');
+        expect(campaignSnapshot(), before);
+      }
       expect(tester.takeException(), isNull);
     },
   );

@@ -240,7 +240,14 @@ void main() {
             find.bySemanticsLabel('Profile for ${actor.name}'),
             findsOneWidget,
           );
+          expect(find.textContaining('No recorded injuries'), findsNothing);
+          expect(find.textContaining('Assigned · Active crew'), findsNothing);
+          expect(_key('daily-plan-exception:${actor.id}'), findsOneWidget);
           await _tap(tester, 'daily-plan-details:${actor.id}');
+          expect(
+            find.text('Status: Active crew · No recorded injuries'),
+            findsOneWidget,
+          );
           expect(find.text('Personal order: Laying Low'), findsOneWidget);
           expect(
             find.bySemanticsLabel('Hide daily plan details for ${actor.name}'),
@@ -466,6 +473,38 @@ void main() {
       );
     }
   }
+
+  testWidgets(
+    'unavailable crew and health problems remain visible without expanding',
+    (tester) async {
+      final person = addTestCrewMember(name: 'Hospital patient')
+        ..blood = 20
+        ..location = game.sites.firstWhere(
+          (site) => site.type == SiteType.universityHospital,
+        );
+      await mount(tester, large: true);
+      final before = campaignSnapshot();
+      await _tap(tester, 'journal-daily-plan');
+      await select(tester, person);
+      expect(
+        find.text('Unavailable · Hospitalized').hitTestable(),
+        findsOneWidget,
+      );
+      expect(find.text('Very low blood').hitTestable(), findsOneWidget);
+      expect(
+        tester
+            .widget<OutlinedButton>(_key('daily-plan-orders:${person.id}'))
+            .onPressed,
+        isNull,
+      );
+      expect(find.textContaining('Personal order:'), findsNothing);
+      await _tap(tester, 'daily-plan-details:${person.id}');
+      expect(find.textContaining('20/'), findsOneWidget);
+      await _tap(tester, 'daily-plan-close');
+      expect(campaignSnapshot(), before);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'deep scroll clamps after filtering and its current position survives revisit',

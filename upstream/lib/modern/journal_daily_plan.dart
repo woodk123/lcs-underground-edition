@@ -303,18 +303,71 @@ class _JournalDailyPlanState extends State<JournalDailyPlan> {
                           'Current actor',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                      Text(
-                        '${person.unavailable
-                            ? 'Unavailable'
-                            : person.needsOrder
-                            ? 'Needs order'
-                            : 'Assigned'} · ${person.status} · ${person.condition}',
+                      if (person.unavailable ||
+                          person.needsOrder ||
+                          person.sleeper ||
+                          person.condition != 'No recorded injuries')
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 2,
+                          children: [
+                            if (person.unavailable || person.needsOrder)
+                              Text(
+                                person.unavailable
+                                    ? 'Unavailable · ${person.status}'
+                                    : 'Needs order',
+                                key: ValueKey(
+                                  'daily-plan-exception:${person.id}',
+                                ),
+                                style: TextStyle(
+                                  color: person.unavailable
+                                      ? JournalPalette.danger
+                                      : JournalPalette.brassDark,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              )
+                            else if (person.sleeper)
+                              Text(person.status),
+                            if (person.condition != 'No recorded injuries')
+                              Text(
+                                person.condition,
+                                key: ValueKey(
+                                  'daily-plan-condition:${person.id}',
+                                ),
+                                style: const TextStyle(
+                                  color: JournalPalette.danger,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                          ],
+                        ),
+                      const SizedBox(height: 3),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.assignment_outlined,
+                            size: 15,
+                            color: JournalPalette.olive,
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              person.effectiveOrder,
+                              key: ValueKey(
+                                'daily-plan-assignment:${person.id}',
+                              ),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        person.effectiveOrder,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 20),
+                        child: Text(person.location),
                       ),
-                      Text(person.location),
                       if (person.meetings.isNotEmpty)
                         Text(
                           'Recruitment follow-ups: ${person.meetings.length}',
@@ -341,6 +394,7 @@ class _JournalDailyPlanState extends State<JournalDailyPlan> {
                 'Personal order: ${person.personalOrder}${person.sleeper ? ' (sleeper standing order)' : ''}',
               ),
               Text('Squad: ${person.squadName ?? 'Outside squads'}'),
+              Text('Status: ${person.status} · ${person.condition}'),
               if (person.squadOrder != null) ...[
                 Text(
                   'Squad order overrides personal work: ${person.squadOrder}',
