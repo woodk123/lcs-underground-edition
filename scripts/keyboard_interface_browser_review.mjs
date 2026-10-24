@@ -21,7 +21,7 @@ const decode = save => typeof save.saveData === 'string' ? JSON.parse(save.saveD
 const report = {
   status: 'running', url,
   scope: 'Unmodified bundled Felix save in disposable profiles. Original LCS L/M/Escape/W/X menu meanings and source-first labels, optional modified journal-tab and Save exit shortcuts, modal isolation, and the identical immediate A/A/B/1 assignment and source Back keys in graphical desktop, graphical compact 1024x720/150%, and Classic. Pointer task previews retain separate draft cancellation and day-advance protection. Import/export and preference changes are setup. No day advances, outcomes or skill values are supplied.',
-  checks: [], screenshots: [], sequences: [], failures: [], pageErrors: [], consoleErrors: [], failedRequests: [],
+  checks: [], screenshots: [], sequences: [], startups: [], failures: [], pageErrors: [], consoleErrors: [], failedRequests: [],
 };
 const expected = value('--expected-hash', null);
 assert.match(expected ?? '', /^[a-f0-9]{64}$/i, 'An exact compiled build hash is required.');
@@ -29,8 +29,39 @@ report.mainJsSha256 = digest(Buffer.from(await (await fetch(new URL('main.dart.j
 assert.equal(report.mainJsSha256, expected.toLowerCase());
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 
+function trackStartupRequests(context) {
+  const startedAt = Date.now(), requests = [], pending = new Map(), workerErrors = [];
+  context.on('request', request => {
+    const entry = { url: request.url(), method: request.method(), resourceType: request.resourceType(),
+      serviceWorker: request.serviceWorker()?.url() ?? null, startedMs: Date.now() - startedAt };
+    requests.push(entry); pending.set(request, entry);
+  });
+  context.on('response', response => {
+    const entry = pending.get(response.request());
+    if (entry) Object.assign(entry, { responseMs: Date.now() - startedAt, status: response.status(),
+      fromServiceWorker: response.fromServiceWorker(), contentLength: Number(response.headers()['content-length'] ?? 0) });
+  });
+  function finish(request, error) {
+    const entry = pending.get(request);
+    if (entry) Object.assign(entry, { finishedMs: Date.now() - startedAt, timing: request.timing(),
+      ...(error ? { error } : {}) });
+    pending.delete(request);
+  }
+  context.on('requestfinished', request => finish(request));
+  context.on('requestfailed', request => finish(request, request.failure()?.errorText ?? 'Unknown request failure'));
+  context.on('console', message => {
+    if (!message.page() && ['error', 'warning'].includes(message.type()))
+      workerErrors.push({ elapsedMs: Date.now() - startedAt, type: message.type(), text: message.text(), location: message.location() });
+  });
+  return { startedAt, requests, workerErrors,
+    pendingAtFailure: () => [...pending.values()].map(entry => ({ ...entry, pendingForMs: Date.now() - startedAt - entry.startedMs })) };
+}
+
 async function runScenario({ name, viewport, compact, classic }) {
   const context = await browser.newContext({ viewport, acceptDownloads: true });
+  const network = trackStartupRequests(context);
+  const startup = { scenario: name, createdAt: new Date(network.startedAt).toISOString(), titleDeadlineMs: 20000 };
+  report.startups.push(startup);
   const page = await context.newPage();
   const operations = [];
   const verifyLoaded = observeMainScript(page, report);
@@ -78,8 +109,11 @@ async function runScenario({ name, viewport, compact, classic }) {
     return data;
   }
   try {
+    startup.navigationStartedAt = new Date().toISOString();
     await page.goto(url, { waitUntil: 'domcontentloaded' });
+    startup.domContentLoadedAt = new Date().toISOString();
     await wait(/Start a New Game/);
+    startup.titleReadyAt = new Date().toISOString();
     const choosing = page.waitForEvent('filechooser');
     await click(/^Import a Save/);
     await (await choosing).setFiles(resolve(root, 'upstream/test/saves/felix_1_0.json'));
@@ -199,21 +233,39 @@ async function runScenario({ name, viewport, compact, classic }) {
     await verifyLoaded(expected.toLowerCase());
     return { before, after };
   } catch (error) {
-    const failure = { scenario: name, error: String(error.stack ?? error), operations: operations.slice(-20) };
+    const failure = { scenario: name, error: String(error.stack ?? error), operations: operations.slice(-20),
+      network: { capturedAt: new Date().toISOString(), pendingBeforeCapture: network.pendingAtFailure(),
+        requests: network.requests, workerErrors: network.workerErrors } };
     try {
       failure.screenshot = `${name}-failure.png`;
       await page.screenshot({ path: resolve(output, failure.screenshot), fullPage: true, timeout: 10000 });
       report.screenshots.push(failure.screenshot);
     } catch (captureError) { failure.screenshotError = String(captureError); }
     try {
-      const evidence = await page.evaluate(() => {
+      const evidence = await page.evaluate(async () => {
         const host = document.querySelector('flt-semantics-host');
         const describe = node => node ? {
           tag: node.tagName, role: node.getAttribute('role'), label: node.getAttribute('aria-label'),
           text: node.textContent, value: node.value,
         } : null;
+        let bridge = { available: false };
+        if (globalThis.lcsDev?.request) {
+          let timer;
+          try { bridge = { available: true, result: JSON.parse(await Promise.race([
+            globalThis.lcsDev.request(JSON.stringify({ method: 'observe', params: {} })),
+            new Promise((_, reject) => { timer = setTimeout(() => reject(Error('Read-only observe timed out')), 1500); }),
+          ])) }; } catch (error) { bridge = { available: true, error: String(error) }; } finally { clearTimeout(timer); }
+        }
+        const registrations = await navigator.serviceWorker.getRegistrations().catch(() => []);
         return {
           url: location.href,
+          capturedAt: new Date().toISOString(), bridge, fonts: document.fonts.status,
+          resources: performance.getEntriesByType('resource').map(entry => entry.toJSON()),
+          navigation: performance.getEntriesByType('navigation').map(entry => entry.toJSON()),
+          serviceWorker: { controller: navigator.serviceWorker.controller && {
+            scriptURL: navigator.serviceWorker.controller.scriptURL, state: navigator.serviceWorker.controller.state },
+          registrations: registrations.map(registration => ({ scope: registration.scope,
+            active: registration.active?.state, installing: registration.installing?.state, waiting: registration.waiting?.state })) },
           semantics: host ? [host.innerText,
             ...[...host.querySelectorAll('[aria-label]')].map(node => node.getAttribute('aria-label')),
             ...[...host.querySelectorAll('input,textarea')].map(node => node.value),
@@ -232,7 +284,10 @@ async function runScenario({ name, viewport, compact, classic }) {
     report.failures.push(failure);
     throw error;
   } finally {
+    startup.pendingBeforeClose = network.pendingAtFailure().length;
+    startup.requestsObserved = network.requests.length;
     await context.close();
+    startup.closedAt = new Date().toISOString();
   }
 }
 
