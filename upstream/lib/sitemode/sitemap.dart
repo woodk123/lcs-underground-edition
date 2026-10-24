@@ -855,7 +855,7 @@ void addOldMapSpecials(Site loc) {
       }
     }
   }
-  SiteTile specialLocation() {
+  SiteTile? specialLocation() {
     Iterable<SiteTile> range = levelMap.all.where(
       (t) =>
           t.x >= 2 &&
@@ -871,42 +871,46 @@ void addOldMapSpecials(Site loc) {
       (t) => !t.blocked && !t.loot && t.special == TileSpecial.none,
     );
     if (candidates.isNotEmpty) return candidates.random;
-    return range.random;
+    return null;
   }
 
   //ADD FIRST SPECIAL
-  SiteTile specialTile = specialLocation();
-  switch (loc.type) {
-    case SiteType.nuclearPlant:
-      specialTile.special = TileSpecial.nuclearControlRoom;
-    case SiteType.policeStation:
-      specialTile.special = TileSpecial.policeStationLockup;
-    case SiteType.courthouse:
-      specialTile.special = TileSpecial.courthouseLockup;
-    case SiteType.prison:
-      specialTile.special = TileSpecial.prisonControl;
-    case SiteType.intelligenceHQ:
-      specialTile.special = TileSpecial.intelSupercomputer;
-    case SiteType.corporateHQ:
-      specialTile.special = TileSpecial.corporateFiles;
-    case SiteType.ceoHouse:
-      specialTile.special = TileSpecial.ceoSafe;
-    case SiteType.armyBase:
-      specialTile.special = TileSpecial.armory;
-    case SiteType.amRadioStation:
-      specialTile.special = TileSpecial.radioBroadcastStudio;
-    case SiteType.cableNewsStation:
-      specialTile.special = TileSpecial.cableBroadcastStudio;
-    default:
-      break;
+  SiteTile? specialTile = specialLocation();
+  if (specialTile != null) {
+    switch (loc.type) {
+      case SiteType.nuclearPlant:
+        specialTile.special = TileSpecial.nuclearControlRoom;
+      case SiteType.policeStation:
+        specialTile.special = TileSpecial.policeStationLockup;
+      case SiteType.courthouse:
+        specialTile.special = TileSpecial.courthouseLockup;
+      case SiteType.prison:
+        specialTile.special = TileSpecial.prisonControl;
+      case SiteType.intelligenceHQ:
+        specialTile.special = TileSpecial.intelSupercomputer;
+      case SiteType.corporateHQ:
+        specialTile.special = TileSpecial.corporateFiles;
+      case SiteType.ceoHouse:
+        specialTile.special = TileSpecial.ceoSafe;
+      case SiteType.armyBase:
+        specialTile.special = TileSpecial.armory;
+      case SiteType.amRadioStation:
+        specialTile.special = TileSpecial.radioBroadcastStudio;
+      case SiteType.cableNewsStation:
+        specialTile.special = TileSpecial.cableBroadcastStudio;
+      default:
+        break;
+    }
   }
   //ADD SECOND SPECIAL
   specialTile = specialLocation();
-  switch (loc.type) {
-    case SiteType.courthouse:
-      specialTile.special = TileSpecial.courthouseJuryRoom;
-    default:
-      break;
+  if (specialTile != null) {
+    switch (loc.type) {
+      case SiteType.courthouse:
+        specialTile.special = TileSpecial.courthouseJuryRoom;
+      default:
+        break;
+    }
   }
 }
 

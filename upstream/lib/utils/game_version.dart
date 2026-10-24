@@ -1,5 +1,5 @@
 /// Player-facing Underground Edition version; mirror in pubspec.yaml.
-const String gameVersion = '0.6.5';
+const String gameVersion = '0.6.6';
 
 /// Upstream base for credits, independent of Underground release numbering.
 const String upstreamVersion = '1.5.6';

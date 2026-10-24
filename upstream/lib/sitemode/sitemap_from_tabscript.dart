@@ -472,9 +472,9 @@ class ConfigSiteScript extends ConfigSiteCommand {
       levelMap[x][y][z].special = TileSpecial.stairsUp;
       levelMap[x][y][z + 1].special = TileSpecial.stairsDown;
       // Move up on level for next iteration.
-      secure = secureAbove;
+      secure = List.of(secureAbove);
       secureAbove.clear();
-      unsecure = unsecureAbove;
+      unsecure = List.of(unsecureAbove);
       unsecureAbove.clear();
     }
   }
@@ -557,16 +557,17 @@ class ConfigSiteSpecial extends ConfigSiteCommand {
     for (int x = xstart; x <= xend; x++) {
       for (int y = ystart; y <= yend; y++) {
         for (int z = zstart; z <= zend; z++) {
-          // Keep one roll per coordinate, including blocked tiles. Other
-          // scripts intentionally overlay fixtures; claims terminals need an
-          // unoccupied, enterable tile for their manual interaction.
+          // Keep one roll per coordinate, including rejected placements.
+          // Signs intentionally share entrance doors; room fixtures cannot.
           final place = lcsRandom(freq) == 0;
           final tile = levelMap[x][y][z];
+          final doorSign =
+              special == TileSpecial.signOne ||
+              special == TileSpecial.signTwo ||
+              special == TileSpecial.signThree;
+          if (tile.wall || (tile.door && !doorSign)) continue;
           if (special == TileSpecial.insuranceClaimsTerminal &&
-              (tile.wall ||
-                  tile.door ||
-                  tile.exit ||
-                  tile.special != TileSpecial.none)) {
+              (tile.exit || tile.special != TileSpecial.none)) {
             continue;
           }
           if (place) tile.special = special;

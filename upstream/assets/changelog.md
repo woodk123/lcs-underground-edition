@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.6.6 — 2026-10-24
+
+* Keep laboratory equipment, cages, machinery and nursing-home beds out of walls and doorways, and fix prison stairs being placed inside walls. Legacy map generation no longer puts special rooms in blocked tiles when no valid space remains.
+
 ## Underground Edition 0.6.5 — 2026-10-24
 
 * Keep insurance claims terminals off walls, doors, exits and existing fixtures. Wall inspection no longer shows unusable fixture artwork or suggests walking into the wall.
