@@ -311,9 +311,15 @@ void main() {
   }
 
   for (final large in [false, true]) {
-    for (final backgroundFocus in [false, true]) {
+    for (final focus in ['initial', 'tab', 'background']) {
+      final initialFocus = focus == 'initial';
+      final backgroundFocus = focus == 'background';
       testWidgets(
-        '${backgroundFocus ? 'Game keyboard beneath Daily plan' : 'Tab to Close'} then Escape preserves the active draft, large=$large',
+        '${initialFocus
+            ? 'Immediate Close focus'
+            : backgroundFocus
+            ? 'Game keyboard beneath Daily plan'
+            : 'Tab to Close'} then Escape preserves the active draft, large=$large',
         (tester) async {
           final semantics = tester.ensureSemantics();
           try {
@@ -336,15 +342,17 @@ void main() {
             await _focusGame(tester);
             final previousFocus = FocusManager.instance.primaryFocus;
             await _tap(tester, 'journal-daily-plan');
-            await tester.enterText(_key('daily-plan-search'), 'wpd');
-            await _settle(tester);
-            await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-            try {
-              await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-            } finally {
-              await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+            if (!initialFocus) {
+              await tester.enterText(_key('daily-plan-search'), 'wpd');
+              await _settle(tester);
+              await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+              try {
+                await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+              } finally {
+                await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+              }
+              await _settle(tester);
             }
-            await _settle(tester);
             final close = find.bySemanticsLabel('Close daily plan');
             expect(close, findsOneWidget);
             expect(
@@ -364,20 +372,22 @@ void main() {
                 reason: 'The adversarial key must reach the real Game keyboard focus beneath the modal.',
               );
             }
-            for (final (key, character) in [
-              (LogicalKeyboardKey.keyW, 'w'),
-              (LogicalKeyboardKey.keyP, 'p'),
-              (LogicalKeyboardKey.keyD, 'd'),
-            ]) {
-              await tester.sendKeyEvent(key, character: character);
-              await _settle(tester);
+            if (!initialFocus) {
+              for (final (key, character) in [
+                (LogicalKeyboardKey.keyW, 'w'),
+                (LogicalKeyboardKey.keyP, 'p'),
+                (LogicalKeyboardKey.keyD, 'd'),
+              ]) {
+                await tester.sendKeyEvent(key, character: character);
+                await _settle(tester);
+              }
             }
             expect(
               tester
                   .widget<TextField>(_key('daily-plan-search'))
                   .controller!
                   .text,
-              'wpd',
+              initialFocus ? '' : 'wpd',
             );
             if (backgroundFocus) {
               expect(FocusManager.instance.primaryFocus, same(previousFocus));

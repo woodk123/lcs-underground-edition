@@ -156,6 +156,7 @@ class _JournalDailyPlanState extends State<JournalDailyPlan> {
               IconButton(
                 key: const ValueKey('daily-plan-close'),
                 tooltip: 'Close daily plan',
+                autofocus: true,
                 onPressed: widget.onClose,
                 icon: const Icon(
                   Icons.close,
