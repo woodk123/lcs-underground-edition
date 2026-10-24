@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import os
+import socket
 import sys
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -27,6 +28,10 @@ class GameServer(ThreadingHTTPServer):
 
 
 class GameHandler(SimpleHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+    disable_nagle_algorithm = True
+    timeout = 10
+
     extensions_map = {
         **SimpleHTTPRequestHandler.extensions_map,
         ".wasm": "application/wasm",
@@ -35,6 +40,19 @@ class GameHandler(SimpleHTTPRequestHandler):
         ".bin": "application/octet-stream",
         ".webp": "image/webp",
     }
+
+    def handle_one_request(self):
+        # A buffered peek preserves pipelined bytes while bounding normal idle
+        # connections without reporting them as failed transfers. Once any
+        # request bytes arrive, stdlib parsing and transfer errors stay intact.
+        try:
+            if not self.rfile.peek(1):
+                self.close_connection = True
+                return
+        except socket.timeout:
+            self.close_connection = True
+            return
+        return super().handle_one_request()
 
     def send_head(self):
         path = Path(self.translate_path(self.path))
@@ -97,6 +115,13 @@ class GameHandler(SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def end_headers(self):
+        if self.close_connection and not any(
+            header.lower().startswith(b"connection:")
+            for header in getattr(self, "_headers_buffer", ())
+        ):
+            # HTTP/1.0 and explicit-close clients must not attempt reuse just
+            # because the response advertises our HTTP/1.1 capabilities.
+            self.send_header("Connection", "close")
         self.send_header("Cache-Control", "no-cache")
         self.send_header("X-Content-Type-Options", "nosniff")
         super().end_headers()

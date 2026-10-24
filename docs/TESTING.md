@@ -98,11 +98,13 @@ npm ci --prefix upstream/tool/dev_mcp --no-audit --no-fund
 npm test --prefix upstream/tool/dev_mcp
 ```
 
-The Node command runs the development-MCP, shared browser-support and offline-cache contract tests without launching a browser. The cache regressions reject partial, stale-version and wrong-scope caches even when other caches contain many entries. For a focused browser-support change, use `node --test scripts/browser_support.test.mjs`. Browser journeys below have their own locked dependencies in `upstream/tool/offline_test/`.
+The Node command runs the development-MCP, shared browser-support and offline-cache contract tests without launching a browser. The cache regressions reject partial, stale-version and wrong-scope caches even when other caches contain many entries. `service_worker.test.mjs` executes the actual worker's install handler with rejected-transfer fixtures, checks bounded recovery and complete manifest publication, and ensures HTTP/storage failures are not retried. For a focused browser-support change, use `node --test scripts/browser_support.test.mjs`. Browser journeys below have their own locked dependencies in `upstream/tool/offline_test/`.
 
 The tests exercise archive integrity/tampering, complete source snapshots, local and nightly packaging, release-size accounting and limits, unchanged-input detection and safe publication. Flutter regressions also decode every runtime WebP, check atlas dimensions and native alpha fidelity, and exercise conservative web renderer pruning. No live GitHub release is modified by these tests.
 
 `test_serve.py` exercises real loopback HTTP responses and cold asset connection bursts. The accept queue is deliberately held while 48 clients connect, then every queued request must receive its expected response. MIME/security headers, launcher health, directory listing and path protection are also checked. Content-validator regressions cover older archive timestamps, identical file sizes/timestamps, legacy date-only cache requests, weak/list ETags and HEAD responses. The symlink case skips when Windows does not grant fixture creation privileges; no permission change is requested.
+
+Persistent-connection regressions cover consecutive and pipelined responses, HEAD/304 framing, explicit close, legacy clients and idle expiry. An idle connection closes quietly; partial requests and transfer errors retain their diagnostics. `required_asset_loading_test.dart` checks failed cached-future eviction, bounded string/binary recovery and unchanged loaded game data. Parsing errors must propagate without replaying earlier assets.
 
 Expected browser disconnects do not print server tracebacks when a page or disposable profile closes during an asset response. Unexpected handler/file errors retain their diagnostics; loopback regressions cover both cases and continued serving afterward.
 
@@ -182,6 +184,8 @@ node --require ./scripts/browser_netlog.cjs scripts/screen_browser_review.mjs --
 ```
 
 The preload uses the helper's installed Playwright and preserves its launch options. Each `chromium.launch` in that Node process gets a fresh ignored `.local/browser-netlog/launch-...` directory, printed to stderr, with launch metadata and recent traffic in a rolling 32 MiB default-redaction log. Close the browser normally to flush the log and retain it alongside the helper report; the report's full journey checks and loaded-build hashes remain separate evidence. This does not instrument persistent-context launches or child Node processes, and it refuses existing NetLog flags rather than overriding their policy.
+
+After preparing the isolated build/server below, run `node scripts/asset_loading_browser_review.mjs --expected-hash $expected --out reports/asset-transfer-recovery` to exercise startup recovery. It deliberately aborts the first one and then two foreground `flags.xml` reads in separate fresh profiles. A declared page-only service-worker bypass models the original cold start before cache control; background worker registration and precaching remain enabled. Each case must reach the actual enabled title within the original 20-second deadline, import the declared bundled campaign, reach headquarters and preserve the complete campaign through save/export/reload. Reports identify the exact injected `ERR_TIMED_OUT` requests; unrelated page or worker errors still fail. This checks rejected foreground transfers, while the separate offline journey checks normal worker-controlled responses. Neither establishes the cause of a historical Windows `ERR_CONNECTION_TIMED_OUT`.
 
 ### Prepare an isolated web build
 

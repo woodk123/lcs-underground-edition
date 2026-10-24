@@ -42,6 +42,8 @@ The Windows launcher selects a working compatible Python installation; release p
 
 Use the same browser profile and address for existing saves. Export important saves before clearing browser data. Do not open `index.html` directly. The loopback server revalidates files by content ETag rather than archive timestamps, so replacing a build with older-dated files still updates the player without clearing saves or offline caches.
 
+The local server uses reusable HTTP/1.1 connections with a ten-second inactivity limit. Required startup assets and offline precache downloads each allow up to three transfer attempts, with 200 ms and 400 ms pauses after failures. Recovery repeats the failed read before parsing; it does not restart a campaign or replay previously loaded game data. Persistent failures remain errors.
+
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop.ps1
 ```

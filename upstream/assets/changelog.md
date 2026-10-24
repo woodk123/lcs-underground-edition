@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.4.2 — 2026-10-24
+
+* Recover from brief asset download failures during startup and offline preparation instead of getting stuck while loading. The local browser player also reuses connections when loading its assets.
+
 ## Underground Edition 0.4.1 — 2026-10-24
 
 * Launch the browser player with Python 3.9 or later without file-loading errors, including game folders reached through directory junctions or paths with trailing separators. The launcher skips incompatible Python installations.

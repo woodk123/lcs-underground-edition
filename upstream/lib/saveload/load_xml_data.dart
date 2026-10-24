@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:lcs_new_age/creature/creature_type.dart';
 import 'package:lcs_new_age/creature/creature_type_xml.dart';
 import 'package:lcs_new_age/engine/engine.dart';
@@ -15,6 +14,7 @@ import 'package:lcs_new_age/items/loot_type.dart';
 import 'package:lcs_new_age/items/loot_type_xml.dart';
 import 'package:lcs_new_age/items/weapon_type.dart';
 import 'package:lcs_new_age/items/weapon_type_xml.dart';
+import 'package:lcs_new_age/saveload/required_asset.dart';
 import 'package:lcs_new_age/sitemode/shop.dart';
 import 'package:lcs_new_age/sitemode/shop_xml.dart';
 import 'package:lcs_new_age/sitemode/sitemap.dart';
@@ -30,33 +30,33 @@ void loadingFeedback(String fileName) {
   refresh();
 }
 
-Future<void> loadXmlData() async {
+Future<void> loadXmlData({AssetBundle? bundle}) async {
   loadingFeedback("sitemaps.txt");
-  oldMapMode = !(await readConfigFile("assets/maps/sitemaps.txt"));
+  oldMapMode = !(await readConfigFile("assets/maps/sitemaps.txt", bundle: bundle));
   loadingFeedback("clothing.xml");
-  _parseDocument(await rootBundle.loadString('assets/xml/clothing.xml'));
+  _parseDocument(await loadRequiredAssetString('assets/xml/clothing.xml', bundle: bundle));
   loadingFeedback("armor_upgrades.xml");
-  _parseDocument(await rootBundle.loadString('assets/xml/armor_upgrades.xml'));
+  _parseDocument(await loadRequiredAssetString('assets/xml/armor_upgrades.xml', bundle: bundle));
   loadingFeedback("loot.xml");
-  _parseDocument(await rootBundle.loadString('assets/xml/loot.xml'));
+  _parseDocument(await loadRequiredAssetString('assets/xml/loot.xml', bundle: bundle));
   loadingFeedback("flags.xml");
-  _parseDocument(await rootBundle.loadString('assets/xml/flags.xml'));
+  _parseDocument(await loadRequiredAssetString('assets/xml/flags.xml', bundle: bundle));
   loadingFeedback("creatures.xml");
-  _parseDocument(await rootBundle.loadString('assets/xml/creatures.xml'));
+  _parseDocument(await loadRequiredAssetString('assets/xml/creatures.xml', bundle: bundle));
   loadingFeedback("weapons.xml");
-  _parseDocument(await rootBundle.loadString('assets/xml/weapons.xml'));
+  _parseDocument(await loadRequiredAssetString('assets/xml/weapons.xml', bundle: bundle));
   loadingFeedback("ammo.xml");
-  _parseDocument(await rootBundle.loadString('assets/xml/ammo.xml'));
+  _parseDocument(await loadRequiredAssetString('assets/xml/ammo.xml', bundle: bundle));
   loadingFeedback("vehicles.xml");
-  _parseDocument(await rootBundle.loadString('assets/xml/vehicles.xml'));
+  _parseDocument(await loadRequiredAssetString('assets/xml/vehicles.xml', bundle: bundle));
   loadingFeedback("oubliette.xml");
-  _parseDocument(await rootBundle.loadString('assets/xml/oubliette.xml'));
+  _parseDocument(await loadRequiredAssetString('assets/xml/oubliette.xml', bundle: bundle));
   loadingFeedback("deptstore.xml");
-  _parseDocument(await rootBundle.loadString('assets/xml/deptstore.xml'));
+  _parseDocument(await loadRequiredAssetString('assets/xml/deptstore.xml', bundle: bundle));
   loadingFeedback("armsdealer.xml");
-  _parseDocument(await rootBundle.loadString('assets/xml/armsdealer.xml'));
+  _parseDocument(await loadRequiredAssetString('assets/xml/armsdealer.xml', bundle: bundle));
   loadingFeedback("pawnshop.xml");
-  _parseDocument(await rootBundle.loadString('assets/xml/pawnshop.xml'));
+  _parseDocument(await loadRequiredAssetString('assets/xml/pawnshop.xml', bundle: bundle));
 }
 
 void _parseDocument(String xml) {
