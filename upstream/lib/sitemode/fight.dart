@@ -25,6 +25,7 @@ import 'package:lcs_new_age/location/site.dart';
 import 'package:lcs_new_age/newspaper/news_story.dart';
 import 'package:lcs_new_age/politics/alignment.dart';
 import 'package:lcs_new_age/sitemode/haul_kidnap.dart';
+import 'package:lcs_new_age/sitemode/identity_exposure.dart';
 import 'package:lcs_new_age/sitemode/map_specials.dart';
 import 'package:lcs_new_age/sitemode/site_display.dart';
 import 'package:lcs_new_age/sitemode/sitemap.dart';
@@ -874,6 +875,16 @@ Future<bool> attack(
 
     bool aliveBefore = t.alive;
     for (int i = 0; i < bursthits; i++) {
+      if (exposeFaceFromHit(t, ranged: attackUsed.ranged)) {
+        clearMessageArea();
+        mvaddstrc(
+          10,
+          1,
+          yellow,
+          "${t.name}'s face covering is torn open!",
+        );
+        await acknowledge(title: 'Identity exposed');
+      }
       await hit(
         a,
         t,
@@ -2089,6 +2100,9 @@ Future<bool> incapacitated(Creature a, bool noncombat) async {
 }
 
 Future<void> captureCreature(Creature t) async {
+  if (gameState.siteIdentities.active || mode == GameMode.site) {
+    gameState.siteIdentities.identify(t);
+  }
   t.activity = Activity.none();
   t.dropWeaponAndAmmo();
   Clothing clothes = Clothing("CLOTHING_CLOTHES");

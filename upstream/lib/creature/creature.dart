@@ -748,8 +748,14 @@ class Creature {
     }
   }
 
-  void criminalize(Crime crime, {double heatMultiplier = 1}) {
-    if (mode == GameMode.site) {
+  void criminalize(
+    Crime crime, {
+    double heatMultiplier = 1,
+    bool siteCrime = false,
+  }) {
+    final duringOperation =
+        siteCrime || mode == GameMode.site || gameState.siteIdentities.active;
+    if (duringOperation) {
       if (activeSiteUnderSiege &&
           activeSite?.siege.activeSiegeType != SiegeType.police) {
         // Attacked by an illegal raid; nobody is reporting anything
@@ -760,13 +766,13 @@ class Creature {
         return;
       }
     }
-    wantedForCrimes[crime] = (wantedForCrimes[crime] ?? 0) + 1;
     int heatFromCrime = (crimeHeat(crime) * heatMultiplier).ceil();
-    if (clothing.type.concealsFace && mode == GameMode.site) {
-      heat += heatFromCrime ~/ 2;
-    } else {
-      heat += heatFromCrime;
+    if (duringOperation) {
+      gameState.siteIdentities.record(this, crime, heatFromCrime);
+      return;
     }
+    wantedForCrimes[crime] = (wantedForCrimes[crime] ?? 0) + 1;
+    heat += heatFromCrime;
   }
 
   void giveClothingType(String clothingTypeString, {List<Item>? lootPile}) {

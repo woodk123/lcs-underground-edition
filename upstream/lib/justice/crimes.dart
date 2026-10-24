@@ -4,6 +4,33 @@ import 'package:lcs_new_age/gamestate/game_state.dart';
 import 'package:lcs_new_age/politics/alignment.dart';
 import 'package:lcs_new_age/politics/laws.dart';
 
+/// Operation-only evidence, like potentialCrimes. Campaigns save at base,
+/// after the operation has resolved; unidentified evidence is then discarded.
+class SiteIdentities {
+  bool active = false;
+  final identified = <int>{};
+  final concealedCrimes = <int, List<(Crime, int)>>{};
+
+  void identify(Creature person) {
+    identified.add(person.id);
+    for (final (crime, heat)
+        in concealedCrimes.remove(person.id) ?? <(Crime, int)>[]) {
+      person.wantedForCrimes[crime] = (person.wantedForCrimes[crime] ?? 0) + 1;
+      person.heat += heat;
+    }
+  }
+
+  void record(Creature person, Crime crime, int heat) {
+    if (person.clothing.concealsFace && !identified.contains(person.id)) {
+      concealedCrimes.putIfAbsent(person.id, () => []).add((crime, heat));
+      return;
+    }
+    identify(person);
+    person.wantedForCrimes[crime] = (person.wantedForCrimes[crime] ?? 0) + 1;
+    person.heat += heat;
+  }
+}
+
 enum Crime {
   treason("Treason", "treason"),
   terrorism("Terrorism", "terrorism"),
@@ -121,11 +148,13 @@ void commitPotentialCrimes() {
       murderCounts + (assaultCounts - murderCounts) ~/ 3 + kidnappingCounts * 2;
   if (violenceScore > 5 && terrorismCounts < 1) {
     // Charge with terrorism if you did a bunch of terrorizing
-    criminalizeAll(allPerpetrators, Crime.terrorism);
+    for (final person in allPerpetrators) {
+      person.criminalize(Crime.terrorism, siteCrime: true);
+    }
   }
   for (var crimeData in gameState.potentialCrimes) {
     for (var creature in crimeData.perpetrators) {
-      creature.criminalize(crimeData.crime);
+      creature.criminalize(crimeData.crime, siteCrime: true);
     }
   }
   gameState.potentialCrimes.clear();

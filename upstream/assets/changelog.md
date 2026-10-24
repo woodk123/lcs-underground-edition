@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## Underground Edition 0.7.0 — 2026-10-24
+
+* Intact face coverings prevent identification for site crimes. Landed melee hits can expose your face (25%; ranged hits 10%), and capture identifies you. Exposure links earlier crimes from that operation; changing outfits cannot undo it. Torn coverings need repair, while alarms and site consequences still apply.
+
 ## Underground Edition 0.6.10 — 2026-10-24
 
 * Click anywhere on a Daily plan member row to select them for Orders, Profile or View squad, with a clear highlight and checkmark.

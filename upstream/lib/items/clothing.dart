@@ -32,6 +32,13 @@ class Clothing extends Item {
 
   @JsonKey()
   bool bloody = false;
+  @JsonKey(defaultValue: false)
+  bool faceCoveringDamaged = false;
+
+  bool get concealsFace =>
+      type.concealsFace &&
+      !faceCoveringDamaged &&
+      quality <= type.qualityLevels;
   @JsonKey(
       includeToJson: true,
       includeFromJson: true,
@@ -40,11 +47,13 @@ class Clothing extends Item {
   bool _damaged = false;
   bool get damaged =>
       _damaged ||
+      faceCoveringDamaged ||
       bodyArmor < maxBodyArmor ||
       headArmor < maxHeadArmor ||
       _limbArmor.values.any((a) => a < maxLimbArmor);
   set damaged(bool value) {
     if (!value) {
+      faceCoveringDamaged = false;
       bodyArmor = maxBodyArmor;
       headArmor = maxHeadArmor;
       _limbArmor = {};
@@ -142,6 +151,7 @@ class Clothing extends Item {
   @override
   Clothing clone() => Clothing(type.idName, armorId: armorId)
     ..bloody = bloody
+    ..faceCoveringDamaged = faceCoveringDamaged
     ..damaged = damaged
     ..quality = quality
     ..bodyArmor = bodyArmor
@@ -248,6 +258,9 @@ class Clothing extends Item {
       int comp =
           (_limbArmor[key] ?? maxLimbArmor).compareTo(other._limbArmor[key]!);
       if (comp != 0) return comp;
+    }
+    if (faceCoveringDamaged != other.faceCoveringDamaged) {
+      return faceCoveringDamaged ? -1 : 1;
     }
     if (bloody && !other.bloody) return -1;
     if (!bloody && other.bloody) return 1;

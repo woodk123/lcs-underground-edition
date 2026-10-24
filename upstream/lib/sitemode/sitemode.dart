@@ -47,7 +47,17 @@ import 'package:lcs_new_age/utils/lcsrandom.dart';
 
 Future<void> siteMode(Site loc) async {
   final history = OperationHistoryCapture(loc);
-  await _runSiteMode(loc);
+  gameState.siteIdentities = SiteIdentities()..active = true;
+  for (final person in operationParticipants(siegeSite: loc)) {
+    if (!person.clothing.concealsFace) {
+      gameState.siteIdentities.identify(person);
+    }
+  }
+  try {
+    await _runSiteMode(loc);
+  } finally {
+    gameState.siteIdentities = SiteIdentities();
+  }
   history.finish();
   if (history.returnReport case final report?) {
     await showMessage(report, title: 'Operation return');
@@ -325,6 +335,11 @@ Future<void> _siteModeAux() async {
   int encounterTimer = 0;
 
   while (true) {
+    for (final person in operationParticipants(siegeSite: activeSite)) {
+      if (!person.clothing.concealsFace) {
+        gameState.siteIdentities.identify(person);
+      }
+    }
     int partysize = squad.length;
     bool partyalive = activeSquad!.livingMembers.isNotEmpty;
     int hostages = 0, encsize = 0, freeable = 0, talkers = 0;

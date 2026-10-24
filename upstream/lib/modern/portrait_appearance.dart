@@ -99,7 +99,7 @@ class PortraitAppearance {
             'CLOTHING_SEALSUIT',
           }.contains(id) &&
           equipped!.type.coversHead,
-      faceCovering: equipped?.type.concealsFace ?? false,
+      faceCovering: equipped?.concealsFace ?? false,
       variant: person.portraitVariant ?? 0,
     );
   }

@@ -161,6 +161,9 @@ class GameState {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   List<CrimeData> potentialCrimes = [];
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  SiteIdentities siteIdentities = SiteIdentities();
 }
 
 enum CCSStrength { inHiding, active, attacks, sieges, defeated }

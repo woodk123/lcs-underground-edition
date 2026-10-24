@@ -76,7 +76,10 @@ const clothingDisguiseLimits =
     'Suspicious weapons and metal detectors have separate checks. '
     'Security, site control, sieges and current laws can change which outfits fit.'
     '\n\nOutfits marked “Hides Face”, such as the Black Bloc Outfit and Ninja '
-    'Costume, halve the heat gained from crimes during site visits. Crimes are '
-    'still recorded against the wearer: hiding your face does not prevent '
-    'charges or remove existing ones. Face concealment does not improve an '
+    'Costume, prevent personal charges and heat for unidentified site crimes '
+    'while the covering is intact. Landed melee hits risk exposure (25%; ranged '
+    'hits 10%), and capture identifies you. Exposure links earlier crimes from '
+    'that operation; changing outfits cannot undo identification. Torn coverings '
+    'need repair. Existing charges, alarms and site consequences remain. '
+    'Face concealment does not improve an '
     'outfit’s clothing rating here.';

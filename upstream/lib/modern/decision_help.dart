@@ -133,6 +133,8 @@ String clothingHelp(ClothingType type, {Creature? actor, Clothing? actual}) {
   return [
     if (type.description.isNotEmpty) type.description,
     'Coverage: ${[if (type.coversHead) 'head', if (type.coversBody) 'body', if (type.coversArms) 'arms', if (type.coversLegs) 'legs'].join(', ')}. Face concealed: ${type.concealsFace ? 'yes' : 'no'}.',
+    if (type.concealsFace)
+      'An intact face covering prevents personal charges and heat for unidentified site crimes. Alarms and site consequences still apply. Each landed melee hit has a 25% chance to expose your face; ranged hits have a 10% chance, even through armour. Exposure or capture links this operation’s earlier crimes to you; changing outfits cannot undo identification. Repairs restore a torn covering for future operations.',
     'Configured alarming outfit: ${type.alarming}; police uniform: ${type.police}; culture markers: ${type.culture.join(', ')}. ${actual == null ? '' : 'Current item considered alarming: ${actual.alarming}.'}',
     'Professionalism ${type.professionalism}; concealment allowance ${type.concealWeaponSize}; stealth value ${type.stealthValue}. Professionalism contributes to donation income; it is not a universal disguise bonus.',
     'Uniform-permitted weapons: ${type.weaponsPermitted.map((w) => w.name).join(', ')}. A disguise must suit the site; the same outfit can be appropriate at one site and suspicious at another.',
@@ -142,6 +144,8 @@ String clothingHelp(ClothingType type, {Creature? actor, Clothing? actual}) {
     'Stealth clothing modifier starts at (stealth value − 2) × 5, rounded. Positive bonuses are multiplied by 0.8 for each quality step above 1, and halved when damaged. Shredded clothing can reduce the total to zero.',
     if (actual != null)
       'Current item: quality ${actual.quality}/${type.qualityLevels}; bloodstained ${actual.bloody}; damaged ${actual.damaged}; body armour ${actual.bodyArmor}/${actual.maxBodyArmor}; head armour ${actual.headArmor}/${actual.maxHeadArmor}.',
+    if (actual != null && type.concealsFace)
+      'Face covering currently ${actual.concealsFace ? 'intact' : 'ineffective (torn or tattered)'}.',
     'Crafting: base supply price \$${type.makePrice}; difficulty ${type.makeDifficulty}. With an armour upgrade: difficulty = clothing difficulty + armour difficulty − Tailoring + 4. Available recyclable cloth halves supply cost. Failure can still consume materials and money.',
     if (actor != null)
       'This crew member: Tailoring ${actor.skill(Skill.tailoring)}. Existing outfit: ${actor.equippedClothing?.type.name ?? 'none'}.',
