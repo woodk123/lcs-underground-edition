@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -38,7 +38,7 @@ assert.ok(response.ok);
 report.mainJsSha256 = createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex');
 assert.equal(report.mainJsSha256, expected.toLowerCase());
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
-let context, page, scene = 'setup', normalized;
+let context, page, verifyLoadedScript, scene = 'setup', normalized;
 const decodeText = async () => {
   if (!await page.locator('flt-semantics-host').count()) return '';
   return page.locator('flt-semantics-host').evaluate(host => [host.innerText,
@@ -74,9 +74,11 @@ function issue(name) {
   console.log(`REPRODUCED ${scene}: ${name}`);
 }
 async function fresh() {
+  if (verifyLoadedScript) await verifyLoadedScript(expected.toLowerCase());
   await context?.close();
   context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
   page = await context.newPage(); page.setDefaultTimeout(9000);
+  verifyLoadedScript = observeMainScript(page, report);
   page.on('pageerror', e => report.pageErrors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') report.consoleErrors.push(m.text()); });
   page.on('requestfailed', r => report.failedRequests.push(r.url()));
@@ -256,6 +258,7 @@ try {
       await capture('discharged-to-headquarters');
     }
   }
+  await verifyLoadedScript(expected.toLowerCase());
   assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.consoleErrors, []); assert.deepEqual(report.failedRequests, []);
   report.status = report.issues.length ? 'baseline-issues-reproduced' : 'passed';
 } catch (error) {

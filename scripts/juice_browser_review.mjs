@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromiumLaunchOptions } from './browser_support.mjs';
+import { chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -48,6 +48,7 @@ assert.equal(report.mainJsSha256, expectedHash.toLowerCase());
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 const context = await browser.newContext({ viewport: { width: 1440, height: 1100 }, acceptDownloads: true });
 const page = await context.newPage();
+const verifyLoadedScript = observeMainScript(page, report);
 page.on('pageerror', error => report.pageErrors.push(String(error)));
 page.on('console', message => { if (message.type() === 'error') report.consoleErrors.push(message.text()); });
 page.on('requestfailed', request => report.failedRequests.push(request.url()));
@@ -194,6 +195,7 @@ try {
   assert.deepEqual(after, before, 'Entire exported campaign must remain identical.');
   report.campaignSha256 = hash(JSON.stringify(before));
   report.checks.push('Entire campaign exports match before and after all Juice browsing');
+  await verifyLoadedScript(expectedHash.toLowerCase());
   assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.consoleErrors, []); assert.deepEqual(report.failedRequests, []);
   report.checks.push('Exact-build Edge run has no page, console or network failures');
   report.status = 'passed';

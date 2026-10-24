@@ -58,12 +58,14 @@ if (expectedHash) assert.equal(report.mainJsSha256, expectedHash.toLowerCase(), 
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 let context;
 let page;
-const verifyLoadedScripts = [];
+let verifyLoadedScript;
 const escape = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 async function newContext() {
+  if (verifyLoadedScript) await verifyLoadedScript(expectedHash?.toLowerCase() ?? report.mainJsSha256);
+  await context?.close();
   context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
   page = await context.newPage();
-  verifyLoadedScripts.push(observeMainScript(page, report));
+  verifyLoadedScript = observeMainScript(page, report);
   page.setDefaultTimeout(10000);
   page.on('pageerror', error => report.pageErrors.push(String(error)));
   page.on('console', message => { if (message.type() === 'error') report.consoleErrors.push(message.text()); });
@@ -231,7 +233,7 @@ try {
       trained.rawSkill.science === founder.rawSkill.science && trained.rawSkillXP.science > founder.rawSkillXP.science,
     'The newly created founder must earn real training progress.');
     const exported = await exportGame('fresh-founder-week-completed');
-    await context.close(); await newContext(); await importAndLoad(exported.path);
+    await newContext(); await importAndLoad(exported.path);
     const restored = (await exportGame('fresh-founder-week-reimported')).state;
     assert.deepEqual(restored, exported.state, 'Retain the entire fresh campaign across a second profile.');
     report.checks.push('fresh-founder-seven-real-days-background-reward-and-training',
@@ -338,7 +340,6 @@ try {
   report.fieldTeam = { id: fieldTeam.id, members: fieldTeam.members, transferredWeapon: weaponName };
   await capture('08-seven-days-retain-roster-squads-and-equipment');
   const exported = await exportGame('first-week-completed');
-  await context.close();
   await newContext();
   await importAndLoad(exported.path);
   const restored = (await exportGame('first-week-reimported')).state;
@@ -346,7 +347,7 @@ try {
   await capture('09-fresh-profile-import-preserves-entire-week');
   report.checks.push('seven-consecutive-calendar-days-and-accounting-verified', 'completed-save-exactly-identical-after-fresh-profile-import');
   }
-  if (expectedHash) for (const verify of verifyLoadedScripts) await verify(expectedHash.toLowerCase());
+  await verifyLoadedScript(expectedHash?.toLowerCase() ?? report.mainJsSha256);
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.consoleErrors, []);
   assert.deepEqual(report.failedRequests, []);

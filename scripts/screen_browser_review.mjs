@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -41,6 +41,7 @@ const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 const large = args.includes('--large');
 const context = await browser.newContext({ viewport: large ? { width: 1024, height: 720 } : { width: 1440, height: 1000 }, acceptDownloads: true });
 const page = await context.newPage();
+const verifyLoadedScript = observeMainScript(page, report);
 page.setDefaultTimeout(7000);
 page.on('pageerror', error => report.pageErrors.push(String(error)));
 page.on('console', message => { if (message.type() === 'error') report.consoleErrors.push(message.text()); });
@@ -244,6 +245,7 @@ try {
     await page.waitForTimeout(500); await screen('invalid-import-error');
     await page.keyboard.press('Enter');
   });
+  await verifyLoadedScript(expected.toLowerCase());
   report.status = report.failures.length || report.pageErrors.length || report.consoleErrors.length ? 'failed' : 'passed';
 } catch (error) {
   report.status = 'failed';

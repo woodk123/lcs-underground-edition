@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertQaUrl, chromiumLaunchOptions } from './browser_support.mjs';
+import { assertQaUrl, chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
 const { chromium } = require('playwright');
@@ -36,8 +36,7 @@ const res = await fetch(new URL('main.dart.js', url)); assert.ok(res.ok);
 report.actualHash = createHash('sha256').update(Buffer.from(await res.arrayBuffer())).digest('hex');
 assert.equal(report.actualHash, expected.toLowerCase());
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
-let page, context;
-const loadedHashTasks = [];
+let page, context, verifyLoadedScript;
 async function text() {
   if (!await page.locator('flt-semantics-host').count()) return '';
   return page.locator('flt-semantics-host').evaluate(host => [host.innerText,
@@ -55,19 +54,14 @@ async function capture(name) {
 }
 function check(name) { report.checks.push(name); console.log(`PASS ${name}`); }
 async function start(width) {
+  if (verifyLoadedScript) await verifyLoadedScript(expected.toLowerCase());
   await context?.close();
   context = await browser.newContext({ viewport: { width, height: width === 1024 ? 720 : 1440 } });
   page = await context.newPage(); page.setDefaultTimeout(12000);
+  verifyLoadedScript = observeMainScript(page, report);
   page.on('pageerror', e => report.pageErrors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') report.consoleErrors.push(m.text()); });
   page.on('requestfailed', r => report.failedRequests.push(r.url()));
-  page.on('response', response => {
-    if (new URL(response.url()).pathname.endsWith('/main.dart.js')) {
-      loadedHashTasks.push(response.body().then(body => {
-        report.loadedMainJsHashes.push(createHash('sha256').update(body).digest('hex'));
-      }));
-    }
-  });
   await page.goto(url, { waitUntil: 'networkidle' }); await wait(/Start a New Game/);
   const chooser = page.waitForEvent('filechooser'); await click(/^Import a Save/); await (await chooser).setFiles(fixture);
   await wait(/Save imported/); await page.keyboard.press('Enter'); await wait(/Start a New Game/);
@@ -109,7 +103,7 @@ try {
       assert.ok(await page.getByRole('button', { name: /Meet / }).count()); check('actual daily recruitment creates candidate controls');
     }
   }
-  await Promise.all(loadedHashTasks);
+  await verifyLoadedScript(expected.toLowerCase());
   assert.ok(report.loadedMainJsHashes.length >= 2, 'Capture the actual loaded JavaScript in both contexts.');
   for (const hash of report.loadedMainJsHashes) assert.equal(hash, expected.toLowerCase());
   assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.consoleErrors, []);

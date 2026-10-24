@@ -86,6 +86,8 @@ try {
 }
 ```
 
+If Windows package resolution stops because plugin symlinks are unavailable, follow the [project-local plugin junction setup](WINDOWS_BUILD.md#plugin-junction-setup-without-developer-mode), then retry package resolution with the pinned SDK.
+
 Fresh worktrees can lack ignored serializers even after package resolution succeeds. The doctor reports missing or non-file generated outputs with the pinned `build_runner` remedy; the generator command above is still required before compiling. Regenerate serializers after changing saved model fields or JSON annotations. Then start the development game:
 
 ```powershell

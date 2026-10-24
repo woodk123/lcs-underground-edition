@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromiumLaunchOptions } from './browser_support.mjs';
+import { chromiumLaunchOptions, observeMainScript } from './browser_support.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'upstream/tool/offline_test/package.json'));
@@ -59,6 +59,7 @@ assert.equal(report.mainJsSha256, report.expectedHash, 'QA server must serve the
 const browser = await chromium.launch(chromiumLaunchOptions({ args }));
 const context = await browser.newContext({ viewport: { width: 1440, height: 1100 }, acceptDownloads: true });
 const page = await context.newPage();
+const verifyLoadedScript = observeMainScript(page, report);
 page.on('pageerror', error => report.pageErrors.push(String(error)));
 page.on('console', message => { if (message.type() === 'error') report.consoleErrors.push(message.text()); });
 page.on('requestfailed', request => report.failedRequests.push(request.url()));
@@ -225,6 +226,7 @@ try {
   report.beforeCampaignSha256 = hash(JSON.stringify(before));
   report.afterCampaignSha256 = hash(JSON.stringify(after));
   report.checks.push('Whole normalized campaign identical; no time or gameplay changes');
+  await verifyLoadedScript(report.expectedHash);
   assert.deepEqual(report.productionFindings, []);
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.consoleErrors, []);
