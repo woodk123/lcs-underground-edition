@@ -5,6 +5,8 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { PNG } from 'pngjs';
+import { waitForSemantics, waitForUiSettled } from '../../../scripts/browser_support.mjs';
+import { inspectPrecache, parseOfflineManifest } from './offline_contract.mjs';
 
 const TIMEOUT = 120_000;
 const FAILURE_SCREENSHOT =
@@ -59,18 +61,28 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+async function waitForTitle(page, phase) {
+  await waitForSemantics(page, /Start a New Game/, { timeout: TIMEOUT });
+  const start = page.getByRole('button', { name: /^Start a New Game\b/ }).first();
+  await start.waitFor({ state: 'visible', timeout: TIMEOUT });
+  assert(await start.isEnabled(), `Source title's Start a New Game is disabled ${phase}.`);
+  await waitForUiSettled(page);
+}
+
 async function main() {
   assert(existsSync(join(buildDir, 'index.html')), `No index.html in ${buildDir}`);
   const sw = readFileSync(join(buildDir, 'sw.js'), 'utf8');
   assert(!sw.includes('// build: manifest'),
     'sw.js still contains the unfilled manifest placeholder. ' +
     'Run tool/inject_service_worker.dart before this test.');
+  const manifest = parseOfflineManifest(sw);
 
   const server = createServer(handleRequest);
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const origin = `http://127.0.0.1:${server.address().port}`;
 
-  const browser = await chromium.launch({channel: process.env.LCS_BROWSER_CHANNEL || undefined});
+  const browser = await chromium.launch({channel: process.env.LCS_BROWSER_CHANNEL || undefined,
+    args: ['--force-renderer-accessibility']});
   const pageErrors = [];
   const failedRequests = [];
   let page;
@@ -83,28 +95,19 @@ async function main() {
     console.log('Loading app online...');
     await page.goto(origin + BASE_PATH, { waitUntil: 'load', timeout: TIMEOUT });
     await page.waitForSelector('flutter-view, flt-glass-pane', { state: 'attached', timeout: TIMEOUT });
-    console.log('App booted online.');
+    await waitForTitle(page, 'online');
+    console.log('Source title ready online.');
 
     console.log('Waiting for service worker activation (precache complete)...');
-    await page.waitForFunction(async () => {
-      const reg = await navigator.serviceWorker.getRegistration();
-      return !!(reg && reg.active);
-    }, undefined, { timeout: TIMEOUT });
+    const scope = origin + BASE_PATH;
+    await page.waitForFunction(async ({ scope, script }) => {
+      const reg = await navigator.serviceWorker.getRegistration(scope);
+      return reg?.scope === scope && reg.active?.state === 'activated' && reg.active.scriptURL === script
+        && navigator.serviceWorker.controller?.state === 'activated' && navigator.serviceWorker.controller.scriptURL === script;
+    }, { scope, script: new URL('sw.js', scope).href }, { timeout: TIMEOUT });
 
-    const cached = await page.evaluate(async () => {
-      const names = await caches.keys();
-      let count = 0;
-      let hasMain = false;
-      for (const name of names) {
-        const keys = await (await caches.open(name)).keys();
-        count += keys.length;
-        hasMain = hasMain || keys.some((k) => k.url.endsWith('main.dart.js'));
-      }
-      return { names, count, hasMain };
-    });
-    console.log(`Caches: ${cached.names.join(', ')} (${cached.count} entries)`);
-    assert(cached.hasMain, 'main.dart.js was not precached');
-    assert(cached.count >= 20, `Suspiciously few precached entries: ${cached.count}`);
+    const cached = await page.evaluate(inspectPrecache, { ...manifest, scope });
+    console.log(`Current cache ${cached.name}: complete manifest and ${cached.count} scoped resource responses verified.`);
 
     console.log('Stopping web server; reloading with no network available...');
     server.closeAllConnections();
@@ -115,7 +118,7 @@ async function main() {
 
     await page.reload({ waitUntil: 'load', timeout: TIMEOUT });
     await page.waitForSelector('flutter-view, flt-glass-pane', { state: 'attached', timeout: TIMEOUT });
-    await page.waitForTimeout(5000);
+    await waitForTitle(page, 'offline after server shutdown');
 
     const shot = PNG.sync.read(await page.screenshot());
     let litPixels = 0;
@@ -125,7 +128,7 @@ async function main() {
     assert(litPixels > 5000,
       `App booted offline but rendered almost nothing (${litPixels} lit pixels)`);
 
-    console.log(`PASS: app boots offline (${cached.count} cached resources, ${litPixels} lit pixels rendered)`);
+    console.log(`PASS: source title boots offline (${cached.name}, ${cached.count} cached resources, ${litPixels} lit pixels rendered)`);
   } catch (e) {
     console.error(`FAIL: ${e.message}`);
     for (const err of pageErrors) console.error(`  page error: ${err}`);
