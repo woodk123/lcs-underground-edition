@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import time
 import tomllib
 
 from developer_doctor import check_node, check_node_packages
@@ -74,7 +75,15 @@ def output_directory(root: Path, value: str) -> Path:
 
 
 def run(command: list[str], cwd: Path) -> None:
-    subprocess.run(command, cwd=cwd, check=True)
+    label = json.dumps(command)
+    print(f'RUN {label}\nCWD {json.dumps(str(cwd))}', flush=True)
+    started = time.perf_counter()
+    try:
+        subprocess.run(command, cwd=cwd, check=True)
+    except BaseException:
+        print(f'FAIL after {time.perf_counter() - started:.2f}s: {label}', flush=True)
+        raise
+    print(f'PASS after {time.perf_counter() - started:.2f}s: {label}', flush=True)
 
 
 def install_dependencies(root: Path, output: Path) -> None:

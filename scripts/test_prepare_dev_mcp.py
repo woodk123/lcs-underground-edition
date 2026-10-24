@@ -1,7 +1,9 @@
 """The development build cache must reject changed source and tampered artifacts."""
 import json
 import io
+import os
 from contextlib import redirect_stderr, redirect_stdout
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import tempfile
 import subprocess
@@ -11,6 +13,103 @@ from unittest.mock import patch
 
 import prepare_dev_mcp as prepare
 from release_common import digest, file_hashes
+
+
+def redirected_progress_evidence():
+    """A pipe-gated real child proves banners survive redirected buffering."""
+    with tempfile.TemporaryDirectory(prefix='lcs prepare progress ') as temporary:
+        root = Path(temporary).resolve()
+        cwd = root / 'work [folder] \u754c'
+        cwd.mkdir()
+        child = root / 'controlled child.py'
+        child.write_text(
+            'import sys\n'
+            'print("CHILD_READY", flush=True)\n'
+            'print("CHILD_STDERR", file=sys.stderr, flush=True)\n'
+            'if sys.stdin.readline().strip() != "release": raise SystemExit(23)\n'
+            'print("CHILD_COMPLETED", flush=True)\n', encoding='utf-8')
+        driver = root / 'driver.py'
+        driver.write_text(
+            'from pathlib import Path\nimport sys\n'
+            'sys.path.insert(0, sys.argv[1])\n'
+            'import prepare_dev_mcp\n'
+            'prepare_dev_mcp.run([sys.executable, "-B", sys.argv[2]], Path(sys.argv[3]))\n', encoding='utf-8')
+        process = subprocess.Popen(
+            [sys.executable, '-B', str(driver), str(Path(prepare.__file__).parent), str(child), str(cwd)],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, encoding='utf-8',
+            env={key: value for key, value in os.environ.items() if key.upper() != 'PYTHONUNBUFFERED'})
+        with ThreadPoolExecutor(max_workers=1) as reader:
+            try:
+                before_release = []
+                while True:
+                    line = reader.submit(process.stdout.readline).result(timeout=10)
+                    if not line:
+                        break
+                    before_release.append(line.rstrip('\n'))
+                    if line.strip() == 'CHILD_READY':
+                        break
+                running = process.poll() is None
+                try:
+                    process.stdin.write('release\n')
+                    process.stdin.flush()
+                except BrokenPipeError:
+                    pass
+                process.stdin.close()
+                after_release = reader.submit(process.stdout.read).result(timeout=10)
+                return_code = process.wait(timeout=10)
+                return {'command': [sys.executable, '-B', str(child)], 'cwd': str(cwd),
+                        'before_release': before_release, 'child_waiting_for_release': running,
+                        'after_release': after_release.splitlines(),
+                        'stderr': process.stderr.read(), 'return_code': return_code}
+            finally:
+                if not process.stdin.closed:
+                    process.stdin.close()  # EOF also releases the controlled child.
+                if process.poll() is None:
+                    process.kill()  # Only this directly started, disposable driver.
+                process.wait(timeout=10)
+                process.stdout.close()
+                process.stderr.close()
+
+
+class PreparationProgressTests(unittest.TestCase):
+    def test_command_is_announced_before_launch_and_success_reports_actual_phase_duration(self):
+        command, cwd = ['tool with spaces', 'pub', 'get'], Path('project with spaces')
+        output = io.StringIO()
+        def child(*args, **kwargs):
+            self.assertIn('RUN ' + json.dumps(command), output.getvalue())
+            self.assertIn('CWD ' + json.dumps(str(cwd)), output.getvalue())
+            self.assertNotIn('PASS', output.getvalue())
+        with redirect_stdout(output), patch.object(prepare.time, 'perf_counter', side_effect=[10, 12.5]), \
+                patch.object(prepare.subprocess, 'run', side_effect=child) as execute:
+            prepare.run(command, cwd)
+        execute.assert_called_once_with(command, cwd=cwd, check=True)
+        self.assertIn('PASS after 2.50s', output.getvalue())
+        self.assertNotIn('FAIL', output.getvalue())
+
+    def test_failed_interrupted_and_unavailable_children_preserve_the_original_exception(self):
+        for failure in (subprocess.CalledProcessError(17, ['tool']),
+                        subprocess.TimeoutExpired(['tool'], 30), FileNotFoundError('missing tool'),
+                        KeyboardInterrupt()):
+            with self.subTest(failure=type(failure).__name__):
+                output = io.StringIO()
+                with redirect_stdout(output), patch.object(prepare.time, 'perf_counter', side_effect=[10, 13.25]), \
+                        patch.object(prepare.subprocess, 'run', side_effect=failure), \
+                        self.assertRaises(type(failure)) as raised:
+                    prepare.run(['tool'], Path('project'))
+                self.assertIs(raised.exception, failure)
+                self.assertIn('FAIL after 3.25s', output.getvalue())
+                self.assertNotIn('PASS', output.getvalue())
+
+    def test_redirected_real_child_waits_for_release_after_flushed_banner_is_visible(self):
+        evidence = redirected_progress_evidence()
+        self.assertTrue(evidence['child_waiting_for_release'])
+        self.assertEqual(evidence['before_release'], [
+            'RUN ' + json.dumps(evidence['command']), 'CWD ' + json.dumps(evidence['cwd']), 'CHILD_READY'])
+        self.assertEqual(evidence['after_release'][0], 'CHILD_COMPLETED')
+        self.assertRegex(evidence['after_release'][1], r'^PASS after \d+\.\d{2}s: ')
+        self.assertEqual(evidence['stderr'], 'CHILD_STDERR\n')
+        self.assertEqual(evidence['return_code'], 0)
 
 
 class DevelopmentBuildTests(unittest.TestCase):
